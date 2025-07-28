@@ -76,7 +76,9 @@ export default function Home() {
               <Link href="/login">
                 <Button>로그인</Button>
               </Link>
-              <Button variant="outline">회원가입</Button>
+              <Link href="/signup">
+                <Button variant="outline">회원가입</Button>
+              </Link>
             </div>
           </div>
         </div>
