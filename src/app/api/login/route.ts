@@ -75,31 +75,21 @@ export async function POST(request: NextRequest) {
     });
 
     // JWT 토큰 생성
-    const jwtSecret = process.env.JWT_SECRET || 'your-secret-key';
     const token = jwt.sign(
-      {
+      { 
         mb_no: member.mb_no,
         mb_id: member.mb_id,
-        mb_email: member.mb_email,
-        mb_nick: member.mb_nick,
-        mb_level: member.mb_level,
-        mb_datetime: member.mb_datetime, // 추가
-        mb_today_login: new Date() // 추가
+        mb_level: member.mb_level 
       },
-      jwtSecret,
+      process.env.JWT_SECRET!,
       { expiresIn: '7d' } // 7일간 유효
     );
-
-    // 클라이언트 IP 주소 가져오기
-    const clientIP = request.headers.get('x-forwarded-for') || 
-                      request.headers.get('x-real-ip') || 
-                      '127.0.0.1';
 
     // HTTP-only 쿠키를 포함한 응답 생성
     const response = NextResponse.json({
       success: true,
       message: '로그인이 완료되었습니다.',
-      user: {
+      member: {
         mb_no: member.mb_no,
         mb_id: member.mb_id,
         mb_email: member.mb_email,

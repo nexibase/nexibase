@@ -6,9 +6,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowLeft, Save, UserPlus, User, Mail, Phone, MapPin, Shield, Settings, Lock, Home, FileText, Calendar } from "lucide-react"
+import { ArrowLeft, Save, Mail, MapPin, Shield, Settings, Lock, FileText, Calendar } from "lucide-react"
 import { MemberFormData, MemberFormProps, Member } from "@/lib/types/member"
-import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
 
 // Daum 우편번호 API 타입 선언
@@ -222,7 +221,7 @@ export function MemberForm({ mode, memberId, onCancel, onSuccess }: MemberFormPr
 
   // 디바운스된 중복 체크 함수들
   const debouncedCheckId = useCallback(
-    debounce(async (id: string) => {
+    (async (id: string) => {
       // Edit 모드에서는 아이디 중복 체크 생략 (아이디는 변경불가)
       if (mode === 'edit') return
 
@@ -271,12 +270,12 @@ export function MemberForm({ mode, memberId, onCancel, onSuccess }: MemberFormPr
       } finally {
         setIdChecking(false)
       }
-    }, 500),
+    }),
     [mode]
   )
 
   const debouncedCheckNick = useCallback(
-    debounce(async (nick: string) => {
+    (async (nick: string) => {
       const nickValidation = validateNick(nick)
       if (!nickValidation.valid) {
         setNickStatus({
@@ -326,12 +325,12 @@ export function MemberForm({ mode, memberId, onCancel, onSuccess }: MemberFormPr
       } finally {
         setNickChecking(false)
       }
-    }, 500),
+    }),
     [mode, memberId]
   )
 
   const debouncedCheckEmail = useCallback(
-    debounce(async (email: string) => {
+    (async (email: string) => {
       const emailValidation = validateEmail(email)
       if (!emailValidation.valid) {
         setEmailStatus({
@@ -381,14 +380,17 @@ export function MemberForm({ mode, memberId, onCancel, onSuccess }: MemberFormPr
       } finally {
         setEmailChecking(false)
       }
-    }, 500),
+    }),
     [mode, memberId]
   )
 
   // 자동 중복 체크 useEffect들
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout
     if (formData.mb_id.trim() && mode === 'create') {
-      debouncedCheckId(formData.mb_id)
+      timeoutId = setTimeout(() => {
+        debouncedCheckId(formData.mb_id)
+      }, 500)
     } else if (mode === 'create') {
       setIdStatus({
         available: null,
@@ -396,11 +398,15 @@ export function MemberForm({ mode, memberId, onCancel, onSuccess }: MemberFormPr
         checked: false
       })
     }
+    return () => clearTimeout(timeoutId)
   }, [formData.mb_id, debouncedCheckId, mode])
 
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout
     if (formData.mb_nick.trim()) {
-      debouncedCheckNick(formData.mb_nick)
+      timeoutId = setTimeout(() => {
+        debouncedCheckNick(formData.mb_nick)
+      }, 500)
     } else {
       setNickStatus({
         available: null,
@@ -408,11 +414,15 @@ export function MemberForm({ mode, memberId, onCancel, onSuccess }: MemberFormPr
         checked: false
       })
     }
+    return () => clearTimeout(timeoutId)
   }, [formData.mb_nick, debouncedCheckNick])
 
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout
     if (formData.mb_email.trim()) {
-      debouncedCheckEmail(formData.mb_email)
+      timeoutId = setTimeout(() => {
+        debouncedCheckEmail(formData.mb_email)
+      }, 500)
     } else {
       setEmailStatus({
         available: null,
@@ -420,6 +430,7 @@ export function MemberForm({ mode, memberId, onCancel, onSuccess }: MemberFormPr
         checked: false
       })
     }
+    return () => clearTimeout(timeoutId)
   }, [formData.mb_email, debouncedCheckEmail])
 
   const handleInputChange = (field: keyof MemberFormData, value: string | number) => {
@@ -545,13 +556,6 @@ export function MemberForm({ mode, memberId, onCancel, onSuccess }: MemberFormPr
       return
     }
 
-    // // 필수 필드 검증
-    // if (!formData.mb_id || !formData.mb_name || !formData.mb_nick || !formData.mb_email) {
-    //   alert("필수 항목을 모두 입력해주세요.")
-    //   return
-    // }
-
-
     try {
       setLoading(true)
       
@@ -585,7 +589,7 @@ export function MemberForm({ mode, memberId, onCancel, onSuccess }: MemberFormPr
     }
   }
 
-  // Enter 키 핸들러 추가
+  // Enter 키 핸들러 수정
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       // Textarea에서 Shift+Enter는 줄바꿈을 위해 허용
@@ -595,7 +599,7 @@ export function MemberForm({ mode, memberId, onCancel, onSuccess }: MemberFormPr
       }
       
       e.preventDefault()
-      handleSubmit(e as any)
+      handleSubmit(e as React.FormEvent)
     }
   }
 
@@ -1222,16 +1226,4 @@ export function MemberForm({ mode, memberId, onCancel, onSuccess }: MemberFormPr
       </div>
     </>
   )
-}
-
-// 디바운스 유틸리티 함수
-function debounce<T extends (...args: any[]) => any>(
-  func: T,
-  wait: number
-): (...args: Parameters<T>) => void {
-  let timeout: NodeJS.Timeout
-  return (...args: Parameters<T>) => {
-    clearTimeout(timeout)
-    timeout = setTimeout(() => func(...args), wait)
-  }
 } 

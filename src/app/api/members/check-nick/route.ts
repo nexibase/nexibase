@@ -1,37 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { mb_nick, exclude_id } = body;
+    const { mb_nick, exclude_id } = await request.json();
 
     if (!mb_nick) {
       return NextResponse.json(
-        { error: '닉네임이 필요합니다.' },
+        { error: '닉네임을 입력해주세요.' },
         { status: 400 }
       );
     }
 
-    // 닉네임 길이 검증 (2-20자)
-    if (mb_nick.length < 2 || mb_nick.length > 20) {
+    // 닉네임 형식 검증 (2-20자, 한글, 영문, 숫자, 일부 특수문자만 허용)
+    const nickRegex = /^[가-힣a-zA-Z0-9._-]{2,20}$/;
+    if (!nickRegex.test(mb_nick)) {
       return NextResponse.json(
-        { error: '닉네임은 2-20자 사이여야 합니다.' },
-        { status: 400 }
-      );
-    }
-
-    // 특수문자 검증 (한글, 영문, 숫자, 언더바만 허용)
-    const nicknameRegex = /^[가-힣a-zA-Z0-9_]+$/;
-    if (!nicknameRegex.test(mb_nick)) {
-      return NextResponse.json(
-        { error: '닉네임은 한글, 영문, 숫자, 언더바(_)만 사용 가능합니다.' },
+        { error: '닉네임은 2-20자의 한글, 영문, 숫자, ., _, -만 사용 가능합니다.' },
         { status: 400 }
       );
     }
 
     // 데이터베이스에서 닉네임 중복 확인 (exclude_id가 있으면 해당 회원 제외)
-    const whereCondition: any = {
+    const whereCondition: Prisma.G5MemberWhereInput = {
       mb_nick: mb_nick
     };
 

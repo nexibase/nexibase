@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
     // HTTP-only 쿠키를 제거하는 응답 생성
     const response = NextResponse.json({

@@ -1,20 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { email, exclude_id } = body;
+    const { email, exclude_id } = await request.json();
 
     if (!email) {
       return NextResponse.json(
-        { error: '이메일이 필요합니다.' },
+        { error: '이메일을 입력해주세요.' },
         { status: 400 }
       );
     }
 
     // 이메일 형식 검증
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return NextResponse.json(
         { error: '올바른 이메일 형식이 아닙니다.' },
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 데이터베이스에서 이메일 중복 확인 (exclude_id가 있으면 해당 회원 제외)
-    const whereCondition: any = {
+    const whereCondition: Prisma.G5MemberWhereInput = {
       mb_email: email.toLowerCase()
     };
 

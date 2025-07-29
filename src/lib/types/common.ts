@@ -1,7 +1,7 @@
 // 공통 타입 정의
 
-// API 응답 타입
-export interface ApiResponse<T = any> {
+// API 응답 타입 - any 대신 unknown 사용
+export interface ApiResponse<T = unknown> {
   success: boolean
   message?: string
   error?: string

@@ -2,6 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { generatePBKDF2Hash } from '@/lib/auth';
 
+interface WhereClause {
+  mb_id?: { contains: string };
+  mb_name?: { contains: string };
+  mb_nick?: { contains: string };
+  mb_email?: { contains: string };
+  mb_intercept_date?: { not: string };
+  mb_leave_date?: { not: string };
+}
+
 // 회원 목록 조회
 export async function GET(request: NextRequest) {
   try {
@@ -15,7 +24,7 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit;
 
     // 검색 조건 구성
-    let whereClause: any = {};
+    const whereClause: WhereClause = {};
     
     if (searchValue) {
       switch (searchType) {

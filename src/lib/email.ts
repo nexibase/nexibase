@@ -31,7 +31,7 @@ export const sendEmailVerificationEmail = async (email: string, mb_id: string, m
     if (error) {
       console.error('SMTP 연결 실패:', error);
     } else {
-      console.log('SMTP 연결 성공');
+      console.log('SMTP 연결 성공:', success);
     }
   });
   

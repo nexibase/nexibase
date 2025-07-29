@@ -255,7 +255,7 @@ export default function SignupPage() {
     }
   };
 
-  // 모든 조건이 만족되는지 확인하는 함수 추가
+  // 폼 제출 버튼에서 실제로 사용할 수 있도록 수정
   const isFormValid = () => {
     return email && 
            password && 
@@ -263,11 +263,6 @@ export default function SignupPage() {
            isValidEmail(email) && 
            emailStatus.available === true && 
            nicknameStatus.available === true;
-  };
-
-  // 모든 필수 필드가 입력되었는지 확인하는 함수
-  const isAllFieldsFilled = () => {
-    return email && password && nickname;
   };
 
   return (
@@ -379,10 +374,10 @@ export default function SignupPage() {
   
               <Button
                 type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                disabled={isLoading}
+                disabled={isLoading || !isFormValid()}
+                className="w-full"
               >
-                {isLoading ? "가입 중..." : "회원가입"}
+                {isLoading ? '가입 중...' : '회원가입'}
               </Button>
               
               {isLoading && (

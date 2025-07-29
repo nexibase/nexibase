@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 
-export default function EmailCertifyPage() {
+function EmailCertifyContent() {
   const [verificationStatus, setVerificationStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('');
   const router = useRouter();
@@ -111,5 +111,21 @@ export default function EmailCertifyPage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <Loader2 className="h-12 w-12 text-blue-500 animate-spin" />
+    </div>
+  );
+}
+
+export default function EmailCertifyPage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <EmailCertifyContent />
+    </Suspense>
   );
 } 

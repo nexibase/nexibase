@@ -18,11 +18,11 @@ export function middleware(request: NextRequest) {
 
     try {
       const jwtSecret = process.env.JWT_SECRET || 'your-secret-key';
-      const decoded = jwt.verify(token, jwtSecret);
+      jwt.verify(token, jwtSecret);
       
       // 토큰이 유효하면 요청을 계속 진행
       return NextResponse.next();
-    } catch (error) {
+    } catch {
       // 토큰이 유효하지 않으면 쿠키를 삭제하고 로그인 페이지로 리다이렉트
       const response = NextResponse.redirect(new URL('/login', request.url));
       response.cookies.set('auth-token', '', {

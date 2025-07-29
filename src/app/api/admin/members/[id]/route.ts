@@ -2,12 +2,34 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { generatePBKDF2Hash } from '@/lib/auth'
 
+interface UpdateData {
+  mb_name: string
+  mb_nick: string
+  mb_email: string
+  mb_level: number
+  mb_certify: string
+  mb_adult: number
+  mb_mailling: number
+  mb_sms: number
+  mb_open: number
+  mb_point: number
+  mb_hp: string
+  mb_tel: string
+  mb_password?: string
+}
+
+// Next.js 15에서 변경된 타입 정의에 맞게 수정
+interface RouteParams {
+  params: Promise<{ id: string }>
+}
+
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: RouteParams
 ) {
   try {
-    const mb_id = params.id
+    // params는 Promise이므로 await 필요
+    const { id: mb_id } = await context.params
     const body = await request.json()
     const {
       mb_name,
@@ -83,7 +105,7 @@ export async function PUT(
     }
 
     // 업데이트 데이터 준비
-    const updateData: any = {
+    const updateData: UpdateData = {
       mb_name,
       mb_nick,
       mb_email: mb_email.toLowerCase(),
@@ -120,27 +142,25 @@ export async function PUT(
 
     return NextResponse.json({
       success: true,
-      message: '회원 정보가 성공적으로 수정되었습니다.',
       member: updatedMember
     })
 
   } catch (error) {
-    console.error('회원 수정 에러:', error)
+    console.error('회원 수정 실패:', error)
     return NextResponse.json(
-      { error: '서버 오류가 발생했습니다.' },
+      { error: '회원 수정 중 오류가 발생했습니다.' },
       { status: 500 }
     )
-  } finally {
-    await prisma.$disconnect()
   }
 }
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: RouteParams
 ) {
   try {
-    const mb_id = params.id
+    // params는 Promise이므로 await 필요
+    const { id: mb_id } = await context.params
 
     const member = await prisma.g5Member.findFirst({
       where: { mb_id },

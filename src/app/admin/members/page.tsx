@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Sidebar } from "@/components/admin/Sidebar"
 import { Button } from "@/components/ui/button"
@@ -12,11 +12,12 @@ import {
   User,
   Check,
   X,
+  Loader2,
 } from "lucide-react"
 
-import { MemberListItem, MemberStats, MemberSearchFilter } from "@/lib/types"
+import { MemberListItem, MemberStats, MemberSearchFilter } from "@/lib/types/member"
 
-export default function MembersPage() {
+function MembersContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   
@@ -39,7 +40,6 @@ export default function MembersPage() {
   const [currentPage, setCurrentPage] = useState(parseInt(searchParams.get("page") || "1"))
   const [totalPages, setTotalPages] = useState(1)
 
-
   // 성공 메시지 상태 추가
   const [showSuccessMessage, setShowSuccessMessage] = useState(false)
 
@@ -60,9 +60,9 @@ export default function MembersPage() {
   }
 
   // 회원 목록 조회
-  const fetchMembers = async () => {
+  const fetchMembers = useCallback(async () => {
+    setLoading(true)
     try {
-      setLoading(true)
       const params = new URLSearchParams({
         page: currentPage.toString(),
         limit: '10',
@@ -84,11 +84,11 @@ export default function MembersPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [currentPage, selectedFilter, searchType, searchValue])
 
   useEffect(() => {
     fetchMembers()
-  }, [currentPage, selectedFilter, searchType, searchValue])
+  }, [fetchMembers])
 
   useEffect(() => {
     // URL에서 성공 파라미터 확인
@@ -496,9 +496,22 @@ export default function MembersPage() {
           </div>
         </main>
       </div>
-      
-      {/* 회원 추가 모달 */}
-      {/* <MemberAddModal /> 및 <MemberEditModal /> 제거 */}
     </div>
   )
+}
+
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+    </div>
+  );
+}
+
+export default function MembersPage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <MembersContent />
+    </Suspense>
+  );
 }
