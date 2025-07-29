@@ -38,7 +38,17 @@ export default function NewMemberPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [idChecking, setIdChecking] = useState(false)
+  const [nickChecking, setNickChecking] = useState(false)
   const [idStatus, setIdStatus] = useState<{
+    available: boolean | null
+    message: string
+    checked: boolean
+  }>({
+    available: null,
+    message: "",
+    checked: false
+  })
+  const [nickStatus, setNickStatus] = useState<{
     available: boolean | null
     message: string
     checked: boolean
@@ -103,6 +113,20 @@ export default function NewMemberPage() {
     return { valid: true, message: "" }
   }
 
+  // 닉네임 유효성 검사
+  const validateNick = (nick: string) => {
+    if (!nick.trim()) {
+      return { valid: false, message: "닉네임을 입력해주세요." }
+    }
+    if (nick.length < 2) {
+      return { valid: false, message: "닉네임은 2자 이상이어야 합니다." }
+    }
+    if (nick.length > 20) {
+      return { valid: false, message: "닉네임은 20자 이하여야 합니다." }
+    }
+    return { valid: true, message: "" }
+  }
+
   // 디바운스된 아이디 중복 체크 함수
   const debouncedCheckId = useCallback(
     debounce(async (id: string) => {
@@ -118,7 +142,7 @@ export default function NewMemberPage() {
 
       setIdChecking(true)
       try {
-        const response = await fetch('/api/admin/members/check-id', {
+        const response = await fetch('/api/members/check-id', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -155,6 +179,58 @@ export default function NewMemberPage() {
     []
   )
 
+  // 디바운스된 닉네임 중복 체크 함수
+  const debouncedCheckNick = useCallback(
+    debounce(async (nick: string) => {
+      const nickValidation = validateNick(nick)
+      if (!nickValidation.valid) {
+        setNickStatus({
+          available: false,
+          message: nickValidation.message,
+          checked: false
+        })
+        return
+      }
+
+      setNickChecking(true)
+      try {
+        const response = await fetch('/api/members/check-nick', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ mb_nick: nick }),
+        })
+
+        const data = await response.json()
+
+        if (response.ok) {
+          setNickStatus({
+            available: data.available,
+            message: data.message,
+            checked: true
+          })
+        } else {
+          setNickStatus({
+            available: false,
+            message: data.error || '중복 확인 중 오류가 발생했습니다.',
+            checked: false
+          })
+        }
+      } catch (error) {
+        console.error('닉네임 중복 확인 에러:', error)
+        setNickStatus({
+          available: false,
+          message: '네트워크 오류가 발생했습니다.',
+          checked: false
+        })
+      } finally {
+        setNickChecking(false)
+      }
+    }, 500),
+    []
+  )
+
   // 아이디 변경 시 자동 중복 체크
   useEffect(() => {
     if (formData.mb_id.trim()) {
@@ -167,6 +243,19 @@ export default function NewMemberPage() {
       })
     }
   }, [formData.mb_id, debouncedCheckId])
+
+  // 닉네임 변경 시 자동 중복 체크
+  useEffect(() => {
+    if (formData.mb_nick.trim()) {
+      debouncedCheckNick(formData.mb_nick)
+    } else {
+      setNickStatus({
+        available: null,
+        message: "",
+        checked: false
+      })
+    }
+  }, [formData.mb_nick, debouncedCheckNick])
 
   const handleInputChange = (field: keyof MemberCreateForm, value: string | number) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -255,6 +344,20 @@ export default function NewMemberPage() {
       return
     }
 
+    // 닉네임 중복 체크 확인 (닉네임이 입력된 경우에만)
+    if (formData.mb_nick.trim()) {
+      const nickValidation = validateNick(formData.mb_nick)
+      if (!nickValidation.valid) {
+        alert(nickValidation.message)
+        return
+      }
+
+      if (!nickStatus.checked || !nickStatus.available) {
+        alert("사용할 수 없는 닉네임입니다.")
+        return
+      }
+    }
+
     // 비밀번호 확인
     if (formData.mb_password !== formData.mb_password_confirm) {
       alert("비밀번호가 일치하지 않습니다.")
@@ -328,7 +431,13 @@ export default function NewMemberPage() {
                 </div>
                 <Button 
                   onClick={handleSubmit}
-                  disabled={loading || !validateId(formData.mb_id).valid || !idStatus.checked || !idStatus.available}
+                  disabled={
+                    loading || 
+                    !validateId(formData.mb_id).valid || 
+                    !idStatus.checked || 
+                    !idStatus.available ||
+                    (formData.mb_nick.trim() && (!nickStatus.checked || !nickStatus.available))
+                  }
                   className="bg-red-600 hover:bg-red-700 text-sm"
                   size="lg"
                 >
@@ -402,6 +511,16 @@ export default function NewMemberPage() {
                         autoComplete="off"
                         className="text-sm"
                       />
+                      {formData.mb_nick && (
+                        <div className={`text-xs ${
+                          nickStatus.available === true ? 'text-green-600' : 
+                          nickStatus.available === false ? 'text-red-600' : 
+                          'text-gray-600'
+                        }`}>
+                          {nickChecking && "확인 중..."}
+                          {!nickChecking && nickStatus.message}
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -882,7 +1001,13 @@ export default function NewMemberPage() {
                 </Button>
                 <Button 
                   onClick={handleSubmit}
-                  disabled={loading || !validateId(formData.mb_id).valid || !idStatus.checked || !idStatus.available}
+                  disabled={
+                    loading || 
+                    !validateId(formData.mb_id).valid || 
+                    !idStatus.checked || 
+                    !idStatus.available ||
+                    (formData.mb_nick.trim() && (!nickStatus.checked || !nickStatus.available))
+                  }
                   className="bg-red-600 hover:bg-red-700 text-sm"
                   size="lg"
                 >
