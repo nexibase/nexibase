@@ -111,4 +111,55 @@ export interface DuplicateCheckStatus {
   available: boolean | null
   message: string
   checking: boolean
+}
+
+// 통합 회원 폼 데이터 (생성/수정 공통)
+export interface MemberFormData {
+  mb_id: string
+  mb_password: string
+  mb_password_confirm?: string
+  mb_name: string
+  mb_nick: string
+  mb_email: string
+  mb_hp: string
+  mb_tel: string
+  mb_level: number
+  mb_certify: string
+  mb_adult: number
+  mb_mailling: number
+  mb_sms: number
+  mb_open: number
+  mb_point: number
+  mb_homepage: string
+  mb_zip: string
+  mb_addr1: string
+  mb_addr2: string
+  mb_addr3: string
+  mb_signature: string
+  mb_memo: string
+  mb_profile: string
+  mb_icon: string
+  mb_leave_date: string
+  mb_intercept_date: string
+  mb_1: string
+  mb_2: string
+  mb_3: string
+  mb_4: string
+  mb_5: string
+  mb_6: string
+  mb_7: string
+  mb_8: string
+  mb_9: string
+  mb_10: string
+}
+
+// 폼 모드 타입
+export type MemberFormMode = 'create' | 'edit'
+
+// 폼 Props 타입
+export interface MemberFormProps {
+  mode: MemberFormMode
+  memberId?: string // edit 모드일 때만 필요
+  onCancel: () => void
+  onSuccess: () => void
 } 
