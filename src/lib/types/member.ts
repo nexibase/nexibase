@@ -49,27 +49,6 @@ export interface MemberCreateForm {
   mb_sms: number
   mb_open: number
   mb_point: number
-  mb_homepage: string
-  mb_zip: string
-  mb_addr1: string
-  mb_addr2: string
-  mb_addr3: string
-  mb_signature: string
-  mb_memo: string
-  mb_profile: string
-  mb_icon: string
-  mb_leave_date: string
-  mb_intercept_date: string
-  mb_1: string // 여분필드 1
-  mb_2: string // 여분필드 2
-  mb_3: string // 여분필드 3
-  mb_4: string // 여분필드 4
-  mb_5: string // 여분필드 5
-  mb_6: string // 여분필드 6
-  mb_7: string // 여분필드 7
-  mb_8: string // 여분필드 8
-  mb_9: string // 여분필드 9
-  mb_10: string // 여분필드 10
 }
 
 // 회원 수정 폼 데이터 (회원 정보 수정 시)
@@ -113,27 +92,11 @@ export interface MemberStats {
   withdrawnMembers: number
 }
 
-// API 응답 타입
-export interface ApiResponse<T = any> {
-  success: boolean
-  message?: string
-  error?: string
-  data?: T
-}
-
 // 회원 API 응답 타입
-export interface MemberApiResponse extends ApiResponse {
+export interface MemberApiResponse {
   member?: Member
   members?: Member[]
   stats?: MemberStats
-}
-
-// 페이지네이션 타입
-export interface PaginationInfo {
-  currentPage: number
-  totalPages: number
-  totalItems: number
-  itemsPerPage: number
 }
 
 // 검색 필터 타입

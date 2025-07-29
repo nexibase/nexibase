@@ -8,20 +8,12 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { 
   Search, 
-  Edit, 
-  Trash2, 
   Plus, 
   User,
   Check,
   X,
-  ChevronDown,
-  Users,
-  Shield,
-  UserX
 } from "lucide-react"
 
-import { MemberAddModal } from "@/components/admin/MemberAddModal"
-import { MemberEditModal } from "@/components/admin/MemberEditModal"
 import { MemberListItem, MemberStats, MemberSearchFilter } from "@/lib/types"
 
 export default function MembersPage() {
@@ -46,10 +38,7 @@ export default function MembersPage() {
   const [loading, setLoading] = useState(true)
   const [currentPage, setCurrentPage] = useState(parseInt(searchParams.get("page") || "1"))
   const [totalPages, setTotalPages] = useState(1)
-  // 모달 관련 상태 제거
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-  const [selectedMember, setSelectedMember] = useState<MemberListItem | null>(null)
+
 
   // 성공 메시지 상태 추가
   const [showSuccessMessage, setShowSuccessMessage] = useState(false)

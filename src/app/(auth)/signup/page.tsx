@@ -60,7 +60,7 @@ export default function SignupPage() {
     setEmailStatus(prev => ({ ...prev, checking: true }));
 
     try {
-      const response = await fetch('/api/check-email', {
+      const response = await fetch('/api/members/check-email', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -103,7 +103,7 @@ export default function SignupPage() {
     setNicknameStatus(prev => ({ ...prev, checking: true }));
 
     try {
-      const response = await fetch('/api/check-nick', {
+      const response = await fetch('/api/members/check-nick', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
