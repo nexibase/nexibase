@@ -1,13 +1,31 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { Search, Users, MessageCircle, TrendingUp, Star, Heart, Share2 } from "lucide-react";
+import { Search, Users, MessageCircle, TrendingUp, Star, Heart, Share2, LogOut, User } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+
+interface Member {
+  mb_no: number;
+  mb_id: string;
+  mb_email: string;
+  mb_nick: string;
+  mb_level: number;
+  mb_datetime: string;
+  mb_today_login: string;
+}
 
 export default function Home() {
+  const [member, setMember] = useState<Member | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
+
   const trendingTopics = [
     { name: "웹 개발", count: 1.2 },
     { name: "React", count: 850 },
@@ -49,6 +67,47 @@ export default function Home() {
     }
   ];
 
+  // 사용자 정보 가져오기
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await fetch('/api/me');
+        if (response.ok) {
+          const data = await response.json();
+          setMember(data.user);
+        } else {
+          setMember(null);
+        }
+      } catch (error) {
+        console.error('사용자 정보 조회 에러:', error);
+        setMember(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, []);
+
+  // 로그아웃 처리
+  const handleLogout = async () => {
+    try {
+      const response = await fetch('/api/logout', {
+        method: 'POST',
+      });
+
+      if (response.ok) {
+        setMember(null);
+        router.push('/');
+      } else {
+        alert('로그아웃 중 오류가 발생했습니다.');
+      }
+    } catch (error) {
+      console.error('로그아웃 에러:', error);
+      alert('로그아웃 중 오류가 발생했습니다.');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -73,12 +132,45 @@ export default function Home() {
                   className="pl-10 w-64"
                 />
               </div>
-              <Link href="/login">
-                <Button>로그인</Button>
-              </Link>
-              <Link href="/signup">
-                <Button variant="outline">회원가입</Button>
-              </Link>
+              
+              {!isLoading && (
+                <>
+                  {member ? (
+                    // 로그인된 사용자
+                    <div className="flex items-center space-x-3">
+                      <div className="flex items-center space-x-2">
+                        <Avatar className="h-8 w-8">
+                          <AvatarFallback className="bg-blue-100 text-blue-600 text-sm font-medium">
+                            {member.mb_nick[0]}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm font-medium text-gray-700 hidden sm:block">
+                          {member.mb_nick}
+                        </span>
+                      </div>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={handleLogout}
+                        className="flex items-center space-x-1"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        <span className="hidden sm:inline">로그아웃</span>
+                      </Button>
+                    </div>
+                  ) : (
+                    // 로그인되지 않은 사용자
+                    <>
+                      <Link href="/login">
+                        <Button>로그인</Button>
+                      </Link>
+                      <Link href="/signup">
+                        <Button variant="outline">회원가입</Button>
+                      </Link>
+                    </>
+                  )}
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -91,10 +183,10 @@ export default function Home() {
             {/* Hero Section */}
             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-8 mb-8">
               <h2 className="text-3xl font-bold text-gray-900 mb-4">
-                개발자들의 소통 공간에 오신 것을 환영합니다!
+                {member ? `${member.mb_nick}님, 환영합니다!` : '개발자들의 소통 공간에 오신 것을 환영합니다!'}
               </h2>
               <p className="text-lg text-gray-600 mb-6">
-                질문하고, 답변하고, 함께 성장하는 개발자 커뮤니티
+                {member ? '질문하고, 답변하고, 함께 성장하는 개발자 커뮤니티' : '질문하고, 답변하고, 함께 성장하는 개발자 커뮤니티'}
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
@@ -197,6 +289,35 @@ export default function Home() {
           {/* Sidebar */}
           <aside className="lg:col-span-4">
             <div className="space-y-6">
+              {/* User Info Card (로그인된 경우만 표시) */}
+              {member && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <User className="h-5 w-5 mr-2" />
+                      내 정보
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center space-x-3 mb-4">
+                      <Avatar className="h-12 w-12">
+                        <AvatarFallback className="bg-blue-100 text-blue-600 text-lg font-medium">
+                          {member.mb_nick[0]}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <div className="font-medium">{member.mb_nick}</div>
+                        <div className="text-sm text-muted-foreground">{member.mb_email}</div>
+                      </div>
+                    </div>
+                    <div className="space-y-2 text-sm text-muted-foreground">
+                      <div>가입일: {new Date(member.mb_datetime).toLocaleDateString('ko-KR')}</div>
+                      <div>최근 로그인: {new Date(member.mb_today_login).toLocaleDateString('ko-KR')}</div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Trending Topics */}
               <Card>
                 <CardHeader>
