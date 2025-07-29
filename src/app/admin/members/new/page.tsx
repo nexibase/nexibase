@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
+import Script from "next/script"
 import { Sidebar } from "@/components/admin/Sidebar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,6 +12,27 @@ import { ArrowLeft, Save, UserPlus, User, Mail, Phone, MapPin, Shield, Settings,
 import { MemberCreateForm } from "@/lib/types"
 import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
+
+// Daum 우편번호 API 타입 선언
+declare global {
+  interface Window {
+    daum: {
+      Postcode: new (options: {
+        oncomplete: (data: {
+          zonecode: string;
+          roadAddress: string;
+          jibunAddress: string;
+          buildingName: string;
+          apartment: string;
+        }) => void;
+        width?: string;
+        height?: string;
+      }) => {
+        open: () => void;
+      };
+    };
+  }
+}
 
 export default function NewMemberPage() {
   const router = useRouter()
@@ -56,7 +78,7 @@ export default function NewMemberPage() {
     mb_leave_date: "",
     mb_intercept_date: "",
     mb_1: "",
-    mb_2: "no", // 기본값: 아니오 (본인확인)
+    mb_2: "",
     mb_3: "",
     mb_4: "",
     mb_5: "",
@@ -167,6 +189,56 @@ export default function NewMemberPage() {
     }
   }
 
+  // 주소 검색 함수
+  const handleAddressSearch = () => {
+    if (!window.daum) {
+      alert('주소 검색 서비스를 불러오는 중입니다. 잠시 후 다시 시도해주세요.')
+      return
+    }
+
+    new window.daum.Postcode({
+      oncomplete: function(data) {
+        // 객체 내용을 콘솔에서 확인할 수 있도록 변경
+        console.log('주소 검색 결과:', data)
+        
+        // 또는 JSON 형태로 alert로 보고 싶다면 이렇게:
+        // alert(JSON.stringify(data, null, 2))
+        
+        // 팝업에서 검색결과 항목을 클릭했을때 실행할 코드
+        let addr = '' // 주소 변수
+        let extraAddr = '' // 참고항목 변수
+
+        // 사용자가 선택한 주소 타입에 따라 해당 주소 값을 가져온다.
+        if (data.roadAddress !== '') { // 도로명 주소를 선택했을 경우
+          addr = data.roadAddress
+        } else { // 지번 주소를 선택했을 경우(J)
+          addr = data.jibunAddress
+        }
+
+        // 도로명 주소일 때 참고항목을 조합한다.
+        if (data.roadAddress !== '') {
+          // 건물명이 있을 경우 추가한다.
+          if (data.buildingName !== '') {
+            extraAddr = data.buildingName
+          }
+          // 표시할 참고항목이 있을 경우, 괄호까지 추가한 최종 문자열을 만든다.
+          if (extraAddr !== '') {
+            addr += ' (' + extraAddr + ')'
+          }
+        }
+
+        // 우편번호와 주소 정보를 해당 필드에 넣는다.
+        setFormData(prev => ({
+          ...prev,
+          mb_zip: data.zonecode,
+          mb_addr1: addr
+        }))
+      },
+      width: '500',
+      height: '600'
+    }).open()
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -227,588 +299,602 @@ export default function NewMemberPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="flex">
-        <Sidebar activeMenu="members" onMenuChange={() => {}} />
-        <main className="flex-1 lg:ml-0 p-6">
-          <div className="max-w-7xl mx-auto space-y-6">
-            {/* 헤더 */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Button variant="outline" size="sm" onClick={handleCancel} className="text-sm">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  목록
+    <>
+      {/* Daum 우편번호 API 스크립트 로드 */}
+      <Script
+        src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"
+        strategy="lazyOnload"
+        onError={(e) => {
+          console.error('Daum Postcode API 로드 실패:', e)
+        }}
+      />
+      
+      <div className="min-h-screen bg-white">
+        <div className="flex">
+          <Sidebar activeMenu="members" onMenuChange={() => {}} />
+          <main className="flex-1 lg:ml-0 p-6">
+            <div className="max-w-7xl mx-auto space-y-6">
+              {/* 헤더 */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Button variant="outline" size="sm" onClick={handleCancel} className="text-sm">
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    목록
+                  </Button>
+                  <div>
+                    <h1 className="text-2xl font-bold text-gray-900">회원 추가</h1>
+                    <p className="text-sm text-gray-600 mt-1">새로운 회원 정보를 입력해주세요</p>
+                  </div>
+                </div>
+                <Button 
+                  onClick={handleSubmit}
+                  disabled={loading || !validateId(formData.mb_id).valid || !idStatus.checked || !idStatus.available}
+                  className="bg-red-600 hover:bg-red-700 text-sm"
+                  size="lg"
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  {loading ? "저장 중..." : "회원 추가"}
                 </Button>
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900">회원 추가</h1>
-                  <p className="text-sm text-gray-600 mt-1">새로운 회원 정보를 입력해주세요</p>
-                </div>
               </div>
-              <Button 
-                onClick={handleSubmit}
-                disabled={loading || !validateId(formData.mb_id).valid || !idStatus.checked || !idStatus.available}
-                className="bg-red-600 hover:bg-red-700 text-sm"
-                size="lg"
-              >
-                <Save className="h-4 w-4 mr-2" />
-                {loading ? "저장 중..." : "회원 추가"}
-              </Button>
-            </div>
 
-            {/* 1. 기본 계정 정보 */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Lock className="h-5 w-5 text-blue-600" />
-                  기본 계정 정보
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* 아이디 / 비밀번호 */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="mb_id" className="text-xs font-medium">아이디 *</Label>
-                    <Input
-                      id="mb_id"
-                      value={formData.mb_id}
-                      onChange={(e) => handleInputChange('mb_id', e.target.value)}
-                      autoComplete="off"
-                      className="text-sm"
-                    />
-                    {formData.mb_id && (
-                      <div className={`text-xs ${
-                        idStatus.available === true ? 'text-green-600' : 
-                        idStatus.available === false ? 'text-red-600' : 
-                        'text-gray-600'
-                      }`}>
-                        {idChecking && "확인 중..."}
-                        {!idChecking && idStatus.message}
-                      </div>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="mb_password" className="text-xs font-medium">비밀번호 *</Label>
-                    <Input
-                      id="mb_password"
-                      type="password"
-                      value={formData.mb_password}
-                      onChange={(e) => handleInputChange('mb_password', e.target.value)}
-                      autoComplete="off"
-                      className="text-sm"
-                    />
-                  </div>
-                </div>
-
-                {/* 이름 / 닉네임 */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="mb_name" className="text-xs font-medium">이름(실명) *</Label>
-                    <Input
-                      id="mb_name"
-                      value={formData.mb_name}
-                      onChange={(e) => handleInputChange('mb_name', e.target.value)}
-                      autoComplete="off"
-                      className="text-sm"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="mb_nick" className="text-xs font-medium">닉네임</Label>
-                    <Input
-                      id="mb_nick"
-                      value={formData.mb_nick}
-                      onChange={(e) => handleInputChange('mb_nick', e.target.value)}
-                      autoComplete="off"
-                      className="text-sm"
-                    />
-                  </div>
-                </div>
-
-                {/* 회원 권한 / 포인트 */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="mb_level" className="text-xs font-medium">회원 권한</Label>
-                    <select
-                      id="mb_level"
-                      value={formData.mb_level}
-                      onChange={(e) => handleInputChange('mb_level', parseInt(e.target.value))}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-sm"
-                    >
-                      <option value={1}>일반회원</option>
-                      <option value={2}>우수회원</option>
-                      <option value={5}>특별회원</option>
-                      <option value={10}>관리자</option>
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs font-medium">포인트</Label>
-                    <div className="flex items-center gap-2">
+              {/* 1. 기본 계정 정보 */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Lock className="h-5 w-5 text-blue-600" />
+                    기본 계정 정보
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* 아이디 / 비밀번호 */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="mb_id" className="text-xs font-medium">아이디 *</Label>
                       <Input
-                        value={formData.mb_point}
-                        onChange={(e) => handleInputChange('mb_point', parseInt(e.target.value) || 0)}
-                        type="number"
+                        id="mb_id"
+                        value={formData.mb_id}
+                        onChange={(e) => handleInputChange('mb_id', e.target.value)}
+                        autoComplete="off"
                         className="text-sm"
                       />
-                      <span className="text-xs text-gray-500">점</span>
+                      {formData.mb_id && (
+                        <div className={`text-xs ${
+                          idStatus.available === true ? 'text-green-600' : 
+                          idStatus.available === false ? 'text-red-600' : 
+                          'text-gray-600'
+                        }`}>
+                          {idChecking && "확인 중..."}
+                          {!idChecking && idStatus.message}
+                        </div>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="mb_password" className="text-xs font-medium">비밀번호 *</Label>
+                      <Input
+                        id="mb_password"
+                        type="password"
+                        value={formData.mb_password}
+                        onChange={(e) => handleInputChange('mb_password', e.target.value)}
+                        autoComplete="off"
+                        className="text-sm"
+                      />
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
 
-            {/* 2. 연락처 정보 */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Mail className="h-5 w-5 text-green-600" />
-                  연락처 정보
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* E-mail / 홈페이지 */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="mb_email" className="text-xs font-medium">E-mail</Label>
-                    <Input
-                      id="mb_email"
-                      type="email"
-                      value={formData.mb_email}
-                      onChange={(e) => handleInputChange('mb_email', e.target.value)}
-                      autoComplete="off"
-                      className="text-sm"
-                    />
+                  {/* 이름 / 닉네임 */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="mb_name" className="text-xs font-medium">이름(실명) *</Label>
+                      <Input
+                        id="mb_name"
+                        value={formData.mb_name}
+                        onChange={(e) => handleInputChange('mb_name', e.target.value)}
+                        autoComplete="off"
+                        className="text-sm"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="mb_nick" className="text-xs font-medium">닉네임</Label>
+                      <Input
+                        id="mb_nick"
+                        value={formData.mb_nick}
+                        onChange={(e) => handleInputChange('mb_nick', e.target.value)}
+                        autoComplete="off"
+                        className="text-sm"
+                      />
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="mb_homepage" className="text-xs font-medium">홈페이지</Label>
-                    <Input
-                      id="mb_homepage"
-                      value={formData.mb_homepage}
-                      onChange={(e) => handleInputChange('mb_homepage', e.target.value)}
-                      autoComplete="off"
-                      className="text-sm"
-                    />
-                  </div>
-                </div>
 
-                {/* 휴대폰번호 / 전화번호 */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="mb_hp" className="text-xs font-medium">휴대폰번호</Label>
-                    <Input
-                      id="mb_hp"
-                      value={formData.mb_hp}
-                      onChange={(e) => handleInputChange('mb_hp', e.target.value)}
-                      autoComplete="off"
-                      className="text-sm"
-                    />
+                  {/* 회원 권한 / 포인트 */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="mb_level" className="text-xs font-medium">회원 권한</Label>
+                      <select
+                        id="mb_level"
+                        value={formData.mb_level}
+                        onChange={(e) => handleInputChange('mb_level', parseInt(e.target.value))}
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-sm"
+                      >
+                        <option value={1}>일반회원</option>
+                        <option value={2}>우수회원</option>
+                        <option value={5}>특별회원</option>
+                        <option value={10}>관리자</option>
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium">포인트</Label>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          value={formData.mb_point}
+                          onChange={(e) => handleInputChange('mb_point', parseInt(e.target.value) || 0)}
+                          type="number"
+                          className="text-sm"
+                        />
+                        <span className="text-xs text-gray-500">점</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="mb_tel" className="text-xs font-medium">전화번호</Label>
-                    <Input
-                      id="mb_tel"
-                      value={formData.mb_tel}
-                      onChange={(e) => handleInputChange('mb_tel', e.target.value)}
-                      autoComplete="off"
-                      className="text-sm"
-                    />
+                </CardContent>
+              </Card>
+
+              {/* 2. 연락처 정보 */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Mail className="h-5 w-5 text-green-600" />
+                    연락처 정보
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* E-mail / 홈페이지 */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="mb_email" className="text-xs font-medium">E-mail</Label>
+                      <Input
+                        id="mb_email"
+                        type="email"
+                        value={formData.mb_email}
+                        onChange={(e) => handleInputChange('mb_email', e.target.value)}
+                        autoComplete="off"
+                        className="text-sm"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="mb_homepage" className="text-xs font-medium">홈페이지</Label>
+                      <Input
+                        id="mb_homepage"
+                        value={formData.mb_homepage}
+                        onChange={(e) => handleInputChange('mb_homepage', e.target.value)}
+                        autoComplete="off"
+                        className="text-sm"
+                      />
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
 
-            {/* 3. 주소 정보 */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <MapPin className="h-5 w-5 text-orange-600" />
-                  주소 정보
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex gap-2">
-                  <Input
-                    value={formData.mb_zip}
-                    onChange={(e) => handleInputChange('mb_zip', e.target.value)}
-                    placeholder="우편번호"
-                    className="flex-1 text-sm"
-                    autoComplete="off"
-                  />
-                  <Button type="button" variant="outline" size="sm" className="text-sm">
-                    주소 검색
-                  </Button>
-                </div>
-                <Input
-                  value={formData.mb_addr1}
-                  onChange={(e) => handleInputChange('mb_addr1', e.target.value)}
-                  placeholder="기본주소"
-                  autoComplete="off"
-                  className="text-sm"
-                />
-                <Input
-                  value={formData.mb_addr2}
-                  onChange={(e) => handleInputChange('mb_addr2', e.target.value)}
-                  placeholder="상세주소"
-                  autoComplete="off"
-                  className="text-sm"
-                />
-                <Input
-                  value={formData.mb_addr3}
-                  onChange={(e) => handleInputChange('mb_addr3', e.target.value)}
-                  placeholder="참고항목"
-                  autoComplete="off"
-                  className="text-sm"
-                />
-              </CardContent>
-            </Card>
+                  {/* 휴대폰번호 / 전화번호 */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="mb_hp" className="text-xs font-medium">휴대폰번호</Label>
+                      <Input
+                        id="mb_hp"
+                        value={formData.mb_hp}
+                        onChange={(e) => handleInputChange('mb_hp', e.target.value)}
+                        autoComplete="off"
+                        className="text-sm"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="mb_tel" className="text-xs font-medium">전화번호</Label>
+                      <Input
+                        id="mb_tel"
+                        value={formData.mb_tel}
+                        onChange={(e) => handleInputChange('mb_tel', e.target.value)}
+                        autoComplete="off"
+                        className="text-sm"
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
-            {/* 4. 인증 및 설정 */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Shield className="h-5 w-5 text-purple-600" />
-                  인증 및 설정
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* 본인확인방법 / 성인인증 */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="mb_certify" className="text-xs font-medium block">본인확인방법</Label>
-                    <select
-                      id="mb_certify"
-                      value={formData.mb_certify}
-                      onChange={(e) => handleInputChange('mb_certify', e.target.value)}
-                      className="w-1/2 border border-gray-300 rounded-md px-3 py-2 bg-white text-xs block"
+              {/* 3. 주소 정보 */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <MapPin className="h-5 w-5 text-orange-600" />
+                    주소 정보
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex gap-2">
+                    <Input
+                      value={formData.mb_zip}
+                      onChange={(e) => handleInputChange('mb_zip', e.target.value)}
+                      placeholder="우편번호"
+                      className="text-sm w-32"
+                      autoComplete="off"
+                      readOnly
+                    />
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm" 
+                      className="text-sm"
+                      onClick={handleAddressSearch}
                     >
-                      <option value="simple">간편인증</option>
-                      <option value="phone">휴대폰</option>
-                      <option value="ipin">아이핀</option>
-                    </select>
+                      주소 검색
+                    </Button>
                   </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs font-medium">성인인증</Label>
-                    <div className="flex gap-4">
-                      <label className="flex items-center">
-                        <input 
-                          type="radio" 
-                          name="adult" 
-                          value="1" 
-                          checked={formData.mb_adult === 1}
-                          onChange={(e) => handleInputChange('mb_adult', parseInt(e.target.value))}
-                          className="mr-2" 
-                        />
-                        <span className="text-xs">예</span>
-                      </label>
-                      <label className="flex items-center">
-                        <input 
-                          type="radio" 
-                          name="adult" 
-                          value="0" 
-                          checked={formData.mb_adult === 0}
-                          onChange={(e) => handleInputChange('mb_adult', parseInt(e.target.value))}
-                          className="mr-2" 
-                        />
-                        <span className="text-xs">아니오</span>
-                      </label>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 본인확인 */}
-                <div className="space-y-2">
-                  <Label className="text-xs font-medium">본인확인</Label>
-                  <div className="flex gap-4">
-                    <label className="flex items-center">
-                      <input 
-                        type="radio" 
-                        name="certify" 
-                        value="yes" 
-                        checked={formData.mb_2 === "yes"}
-                        onChange={(e) => handleInputChange('mb_2', e.target.value)}
-                        className="mr-2" 
-                      />
-                      <span className="text-xs">예</span>
-                    </label>
-                    <label className="flex items-center">
-                      <input 
-                        type="radio" 
-                        name="certify" 
-                        value="no" 
-                        checked={formData.mb_2 === "no"}
-                        onChange={(e) => handleInputChange('mb_2', e.target.value)}
-                        className="mr-2" 
-                      />
-                      <span className="text-xs">아니오</span>
-                    </label>
-                  </div>
-                </div>
-
-                {/* 메일 수신 / SMS 수신 */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label className="text-xs font-medium">메일 수신</Label>
-                    <div className="flex gap-4">
-                      <label className="flex items-center">
-                        <input
-                          type="radio"
-                          name="mailling"
-                          value="1"
-                          checked={formData.mb_mailling === 1}
-                          onChange={(e) => handleInputChange('mb_mailling', parseInt(e.target.value))}
-                          className="mr-2"
-                        />
-                        <span className="text-xs">예</span>
-                      </label>
-                      <label className="flex items-center">
-                        <input
-                          type="radio"
-                          name="mailling"
-                          value="0"
-                          checked={formData.mb_mailling === 0}
-                          onChange={(e) => handleInputChange('mb_mailling', parseInt(e.target.value))}
-                          className="mr-2"
-                        />
-                        <span className="text-xs">아니오</span>
-                      </label>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs font-medium">SMS 수신</Label>
-                    <div className="flex gap-4">
-                      <label className="flex items-center">
-                        <input
-                          type="radio"
-                          name="sms"
-                          value="1"
-                          checked={formData.mb_sms === 1}
-                          onChange={(e) => handleInputChange('mb_sms', parseInt(e.target.value))}
-                          className="mr-2"
-                        />
-                        <span className="text-xs">예</span>
-                      </label>
-                      <label className="flex items-center">
-                        <input
-                          type="radio"
-                          name="sms"
-                          value="0"
-                          checked={formData.mb_sms === 0}
-                          onChange={(e) => handleInputChange('mb_sms', parseInt(e.target.value))}
-                          className="mr-2"
-                        />
-                        <span className="text-xs">아니오</span>
-                      </label>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 정보 공개 */}
-                <div className="space-y-2">
-                  <Label className="text-xs font-medium">정보 공개</Label>
-                  <div className="flex gap-4">
-                    <label className="flex items-center">
-                      <input
-                        type="radio"
-                        name="open"
-                        value="1"
-                        checked={formData.mb_open === 1}
-                        onChange={(e) => handleInputChange('mb_open', parseInt(e.target.value))}
-                        className="mr-2"
-                      />
-                      <span className="text-xs">예</span>
-                    </label>
-                    <label className="flex items-center">
-                      <input
-                        type="radio"
-                        name="open"
-                        value="0"
-                        checked={formData.mb_open === 0}
-                        onChange={(e) => handleInputChange('mb_open', parseInt(e.target.value))}
-                        className="mr-2"
-                      />
-                      <span className="text-xs">아니오</span>
-                    </label>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* 5. 파일 업로드 */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <FileText className="h-5 w-5 text-indigo-600" />
-                  파일 업로드
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label className="text-xs font-medium">회원아이콘</Label>
-                    <p className="text-xs text-gray-500">이미지 크기는 넓이 22픽셀 높이 22픽셀로 해주세요.</p>
-                    <div className="flex items-center gap-2">
-                      <Button type="button" variant="outline" size="sm" className="text-sm">
-                        파일 선택
-                      </Button>
-                      <span className="text-xs text-gray-500">선택된 파일 없음</span>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs font-medium">회원이미지</Label>
-                    <p className="text-xs text-gray-500">이미지 크기는 넓이 60픽셀 높이 60픽셀로 해주세요.</p>
-                    <div className="flex items-center gap-2">
-                      <Button type="button" variant="outline" size="sm" className="text-sm">
-                        파일 선택
-                      </Button>
-                      <span className="text-xs text-gray-500">선택된 파일 없음</span>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* 6. 추가 정보 */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Settings className="h-5 w-5 text-gray-600" />
-                  추가 정보
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* 서명 */}
-                <div className="space-y-2">
-                  <Label htmlFor="mb_signature" className="text-xs font-medium">서명</Label>
-                  <Textarea
-                    id="mb_signature"
-                    value={formData.mb_signature}
-                    onChange={(e) => handleInputChange('mb_signature', e.target.value)}
-                    rows={3}
-                    className="text-sm"
-                  />
-                </div>
-
-                {/* 자기 소개 */}
-                <div className="space-y-2">
-                  <Label htmlFor="mb_profile" className="text-xs font-medium">자기 소개</Label>
-                  <Textarea
-                    id="mb_profile"
-                    value={formData.mb_profile}
-                    onChange={(e) => handleInputChange('mb_profile', e.target.value)}
-                    rows={3}
-                    className="text-sm"
-                  />
-                </div>
-
-                {/* 메모 */}
-                <div className="space-y-2">
-                  <Label htmlFor="mb_memo" className="text-xs font-medium">메모</Label>
-                  <Textarea
-                    id="mb_memo"
-                    value={formData.mb_memo}
-                    onChange={(e) => handleInputChange('mb_memo', e.target.value)}
-                    rows={3}
-                    className="text-sm"
-                  />
-                </div>
-
-                {/* 여분 필드 1 */}
-                <div className="space-y-2">
-                  <Label htmlFor="mb_1" className="text-xs font-medium">여분 필드 1</Label>
                   <Input
-                    id="mb_1"
-                    value={formData.mb_1}
-                    onChange={(e) => handleInputChange('mb_1', e.target.value)}
+                    value={formData.mb_addr1}
+                    onChange={(e) => handleInputChange('mb_addr1', e.target.value)}
+                    placeholder="기본주소"
+                    autoComplete="off"
+                    className="text-sm"
+                    readOnly
+                  />
+                  <Input
+                    value={formData.mb_addr2}
+                    onChange={(e) => handleInputChange('mb_addr2', e.target.value)}
+                    placeholder="상세주소"
                     autoComplete="off"
                     className="text-sm"
                   />
-                </div>
-              </CardContent>
-            </Card>
+                  {/* <Input
+                    value={formData.mb_addr3}
+                    onChange={(e) => handleInputChange('mb_addr3', e.target.value)}
+                    placeholder="참고항목"
+                    autoComplete="off"
+                    className="text-sm"
+                    readOnly
+                  /> */}
+                </CardContent>
+              </Card>
 
-            {/* 7. 관리 정보 */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Calendar className="h-5 w-5 text-red-600" />
-                  관리 정보
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* 본인인증 내역 */}
-                <div className="space-y-2">
-                  <Label className="text-xs font-medium">본인인증 내역</Label>
-                  <p className="text-xs text-gray-500">본인인증 내역이 없습니다.</p>
-                </div>
+              {/* 4. 인증 및 설정 */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Shield className="h-5 w-5 text-purple-600" />
+                    인증 및 설정
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* 본인확인방법 / 성인인증 */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="mb_certify" className="text-xs font-medium block">본인확인방법</Label>
+                      <select
+                        id="mb_certify"
+                        value={formData.mb_certify}
+                        onChange={(e) => handleInputChange('mb_certify', e.target.value)}
+                        className="w-1/2 border border-gray-300 rounded-md px-3 py-2 bg-white text-xs block"
+                      >
+                        <option value="simple">간편인증</option>
+                        <option value="phone">휴대폰</option>
+                        <option value="ipin">아이핀</option>
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium">성인인증</Label>
+                      <div className="flex gap-4">
+                        <label className="flex items-center">
+                          <input 
+                            type="radio" 
+                            name="adult" 
+                            value="1" 
+                            checked={formData.mb_adult === 1}
+                            onChange={(e) => handleInputChange('mb_adult', parseInt(e.target.value))}
+                            className="mr-2" 
+                          />
+                          <span className="text-xs">예</span>
+                        </label>
+                        <label className="flex items-center">
+                          <input 
+                            type="radio" 
+                            name="adult" 
+                            value="0" 
+                            checked={formData.mb_adult === 0}
+                            onChange={(e) => handleInputChange('mb_adult', parseInt(e.target.value))}
+                            className="mr-2" 
+                          />
+                          <span className="text-xs">아니오</span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
 
-                {/* 탈퇴일자 */}
-                <div className="space-y-2">
-                  <Label htmlFor="mb_leave_date" className="text-xs font-medium">탈퇴일자</Label>
-                  <div className="flex gap-2 items-center">
-                    <Input
-                      id="mb_leave_date"
-                      value={formData.mb_leave_date}
-                      onChange={(e) => handleInputChange('mb_leave_date', e.target.value)}
-                      placeholder="YYYY-MM-DD"
-                      autoComplete="off"
+                  {/* 메일 수신 / SMS 수신 */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium">메일 수신</Label>
+                      <div className="flex gap-4">
+                        <label className="flex items-center">
+                          <input
+                            type="radio"
+                            name="mailling"
+                            value="1"
+                            checked={formData.mb_mailling === 1}
+                            onChange={(e) => handleInputChange('mb_mailling', parseInt(e.target.value))}
+                            className="mr-2"
+                          />
+                          <span className="text-xs">예</span>
+                        </label>
+                        <label className="flex items-center">
+                          <input
+                            type="radio"
+                            name="mailling"
+                            value="0"
+                            checked={formData.mb_mailling === 0}
+                            onChange={(e) => handleInputChange('mb_mailling', parseInt(e.target.value))}
+                            className="mr-2"
+                          />
+                          <span className="text-xs">아니오</span>
+                        </label>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium">SMS 수신</Label>
+                      <div className="flex gap-4">
+                        <label className="flex items-center">
+                          <input
+                            type="radio"
+                            name="sms"
+                            value="1"
+                            checked={formData.mb_sms === 1}
+                            onChange={(e) => handleInputChange('mb_sms', parseInt(e.target.value))}
+                            className="mr-2"
+                          />
+                          <span className="text-xs">예</span>
+                        </label>
+                        <label className="flex items-center">
+                          <input
+                            type="radio"
+                            name="sms"
+                            value="0"
+                            checked={formData.mb_sms === 0}
+                            onChange={(e) => handleInputChange('mb_sms', parseInt(e.target.value))}
+                            className="mr-2"
+                          />
+                          <span className="text-xs">아니오</span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 정보 공개 */}
+                  <div className="space-y-2">
+                    <Label className="text-xs font-medium">정보 공개</Label>
+                    <div className="flex gap-4">
+                      <label className="flex items-center">
+                        <input
+                          type="radio"
+                          name="open"
+                          value="1"
+                          checked={formData.mb_open === 1}
+                          onChange={(e) => handleInputChange('mb_open', parseInt(e.target.value))}
+                          className="mr-2"
+                        />
+                        <span className="text-xs">예</span>
+                      </label>
+                      <label className="flex items-center">
+                        <input
+                          type="radio"
+                          name="open"
+                          value="0"
+                          checked={formData.mb_open === 0}
+                          onChange={(e) => handleInputChange('mb_open', parseInt(e.target.value))}
+                          className="mr-2"
+                        />
+                        <span className="text-xs">아니오</span>
+                      </label>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* 5. 파일 업로드 */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <FileText className="h-5 w-5 text-indigo-600" />
+                    파일 업로드
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium">회원아이콘</Label>
+                      <p className="text-xs text-gray-500">이미지 크기는 넓이 22픽셀 높이 22픽셀로 해주세요.</p>
+                      <div className="flex items-center gap-2">
+                        <Button type="button" variant="outline" size="sm" className="text-sm">
+                          파일 선택
+                        </Button>
+                        <span className="text-xs text-gray-500">선택된 파일 없음</span>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium">회원이미지</Label>
+                      <p className="text-xs text-gray-500">이미지 크기는 넓이 60픽셀 높이 60픽셀로 해주세요.</p>
+                      <div className="flex items-center gap-2">
+                        <Button type="button" variant="outline" size="sm" className="text-sm">
+                          파일 선택
+                        </Button>
+                        <span className="text-xs text-gray-500">선택된 파일 없음</span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* 6. 추가 정보 */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Settings className="h-5 w-5 text-gray-600" />
+                    추가 정보
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* 서명 */}
+                  <div className="space-y-2">
+                    <Label htmlFor="mb_signature" className="text-xs font-medium">서명</Label>
+                    <Textarea
+                      id="mb_signature"
+                      value={formData.mb_signature}
+                      onChange={(e) => handleInputChange('mb_signature', e.target.value)}
+                      rows={3}
                       className="text-sm"
                     />
-                    <label className="flex items-center text-xs">
-                      <input 
-                        type="checkbox" 
-                        checked={setTodayLeave}
-                        onChange={(e) => handleTodayLeave(e.target.checked)}
-                        className="mr-1" 
-                      />
-                      탈퇴일을 오늘로 지정
-                    </label>
                   </div>
-                </div>
 
-                {/* 접근차단일자 */}
-                <div className="space-y-2">
-                  <Label htmlFor="mb_intercept_date" className="text-xs font-medium">접근차단일자</Label>
-                  <div className="flex gap-2 items-center">
-                    <Input
-                      id="mb_intercept_date"
-                      value={formData.mb_intercept_date}
-                      onChange={(e) => handleInputChange('mb_intercept_date', e.target.value)}
-                      placeholder="YYYY-MM-DD"
-                      autoComplete="off"
+                  {/* 자기 소개 */}
+                  <div className="space-y-2">
+                    <Label htmlFor="mb_profile" className="text-xs font-medium">자기 소개</Label>
+                    <Textarea
+                      id="mb_profile"
+                      value={formData.mb_profile}
+                      onChange={(e) => handleInputChange('mb_profile', e.target.value)}
+                      rows={3}
                       className="text-sm"
                     />
-                    <label className="flex items-center text-xs">
-                      <input 
-                        type="checkbox" 
-                        checked={setTodayIntercept}
-                        onChange={(e) => handleTodayIntercept(e.target.checked)}
-                        className="mr-1" 
-                      />
-                      접근차단일을 오늘로 지정
-                    </label>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
 
-            {/* 하단 액션 버튼 */}
-            <div className="flex justify-center gap-4 pt-6">
-              <Button variant="outline" onClick={handleCancel} size="lg" className="text-sm">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                목록으로
-              </Button>
-              <Button 
-                onClick={handleSubmit}
-                disabled={loading || !validateId(formData.mb_id).valid || !idStatus.checked || !idStatus.available}
-                className="bg-red-600 hover:bg-red-700 text-sm"
-                size="lg"
-              >
-                <Save className="h-4 w-4 mr-2" />
-                {loading ? "저장 중..." : "회원 추가"}
-              </Button>
+                  {/* 메모 */}
+                  <div className="space-y-2">
+                    <Label htmlFor="mb_memo" className="text-xs font-medium">메모</Label>
+                    <Textarea
+                      id="mb_memo"
+                      value={formData.mb_memo}
+                      onChange={(e) => handleInputChange('mb_memo', e.target.value)}
+                      rows={3}
+                      className="text-sm"
+                    />
+                  </div>
+
+                  {/* 여분 필드들 */}
+                  <div className="space-y-4">
+                    <Label className="text-xs font-medium">여분 필드</Label>
+                    
+                    {/* 여분 필드 1-10을 한 행에 2개씩 렌더링 */}
+                    {[1, 3, 5, 7, 9].map((fieldNum) => (
+                      <div key={fieldNum} className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor={`mb_${fieldNum}`} className="text-xs font-medium">
+                            여분 필드 {fieldNum}
+                          </Label>
+                          <Input
+                            id={`mb_${fieldNum}`}
+                            value={formData[`mb_${fieldNum}` as keyof MemberCreateForm] as string}
+                            onChange={(e) => handleInputChange(`mb_${fieldNum}` as keyof MemberCreateForm, e.target.value)}
+                            autoComplete="off"
+                            className="text-sm"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor={`mb_${fieldNum + 1}`} className="text-xs font-medium">
+                            여분 필드 {fieldNum + 1}
+                          </Label>
+                          <Input
+                            id={`mb_${fieldNum + 1}`}
+                            value={formData[`mb_${fieldNum + 1}` as keyof MemberCreateForm] as string}
+                            onChange={(e) => handleInputChange(`mb_${fieldNum + 1}` as keyof MemberCreateForm, e.target.value)}
+                            autoComplete="off"
+                            className="text-sm"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* 7. 관리 정보 */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Calendar className="h-5 w-5 text-red-600" />
+                    관리 정보
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* 본인인증 내역 */}
+                  <div className="space-y-2">
+                    <Label className="text-xs font-medium">본인인증 내역</Label>
+                    <p className="text-xs text-gray-500">본인인증 내역이 없습니다.</p>
+                  </div>
+
+                  {/* 탈퇴일자 */}
+                  <div className="space-y-2">
+                    <Label htmlFor="mb_leave_date" className="text-xs font-medium">탈퇴일자</Label>
+                    <div className="flex gap-2 items-center">
+                      <Input
+                        id="mb_leave_date"
+                        value={formData.mb_leave_date}
+                        onChange={(e) => handleInputChange('mb_leave_date', e.target.value)}
+                        placeholder="YYYY-MM-DD"
+                        autoComplete="off"
+                        className="text-sm w-32"
+                      />
+                      <label className="flex items-center text-xs">
+                        <input 
+                          type="checkbox" 
+                          checked={setTodayLeave}
+                          onChange={(e) => handleTodayLeave(e.target.checked)}
+                          className="mr-1" 
+                        />
+                        탈퇴일을 오늘로 지정
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* 접근차단일자 */}
+                  <div className="space-y-2">
+                    <Label htmlFor="mb_intercept_date" className="text-xs font-medium">접근차단일자</Label>
+                    <div className="flex gap-2 items-center">
+                      <Input
+                        id="mb_intercept_date"
+                        value={formData.mb_intercept_date}
+                        onChange={(e) => handleInputChange('mb_intercept_date', e.target.value)}
+                        placeholder="YYYY-MM-DD"
+                        autoComplete="off"
+                        className="text-sm w-32"
+                      />
+                      <label className="flex items-center text-xs">
+                        <input 
+                          type="checkbox" 
+                          checked={setTodayIntercept}
+                          onChange={(e) => handleTodayIntercept(e.target.checked)}
+                          className="mr-1" 
+                        />
+                        접근차단일을 오늘로 지정
+                      </label>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* 하단 액션 버튼 */}
+              <div className="flex justify-center gap-4 pt-6">
+                <Button variant="outline" onClick={handleCancel} size="lg" className="text-sm">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  목록으로
+                </Button>
+                <Button 
+                  onClick={handleSubmit}
+                  disabled={loading || !validateId(formData.mb_id).valid || !idStatus.checked || !idStatus.available}
+                  className="bg-red-600 hover:bg-red-700 text-sm"
+                  size="lg"
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  {loading ? "저장 중..." : "회원 추가"}
+                </Button>
+              </div>
             </div>
-          </div>
-        </main>
+          </main>
+        </div>
       </div>
-    </div>
+    </>
   )
 }
 
