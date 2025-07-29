@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
 import jwt from 'jsonwebtoken';
 import { JWTPayload } from '@/lib/types/auth';
 
 export async function GET(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization');
-    const token = authHeader?.replace('Bearer ', '');
+    // 쿠키에서 토큰 가져오기 (HTTP-only 쿠키)
+    const token = request.cookies.get('auth-token')?.value;
 
     if (!token) {
       return NextResponse.json(
@@ -15,7 +14,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // JWT 토큰 검증
+    // JWT 토큰 검증 및 디코드
     const jwtSecret = process.env.JWT_SECRET || 'your-secret-key';
     const decoded = jwt.verify(token, jwtSecret) as JWTPayload;
     
@@ -26,29 +25,17 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // JWT 토큰에서 mb_no를 추출하여 DB에서 최신 사용자 정보 조회
-    const member = await prisma.g5Member.findUnique({
-      where: { mb_no: decoded.mb_no },
-      select: {
-        mb_no: true,
-        mb_id: true,
-        mb_email: true,
-        mb_nick: true,
-        mb_level: true,
-        mb_datetime: true,
-        mb_today_login: true
-      }
-    });
-
-    if (!member) {
-      return NextResponse.json(
-        { error: '사용자를 찾을 수 없습니다.' },
-        { status: 404 }
-      );
-    }
-
+    // JWT 페이로드에서 사용자 정보 직접 반환 (DB 조회 없음)
     return NextResponse.json({
-      member: member
+      member: {
+        mb_no: decoded.mb_no,
+        mb_id: decoded.mb_id,
+        mb_email: decoded.mb_email,
+        mb_nick: decoded.mb_nick,
+        mb_level: decoded.mb_level,
+        mb_datetime: decoded.mb_datetime,
+        mb_today_login: decoded.mb_today_login
+      }
     });
 
   } catch (error) {
@@ -66,7 +53,5 @@ export async function GET(request: NextRequest) {
       { error: '서버 오류가 발생했습니다.' },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 } 

@@ -79,6 +79,9 @@ export async function POST(request: NextRequest) {
       { 
         mb_no: member.mb_no,
         mb_id: member.mb_id,
+        mb_email: member.mb_email,
+        mb_nick: member.mb_nick,
+        mb_datetime: member.mb_datetime,
         mb_level: member.mb_level 
       },
       process.env.JWT_SECRET!,

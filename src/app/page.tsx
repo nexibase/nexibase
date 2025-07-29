@@ -155,11 +155,11 @@ export default function Home() {
                       <div className="flex items-center space-x-2">
                         <Avatar className="h-8 w-8">
                           <AvatarFallback className="bg-blue-100 text-blue-600 text-sm font-medium">
-                            {member.mb_nick[0]}
+                            {(member.mb_nick || member.mb_id || '?')[0]?.toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         <span className="text-sm font-medium text-gray-700 hidden sm:block">
-                          {member.mb_nick}
+                          {member.mb_nick || member.mb_id || '사용자'}
                         </span>
                       </div>
                       <Button 
@@ -197,7 +197,7 @@ export default function Home() {
             {/* Hero Section */}
             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-8 mb-8">
               <h2 className="text-3xl font-bold text-gray-900 mb-4">
-                {member ? `${member.mb_nick}님, 환영합니다!` : '개발자들의 소통 공간에 오신 것을 환영합니다!'}
+                {member ? `${member.mb_nick || member.mb_id || '사용자'}님, 환영합니다!` : '개발자들의 소통 공간에 오신 것을 환영합니다!'}  
               </h2>
               <p className="text-lg text-gray-600 mb-6">
                 {member ? '질문하고, 답변하고, 함께 성장하는 개발자 커뮤니티' : '질문하고, 답변하고, 함께 성장하는 개발자 커뮤니티'}
@@ -316,11 +316,11 @@ export default function Home() {
                     <div className="flex items-center space-x-3 mb-4">
                       <Avatar className="h-12 w-12">
                         <AvatarFallback className="bg-blue-100 text-blue-600 text-lg font-medium">
-                          {member.mb_nick[0]}
+                          {(member.mb_nick || member.mb_id || '?')[0]?.toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <div className="font-medium">{member.mb_nick}</div>
+                        <div className="font-medium">{member.mb_nick || member.mb_id || '사용자'}</div>
                         <div className="text-sm text-muted-foreground">{member.mb_email}</div>
                       </div>
                     </div>

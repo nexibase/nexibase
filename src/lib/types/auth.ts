@@ -4,6 +4,10 @@ export interface JWTPayload {
   mb_no: number;
   mb_id: string;
   mb_level: number;
+  mb_email: string;
+  mb_nick: string;
+  mb_datetime: string;
+  mb_today_login: string;
   iat?: number;
   exp?: number;
 }
