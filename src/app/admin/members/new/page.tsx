@@ -330,7 +330,37 @@ export default function NewMemberPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
+    // if (!formData.mb_id) {
+    //   alert("아이디를 입력해주세요.")
+    //   document.getElementById('mb_id')?.focus()
+    //   return
+    // }
+
+    // // if (!formData.mb_password) {
+    // //   alert("비밀번호를 입력해주세요.")
+    // //   document.getElementById('mb_password')?.focus()
+    // //   return
+    // // }
+
+    // if (!formData.mb_name) {
+    //   alert("이름을 입력해주세요.")
+    //   document.getElementById('mb_name')?.focus()
+    //   return
+    // }
+
+    // if (!formData.mb_nick) {
+    //   alert("닉네임을 입력해주세요.")
+    //   document.getElementById('mb_nick')?.focus()
+    //   return
+    // }
+
+    // if (!formData.mb_email) {
+    //   alert("이메일을 입력해주세요.")
+    //   document.getElementById('mb_email')?.focus()
+    //   return
+    // }
+
     // 아이디 유효성 검사
     const idValidation = validateId(formData.mb_id)
     if (!idValidation.valid) {
@@ -341,6 +371,7 @@ export default function NewMemberPage() {
     // 아이디 중복 체크 확인
     if (!idStatus.checked || !idStatus.available) {
       alert("사용할 수 없는 아이디입니다.")
+      document.getElementById('mb_id')?.focus()
       return
     }
 
@@ -354,19 +385,27 @@ export default function NewMemberPage() {
 
       if (!nickStatus.checked || !nickStatus.available) {
         alert("사용할 수 없는 닉네임입니다.")
+        document.getElementById('mb_nick')?.focus()
         return
       }
     }
 
-    // 비밀번호 확인
-    if (formData.mb_password !== formData.mb_password_confirm) {
-      alert("비밀번호가 일치하지 않습니다.")
+    if (!formData.mb_email.includes('@') || !formData.mb_email.includes('.')) {
+      alert("이메일 형식이 올바르지 않습니다.")
+      document.getElementById('mb_email')?.focus()
+      return
+    }   
+
+    // 필수 필드 검증 (신규등록시에만 비밀번호 필수)
+    if (!formData.mb_id || !formData.mb_name || !formData.mb_nick || !formData.mb_email) {
+      alert("필수 항목을 모두 입력해주세요.")
       return
     }
 
-    // 필수 필드 검증
-    if (!formData.mb_id || !formData.mb_password || !formData.mb_name) {
-      alert("필수 항목을 모두 입력해주세요.")
+    // 신규등록시에만 비밀번호 필수
+    if (!formData.mb_password) {
+      alert("비밀번호를 입력해주세요.")
+      document.getElementById('mb_password')?.focus()
       return
     }
 
@@ -436,7 +475,11 @@ export default function NewMemberPage() {
                     !validateId(formData.mb_id).valid || 
                     !idStatus.checked || 
                     !idStatus.available ||
-                    (formData.mb_nick.trim() && (!nickStatus.checked || !nickStatus.available))
+                    (formData.mb_nick.trim() && (!nickStatus.checked || !nickStatus.available)) ||
+                    !formData.mb_password ||
+                    !formData.mb_name ||
+                    !formData.mb_nick ||
+                    !formData.mb_email
                   }
                   className="bg-red-600 hover:bg-red-700 text-sm"
                   size="lg"
@@ -465,6 +508,7 @@ export default function NewMemberPage() {
                         onChange={(e) => handleInputChange('mb_id', e.target.value)}
                         autoComplete="off"
                         className="text-sm"
+                        required
                       />
                       {formData.mb_id && (
                         <div className={`text-xs ${
@@ -485,7 +529,7 @@ export default function NewMemberPage() {
                         value={formData.mb_password}
                         onChange={(e) => handleInputChange('mb_password', e.target.value)}
                         autoComplete="off"
-                        className="text-sm"
+                        className="text-sm"required
                       />
                     </div>
                   </div>
@@ -500,10 +544,11 @@ export default function NewMemberPage() {
                         onChange={(e) => handleInputChange('mb_name', e.target.value)}
                         autoComplete="off"
                         className="text-sm"
+                        required
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="mb_nick" className="text-xs font-medium">닉네임</Label>
+                      <Label htmlFor="mb_nick" className="text-xs font-medium">닉네임 *</Label>
                       <Input
                         id="mb_nick"
                         value={formData.mb_nick}
@@ -524,6 +569,22 @@ export default function NewMemberPage() {
                     </div>
                   </div>
 
+                  {/* 이메일 */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                    <Label htmlFor="mb_email" className="text-xs font-medium">이메일 *</Label>
+                    <Input
+                      id="mb_email"
+                      type="email"
+                      value={formData.mb_email}
+                      onChange={(e) => handleInputChange('mb_email', e.target.value)}
+                      autoComplete="off"
+                      className="text-sm"
+                        required
+                      />
+                    </div>
+                  </div>
+
                   {/* 회원 권한 / 포인트 */}
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div className="space-y-2">
@@ -534,23 +595,25 @@ export default function NewMemberPage() {
                         onChange={(e) => handleInputChange('mb_level', parseInt(e.target.value))}
                         className="w-full border border-gray-300 rounded-md px-3 py-2 bg-white text-sm"
                       >
-                        <option value={1}>일반회원</option>
-                        <option value={2}>우수회원</option>
-                        <option value={5}>특별회원</option>
-                        <option value={10}>관리자</option>
+                        <option value={1}>1</option>
+                        <option value={2}>2</option>
+                        <option value={3}>3</option>
+                        <option value={4}>4</option>
+                        <option value={5}>5</option>
+                        <option value={6}>6</option>
+                        <option value={7}>7</option>
+                        <option value={8}>8</option>
+                        <option value={9}>9</option>
+                        <option value={10}>10</option>
                       </select>
                     </div>
                     <div className="space-y-2">
                       <Label className="text-xs font-medium">포인트</Label>
                       <div className="flex items-center gap-2">
-                        <Input
-                          value={formData.mb_point}
-                          onChange={(e) => handleInputChange('mb_point', parseInt(e.target.value) || 0)}
-                          type="number"
-                          className="text-sm"
-                        />
+                        <span className="text-sm text-gray-700">0</span>
                         <span className="text-xs text-gray-500">점</span>
                       </div>
+                      <p className="text-xs text-gray-500">신규 회원은 0점으로 시작됩니다.</p>
                     </div>
                   </div>
                 </CardContent>
@@ -565,31 +628,6 @@ export default function NewMemberPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {/* E-mail / 홈페이지 */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="mb_email" className="text-xs font-medium">E-mail</Label>
-                      <Input
-                        id="mb_email"
-                        type="email"
-                        value={formData.mb_email}
-                        onChange={(e) => handleInputChange('mb_email', e.target.value)}
-                        autoComplete="off"
-                        className="text-sm"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="mb_homepage" className="text-xs font-medium">홈페이지</Label>
-                      <Input
-                        id="mb_homepage"
-                        value={formData.mb_homepage}
-                        onChange={(e) => handleInputChange('mb_homepage', e.target.value)}
-                        autoComplete="off"
-                        className="text-sm"
-                      />
-                    </div>
-                  </div>
-
                   {/* 휴대폰번호 / 전화번호 */}
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div className="space-y-2">
@@ -608,6 +646,19 @@ export default function NewMemberPage() {
                         id="mb_tel"
                         value={formData.mb_tel}
                         onChange={(e) => handleInputChange('mb_tel', e.target.value)}
+                        autoComplete="off"
+                        className="text-sm"
+                      />
+                    </div>
+                  </div>
+                  {/* 홈페이지 */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="mb_homepage" className="text-xs font-medium">홈페이지</Label>
+                      <Input
+                        id="mb_homepage"
+                        value={formData.mb_homepage}
+                        onChange={(e) => handleInputChange('mb_homepage', e.target.value)}
                         autoComplete="off"
                         className="text-sm"
                       />

@@ -4,9 +4,9 @@ import { prisma } from '@/lib/prisma';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { nickname } = body;
+    const { mb_nick } = body;
 
-    if (!nickname) {
+    if (!mb_nick) {
       return NextResponse.json(
         { error: '닉네임이 필요합니다.' },
         { status: 400 }
@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 닉네임 길이 검증 (2-20자)
-    if (nickname.length < 2 || nickname.length > 20) {
+    if (mb_nick.length < 2 || mb_nick.length > 20) {
       return NextResponse.json(
         { error: '닉네임은 2-20자 사이여야 합니다.' },
         { status: 400 }
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
 
     // 특수문자 검증 (한글, 영문, 숫자, 언더바만 허용)
     const nicknameRegex = /^[가-힣a-zA-Z0-9_]+$/;
-    if (!nicknameRegex.test(nickname)) {
+    if (!nicknameRegex.test(mb_nick)) {
       return NextResponse.json(
         { error: '닉네임은 한글, 영문, 숫자, 언더바(_)만 사용 가능합니다.' },
         { status: 400 }
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     // 데이터베이스에서 닉네임 중복 확인
     const existingMember = await prisma.g5Member.findFirst({
       where: {
-        mb_nick: nickname
+        mb_nick: mb_nick
       },
       select: {
         mb_nick: true
