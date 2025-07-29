@@ -199,10 +199,10 @@ export default function SignupPage() {
       return;
     }
 
-    if (password.length < 6) {
-      alert('비밀번호는 최소 6자 이상이어야 합니다.');
-      return;
-    }
+    // if (password.length < 6) {
+    //   alert('비밀번호는 최소 6자 이상이어야 합니다.');
+    //   return;
+    // }
     
     setIsLoading(true);
 
@@ -233,6 +233,21 @@ export default function SignupPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // 모든 조건이 만족되는지 확인하는 함수 추가
+  const isFormValid = () => {
+    return email && 
+           password && 
+           nickname && 
+           isValidEmail(email) && 
+           emailStatus.available === true && 
+           nicknameStatus.available === true;
+  };
+
+  // 모든 필수 필드가 입력되었는지 확인하는 함수
+  const isAllFieldsFilled = () => {
+    return email && password && nickname;
   };
 
   return (
@@ -343,12 +358,16 @@ export default function SignupPage() {
   
               <Button
                 type="submit"
-                className="w-full"
+                className={`w-full ${
+                  isFormValid() 
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                    : isAllFieldsFilled()
+                    ? 'bg-gray-600 hover:bg-gray-700 text-white'
+                    : 'bg-gray-400 text-gray-300 cursor-not-allowed'
+                }`}
                 disabled={
                   isLoading || 
-                  !email || 
-                  !password || 
-                  !nickname || 
+                  !isAllFieldsFilled() || 
                   !isValidEmail(email) || 
                   emailStatus.available !== true || 
                   nicknameStatus.available !== true

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { generatePBKDF2Hash, generateUniqueId } from '@/lib/auth';
+import { generateEmailVerificationToken, sendEmailVerificationEmail } from '@/lib/email';
 
 export async function POST(request: NextRequest) {
   try {
@@ -40,13 +41,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 비밀번호 길이 검증
-    if (password.length < 6) {
-      return NextResponse.json(
-        { error: '비밀번호는 최소 6자 이상이어야 합니다.' },
-        { status: 400 }
-      );
-    }
+    // // 비밀번호 길이 검증
+    // if (password.length < 6) {
+    //   return NextResponse.json(
+    //     { error: '비밀번호는 최소 6자 이상이어야 합니다.' },
+    //     { status: 400 }
+    //   );
+    // }
 
     // 이메일 중복 확인
     const existingEmail = await prisma.g5Member.findFirst({
@@ -82,10 +83,14 @@ export async function POST(request: NextRequest) {
                       request.headers.get('x-real-ip') || 
                       '127.0.0.1';
 
-    // 회원 정보 저장
+    // 그누보드5 방식의 이메일 인증 토큰 생성
+    const mb_md5 = generateEmailVerificationToken();
+    const mb_id = generateUniqueId(email);
+
+    // 회원 정보 저장 (그누보드5 방식)
     const newMember = await prisma.g5Member.create({
       data: {
-        mb_id: generateUniqueId(email), // 공통 함수 사용
+        mb_id: mb_id,
         mb_password: hashedPassword,
         mb_name: nickname,
         mb_nick: nickname,
@@ -96,7 +101,8 @@ export async function POST(request: NextRequest) {
         mb_nick_date: new Date(),
         mb_point: 0,
         mb_today_login: new Date('1970-01-01'),
-        mb_email_certify: new Date('1970-01-01'),
+        mb_email_certify: new Date('1970-01-01'), // 인증 전 기본값
+        mb_email_certify2: mb_md5, // 인증 토큰 저장
         mb_open_date: new Date('1970-01-01'),
         mb_signature: '',
         mb_memo: '',
@@ -112,9 +118,12 @@ export async function POST(request: NextRequest) {
       }
     });
 
+    // 회원가입 후 이메일 인증 메일 발송 (그누보드5 방식)
+    await sendEmailVerificationEmail(newMember.mb_email, mb_id, mb_md5);
+
     return NextResponse.json({
       success: true,
-      message: '회원가입이 완료되었습니다.',
+      message: '회원가입이 완료되었습니다. 이메일을 확인하여 인증을 완료해주세요.',
       member: newMember
     }, { status: 201 });
 
