@@ -634,7 +634,7 @@ export function MemberForm({ mode, memberId, onCancel, onSuccess }: MemberFormPr
                   value={formData.mb_id}
                   onChange={(e) => handleInputChange('mb_id', e.target.value)}
                   autoComplete="off"
-                  className="text-sm"
+                  className={`text-sm ${mode === 'edit' ? 'bg-gray-100' : ''}`}
                   required
                   disabled={mode === 'edit'} // Edit 모드에서는 아이디 변경 불가
                 />
