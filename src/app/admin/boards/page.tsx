@@ -23,6 +23,7 @@ import {
   ChevronRight,
   Check,
   ExternalLink,
+  Heart,
 } from "lucide-react"
 
 interface Board {
@@ -707,6 +708,11 @@ export default function BoardsPage() {
                                 {board.useComment && (
                                   <span title="댓글" className="p-1 bg-blue-500/10 dark:bg-blue-500/20 rounded">
                                     <MessageSquare className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+                                  </span>
+                                )}
+                                {board.useReaction && (
+                                  <span title="리액션" className="p-1 bg-pink-500/10 dark:bg-pink-500/20 rounded">
+                                    <Heart className="h-3 w-3 text-pink-600 dark:text-pink-400" />
                                   </span>
                                 )}
                                 {board.useFile && (
