@@ -16,7 +16,7 @@ datasource db {
 
 // 사용자 테이블
 model User {
-  id            String    @id @db.VarChar(36)
+  id            String    @id @db.VarChar(24)
   email         String    @unique @db.VarChar(255)
   name          String?   @db.VarChar(100)
   nickname      String?   @db.VarChar(100)
@@ -47,7 +47,7 @@ model User {
 
 // 소셜 로그인 계정 연동 테이블
 model Account {
-  id                String  @id @db.VarChar(36)
+  id                String  @id @db.VarChar(24)
   userId            String
   type              String  @db.VarChar(50) // oauth, credentials
   provider          String  @db.VarChar(50) // google, kakao, naver, github
@@ -71,7 +71,7 @@ model Account {
 
 // 세션 테이블
 model UserSession {
-  id           String   @id @db.VarChar(36)
+  id           String   @id @db.VarChar(24)
   sessionToken String   @unique @db.VarChar(255)
   userId       String
   expires      DateTime
@@ -89,7 +89,7 @@ model UserSession {
 
 // 게시판 테이블
 model Board {
-  id          String   @id @db.VarChar(36)
+  id          String   @id @db.VarChar(24)
   slug        String   @unique @db.VarChar(50) // URL용 슬러그 (예: free, notice, qna)
   name        String   @db.VarChar(100) // 게시판 이름
   description String?  @db.VarChar(500) // 게시판 설명
@@ -129,7 +129,7 @@ model Board {
 
 // 게시글 테이블
 model Post {
-  id          String   @id @db.VarChar(36)
+  id          String   @id @db.VarChar(24)
   boardId     String
   authorId    String
 
@@ -167,7 +167,7 @@ model Post {
 
 // 댓글 테이블
 model Comment {
-  id          String   @id @db.VarChar(36)
+  id          String   @id @db.VarChar(24)
   postId      String
   authorId    String
   parentId    String?  // 대댓글용 부모 댓글 ID
@@ -203,7 +203,7 @@ model Comment {
 
 // 반응(좋아요 등) 테이블
 model Reaction {
-  id          String   @id @db.VarChar(36)
+  id          String   @id @db.VarChar(24)
   userId      String
   postId      String?
   commentId   String?
