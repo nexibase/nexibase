@@ -34,20 +34,24 @@ cp .env.example .env
 `.env` 파일 편집:
 
 ```env
-# MySQL 연결 정보 (직접 입력)
-DATABASE_URL="mysql://사용자명:비밀번호@localhost:3306/데이터베이스명"
+# MySQL 연결 정보
+MYSQL_HOST=localhost
+MYSQL_PORT=3306
+MYSQL_USER=root
+MYSQL_PASS=your-password
+MYSQL_DB=nexabase
+
+# Prisma용 DATABASE_URL (위 값을 조합)
+DATABASE_URL="mysql://${MYSQL_USER}:${MYSQL_PASS}@${MYSQL_HOST}:${MYSQL_PORT}/${MYSQL_DB}"
 
 # SMTP 설정 (이메일 인증용)
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=your-email@gmail.com
-SMTP_PASS="your-app-password"
+SMTP_PASS=your-app-password
 
 # 앱 URL
 NEXT_PUBLIC_APP_URL=http://localhost:3000
-
-# JWT 시크릿 (보안키)
-JWT_SECRET=your-secret-key
 ```
 
 ### 4. 데이터베이스 설정
