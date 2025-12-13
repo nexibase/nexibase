@@ -6,7 +6,7 @@ import Link from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
 import Placeholder from '@tiptap/extension-placeholder'
 import Underline from '@tiptap/extension-underline'
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   Bold,
   Italic,
@@ -24,6 +24,8 @@ import {
   Heading1,
   Heading2,
   Heading3,
+  Upload,
+  Loader2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -99,7 +101,7 @@ export function TiptapEditor({
     editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
   }, [editor])
 
-  const addImage = useCallback(() => {
+  const addImageByUrl = useCallback(() => {
     if (!editor) return
 
     const url = window.prompt('이미지 URL을 입력하세요:')
@@ -108,6 +110,60 @@ export function TiptapEditor({
       editor.chain().focus().setImage({ src: url }).run()
     }
   }, [editor])
+
+  // 파일 업로드 관련
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [uploading, setUploading] = useState(false)
+
+  const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!editor) return
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // 파일 타입 검증
+    if (!file.type.startsWith('image/')) {
+      alert('이미지 파일만 업로드 가능합니다.')
+      return
+    }
+
+    // 파일 크기 검증 (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('파일 크기는 5MB 이하여야 합니다.')
+      return
+    }
+
+    setUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append('image', file)
+
+      const response = await fetch('/api/tiptap-image-upload', {
+        method: 'POST',
+        body: formData
+      })
+
+      const data = await response.json()
+
+      if (response.ok && data.url) {
+        editor.chain().focus().setImage({ src: data.url }).run()
+      } else {
+        alert(data.error || '이미지 업로드에 실패했습니다.')
+      }
+    } catch (error) {
+      console.error('이미지 업로드 에러:', error)
+      alert('이미지 업로드 중 오류가 발생했습니다.')
+    } finally {
+      setUploading(false)
+      // input 초기화
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    }
+  }, [editor])
+
+  const triggerFileUpload = useCallback(() => {
+    fileInputRef.current?.click()
+  }, [])
 
   if (!editor) {
     return null
@@ -216,8 +272,19 @@ export function TiptapEditor({
             <LinkIcon className="h-4 w-4" />
           </ToolbarButton>
           <ToolbarButton
-            onClick={addImage}
-            title="이미지"
+            onClick={triggerFileUpload}
+            disabled={uploading}
+            title="이미지 업로드"
+          >
+            {uploading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Upload className="h-4 w-4" />
+            )}
+          </ToolbarButton>
+          <ToolbarButton
+            onClick={addImageByUrl}
+            title="이미지 URL"
           >
             <ImageIcon className="h-4 w-4" />
           </ToolbarButton>
@@ -228,6 +295,15 @@ export function TiptapEditor({
             <Minus className="h-4 w-4" />
           </ToolbarButton>
         </div>
+
+        {/* 숨겨진 파일 입력 */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFileSelect}
+          className="hidden"
+        />
 
         {/* 실행 취소/다시 실행 */}
         <div className="flex gap-0.5">
