@@ -3,7 +3,7 @@
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
-import Image from '@tiptap/extension-image'
+import { ImageResize } from 'tiptap-extension-resize-image'
 import Placeholder from '@tiptap/extension-placeholder'
 import Underline from '@tiptap/extension-underline'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -57,9 +57,9 @@ export function TiptapEditor({
           class: 'text-primary underline'
         }
       }),
-      Image.configure({
+      ImageResize.configure({
         HTMLAttributes: {
-          class: 'max-w-full h-auto rounded-lg'
+          class: 'rounded-lg'
         }
       }),
       Placeholder.configure({
