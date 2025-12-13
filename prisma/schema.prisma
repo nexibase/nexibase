@@ -90,7 +90,7 @@ model UserSession {
 // 게시판 테이블
 model Board {
   id          Int      @id @default(autoincrement())
-  slug        String   @unique @db.VarChar(50) // URL용 슬러그 (예: free, notice, qna)
+  slug        String   @unique @db.VarChar(50) // URL용 슬러그 (예: free, notice, qa)
   name        String   @db.VarChar(100) // 게시판 이름
   description String?  @db.VarChar(500) // 게시판 설명
   category    String?  @db.VarChar(50) // 카테고리 (community, support, etc.)

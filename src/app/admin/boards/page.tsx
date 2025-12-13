@@ -24,6 +24,7 @@ import {
   Check,
   ExternalLink,
   Heart,
+  Sparkles,
 } from "lucide-react"
 
 interface Board {
@@ -180,7 +181,7 @@ function BoardModal({
                 </Label>
                 <Input
                   id="slug"
-                  placeholder="free, notice, qna..."
+                  placeholder="free, notice, qa..."
                   value={formData.slug}
                   onChange={(e) => setFormData({ ...formData, slug: e.target.value.toLowerCase() })}
                   className={board ? 'bg-muted' : ''}
@@ -423,6 +424,32 @@ export default function BoardsPage() {
   const [modalOpen, setModalOpen] = useState(false)
   const [editingBoard, setEditingBoard] = useState<Board | null>(null)
   const [selectedAll, setSelectedAll] = useState(false)
+  const [seedingBoards, setSeedingBoards] = useState(false)
+
+  // 기본 게시판 생성
+  const handleSeedBoards = async () => {
+    if (!confirm('자유게시판, 공지사항, 문의게시판을 생성하시겠습니까?')) return
+
+    setSeedingBoards(true)
+    try {
+      const response = await fetch('/api/admin/boards/seed', {
+        method: 'POST'
+      })
+      const data = await response.json()
+
+      if (response.ok) {
+        alert(data.message)
+        fetchBoards()
+      } else {
+        alert(data.error || '생성에 실패했습니다.')
+      }
+    } catch (error) {
+      console.error('기본 게시판 생성 에러:', error)
+      alert('생성 중 오류가 발생했습니다.')
+    } finally {
+      setSeedingBoards(false)
+    }
+  }
 
   // 게시판 목록 조회
   const fetchBoards = useCallback(async () => {
@@ -639,8 +666,19 @@ export default function BoardsPage() {
                   <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                 </div>
               ) : boards.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  게시판이 없습니다.
+                <div className="text-center py-12">
+                  <p className="text-muted-foreground mb-4">게시판이 없습니다.</p>
+                  <Button onClick={handleSeedBoards} disabled={seedingBoards}>
+                    {seedingBoards ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Sparkles className="h-4 w-4 mr-2" />
+                    )}
+                    기본 게시판 생성
+                  </Button>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    자유게시판, 공지사항, 문의게시판이 생성됩니다
+                  </p>
                 </div>
               ) : (
                 <>
