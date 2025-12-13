@@ -1,20 +1,20 @@
-import cuid from 'cuid'
+import { customAlphabet } from 'nanoid'
+
+// 소문자 + 숫자만 사용 (36자)
+const nanoid = customAlphabet('0123456789abcdefghijklmnopqrstuvwxyz', 21)
 
 /**
- * CUID (Collision-resistant Unique Identifier) 생성
+ * NanoID 생성 (소문자 + 숫자)
  *
  * 특징:
- * - 25자 소문자 문자열 (예: cly7x2k0a0000...)
- * - URL 친화적
+ * - 21자 URL-safe 문자열 (a-z0-9)
+ * - cuid보다 작고 빠름
  * - 충돌 확률 매우 낮음
- * - 분산 시스템에 적합
- *
- * 정렬: createdAt 필드를 사용해야 함
  *
  * 사용법:
  * const id = generateId()
  * await prisma.user.create({ data: { id, email: '...' } })
  */
 export function generateId(): string {
-  return cuid()
+  return nanoid()
 }
