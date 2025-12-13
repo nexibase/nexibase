@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { generateId } from '@/lib/id'
 
 // 사용자 레벨 확인 헬퍼
-async function getUserLevel(request: NextRequest): Promise<{ userId: string | null; level: number }> {
+async function getUserLevel(request: NextRequest): Promise<{ userId: number | null; level: number }> {
   const sessionToken = request.cookies.get('session-token')?.value
   if (!sessionToken) return { userId: null, level: 0 }
 
@@ -33,7 +32,8 @@ export async function POST(
   { params }: { params: Promise<{ slug: string; postId: string }> }
 ) {
   try {
-    const { slug, postId } = await params
+    const { slug, postId: postIdParam } = await params
+    const postId = parseInt(postIdParam)
     const body = await request.json()
     const { content, parentId } = body
 
@@ -89,7 +89,7 @@ export async function POST(
     // 대댓글인 경우 부모 댓글 확인
     if (parentId) {
       const parentComment = await prisma.comment.findUnique({
-        where: { id: parentId }
+        where: { id: parseInt(parentId) }
       })
 
       if (!parentComment || parentComment.postId !== postId) {
@@ -111,11 +111,10 @@ export async function POST(
     // 댓글 생성
     const comment = await prisma.comment.create({
       data: {
-        id: generateId(),
         content: content.trim(),
         authorId: userId,
         postId,
-        parentId: parentId || null
+        parentId: parentId ? parseInt(parentId) : null
       },
       include: {
         author: {
@@ -156,7 +155,8 @@ export async function GET(
   { params }: { params: Promise<{ slug: string; postId: string }> }
 ) {
   try {
-    const { postId } = await params
+    const { postId: postIdParam } = await params
+    const postId = parseInt(postIdParam)
 
     const comments = await prisma.comment.findMany({
       where: {

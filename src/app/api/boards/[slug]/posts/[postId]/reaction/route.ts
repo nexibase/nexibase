@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { generateId } from '@/lib/id'
 
 // 허용된 리액션 타입 (긍정적인 것만)
 const REACTION_TYPES = ['like', 'haha', 'agree', 'thanks', 'wow'] as const
 type ReactionType = typeof REACTION_TYPES[number]
 
 // 사용자 정보 확인 헬퍼
-async function getUser(request: NextRequest): Promise<{ userId: string | null }> {
+async function getUser(request: NextRequest): Promise<{ userId: number | null }> {
   const sessionToken = request.cookies.get('session-token')?.value
   if (!sessionToken) return { userId: null }
 
@@ -33,7 +32,8 @@ export async function GET(
   { params }: { params: Promise<{ slug: string; postId: string }> }
 ) {
   try {
-    const { postId } = await params
+    const { postId: postIdParam } = await params
+    const postId = parseInt(postIdParam)
 
     // 사용자 확인
     const { userId } = await getUser(request)
@@ -83,7 +83,8 @@ export async function POST(
   { params }: { params: Promise<{ slug: string; postId: string }> }
 ) {
   try {
-    const { slug, postId } = await params
+    const { slug, postId: postIdParam } = await params
+    const postId = parseInt(postIdParam)
     const body = await request.json()
     const { type = 'like' } = body
 
@@ -162,7 +163,6 @@ export async function POST(
       // 반응 추가
       await prisma.reaction.create({
         data: {
-          id: generateId(),
           type,
           userId,
           postId

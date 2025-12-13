@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { generateId } from '@/lib/id'
 import bcrypt from 'bcryptjs'
 
 // 사용자 목록 조회
@@ -111,7 +110,6 @@ export async function POST(request: NextRequest) {
     // 사용자 생성
     const user = await prisma.user.create({
       data: {
-        id: generateId(),
         email,
         name,
         nickname,
@@ -140,7 +138,8 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    const ids = searchParams.get('ids')?.split(',') || []
+    const idsParam = searchParams.get('ids')?.split(',') || []
+    const ids = idsParam.map(id => parseInt(id)).filter(id => !isNaN(id))
 
     if (ids.length === 0) {
       return NextResponse.json(

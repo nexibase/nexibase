@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { generateId } from '@/lib/id'
 
 // 게시판 목록 조회
 export async function GET(request: NextRequest) {
@@ -110,7 +109,6 @@ export async function POST(request: NextRequest) {
     // 게시판 생성
     const newBoard = await prisma.board.create({
       data: {
-        id: generateId(),
         slug,
         name,
         description: description || null,

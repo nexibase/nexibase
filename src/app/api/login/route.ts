@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { generateId } from '@/lib/id'
 import bcrypt from 'bcryptjs'
 import { randomUUID } from 'crypto'
 
@@ -94,7 +93,6 @@ export async function POST(request: NextRequest) {
     // 세션 저장
     await prisma.userSession.create({
       data: {
-        id: generateId(),
         sessionToken,
         userId: user.id,
         expires: expiresAt

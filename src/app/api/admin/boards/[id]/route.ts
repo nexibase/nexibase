@@ -8,9 +8,10 @@ export async function GET(
 ) {
   try {
     const { id } = await params
+    const boardId = parseInt(id)
 
     const board = await prisma.board.findUnique({
-      where: { id },
+      where: { id: boardId },
       include: {
         _count: {
           select: { posts: true }
@@ -45,6 +46,7 @@ export async function PUT(
 ) {
   try {
     const { id } = await params
+    const boardId = parseInt(id)
     const body = await request.json()
     const {
       slug,
@@ -66,7 +68,7 @@ export async function PUT(
 
     // 게시판 존재 확인
     const existingBoard = await prisma.board.findUnique({
-      where: { id }
+      where: { id: boardId }
     })
 
     if (!existingBoard) {
@@ -100,7 +102,7 @@ export async function PUT(
 
     // 게시판 업데이트
     const updatedBoard = await prisma.board.update({
-      where: { id },
+      where: { id: boardId },
       data: {
         slug: slug || existingBoard.slug,
         name: name || existingBoard.name,
@@ -142,10 +144,11 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params
+    const boardId = parseInt(id)
 
     // 게시판 존재 확인
     const existingBoard = await prisma.board.findUnique({
-      where: { id }
+      where: { id: boardId }
     })
 
     if (!existingBoard) {
@@ -157,7 +160,7 @@ export async function DELETE(
 
     // 게시판 삭제 (연관된 posts, comments, reactions는 CASCADE로 자동 삭제)
     await prisma.board.delete({
-      where: { id }
+      where: { id: boardId }
     })
 
     return NextResponse.json({

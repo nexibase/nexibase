@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { generateId } from '@/lib/id'
 
 // 사용자 레벨 확인 헬퍼
-async function getUserLevel(request: NextRequest): Promise<{ userId: string | null; level: number }> {
+async function getUserLevel(request: NextRequest): Promise<{ userId: number | null; level: number }> {
   const sessionToken = request.cookies.get('session-token')?.value
   if (!sessionToken) return { userId: null, level: 0 }
 
@@ -222,7 +221,6 @@ export async function POST(
     // 게시글 생성
     const post = await prisma.post.create({
       data: {
-        id: generateId(),
         boardId: board.id,
         authorId: userId,
         title: title.trim(),

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
 // 사용자 레벨 확인 헬퍼
-async function getUserLevel(request: NextRequest): Promise<{ userId: string | null; level: number }> {
+async function getUserLevel(request: NextRequest): Promise<{ userId: number | null; level: number }> {
   const sessionToken = request.cookies.get('session-token')?.value
   if (!sessionToken) return { userId: null, level: 0 }
 
@@ -32,7 +32,8 @@ export async function GET(
   { params }: { params: Promise<{ slug: string; postId: string }> }
 ) {
   try {
-    const { slug, postId } = await params
+    const { slug, postId: postIdParam } = await params
+    const postId = parseInt(postIdParam)
 
     // 게시판 정보 조회
     const board = await prisma.board.findUnique({
@@ -205,7 +206,8 @@ export async function PUT(
   { params }: { params: Promise<{ slug: string; postId: string }> }
 ) {
   try {
-    const { slug, postId } = await params
+    const { slug, postId: postIdParam } = await params
+    const postId = parseInt(postIdParam)
     const body = await request.json()
     const { title, content, isNotice, isSecret } = body
 
@@ -282,7 +284,8 @@ export async function DELETE(
   { params }: { params: Promise<{ slug: string; postId: string }> }
 ) {
   try {
-    const { slug, postId } = await params
+    const { slug, postId: postIdParam } = await params
+    const postId = parseInt(postIdParam)
 
     // 로그인 확인
     const { userId, level } = await getUserLevel(request)

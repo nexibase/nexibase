@@ -9,9 +9,10 @@ export async function GET(
 ) {
   try {
     const { id } = await params
+    const userId = parseInt(id)
 
     const user = await prisma.user.findUnique({
-      where: { id },
+      where: { id: userId },
       include: {
         accounts: {
           select: {
@@ -51,12 +52,13 @@ export async function PUT(
 ) {
   try {
     const { id } = await params
+    const userId = parseInt(id)
     const body = await request.json()
     const { email, name, nickname, password, phone, role, status, level } = body
 
     // 기존 사용자 확인
     const existingUser = await prisma.user.findUnique({
-      where: { id }
+      where: { id: userId }
     })
 
     if (!existingUser) {
@@ -96,7 +98,7 @@ export async function PUT(
     }
 
     const user = await prisma.user.update({
-      where: { id },
+      where: { id: userId },
       data: updateData
     })
 
@@ -120,9 +122,10 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params
+    const userId = parseInt(id)
 
     await prisma.user.delete({
-      where: { id }
+      where: { id: userId }
     })
 
     return NextResponse.json({ success: true })
