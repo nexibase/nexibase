@@ -1,38 +1,124 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# NexaBase
 
-## Getting Started
+Next.js 15 기반 게시판 시스템
 
-First, run the development server:
+## 요구사항
+
+- Node.js 18+
+- MySQL 8.0+
+- npm 또는 yarn
+
+## 설치 방법
+
+### 1. 저장소 클론
+
+```bash
+git clone <repository-url>
+cd nexabase
+```
+
+### 2. 의존성 설치
+
+```bash
+npm install
+```
+
+### 3. 환경 설정
+
+`.env.example` 파일을 `.env.local`로 복사 후 수정:
+
+```bash
+cp .env.example .env.local
+```
+
+`.env.local` 파일 편집:
+
+```env
+# MySQL 연결 정보
+DATABASE_URL="mysql://사용자명:비밀번호@호스트:3306/데이터베이스명"
+
+# SMTP 설정 (이메일 인증용)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASS="your-app-password"
+
+# 앱 URL
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+# JWT 시크릿 (보안키)
+JWT_SECRET=your-secret-key
+```
+
+### 4. 데이터베이스 설정
+
+MySQL에서 데이터베이스 생성:
+
+```sql
+CREATE DATABASE nexabase CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+Prisma 스키마 적용:
+
+```bash
+npx prisma db push
+```
+
+### 5. 개발 서버 실행
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+http://localhost:3000 에서 확인
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 초기 설정
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 관리자 계정 생성
 
-## Learn More
+1. http://localhost:3000/signup 에서 첫 회원가입
+2. **첫 번째 가입자는 자동으로 관리자**로 등록됩니다
 
-To learn more about Next.js, take a look at the following resources:
+### 기본 게시판 생성
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. 관리자로 로그인
+2. http://localhost:3000/admin/boards 접속
+3. "기본 게시판 생성" 버튼 클릭
+   - 자유게시판 (free)
+   - 공지사항 (notice)
+   - 문의게시판 (qa)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 주요 기능
 
-## Deploy on Vercel
+- 회원가입/로그인 (이메일 인증)
+- 게시판 CRUD
+- 게시글 작성 (Tiptap 에디터)
+- 이미지 업로드 (자동 리사이징, WebP 변환)
+- 댓글/대댓글
+- 리액션 (좋아요, 추천 등)
+- 관리자 페이지
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 기술 스택
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-# next-app
-# nexabase
+- **Frontend**: Next.js 15, React 19, Tailwind CSS 4
+- **Backend**: Next.js API Routes
+- **Database**: MySQL + Prisma ORM
+- **Editor**: Tiptap
+- **Image Processing**: Sharp
+
+## 프로젝트 구조
+
+```
+src/
+├── app/
+│   ├── (auth)/          # 인증 페이지 (로그인, 회원가입)
+│   ├── admin/           # 관리자 페이지
+│   ├── api/             # API 라우트
+│   └── board/           # 게시판 페이지
+├── components/          # 공통 컴포넌트
+└── lib/                 # 유틸리티
+```
+
+## 라이선스
+
+MIT
