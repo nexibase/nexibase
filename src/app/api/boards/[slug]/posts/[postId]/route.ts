@@ -149,6 +149,28 @@ export async function GET(
       userReaction = reaction ? reaction.type : null
     }
 
+    // 이전 게시글 조회 (현재 글보다 이전에 작성된 글 중 가장 최신)
+    const prevPost = await prisma.post.findFirst({
+      where: {
+        boardId: board.id,
+        status: 'published',
+        createdAt: { lt: post.createdAt }
+      },
+      orderBy: { createdAt: 'desc' },
+      select: { id: true, title: true }
+    })
+
+    // 다음 게시글 조회 (현재 글보다 이후에 작성된 글 중 가장 오래된)
+    const nextPost = await prisma.post.findFirst({
+      where: {
+        boardId: board.id,
+        status: 'published',
+        createdAt: { gt: post.createdAt }
+      },
+      orderBy: { createdAt: 'asc' },
+      select: { id: true, title: true }
+    })
+
     return NextResponse.json({
       success: true,
       board: {
@@ -164,7 +186,9 @@ export async function GET(
         viewCount: post.viewCount + (post.authorId !== userId ? 1 : 0)
       },
       userReaction,
-      isAuthor: post.authorId === userId
+      isAuthor: post.authorId === userId,
+      prevPost,
+      nextPost
     })
   } catch (error) {
     console.error('게시글 조회 에러:', error)

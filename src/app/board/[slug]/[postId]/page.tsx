@@ -20,6 +20,8 @@ import {
   Trash2,
   List,
   Send,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { CommentReactions } from "@/components/comment/CommentReactions"
@@ -78,6 +80,11 @@ interface Post {
   comments?: Comment[]
 }
 
+interface AdjacentPost {
+  id: string
+  title: string
+}
+
 interface User {
   id: string
   nickname: string | null
@@ -103,6 +110,8 @@ export default function PostPage() {
   const [commentText, setCommentText] = useState("")
   const [submittingComment, setSubmittingComment] = useState(false)
   const [userLevel, setUserLevel] = useState(0)
+  const [prevPost, setPrevPost] = useState<AdjacentPost | null>(null)
+  const [nextPost, setNextPost] = useState<AdjacentPost | null>(null)
 
   // 사용자 정보 조회
   const fetchUser = useCallback(async () => {
@@ -155,6 +164,8 @@ export default function PostPage() {
         setBoard(data.board)
         setPost(data.post)
         setIsAuthor(data.isAuthor)
+        setPrevPost(data.prevPost || null)
+        setNextPost(data.nextPost || null)
       }
     } catch (error) {
       console.error('게시글 조회 에러:', error)
@@ -323,12 +334,34 @@ export default function PostPage() {
             </Link>
             <h2 className="text-lg font-semibold">{board.name}</h2>
           </div>
-          <Link href={`/board/${slug}`}>
-            <Button variant="outline" size="sm">
-              <List className="h-4 w-4 mr-1" />
-              목록
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={!nextPost}
+              onClick={() => nextPost && router.push(`/board/${slug}/${nextPost.id}`)}
+              title={nextPost ? nextPost.title : '이전 글이 없습니다'}
+            >
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              이전글
             </Button>
-          </Link>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={!prevPost}
+              onClick={() => prevPost && router.push(`/board/${slug}/${prevPost.id}`)}
+              title={prevPost ? prevPost.title : '다음 글이 없습니다'}
+            >
+              다음글
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+            <Link href={`/board/${slug}`}>
+              <Button variant="outline" size="sm">
+                <List className="h-4 w-4 mr-1" />
+                목록
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {/* 게시글 */}
