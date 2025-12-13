@@ -153,13 +153,11 @@ export async function POST(
         where: { id: existingReaction.id }
       })
 
-      // likeCount 업데이트 (like 타입만)
-      if (type === 'like') {
-        await prisma.post.update({
-          where: { id: postId },
-          data: { likeCount: { decrement: 1 } }
-        })
-      }
+      // likeCount 업데이트 (모든 리액션 타입)
+      await prisma.post.update({
+        where: { id: postId },
+        data: { likeCount: { decrement: 1 } }
+      })
     } else {
       // 반응 추가
       await prisma.reaction.create({
@@ -171,13 +169,11 @@ export async function POST(
         }
       })
 
-      // likeCount 업데이트 (like 타입만)
-      if (type === 'like') {
-        await prisma.post.update({
-          where: { id: postId },
-          data: { likeCount: { increment: 1 } }
-        })
-      }
+      // likeCount 업데이트 (모든 리액션 타입)
+      await prisma.post.update({
+        where: { id: postId },
+        data: { likeCount: { increment: 1 } }
+      })
 
       reacted = true
     }
