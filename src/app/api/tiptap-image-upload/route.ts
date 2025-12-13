@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { writeFile, mkdir } from 'fs/promises'
+import { mkdir } from 'fs/promises'
 import { existsSync } from 'fs'
 import path from 'path'
 import { prisma } from '@/lib/prisma'
+import sharp from 'sharp'
 
 // 허용 이미지 타입
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
-const MAX_SIZE = 5 * 1024 * 1024 // 5MB
+const MAX_SIZE = 10 * 1024 * 1024 // 10MB (리사이징 전)
+const MAX_WIDTH = 1200 // 최대 너비
+const QUALITY = 80 // 압축 품질
 
 // 사용자 확인
 async function getUser(request: NextRequest): Promise<{ userId: number | null }> {
@@ -57,16 +60,15 @@ export async function POST(request: NextRequest) {
     // 파일 크기 검증
     if (file.size > MAX_SIZE) {
       return NextResponse.json(
-        { error: '파일 크기는 5MB 이하여야 합니다.' },
+        { error: '파일 크기는 10MB 이하여야 합니다.' },
         { status: 400 }
       )
     }
 
-    // 파일명 생성 (타임스탬프 + 랜덤)
-    const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+    // 파일명 생성 (타임스탬프 + 랜덤, webp로 변환)
     const timestamp = Date.now()
     const random = Math.random().toString(36).substring(2, 8)
-    const filename = `${timestamp}-${random}.${ext}`
+    const filename = `${timestamp}-${random}.webp`
 
     // 년/월 폴더 구조
     const now = new Date()
@@ -79,18 +81,44 @@ export async function POST(request: NextRequest) {
       await mkdir(uploadDir, { recursive: true })
     }
 
-    // 파일 저장
+    // 이미지 리사이징 및 WebP 변환
     const bytes = await file.arrayBuffer()
-    const buffer = Buffer.from(bytes)
-    const filePath = path.join(uploadDir, filename)
-    await writeFile(filePath, buffer)
+    const inputBuffer = Buffer.from(bytes)
+
+    // GIF는 애니메이션 유지를 위해 그대로 저장
+    let outputBuffer: Buffer
+    let outputFilename = filename
+
+    if (file.type === 'image/gif') {
+      // GIF는 리사이징만 (애니메이션 유지)
+      outputBuffer = await sharp(inputBuffer, { animated: true })
+        .resize({ width: MAX_WIDTH, withoutEnlargement: true })
+        .gif()
+        .toBuffer()
+      outputFilename = `${timestamp}-${random}.gif`
+    } else {
+      // 나머지는 WebP로 변환 + 리사이징
+      outputBuffer = await sharp(inputBuffer)
+        .resize({ width: MAX_WIDTH, withoutEnlargement: true })
+        .webp({ quality: QUALITY })
+        .toBuffer()
+    }
+
+    // 파일 저장
+    const filePath = path.join(uploadDir, outputFilename)
+    await sharp(outputBuffer).toFile(filePath)
 
     // URL 반환
-    const url = `/uploads/${year}/${month}/${filename}`
+    const url = `/uploads/${year}/${month}/${outputFilename}`
+
+    // 원본 크기와 변환 후 크기 로깅
+    console.log(`이미지 업로드: ${file.name} (${(file.size / 1024).toFixed(1)}KB) → ${outputFilename} (${(outputBuffer.length / 1024).toFixed(1)}KB)`)
 
     return NextResponse.json({
       success: true,
-      url
+      url,
+      originalSize: file.size,
+      compressedSize: outputBuffer.length
     })
 
   } catch (error) {
