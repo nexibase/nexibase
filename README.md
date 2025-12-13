@@ -35,7 +35,14 @@ cp .env.example .env.local
 
 ```env
 # MySQL 연결 정보
-DATABASE_URL="mysql://사용자명:비밀번호@호스트:3306/데이터베이스명"
+MYSQL_HOST=localhost
+MYSQL_PORT=3306
+MYSQL_USER=root
+MYSQL_PASS=your-password
+MYSQL_DB=nexabase
+
+# Prisma용 (위 값들로 자동 조합)
+DATABASE_URL="mysql://${MYSQL_USER}:${MYSQL_PASS}@${MYSQL_HOST}:${MYSQL_PORT}/${MYSQL_DB}"
 
 # SMTP 설정 (이메일 인증용)
 SMTP_HOST=smtp.gmail.com
