@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Search, LogOut } from "lucide-react"
 import Link from "next/link"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 
 interface UserInfo {
@@ -17,30 +18,52 @@ interface UserInfo {
   role: string
 }
 
+interface SiteSettings {
+  site_name: string
+  site_logo: string
+}
+
 export function Header() {
   const [user, setUser] = useState<UserInfo | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [settings, setSettings] = useState<SiteSettings>({
+    site_name: 'NexiBase',
+    site_logo: ''
+  })
   const router = useRouter()
 
   useEffect(() => {
-    const fetchUser = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch('/api/me')
-        if (response.ok) {
-          const data = await response.json()
-          setUser(data.user)
+        // 사용자 정보와 설정을 병렬로 가져옴
+        const [userResponse, settingsResponse] = await Promise.all([
+          fetch('/api/me'),
+          fetch('/api/settings')
+        ])
+
+        if (userResponse.ok) {
+          const userData = await userResponse.json()
+          setUser(userData.user)
         } else {
           setUser(null)
         }
+
+        if (settingsResponse.ok) {
+          const settingsData = await settingsResponse.json()
+          setSettings({
+            site_name: settingsData.settings.site_name || 'NexiBase',
+            site_logo: settingsData.settings.site_logo || ''
+          })
+        }
       } catch (error) {
-        console.error('사용자 정보 조회 에러:', error)
+        console.error('데이터 조회 에러:', error)
         setUser(null)
       } finally {
         setIsLoading(false)
       }
     }
 
-    fetchUser()
+    fetchData()
   }, [])
 
   const handleLogout = async () => {
@@ -66,8 +89,17 @@ export function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-4">
-            <Link href="/">
-              <h1 className="text-2xl font-bold text-primary">NexiBase</h1>
+            <Link href="/" className="flex items-center space-x-2">
+              {settings.site_logo ? (
+                <Image
+                  src={settings.site_logo}
+                  alt={settings.site_name}
+                  width={32}
+                  height={32}
+                  className="h-8 w-auto"
+                />
+              ) : null}
+              <h1 className="text-2xl font-bold text-primary">{settings.site_name}</h1>
             </Link>
             <nav className="hidden md:flex items-center space-x-6">
               <Link href="/">
