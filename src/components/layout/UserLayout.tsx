@@ -85,7 +85,7 @@ export function UserLayout({ children }: UserLayoutProps) {
             {/* Logo & Nav */}
             <div className="flex items-center space-x-4">
               <Link href="/" className="text-2xl font-bold text-primary">
-                NexaBase
+                NexiBase
               </Link>
               <nav className="hidden md:flex items-center space-x-1">
                 <Link href="/">
@@ -196,7 +196,7 @@ export function UserLayout({ children }: UserLayoutProps) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="text-sm text-muted-foreground">
-              &copy; 2025 NexaBase. All rights reserved.
+              &copy; 2025 NexiBase. All rights reserved.
             </div>
             <div className="flex items-center space-x-4 text-sm text-muted-foreground">
               <Link href="/terms" className="hover:text-foreground">이용약관</Link>

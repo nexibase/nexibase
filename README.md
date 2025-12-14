@@ -1,4 +1,4 @@
-# NexaBase
+# NexiBase
 
 Next.js 15 기반 게시판 시스템
 
@@ -14,7 +14,7 @@ Next.js 15 기반 게시판 시스템
 
 ```bash
 git clone <repository-url>
-cd nexabase
+cd nexibase
 ```
 
 ### 2. 의존성 설치
@@ -39,7 +39,7 @@ MYSQL_HOST=localhost
 MYSQL_PORT=3306
 MYSQL_USER=root
 MYSQL_PASS=your-password
-MYSQL_DB=nexabase
+MYSQL_DB=nexibase
 
 # Prisma용 DATABASE_URL (위 값을 조합)
 DATABASE_URL="mysql://${MYSQL_USER}:${MYSQL_PASS}@${MYSQL_HOST}:${MYSQL_PORT}/${MYSQL_DB}"
@@ -59,7 +59,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 MySQL에서 데이터베이스 생성:
 
 ```sql
-CREATE DATABASE nexabase CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE nexibase CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
 Prisma 스키마 적용:

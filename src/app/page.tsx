@@ -119,7 +119,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-4">
-              <h1 className="text-2xl font-bold text-primary">NexaBase</h1>
+              <h1 className="text-2xl font-bold text-primary">NexiBase</h1>
               <nav className="hidden md:flex items-center space-x-6">
                 <Button variant="ghost">홈</Button>
                 <Button variant="ghost">프로젝트</Button>
