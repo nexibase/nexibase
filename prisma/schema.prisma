@@ -224,3 +224,38 @@ model Reaction {
   @@index([commentId])
   @@map("reactions")
 }
+
+// ============================================
+// 콘텐츠 관리 시스템
+// ============================================
+
+// 일반 콘텐츠 테이블 (회사소개, About 등)
+model Content {
+  id        Int      @id @default(autoincrement())
+  slug      String   @unique @db.VarChar(100)
+  title     String   @db.VarChar(200)
+  content   String   @db.LongText
+  isPublic  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([slug])
+  @@index([isPublic])
+  @@map("contents")
+}
+
+// 약관/정책 테이블 (버전 관리)
+model Policy {
+  id        Int      @id @default(autoincrement())
+  slug      String   @db.VarChar(100)  // "terms", "privacy"
+  version   String   @db.VarChar(20)   // "1.0", "1.1"
+  title     String   @db.VarChar(200)
+  content   String   @db.LongText
+  isActive  Boolean  @default(false)   // 슬러그당 하나만 true
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([slug, version])
+  @@index([slug, isActive])
+  @@map("policies")
+}
