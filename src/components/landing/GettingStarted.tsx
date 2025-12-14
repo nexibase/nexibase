@@ -19,7 +19,7 @@ const steps = [
   {
     step: 3,
     title: "환경 설정",
-    command: "cp .env.example .env.local",
+    command: "cp .env.example .env",
   },
   {
     step: 4,
