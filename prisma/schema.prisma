@@ -259,3 +259,17 @@ model Policy {
   @@index([slug, isActive])
   @@map("policies")
 }
+
+// ============================================
+// 환경설정 시스템
+// ============================================
+
+// 사이트 설정 테이블 (key-value)
+model Setting {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique @db.VarChar(100)
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+}
