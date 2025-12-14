@@ -43,6 +43,9 @@ next-env.d.ts
 
 /src/generated/prisma
 
-# 사용자가 app 을 복사해서 만드는 디렉토리 
-# core 를 수정할때 사용함
+# 사용자가 src/app 을 복사해서 커스터마이징하는 디렉토리
+# git pull 시 영향받지 않음
 /custom
+
+# app 심볼릭 링크 (setup-app.js가 자동 생성)
+/app
