@@ -41,7 +41,7 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
     { id: "boards", label: "게시판관리", icon: MessageSquare, path: "/admin/boards" },
     { id: "contents", label: "콘텐츠관리", icon: FileText, path: "/admin/contents" },
     { id: "policies", label: "약관관리", icon: ScrollText, path: "/admin/policies" },
-    { id: "settings", label: "환경설정", icon: Settings, path: "/admin/config" },
+    { id: "settings", label: "환경설정", icon: Settings, path: "/admin/settings" },
   ]
 
   // 현재 경로에 따라 활성 메뉴 결정
