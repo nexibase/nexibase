@@ -5,7 +5,7 @@ import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Search, LogOut, Sun, Moon, Monitor } from "lucide-react"
+import { Search, LogOut, Sun, Moon } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
@@ -91,17 +91,13 @@ export function Header() {
     }
   }
 
-  const cycleTheme = () => {
-    if (theme === 'light') setTheme('dark')
-    else if (theme === 'dark') setTheme('system')
-    else setTheme('light')
+  const toggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark')
   }
 
   const getThemeIcon = () => {
-    if (!mounted) return <Monitor className="h-4 w-4" />
-    if (theme === 'light') return <Sun className="h-4 w-4" />
-    if (theme === 'dark') return <Moon className="h-4 w-4" />
-    return <Monitor className="h-4 w-4" />
+    if (!mounted) return <Sun className="h-4 w-4" />
+    return theme === 'dark' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />
   }
 
   return (
@@ -148,9 +144,9 @@ export function Header() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={cycleTheme}
+              onClick={toggleTheme}
               className="h-9 w-9"
-              title={mounted ? (theme === 'light' ? '라이트 모드' : theme === 'dark' ? '다크 모드' : '시스템 모드') : '테마 변경'}
+              title={mounted ? (theme === 'dark' ? '다크 모드' : '라이트 모드') : '테마 변경'}
             >
               {getThemeIcon()}
             </Button>
