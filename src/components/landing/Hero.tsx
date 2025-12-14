@@ -27,23 +27,22 @@ export function Hero() {
         <div className="inline-flex items-center space-x-2 px-4 py-1.5 mb-8 rounded-full border border-border/50 bg-muted/50 backdrop-blur-sm">
           <Sparkles className="h-4 w-4 text-primary" />
           <span className="text-sm text-muted-foreground">
-            Built with Next.js 15 & React 19
+            Next.js 15 & React 19 기반
           </span>
         </div>
 
         {/* Main Heading */}
         <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6">
-          <span className="block">The Foundation for</span>
+          <span className="block">모던 웹 앱을 위한</span>
           <span className="block mt-2 bg-gradient-to-r from-foreground via-foreground/80 to-foreground bg-clip-text">
-            Modern Web Apps
+            완벽한 시작점
           </span>
         </h1>
 
         {/* Subtitle */}
         <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto mb-10">
-          NexiBase is an open-source full-stack template with authentication,
-          database integration, and a beautiful UI. Start building your next
-          project in minutes, not days.
+          NexiBase는 인증, 데이터베이스 연동, 아름다운 UI를 갖춘 오픈소스 풀스택 템플릿입니다.
+          며칠이 아닌 몇 분 만에 프로젝트를 시작하세요.
         </p>
 
         {/* CTA Buttons */}
@@ -51,12 +50,12 @@ export function Hero() {
           <Link href="https://github.com/gnuboard/nexibase" target="_blank" rel="noopener noreferrer">
             <Button size="lg" className="h-12 px-8 text-base">
               <Github className="mr-2 h-5 w-5" />
-              View on GitHub
+              GitHub에서 보기
             </Button>
           </Link>
           <Link href="#features">
             <Button variant="outline" size="lg" className="h-12 px-8 text-base group">
-              Learn More
+              자세히 알아보기
               <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
             </Button>
           </Link>
@@ -64,7 +63,7 @@ export function Hero() {
 
         {/* Tech Stack Preview */}
         <div className="mt-16 pt-8 border-t border-border/30">
-          <p className="text-sm text-muted-foreground mb-4">Powered by</p>
+          <p className="text-sm text-muted-foreground mb-4">사용 기술</p>
           <div className="flex items-center justify-center flex-wrap gap-8 text-muted-foreground">
             <div className="flex items-center space-x-2">
               <svg className="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">

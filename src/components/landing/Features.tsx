@@ -15,51 +15,51 @@ import {
 const features = [
   {
     icon: Users,
-    title: "User Authentication",
+    title: "회원 인증",
     description:
-      "Complete authentication system with email verification, secure login, and session management.",
+      "이메일 인증, 보안 로그인, 세션 관리를 포함한 완전한 인증 시스템을 제공합니다.",
   },
   {
     icon: MessageSquare,
-    title: "Board System",
+    title: "게시판 시스템",
     description:
-      "Full-featured bulletin board with CRUD operations, comments, replies, and reactions.",
+      "CRUD 기능, 댓글, 대댓글, 리액션을 지원하는 완벽한 게시판 시스템입니다.",
   },
   {
     icon: Palette,
-    title: "Rich Text Editor",
+    title: "리치 텍스트 에디터",
     description:
-      "Tiptap-powered editor with formatting, links, images, and code blocks support.",
+      "서식, 링크, 이미지, 코드 블록을 지원하는 Tiptap 기반 에디터입니다.",
   },
   {
     icon: Image,
-    title: "Image Processing",
+    title: "이미지 처리",
     description:
-      "Automatic image optimization with Sharp - resizing, WebP conversion, and compression.",
+      "Sharp를 활용한 자동 이미지 최적화 - 리사이징, WebP 변환, 압축을 지원합니다.",
   },
   {
     icon: Database,
     title: "Prisma ORM",
     description:
-      "Type-safe database access with Prisma. Easy migrations and powerful query capabilities.",
+      "타입 안전한 데이터베이스 접근, 간편한 마이그레이션, 강력한 쿼리 기능을 제공합니다.",
   },
   {
     icon: Shield,
-    title: "Admin Dashboard",
+    title: "관리자 대시보드",
     description:
-      "Comprehensive admin panel for user management, board configuration, and site settings.",
+      "회원 관리, 게시판 설정, 사이트 설정을 위한 종합 관리자 패널입니다.",
   },
   {
     icon: Lock,
-    title: "Security First",
+    title: "보안 우선",
     description:
-      "Built-in protection against common vulnerabilities with secure authentication patterns.",
+      "일반적인 보안 취약점에 대한 보호와 안전한 인증 패턴이 기본 내장되어 있습니다.",
   },
   {
     icon: Zap,
-    title: "Performance",
+    title: "최적화된 성능",
     description:
-      "Optimized for speed with React Server Components, efficient caching, and lazy loading.",
+      "React 서버 컴포넌트, 효율적인 캐싱, 지연 로딩으로 속도를 최적화했습니다.",
   },
 ]
 
@@ -70,11 +70,10 @@ export function Features() {
         {/* Section Header */}
         <div className="text-center mb-16">
           <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4">
-            Everything You Need
+            필요한 모든 기능
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            A complete foundation for building modern web applications with all the
-            essential features out of the box.
+            모던 웹 애플리케이션 구축을 위한 모든 필수 기능이 기본으로 포함된 완벽한 기반입니다.
           </p>
         </div>
 

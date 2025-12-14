@@ -19,10 +19,10 @@ export function Header() {
   }, [])
 
   const navItems = [
-    { label: "Features", href: "#features" },
-    { label: "Tech Stack", href: "#tech-stack" },
-    { label: "Getting Started", href: "#getting-started" },
-    { label: "Community", href: "/community" },
+    { label: "기능", href: "#features" },
+    { label: "기술 스택", href: "#tech-stack" },
+    { label: "시작하기", href: "#getting-started" },
+    { label: "커뮤니티", href: "/community" },
     { label: "GitHub", href: "https://github.com/gnuboard/nexibase", external: true },
   ]
 
@@ -63,12 +63,12 @@ export function Header() {
             <ThemeToggle />
             <Link href="/login" className="hidden sm:block">
               <Button variant="ghost" size="sm">
-                Login
+                로그인
               </Button>
             </Link>
             <Link href="https://github.com/gnuboard/nexibase" target="_blank" rel="noopener noreferrer">
               <Button size="sm" className="hidden sm:flex">
-                Get Started
+                시작하기
               </Button>
             </Link>
 
@@ -103,12 +103,12 @@ export function Header() {
               <div className="flex items-center space-x-2 px-4 pt-2">
                 <Link href="/login" className="flex-1">
                   <Button variant="outline" size="sm" className="w-full">
-                    Login
+                    로그인
                   </Button>
                 </Link>
                 <Link href="https://github.com/gnuboard/nexibase" target="_blank" rel="noopener noreferrer" className="flex-1">
                   <Button size="sm" className="w-full">
-                    Get Started
+                    시작하기
                   </Button>
                 </Link>
               </div>

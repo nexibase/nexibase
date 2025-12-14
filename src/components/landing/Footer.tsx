@@ -5,18 +5,18 @@ import { Github, Twitter } from "lucide-react"
 
 const footerLinks = {
   product: [
-    { label: "Features", href: "#features" },
-    { label: "Tech Stack", href: "#tech-stack" },
-    { label: "Getting Started", href: "#getting-started" },
+    { label: "기능", href: "#features" },
+    { label: "기술 스택", href: "#tech-stack" },
+    { label: "시작하기", href: "#getting-started" },
   ],
   resources: [
-    { label: "Documentation", href: "https://github.com/gnuboard/nexibase#readme", external: true },
+    { label: "문서", href: "https://github.com/gnuboard/nexibase#readme", external: true },
     { label: "GitHub", href: "https://github.com/gnuboard/nexibase", external: true },
-    { label: "Issues", href: "https://github.com/gnuboard/nexibase/issues", external: true },
+    { label: "이슈", href: "https://github.com/gnuboard/nexibase/issues", external: true },
   ],
   community: [
-    { label: "GNU Board", href: "https://sir.kr", external: true },
-    { label: "Discussions", href: "https://github.com/gnuboard/nexibase/discussions", external: true },
+    { label: "그누보드", href: "https://sir.kr", external: true },
+    { label: "토론", href: "https://github.com/gnuboard/nexibase/discussions", external: true },
   ],
 }
 
@@ -34,7 +34,7 @@ export function Footer() {
               </span>
             </Link>
             <p className="text-sm text-muted-foreground mb-4">
-              The foundation for modern web apps. Built with Next.js, React, and Prisma.
+              모던 웹 앱을 위한 기반. Next.js, React, Prisma로 구축되었습니다.
             </p>
             <div className="flex items-center space-x-4">
               <a
@@ -58,7 +58,7 @@ export function Footer() {
 
           {/* Product */}
           <div>
-            <h3 className="font-semibold mb-4">Product</h3>
+            <h3 className="font-semibold mb-4">제품</h3>
             <ul className="space-y-3">
               {footerLinks.product.map((link) => (
                 <li key={link.label}>
@@ -75,7 +75,7 @@ export function Footer() {
 
           {/* Resources */}
           <div>
-            <h3 className="font-semibold mb-4">Resources</h3>
+            <h3 className="font-semibold mb-4">리소스</h3>
             <ul className="space-y-3">
               {footerLinks.resources.map((link) => (
                 <li key={link.label}>
@@ -94,7 +94,7 @@ export function Footer() {
 
           {/* Community */}
           <div>
-            <h3 className="font-semibold mb-4">Community</h3>
+            <h3 className="font-semibold mb-4">커뮤니티</h3>
             <ul className="space-y-3">
               {footerLinks.community.map((link) => (
                 <li key={link.label}>
@@ -115,10 +115,10 @@ export function Footer() {
         {/* Bottom Bar */}
         <div className="py-6 border-t border-border/50 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} NexiBase. MIT License.
+            &copy; {new Date().getFullYear()} NexiBase. MIT 라이선스.
           </p>
           <p className="text-sm text-muted-foreground">
-            Made with Next.js + I + Base
+            Next.js + I + Base
           </p>
         </div>
       </div>

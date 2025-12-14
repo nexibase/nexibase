@@ -8,27 +8,27 @@ import { useState } from "react"
 const steps = [
   {
     step: 1,
-    title: "Clone the Repository",
+    title: "저장소 클론",
     command: "git clone https://github.com/gnuboard/nexibase.git",
   },
   {
     step: 2,
-    title: "Install Dependencies",
+    title: "의존성 설치",
     command: "cd nexibase && npm install",
   },
   {
     step: 3,
-    title: "Set Up Environment",
+    title: "환경 설정",
     command: "cp .env.example .env.local",
   },
   {
     step: 4,
-    title: "Run Database Migration",
+    title: "데이터베이스 마이그레이션",
     command: "npx prisma db push",
   },
   {
     step: 5,
-    title: "Start Development Server",
+    title: "개발 서버 실행",
     command: "npm run dev",
   },
 ]
@@ -66,11 +66,10 @@ export function GettingStarted() {
         {/* Section Header */}
         <div className="text-center mb-16">
           <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4">
-            Get Started in Minutes
+            몇 분 만에 시작하기
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Follow these simple steps to set up your NexiBase project and start
-            building your application.
+            간단한 단계를 따라 NexiBase 프로젝트를 설정하고 애플리케이션 개발을 시작하세요.
           </p>
         </div>
 
@@ -96,7 +95,7 @@ export function GettingStarted() {
         {/* Additional Info */}
         <div className="mt-12 text-center">
           <p className="text-muted-foreground mb-4">
-            Need help? Check out our documentation or open an issue on GitHub.
+            도움이 필요하신가요? 문서를 확인하거나 GitHub에 이슈를 등록해주세요.
           </p>
           <Button variant="outline" asChild>
             <a
@@ -104,7 +103,7 @@ export function GettingStarted() {
               target="_blank"
               rel="noopener noreferrer"
             >
-              View Documentation
+              문서 보기
             </a>
           </Button>
         </div>
