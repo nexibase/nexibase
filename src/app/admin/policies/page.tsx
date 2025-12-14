@@ -21,6 +21,7 @@ import {
   ExternalLink,
   History,
   Power,
+  Sparkles,
 } from "lucide-react"
 
 interface Policy {
@@ -195,6 +196,32 @@ export default function PoliciesPage() {
   const [editingPolicy, setEditingPolicy] = useState<Policy | null>(null)
   const [selectedAll, setSelectedAll] = useState(false)
   const [activatingId, setActivatingId] = useState<number | null>(null)
+  const [seedingPolicies, setSeedingPolicies] = useState(false)
+
+  // 기본 약관 생성
+  const handleSeedPolicies = async () => {
+    if (!confirm('이용약관, 개인정보처리방침, 마케팅 동의 약관을 생성하시겠습니까?')) return
+
+    setSeedingPolicies(true)
+    try {
+      const response = await fetch('/api/admin/policies/seed', {
+        method: 'POST'
+      })
+      const data = await response.json()
+
+      if (response.ok) {
+        alert(data.message)
+        fetchPolicies()
+      } else {
+        alert(data.error || '생성에 실패했습니다.')
+      }
+    } catch (error) {
+      console.error('기본 약관 생성 에러:', error)
+      alert('생성 중 오류가 발생했습니다.')
+    } finally {
+      setSeedingPolicies(false)
+    }
+  }
 
   // 약관 목록 조회
   const fetchPolicies = useCallback(async () => {
@@ -410,10 +437,23 @@ export default function PoliciesPage() {
                 <div className="text-center py-12">
                   <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                   <p className="text-muted-foreground mb-4">약관이 없습니다.</p>
-                  <Button onClick={() => { setEditingPolicy(null); setModalOpen(true); }}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    첫 약관 추가
-                  </Button>
+                  <div className="flex justify-center gap-2">
+                    <Button onClick={handleSeedPolicies} disabled={seedingPolicies}>
+                      {seedingPolicies ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Sparkles className="h-4 w-4 mr-2" />
+                      )}
+                      기본 약관 생성
+                    </Button>
+                    <Button variant="outline" onClick={() => { setEditingPolicy(null); setModalOpen(true); }}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      직접 추가
+                    </Button>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    이용약관, 개인정보처리방침, 마케팅 동의가 생성됩니다
+                  </p>
                 </div>
               ) : (
                 <>

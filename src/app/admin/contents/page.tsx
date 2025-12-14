@@ -21,6 +21,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ExternalLink,
+  Sparkles,
 } from "lucide-react"
 
 interface Content {
@@ -175,6 +176,32 @@ export default function ContentsPage() {
   const [modalOpen, setModalOpen] = useState(false)
   const [editingContent, setEditingContent] = useState<Content | null>(null)
   const [selectedAll, setSelectedAll] = useState(false)
+  const [seedingContents, setSeedingContents] = useState(false)
+
+  // 기본 콘텐츠 생성
+  const handleSeedContents = async () => {
+    if (!confirm('회사소개, 문의하기, FAQ 콘텐츠를 생성하시겠습니까?')) return
+
+    setSeedingContents(true)
+    try {
+      const response = await fetch('/api/admin/contents/seed', {
+        method: 'POST'
+      })
+      const data = await response.json()
+
+      if (response.ok) {
+        alert(data.message)
+        fetchContents()
+      } else {
+        alert(data.error || '생성에 실패했습니다.')
+      }
+    } catch (error) {
+      console.error('기본 콘텐츠 생성 에러:', error)
+      alert('생성 중 오류가 발생했습니다.')
+    } finally {
+      setSeedingContents(false)
+    }
+  }
 
   // 콘텐츠 목록 조회
   const fetchContents = useCallback(async () => {
@@ -362,10 +389,23 @@ export default function ContentsPage() {
                 <div className="text-center py-12">
                   <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                   <p className="text-muted-foreground mb-4">콘텐츠가 없습니다.</p>
-                  <Button onClick={() => { setEditingContent(null); setModalOpen(true); }}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    첫 콘텐츠 추가
-                  </Button>
+                  <div className="flex justify-center gap-2">
+                    <Button onClick={handleSeedContents} disabled={seedingContents}>
+                      {seedingContents ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Sparkles className="h-4 w-4 mr-2" />
+                      )}
+                      기본 콘텐츠 생성
+                    </Button>
+                    <Button variant="outline" onClick={() => { setEditingContent(null); setModalOpen(true); }}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      직접 추가
+                    </Button>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    회사소개, 문의하기, FAQ가 생성됩니다
+                  </p>
                 </div>
               ) : (
                 <>
