@@ -29,7 +29,9 @@ import {
   CheckCircle2,
   XCircle,
   RotateCcw,
+  ExternalLink,
 } from "lucide-react"
+import { getTrackingUrlByName } from "@/lib/delivery"
 
 interface Order {
   id: number
@@ -200,18 +202,7 @@ export default function OrderDetailPage() {
     return new Date(date).toLocaleString("ko-KR")
   }
 
-  // 배송 조회 URL 생성
-  const getTrackingUrl = (company: string, number: string) => {
-    const urls: Record<string, string> = {
-      CJ대한통운: `https://www.cjlogistics.com/ko/tool/parcel/tracking?gnbInvcNo=${number}`,
-      한진택배: `https://www.hanjin.co.kr/kor/CMS/DeliveryMgr/WaybillResult.do?mession=open&wblnumText2=${number}`,
-      롯데택배: `https://www.lotteglogis.com/home/reservation/tracking/linkView?InvNo=${number}`,
-      우체국택배: `https://service.epost.go.kr/trace.RetrieveDomRi498List.comm?displayHeader=N&sid1=${number}`,
-      로젠택배: `https://www.ilogen.com/web/personal/trace/${number}`,
-    }
-    return urls[company] || "#"
-  }
-
+  
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
@@ -284,12 +275,13 @@ export default function OrderDetailPage() {
                   </p>
                   {order.trackingCompany && (
                     <a
-                      href={getTrackingUrl(order.trackingCompany, order.trackingNumber)}
+                      href={getTrackingUrlByName(order.trackingCompany, order.trackingNumber) || '#'}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-sm text-primary hover:underline mt-2 inline-block"
+                      className="inline-flex items-center gap-1 text-sm text-primary hover:underline mt-2"
                     >
-                      배송 조회 →
+                      <ExternalLink className="h-3 w-3" />
+                      배송 조회
                     </a>
                   )}
                 </div>

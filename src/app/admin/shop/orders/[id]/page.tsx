@@ -35,7 +35,10 @@ import {
   Save,
   AlertCircle,
   Trash2,
+  Printer,
+  ExternalLink,
 } from "lucide-react"
+import { DELIVERY_COMPANIES as DELIVERY_LIST, getTrackingUrlByName } from "@/lib/delivery"
 
 interface Order {
   id: number
@@ -109,14 +112,7 @@ const STATUS_COLORS: Record<string, string> = {
   refunded: "bg-red-500",
 }
 
-const DELIVERY_COMPANIES = [
-  "CJ대한통운",
-  "한진택배",
-  "롯데택배",
-  "우체국택배",
-  "로젠택배",
-  "경동택배",
-]
+const DELIVERY_COMPANIES = DELIVERY_LIST.map(c => c.name)
 
 export default function AdminOrderDetailPage() {
   const params = useParams()
@@ -281,6 +277,14 @@ export default function AdminOrderDetailPage() {
           <Badge className={STATUS_COLORS[order.status] || "bg-gray-500"}>
             {STATUS_OPTIONS.find(s => s.value === order.status)?.label || order.status}
           </Badge>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.open(`/api/admin/shop/orders/${order.id}/label`, '_blank')}
+          >
+            <Printer className="h-4 w-4 mr-1" />
+            라벨 출력
+          </Button>
           <Button
             variant="outline"
             size="sm"
@@ -514,11 +518,27 @@ export default function AdminOrderDetailPage() {
                   </div>
                   <div>
                     <Label>송장번호</Label>
-                    <Input
-                      value={trackingNumber}
-                      onChange={(e) => setTrackingNumber(e.target.value)}
-                      placeholder="송장번호 입력"
-                    />
+                    <div className="flex gap-2">
+                      <Input
+                        value={trackingNumber}
+                        onChange={(e) => setTrackingNumber(e.target.value)}
+                        placeholder="송장번호 입력"
+                      />
+                      {trackingCompany && trackingNumber && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          onClick={() => {
+                            const url = getTrackingUrlByName(trackingCompany, trackingNumber)
+                            if (url) window.open(url, '_blank')
+                          }}
+                          title="배송조회"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </>
               )}

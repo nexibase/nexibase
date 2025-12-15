@@ -16,6 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Search,
   Loader2,
@@ -26,6 +27,7 @@ import {
   RefreshCw,
   Trash2,
   RotateCcw,
+  Printer,
 } from "lucide-react"
 
 interface Order {
@@ -94,6 +96,7 @@ export default function AdminOrdersPage() {
   const search = searchParams.get('search') || ''
   const showDeleted = searchParams.get('deleted') === 'true'
   const [searchInput, setSearchInput] = useState(search)
+  const [selectedOrders, setSelectedOrders] = useState<number[]>([])
 
   const fetchOrders = useCallback(async () => {
     setLoading(true)
@@ -127,7 +130,79 @@ export default function AdminOrdersPage() {
 
   useEffect(() => {
     setPage(1)
+    setSelectedOrders([])
   }, [status, search, showDeleted])
+
+  // 전체 선택/해제
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedOrders(orders.map(o => o.id))
+    } else {
+      setSelectedOrders([])
+    }
+  }
+
+  // 개별 선택
+  const handleSelectOrder = (orderId: number, checked: boolean) => {
+    if (checked) {
+      setSelectedOrders(prev => [...prev, orderId])
+    } else {
+      setSelectedOrders(prev => prev.filter(id => id !== orderId))
+    }
+  }
+
+  // 다중 라벨 출력
+  const handlePrintLabels = async () => {
+    if (selectedOrders.length === 0) {
+      alert('출력할 주문을 선택해주세요.')
+      return
+    }
+
+    // form 으로 POST 요청하여 새 창에서 열기
+    const form = document.createElement('form')
+    form.method = 'POST'
+    form.action = '/api/admin/shop/orders/labels'
+    form.target = '_blank'
+
+    const input = document.createElement('input')
+    input.type = 'hidden'
+    input.name = 'orderIds'
+    input.value = JSON.stringify(selectedOrders)
+
+    // JSON body로 전송하기 위한 처리
+    const jsonInput = document.createElement('input')
+    jsonInput.type = 'hidden'
+    jsonInput.name = 'json'
+    jsonInput.value = JSON.stringify({ orderIds: selectedOrders })
+
+    form.appendChild(input)
+    document.body.appendChild(form)
+
+    // form 대신 fetch로 blob 받아서 새 창에서 열기
+    try {
+      const res = await fetch('/api/admin/shop/orders/labels', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderIds: selectedOrders })
+      })
+
+      if (!res.ok) {
+        const data = await res.json()
+        alert(data.error || '라벨 출력에 실패했습니다.')
+        return
+      }
+
+      const html = await res.text()
+      const blob = new Blob([html], { type: 'text/html' })
+      const url = URL.createObjectURL(blob)
+      window.open(url, '_blank')
+    } catch (error) {
+      console.error('라벨 출력 에러:', error)
+      alert('라벨 출력 중 오류가 발생했습니다.')
+    }
+
+    document.body.removeChild(form)
+  }
 
   const handleStatusChange = (newStatus: string) => {
     const params = new URLSearchParams(searchParams.toString())
@@ -210,10 +285,18 @@ export default function AdminOrdersPage() {
                 총 {total}개의 {showDeleted ? '삭제된 ' : ''}주문
               </p>
             </div>
-            <Button variant="outline" onClick={fetchOrders}>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              새로고침
-            </Button>
+            <div className="flex items-center gap-2">
+              {selectedOrders.length > 0 && (
+                <Button variant="outline" onClick={handlePrintLabels}>
+                  <Printer className="h-4 w-4 mr-2" />
+                  라벨 출력 ({selectedOrders.length})
+                </Button>
+              )}
+              <Button variant="outline" onClick={fetchOrders}>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                새로고침
+              </Button>
+            </div>
           </div>
 
           {/* 상태별 통계 */}
@@ -289,6 +372,12 @@ export default function AdminOrdersPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-[40px]">
+                        <Checkbox
+                          checked={orders.length > 0 && selectedOrders.length === orders.length}
+                          onCheckedChange={handleSelectAll}
+                        />
+                      </TableHead>
                       <TableHead className="w-[140px]">주문번호</TableHead>
                       <TableHead>주문상품</TableHead>
                       <TableHead>주문자</TableHead>
@@ -302,6 +391,12 @@ export default function AdminOrdersPage() {
                   <TableBody>
                     {orders.map((order) => (
                       <TableRow key={order.id}>
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedOrders.includes(order.id)}
+                            onCheckedChange={(checked) => handleSelectOrder(order.id, checked as boolean)}
+                          />
+                        </TableCell>
                         <TableCell>
                           <div className="font-mono text-sm leading-tight">
                             <div>{order.orderNo.split('-')[0]}</div>
