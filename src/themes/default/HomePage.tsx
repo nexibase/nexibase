@@ -141,15 +141,17 @@ export default function HomePage() {
 
       <main className="flex-1">
         <div className="max-w-6xl mx-auto px-4 py-6">
-          {/* 환영 배너 */}
-          <Card className="mb-6 bg-gradient-to-r from-primary/10 via-primary/5 to-background border-primary/20">
-            <CardContent className="p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                  <Sparkles className="h-6 w-6 text-primary" />
-                </div>
+          {/* 환영 배너 (좌 2열) + 통계 (우 2열 2행) */}
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
+            {/* 환영 배너 - 좌측 2열 */}
+            <Card className="lg:col-span-2 lg:row-span-2 bg-gradient-to-br from-primary/10 via-primary/5 to-background border-primary/20">
+              <CardContent className="p-6 h-full flex flex-col justify-between">
                 <div>
-                  <h1 className="text-xl font-bold">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Sparkles className="h-5 w-5 text-primary" />
+                    <span className="text-sm font-medium text-primary">Welcome</span>
+                  </div>
+                  <h1 className="text-xl md:text-2xl font-bold mb-2">
                     {user
                       ? `${user.nickname || user.name || '사용자'}님, 환영합니다!`
                       : `${settings.site_name}에 오신 것을 환영합니다`
@@ -159,72 +161,72 @@ export default function HomePage() {
                     {settings.site_description || '함께 성장하는 커뮤니티에서 다양한 이야기를 나눠보세요.'}
                   </p>
                 </div>
-              </div>
-              <div className="flex gap-2 w-full sm:w-auto">
-                {boards.length > 0 && (
-                  <Link href={`/board/${boards[0].slug}`}>
-                    <Button>
-                      시작하기
-                      <ArrowRight className="h-4 w-4 ml-2" />
-                    </Button>
+                <div className="flex gap-2 mt-4">
+                  {boards.length > 0 && (
+                    <Link href={`/board/${boards[0].slug}`}>
+                      <Button>
+                        시작하기
+                        <ArrowRight className="h-4 w-4 ml-2" />
+                      </Button>
+                    </Link>
+                  )}
+                  <Link href="/content/about">
+                    <Button variant="outline">더 알아보기</Button>
                   </Link>
-                )}
-                <Link href="/content/about">
-                  <Button variant="outline">더 알아보기</Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
+                </div>
+              </CardContent>
+            </Card>
 
-          {/* 통계 카드 - 4열 */}
-          {stats && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              <Card className="group hover:border-blue-500/50 transition-colors">
-                <CardContent className="p-4 flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <Users className="h-5 w-5 text-blue-500" />
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold">{stats.memberCount.toLocaleString()}</div>
-                    <div className="text-sm text-muted-foreground">회원</div>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card className="group hover:border-green-500/50 transition-colors">
-                <CardContent className="p-4 flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <FileText className="h-5 w-5 text-green-500" />
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold">{stats.postCount.toLocaleString()}</div>
-                    <div className="text-sm text-muted-foreground">게시글</div>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card className="group hover:border-purple-500/50 transition-colors">
-                <CardContent className="p-4 flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <MessageSquare className="h-5 w-5 text-purple-500" />
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold">{stats.commentCount.toLocaleString()}</div>
-                    <div className="text-sm text-muted-foreground">댓글</div>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card className="group hover:border-orange-500/50 transition-colors">
-                <CardContent className="p-4 flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <TrendingUp className="h-5 w-5 text-orange-500" />
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold">{stats.boardCount.toLocaleString()}</div>
-                    <div className="text-sm text-muted-foreground">게시판</div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
+            {/* 통계 카드 - 우측 2열 2행 */}
+            {stats && (
+              <>
+                <Card className="group hover:border-blue-500/50 transition-colors">
+                  <CardContent className="p-4 h-full flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Users className="h-5 w-5 text-blue-500" />
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold">{stats.memberCount.toLocaleString()}</div>
+                      <div className="text-sm text-muted-foreground">회원</div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="group hover:border-green-500/50 transition-colors">
+                  <CardContent className="p-4 h-full flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <FileText className="h-5 w-5 text-green-500" />
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold">{stats.postCount.toLocaleString()}</div>
+                      <div className="text-sm text-muted-foreground">게시글</div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="group hover:border-purple-500/50 transition-colors">
+                  <CardContent className="p-4 h-full flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <MessageSquare className="h-5 w-5 text-purple-500" />
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold">{stats.commentCount.toLocaleString()}</div>
+                      <div className="text-sm text-muted-foreground">댓글</div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="group hover:border-orange-500/50 transition-colors">
+                  <CardContent className="p-4 h-full flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <TrendingUp className="h-5 w-5 text-orange-500" />
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold">{stats.boardCount.toLocaleString()}</div>
+                      <div className="text-sm text-muted-foreground">게시판</div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </>
+            )}
+          </div>
 
           {/* Bento Grid 레이아웃 */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 auto-rows-[minmax(100px,auto)]">
