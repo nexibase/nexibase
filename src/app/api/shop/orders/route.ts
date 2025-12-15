@@ -311,18 +311,19 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// 주문번호 생성 (YYMMDDHHmmss + 랜덤 4자리 = 16자리)
+// 주문번호 생성 (YYMMDDHHMMSS-mmmXX = 18자리)
 function generateOrderNo(): string {
   const now = new Date()
   const yy = String(now.getFullYear()).slice(-2)
-  const mm = String(now.getMonth() + 1).padStart(2, '0')
+  const MM = String(now.getMonth() + 1).padStart(2, '0')
   const dd = String(now.getDate()).padStart(2, '0')
   const hh = String(now.getHours()).padStart(2, '0')
-  const mi = String(now.getMinutes()).padStart(2, '0')
+  const mm = String(now.getMinutes()).padStart(2, '0')
   const ss = String(now.getSeconds()).padStart(2, '0')
-  const rand = String(Math.floor(Math.random() * 10000)).padStart(4, '0')
+  const ms = String(now.getMilliseconds()).padStart(3, '0')
+  const rand = String(Math.floor(Math.random() * 100)).padStart(2, '0')
 
-  return `${yy}${mm}${dd}${hh}${mi}${ss}${rand}`
+  return `${yy}${MM}${dd}${hh}${mm}${ss}-${ms}${rand}`
 }
 
 // 배송비 계산
