@@ -1,0 +1,132 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { mkdir } from 'fs/promises'
+import { existsSync } from 'fs'
+import path from 'path'
+import { prisma } from '@/lib/prisma'
+import sharp from 'sharp'
+
+// 허용 이미지 타입
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+const MAX_SIZE = 10 * 1024 * 1024 // 10MB (리사이징 전)
+const MAX_WIDTH = 1200 // 최대 너비
+const QUALITY = 80 // 압축 품질
+
+// 사용자 확인
+async function getUser(request: NextRequest): Promise<{ userId: number | null }> {
+  const sessionToken = request.cookies.get('session-token')?.value
+  if (!sessionToken) return { userId: null }
+
+  const session = await prisma.userSession.findUnique({
+    where: { sessionToken },
+    include: { user: { select: { id: true } } }
+  })
+
+  if (!session || new Date() > session.expires) {
+    return { userId: null }
+  }
+
+  return { userId: session.user.id }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    // 로그인 확인
+    const { userId } = await getUser(request)
+    if (!userId) {
+      return NextResponse.json(
+        { error: '로그인이 필요합니다.' },
+        { status: 401 }
+      )
+    }
+
+    const formData = await request.formData()
+    // 'file' 또는 'image' 필드명 지원
+    const file = (formData.get('file') || formData.get('image')) as File | null
+
+    if (!file) {
+      return NextResponse.json(
+        { error: '이미지 파일을 선택해주세요.' },
+        { status: 400 }
+      )
+    }
+
+    // 파일 타입 검증
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      return NextResponse.json(
+        { error: 'JPG, PNG, GIF, WebP 파일만 업로드 가능합니다.' },
+        { status: 400 }
+      )
+    }
+
+    // 파일 크기 검증
+    if (file.size > MAX_SIZE) {
+      return NextResponse.json(
+        { error: '파일 크기는 10MB 이하여야 합니다.' },
+        { status: 400 }
+      )
+    }
+
+    // 파일명 생성 (타임스탬프 + 랜덤, webp로 변환)
+    const timestamp = Date.now()
+    const random = Math.random().toString(36).substring(2, 8)
+    const filename = `${timestamp}-${random}.webp`
+
+    // 년/월 폴더 구조
+    const now = new Date()
+    const year = now.getFullYear()
+    const month = String(now.getMonth() + 1).padStart(2, '0')
+    const uploadDir = path.join(process.cwd(), 'public', 'uploads', String(year), month)
+
+    // 디렉토리 생성
+    if (!existsSync(uploadDir)) {
+      await mkdir(uploadDir, { recursive: true })
+    }
+
+    // 이미지 리사이징 및 WebP 변환
+    const bytes = await file.arrayBuffer()
+    const inputBuffer = Buffer.from(bytes)
+
+    // GIF는 애니메이션 유지를 위해 그대로 저장
+    let outputBuffer: Buffer
+    let outputFilename = filename
+
+    if (file.type === 'image/gif') {
+      // GIF는 리사이징만 (애니메이션 유지)
+      outputBuffer = await sharp(inputBuffer, { animated: true })
+        .resize({ width: MAX_WIDTH, withoutEnlargement: true })
+        .gif()
+        .toBuffer()
+      outputFilename = `${timestamp}-${random}.gif`
+    } else {
+      // 나머지는 WebP로 변환 + 리사이징
+      outputBuffer = await sharp(inputBuffer)
+        .resize({ width: MAX_WIDTH, withoutEnlargement: true })
+        .webp({ quality: QUALITY })
+        .toBuffer()
+    }
+
+    // 파일 저장
+    const filePath = path.join(uploadDir, outputFilename)
+    await sharp(outputBuffer).toFile(filePath)
+
+    // URL 반환
+    const url = `/uploads/${year}/${month}/${outputFilename}`
+
+    // 원본 크기와 변환 후 크기 로깅
+    console.log(`이미지 업로드: ${file.name} (${(file.size / 1024).toFixed(1)}KB) → ${outputFilename} (${(outputBuffer.length / 1024).toFixed(1)}KB)`)
+
+    return NextResponse.json({
+      success: true,
+      url,
+      originalSize: file.size,
+      compressedSize: outputBuffer.length
+    })
+
+  } catch (error) {
+    console.error('이미지 업로드 에러:', error)
+    return NextResponse.json(
+      { error: '이미지 업로드에 실패했습니다.' },
+      { status: 500 }
+    )
+  }
+}
