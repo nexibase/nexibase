@@ -162,6 +162,7 @@ model Post {
   @@index([authorId])
   @@index([status])
   @@index([createdAt])
+  @@fulltext([title, content])
   @@map("posts")
 }
 
