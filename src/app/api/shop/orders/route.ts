@@ -243,7 +243,8 @@ export async function GET(request: NextRequest) {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = {
-      userId: session.id
+      userId: session.id,
+      deletedAt: null  // 소프트 삭제된 주문 제외
     }
 
     if (status) {
