@@ -16,6 +16,12 @@ import {
   Monitor,
   FileText,
   ScrollText,
+  ShoppingBag,
+  Package,
+  Truck,
+  ClipboardList,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react"
 
 interface SidebarProps {
@@ -26,13 +32,18 @@ interface SidebarProps {
 export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [shopMenuOpen, setShopMenuOpen] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
   const { theme, setTheme } = useTheme()
 
   useEffect(() => {
     setMounted(true)
-  }, [])
+    // 쇼핑몰 관련 경로면 쇼핑몰 메뉴 열기
+    if (pathname.startsWith('/admin/shop')) {
+      setShopMenuOpen(true)
+    }
+  }, [pathname])
 
   const menuItems = [
     { id: "dashboard", label: "대시보드", icon: LayoutDashboard, path: "/admin" },
@@ -44,8 +55,18 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
     { id: "settings", label: "환경설정", icon: Settings, path: "/admin/settings" },
   ]
 
+  const shopMenuItems = [
+    { id: "shop-products", label: "상품관리", icon: Package, path: "/admin/shop/products" },
+    { id: "shop-categories", label: "카테고리", icon: ShoppingBag, path: "/admin/shop/categories" },
+    { id: "shop-orders", label: "주문관리", icon: ClipboardList, path: "/admin/shop/orders" },
+    { id: "shop-delivery", label: "배송비정책", icon: Truck, path: "/admin/shop/delivery" },
+    { id: "shop-settings", label: "쇼핑몰설정", icon: Settings, path: "/admin/shop/settings" },
+  ]
+
   // 현재 경로에 따라 활성 메뉴 결정
   const getActiveMenu = () => {
+    const shopItem = shopMenuItems.find(item => item.path === pathname)
+    if (shopItem) return shopItem.id
     return menuItems.find(item => item.path === pathname)?.id || "dashboard"
   }
 
@@ -114,7 +135,7 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
           </div>
 
           {/* 메뉴 */}
-          <nav className="flex-1 p-4 space-y-2">
+          <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
             {menuItems.map((item) => {
               const Icon = item.icon
               return (
@@ -129,6 +150,44 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
                 </Button>
               )
             })}
+
+            {/* 쇼핑몰 메뉴 그룹 */}
+            <div className="pt-2 border-t border-border mt-2">
+              <Button
+                variant="ghost"
+                className="w-full justify-between"
+                onClick={() => setShopMenuOpen(!shopMenuOpen)}
+              >
+                <span className="flex items-center">
+                  <ShoppingBag className="mr-2 h-4 w-4" />
+                  쇼핑몰
+                </span>
+                {shopMenuOpen ? (
+                  <ChevronDown className="h-4 w-4" />
+                ) : (
+                  <ChevronRight className="h-4 w-4" />
+                )}
+              </Button>
+              {shopMenuOpen && (
+                <div className="ml-4 mt-1 space-y-1">
+                  {shopMenuItems.map((item) => {
+                    const Icon = item.icon
+                    return (
+                      <Button
+                        key={item.id}
+                        variant={currentActiveMenu === item.id ? "default" : "ghost"}
+                        size="sm"
+                        className="w-full justify-start"
+                        onClick={() => handleMenuClick(item)}
+                      >
+                        <Icon className="mr-2 h-4 w-4" />
+                        {item.label}
+                      </Button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
           </nav>
 
           {/* 하단 정보 */}
