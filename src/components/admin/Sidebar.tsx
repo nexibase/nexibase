@@ -22,6 +22,7 @@ import {
   ClipboardList,
   ChevronDown,
   ChevronRight,
+  BarChart3,
 } from "lucide-react"
 
 interface SidebarProps {
@@ -56,6 +57,7 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
   ]
 
   const shopMenuItems = [
+    { id: "shop-dashboard", label: "대시보드", icon: BarChart3, path: "/admin/shop" },
     { id: "shop-products", label: "상품관리", icon: Package, path: "/admin/shop/products" },
     { id: "shop-categories", label: "카테고리", icon: ShoppingBag, path: "/admin/shop/categories" },
     { id: "shop-orders", label: "주문관리", icon: ClipboardList, path: "/admin/shop/orders" },
