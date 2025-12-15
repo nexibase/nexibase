@@ -47,10 +47,46 @@ function getNetCancelUrl(idcName: string): string {
   }
 }
 
+// GET 요청 처리 (이니시스 팝업 모드에서 GET으로 호출될 수 있음)
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url)
+
+  // request에서 호스트 정보를 가져와 baseUrl 생성
+  const host = request.headers.get('host') || 'localhost:3003'
+  const protocol = request.headers.get('x-forwarded-proto') || 'http'
+  const baseUrl = process.env.NEXT_PUBLIC_URL || `${protocol}://${host}`
+
+  // 에러 파라미터가 있으면 에러 페이지로
+  const error = searchParams.get('error')
+  const message = searchParams.get('message')
+
+  if (error) {
+    return NextResponse.redirect(
+      new URL(`/shop/order/complete?error=${error}&message=${encodeURIComponent(message || '결제에 실패했습니다.')}`, baseUrl),
+      303
+    )
+  }
+
+  // 주문번호가 있으면 완료 페이지로
+  const orderNo = searchParams.get('orderNo') || searchParams.get('MOID')
+  if (orderNo) {
+    return NextResponse.redirect(
+      new URL(`/shop/order/complete?orderNo=${orderNo}`, baseUrl),
+      303
+    )
+  }
+
+  // 기타 경우 주문서 페이지로
+  return NextResponse.redirect(
+    new URL('/shop/order?error=payment_cancelled', baseUrl),
+    303
+  )
+}
+
 // 결제 승인 결과 처리 (POST)
 export async function POST(request: NextRequest) {
   // request에서 호스트 정보를 가져와 baseUrl 생성
-  const host = request.headers.get('host') || 'localhost:3004'
+  const host = request.headers.get('host') || 'localhost:3003'
   const protocol = request.headers.get('x-forwarded-proto') || 'http'
   const baseUrl = process.env.NEXT_PUBLIC_URL || `${protocol}://${host}`
 
