@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "npm run prebuild && next dev --turbopack",
     "prebuild": "node scripts/prebuild.js",
     "build": "npm run prebuild && next build",
     "start": "next start",
