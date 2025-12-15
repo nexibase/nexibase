@@ -202,7 +202,8 @@ export async function DELETE(
     const orderId = parseInt(id)
 
     const order = await prisma.order.findUnique({
-      where: { id: orderId }
+      where: { id: orderId },
+      include: { items: true }
     })
 
     if (!order) {
@@ -226,6 +227,12 @@ export async function DELETE(
         { error: '결제 완료된 주문은 취소/환불 처리 후 삭제할 수 있습니다.' },
         { status: 400 }
       )
+    }
+
+    // pending 상태에서 삭제 시 재고 복구 (결제 전이지만 재고가 차감되어 있는 경우)
+    // cancelled/refunded 상태는 이미 재고 복구가 되어 있으므로 제외
+    if (order.status === 'pending') {
+      await restoreStock(order.items)
     }
 
     // 소프트 삭제 (deletedAt 설정)
