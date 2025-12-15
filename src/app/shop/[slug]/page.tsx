@@ -304,11 +304,21 @@ export default function ProductDetailPage() {
       return
     }
 
-    // 장바구니에 추가 후 주문 페이지로 이동
-    addToCart()
-    setTimeout(() => {
-      router.push("/shop/cart")
-    }, 500)
+    // 주문 아이템 생성
+    const orderItem: CartItem = {
+      productId: product.id,
+      productName: product.name,
+      productSlug: product.slug,
+      productImage: product.images[0] || null,
+      optionId: selectedOption?.id || null,
+      optionText: getOptionText(),
+      price: currentPrice,
+      quantity: quantity,
+    }
+
+    // 주문 정보로 저장 후 바로 주문 페이지로 이동
+    localStorage.setItem("orderItems", JSON.stringify([orderItem]))
+    router.push("/shop/order")
   }
 
   const formatPrice = (price: number) => price.toLocaleString() + "원"
