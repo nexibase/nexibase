@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
-import Link from "next/link"
+import Script from "next/script"
 import { Header, Footer } from "@/themes"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -45,6 +45,28 @@ interface ShopSettings {
   refund_policy: string
 }
 
+interface InicisPaymentData {
+  version: string
+  mid: string
+  oid: string
+  goodname: string
+  price: number
+  currency: string
+  buyername: string
+  buyertel: string
+  buyeremail: string
+  timestamp: string
+  signature: string
+  mKey: string
+  returnUrl: string
+  closeUrl: string
+  gopaymethod: string
+  payViewType: string
+  quotabase: string
+  payUrl: string
+  testMode: boolean
+}
+
 export default function OrderPage() {
   const router = useRouter()
   const [orderItems, setOrderItems] = useState<OrderItem[]>([])
@@ -54,6 +76,11 @@ export default function OrderPage() {
 
   // 쇼핑몰 설정
   const [shopSettings, setShopSettings] = useState<ShopSettings | null>(null)
+
+  // 이니시스 결제
+  const [inicisScriptUrl, setInicisScriptUrl] = useState<string | null>(null)
+  const [inicisReady, setInicisReady] = useState(false)
+  const paymentFormRef = useRef<HTMLFormElement>(null)
 
   // 배송비
   const [deliveryFee, setDeliveryFee] = useState(0)
@@ -150,6 +177,59 @@ export default function OrderPage() {
 
   const formatPrice = (price: number) => price.toLocaleString() + "원"
 
+  // 이니시스 결제창 호출
+  const openInicisPayment = (paymentData: InicisPaymentData) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const win = window as any
+
+    if (!win.INIStdPay) {
+      setError("결제 모듈을 로딩 중입니다. 잠시 후 다시 시도해주세요.")
+      setSubmitting(false)
+      return
+    }
+
+    // 결제 폼 생성
+    const form = paymentFormRef.current
+    if (!form) {
+      setError("결제 폼을 찾을 수 없습니다.")
+      setSubmitting(false)
+      return
+    }
+
+    // 폼 필드 설정
+    form.innerHTML = ""
+    const fields = {
+      version: paymentData.version,
+      mid: paymentData.mid,
+      oid: paymentData.oid,
+      goodname: paymentData.goodname,
+      price: paymentData.price.toString(),
+      currency: paymentData.currency,
+      buyername: paymentData.buyername,
+      buyertel: paymentData.buyertel,
+      buyeremail: paymentData.buyeremail,
+      timestamp: paymentData.timestamp,
+      signature: paymentData.signature,
+      mKey: paymentData.mKey,
+      returnUrl: paymentData.returnUrl,
+      closeUrl: paymentData.closeUrl,
+      gopaymethod: paymentData.gopaymethod,
+      payViewType: paymentData.payViewType,
+      quotabase: paymentData.quotabase,
+    }
+
+    Object.entries(fields).forEach(([name, value]) => {
+      const input = document.createElement("input")
+      input.type = "hidden"
+      input.name = name
+      input.value = value
+      form.appendChild(input)
+    })
+
+    // 이니시스 결제창 호출
+    win.INIStdPay.pay("inicisPayForm")
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
@@ -168,6 +248,77 @@ export default function OrderPage() {
     setSubmitting(true)
 
     try {
+      // 카드결제인 경우 이니시스 결제 진행
+      if (paymentMethod === "card") {
+        const res = await fetch("/api/shop/payment/inicis", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            items: orderItems.map(item => ({
+              productId: item.productId,
+              optionId: item.optionId,
+              quantity: item.quantity,
+            })),
+            ordererName,
+            ordererPhone,
+            ordererEmail: ordererEmail || null,
+            recipientName,
+            recipientPhone,
+            zipCode,
+            address,
+            addressDetail: addressDetail || null,
+            deliveryMemo: deliveryMemo || null,
+          }),
+        })
+
+        const data = await res.json()
+
+        if (!res.ok) {
+          setError(data.error || "결제 준비 중 오류가 발생했습니다.")
+          setSubmitting(false)
+          return
+        }
+
+        // 장바구니에서 주문 상품 제거 (결제 완료 후 처리되므로 미리 제거)
+        const cart: OrderItem[] = JSON.parse(localStorage.getItem("cart") || "[]")
+        const orderedKeys = new Set(
+          orderItems.map(item => `${item.productId}-${item.optionId || "none"}`)
+        )
+        const newCart = cart.filter(
+          item => !orderedKeys.has(`${item.productId}-${item.optionId || "none"}`)
+        )
+        localStorage.setItem("cart", JSON.stringify(newCart))
+        localStorage.removeItem("orderItems")
+        window.dispatchEvent(new Event("cartUpdated"))
+
+        // 이니시스 스크립트 URL 설정 및 결제창 호출
+        setInicisScriptUrl(data.payment.payUrl)
+
+        // 스크립트 로드 후 결제창 호출
+        const checkAndPay = () => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const win = window as any
+          if (win.INIStdPay) {
+            openInicisPayment(data.payment)
+          } else {
+            setTimeout(checkAndPay, 100)
+          }
+        }
+
+        // 스크립트가 이미 로드되어 있으면 바로 호출
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const win = window as any
+        if (win.INIStdPay) {
+          openInicisPayment(data.payment)
+        } else {
+          // 스크립트 로드 대기
+          setTimeout(checkAndPay, 500)
+        }
+
+        return
+      }
+
+      // 무통장입금인 경우 기존 로직
       const res = await fetch("/api/shop/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -267,6 +418,23 @@ export default function OrderPage() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
+
+      {/* 이니시스 결제 스크립트 */}
+      {inicisScriptUrl && (
+        <Script
+          src={inicisScriptUrl}
+          strategy="afterInteractive"
+          onLoad={() => setInicisReady(true)}
+        />
+      )}
+
+      {/* 이니시스 결제 폼 (숨김) */}
+      <form
+        id="inicisPayForm"
+        ref={paymentFormRef}
+        method="post"
+        style={{ display: "none" }}
+      />
 
       <main className="flex-1">
         <div className="max-w-4xl mx-auto px-4 py-6">

@@ -14,6 +14,8 @@ import {
   CreditCard,
   Copy,
   Check,
+  XCircle,
+  AlertCircle,
 } from "lucide-react"
 
 interface Order {
@@ -71,6 +73,8 @@ function OrderCompleteContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const orderNo = searchParams.get("orderNo")
+  const paymentError = searchParams.get("error")
+  const errorMessage = searchParams.get("message")
 
   const [order, setOrder] = useState<Order | null>(null)
   const [shopSettings, setShopSettings] = useState<ShopSettings | null>(null)
@@ -79,13 +83,20 @@ function OrderCompleteContent() {
   const [copied, setCopied] = useState(false)
 
   useEffect(() => {
+    // 결제 에러가 있는 경우
+    if (paymentError) {
+      setError(errorMessage || "결제 처리 중 오류가 발생했습니다.")
+      setLoading(false)
+      return
+    }
+
     if (!orderNo) {
       router.push("/shop")
       return
     }
     loadOrder()
     loadShopSettings()
-  }, [orderNo])
+  }, [orderNo, paymentError, errorMessage])
 
   const loadOrder = async () => {
     try {
@@ -144,6 +155,64 @@ function OrderCompleteContent() {
     )
   }
 
+  // 결제 실패 화면
+  if (paymentError) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <Header />
+        <main className="flex-1">
+          <div className="max-w-2xl mx-auto px-4 py-8">
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mb-4">
+                <XCircle className="h-8 w-8 text-red-600" />
+              </div>
+              <h1 className="text-2xl font-bold mb-2">결제에 실패했습니다</h1>
+              <p className="text-muted-foreground">
+                {errorMessage || "결제 처리 중 오류가 발생했습니다."}
+              </p>
+            </div>
+
+            <Card className="mb-6 border-red-200">
+              <CardHeader className="bg-red-50">
+                <CardTitle className="text-lg flex items-center gap-2 text-red-800">
+                  <AlertCircle className="h-5 w-5" />
+                  결제 실패 안내
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4">
+                <p className="text-sm mb-4">
+                  결제가 정상적으로 처리되지 않았습니다. 다시 시도해주세요.
+                </p>
+                <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                  <li>카드 잔액이 충분한지 확인해주세요.</li>
+                  <li>카드 한도를 초과하지 않았는지 확인해주세요.</li>
+                  <li>문제가 지속되면 카드사에 문의해주세요.</li>
+                </ul>
+              </CardContent>
+            </Card>
+
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => router.push("/shop")}
+              >
+                쇼핑 계속하기
+              </Button>
+              <Button
+                className="flex-1"
+                onClick={() => router.push("/shop/cart")}
+              >
+                장바구니로 돌아가기
+              </Button>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    )
+  }
+
   if (error || !order) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
@@ -168,7 +237,9 @@ function OrderCompleteContent() {
             <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
               <CheckCircle2 className="h-8 w-8 text-green-600" />
             </div>
-            <h1 className="text-2xl font-bold mb-2">주문이 완료되었습니다</h1>
+            <h1 className="text-2xl font-bold mb-2">
+              {order.status === "paid" ? "결제가 완료되었습니다" : "주문이 완료되었습니다"}
+            </h1>
             <p className="text-muted-foreground">
               주문번호: <span className="font-mono font-medium">{order.orderNo}</span>
               <button
@@ -215,23 +286,44 @@ function OrderCompleteContent() {
             </Card>
           )}
 
-          {order.paymentMethod === "card" && order.status === "pending" && (
-            <Card className="mb-6 border-primary">
-              <CardHeader className="bg-primary/5">
-                <CardTitle className="text-lg flex items-center gap-2">
+          {order.paymentMethod === "card" && order.status === "paid" && (
+            <Card className="mb-6 border-green-200">
+              <CardHeader className="bg-green-50">
+                <CardTitle className="text-lg flex items-center gap-2 text-green-800">
                   <CreditCard className="h-5 w-5" />
-                  카드 결제
+                  카드 결제 완료
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4">
+                <div className="p-4 bg-muted rounded-lg">
+                  <p className="text-sm">
+                    <span className="font-medium">결제 금액:</span>{" "}
+                    <span className="text-lg font-bold text-primary">
+                      {formatPrice(order.finalPrice)}
+                    </span>
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    카드 결제가 정상적으로 완료되었습니다.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {order.paymentMethod === "card" && order.status === "pending" && (
+            <Card className="mb-6 border-yellow-200">
+              <CardHeader className="bg-yellow-50">
+                <CardTitle className="text-lg flex items-center gap-2 text-yellow-800">
+                  <AlertCircle className="h-5 w-5" />
+                  결제 대기 중
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-4">
                 <p className="text-sm mb-4">
-                  카드 결제를 진행해주세요.
+                  결제가 진행 중입니다. 잠시만 기다려주세요.
                 </p>
-                <Button className="w-full" size="lg">
-                  {formatPrice(order.finalPrice)} 결제하기
-                </Button>
-                <p className="text-xs text-muted-foreground mt-2 text-center">
-                  결제 창으로 이동합니다.
+                <p className="text-xs text-muted-foreground">
+                  결제가 완료되지 않으면 다시 시도해주세요.
                 </p>
               </CardContent>
             </Card>

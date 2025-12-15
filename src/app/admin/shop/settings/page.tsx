@@ -15,7 +15,9 @@ import {
   FileText,
   AlertCircle,
   Check,
+  CreditCard,
 } from "lucide-react"
+import { Sidebar } from "@/components/admin/Sidebar"
 
 interface ShopSettings {
   shop_name: string
@@ -27,6 +29,11 @@ interface ShopSettings {
   option1_name: string
   option2_name: string
   option3_name: string
+  // PG 설정
+  pg_provider: string
+  pg_mid: string
+  pg_signkey: string
+  pg_test_mode: string
 }
 
 const DEFAULT_SETTINGS: ShopSettings = {
@@ -39,6 +46,11 @@ const DEFAULT_SETTINGS: ShopSettings = {
   option1_name: "색상",
   option2_name: "사이즈",
   option3_name: "모델",
+  // PG 설정
+  pg_provider: "inicis",
+  pg_mid: "",
+  pg_signkey: "",
+  pg_test_mode: "true",
 }
 
 export default function ShopSettingsPage() {
@@ -99,14 +111,20 @@ export default function ShopSettingsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="flex min-h-screen bg-muted/30">
+        <Sidebar />
+        <main className="flex-1 p-6 flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </main>
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex min-h-screen bg-muted/30">
+      <Sidebar />
+      <main className="flex-1 p-6">
+        <div className="max-w-6xl mx-auto space-y-6">
       {/* 헤더 */}
       <div className="flex items-center justify-between">
         <div>
@@ -312,7 +330,71 @@ export default function ShopSettingsPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* PG 결제 설정 */}
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CreditCard className="h-5 w-5" />
+              PG 결제 설정 (이니시스)
+            </CardTitle>
+            <CardDescription>
+              카드결제를 위한 이니시스 PG 설정입니다. 테스트 모드에서는 실제 결제가 되지 않습니다.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="pg_mid">상점 ID (MID)</Label>
+                <Input
+                  id="pg_mid"
+                  value={settings.pg_mid}
+                  onChange={(e) => handleChange("pg_mid", e.target.value)}
+                  placeholder="예: INIpayTest"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  이니시스에서 발급받은 상점 아이디
+                </p>
+              </div>
+              <div>
+                <Label htmlFor="pg_signkey">SignKey</Label>
+                <Input
+                  id="pg_signkey"
+                  type="password"
+                  value={settings.pg_signkey}
+                  onChange={(e) => handleChange("pg_signkey", e.target.value)}
+                  placeholder="SignKey를 입력하세요"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  이니시스에서 발급받은 서명키
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="pg_test_mode"
+                checked={settings.pg_test_mode === "true"}
+                onChange={(e) => handleChange("pg_test_mode", e.target.checked ? "true" : "false")}
+                className="rounded"
+              />
+              <label htmlFor="pg_test_mode" className="text-sm cursor-pointer">
+                테스트 모드 (실제 결제 안됨)
+              </label>
+            </div>
+            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-sm">
+              <p className="font-medium text-yellow-800 mb-2">테스트 모드 안내</p>
+              <ul className="list-disc list-inside text-yellow-700 space-y-1">
+                <li>테스트 MID: <code className="bg-yellow-100 px-1 rounded">INIpayTest</code></li>
+                <li>테스트 SignKey: 이니시스 개발자센터에서 확인</li>
+                <li>실제 운영 시 테스트 모드를 해제하세요</li>
+              </ul>
+            </div>
+          </CardContent>
+        </Card>
       </div>
+        </div>
+      </main>
     </div>
   )
 }
