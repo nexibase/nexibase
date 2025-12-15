@@ -50,3 +50,6 @@ next-env.d.ts
 # 사용자 커스텀 테마
 # src/themes/default를 복사해서 사용
 /src/themes/custom
+
+# 테마 index.ts (prebuild 스크립트로 자동 생성)
+/src/themes/index.ts

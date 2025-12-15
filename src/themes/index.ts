@@ -1,19 +1,14 @@
 /**
- * 테마 컴포넌트 export
+ * 테마 컴포넌트 export (자동 생성됨)
  *
- * 커스터마이징 방법:
- * 1. src/themes/custom/ 폴더에 컴포넌트 복사
- * 2. 아래 import를 './custom/...'으로 변경
+ * 현재 테마: default
+ * 생성 시간: 2025-12-15T01:54:08.656Z
  *
- * 예시:
- * export { default as Header } from './custom/Header'
+ * 테마 변경 방법:
+ * 1. .env 파일에서 NEXT_PUBLIC_THEME 값 변경
+ * 2. npm run build 실행
  */
 
-// Header - 커스터마이징: './custom/Header'로 변경
 export { default as Header } from './default/Header'
-
-// Footer - 커스터마이징: './custom/Footer'로 변경
 export { default as Footer } from './default/Footer'
-
-// HomePage - 커스터마이징: './custom/HomePage'로 변경
 export { default as HomePage } from './default/HomePage'
