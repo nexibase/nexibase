@@ -6,15 +6,8 @@ import Link from "next/link"
 import { Sidebar } from "@/components/admin/Sidebar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import {
   Table,
   TableBody,
@@ -138,7 +131,6 @@ export default function AdminOrdersPage() {
 
   const handleStatusChange = (newStatus: string) => {
     const params = new URLSearchParams(searchParams.toString())
-    // 삭제된 주문 탭 클릭 시
     if (newStatus === 'deleted') {
       params.set('deleted', 'true')
       params.delete('status')
@@ -204,214 +196,213 @@ export default function AdminOrdersPage() {
       <main className="flex-1 p-6">
         <div className="space-y-6">
           {/* 헤더 */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">
-            {showDeleted ? (
-              <span className="flex items-center gap-2">
-                <Trash2 className="h-6 w-6 text-red-500" />
-                삭제된 주문
-              </span>
-            ) : '주문 관리'}
-          </h1>
-          <p className="text-muted-foreground">
-            총 {total}개의 {showDeleted ? '삭제된 ' : ''}주문
-          </p>
-        </div>
-        <Button variant="outline" onClick={fetchOrders}>
-          <RefreshCw className="h-4 w-4 mr-2" />
-          새로고침
-        </Button>
-      </div>
-
-      {/* 상태별 통계 */}
-      {stats && (
-        <div className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-11 gap-2">
-          <button
-            onClick={() => handleStatusChange('all')}
-            className={`p-3 rounded-lg text-center transition-colors ${
-              !status && !showDeleted ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'
-            }`}
-          >
-            <p className="text-lg font-bold">{stats.all}</p>
-            <p className="text-xs">전체</p>
-          </button>
-          {Object.entries(STATUS_LABELS).map(([key, { label }]) => (
-            <button
-              key={key}
-              onClick={() => handleStatusChange(key)}
-              className={`p-3 rounded-lg text-center transition-colors ${
-                status === key && !showDeleted ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'
-              }`}
-            >
-              <p className="text-lg font-bold">{stats[key as keyof Stats] || 0}</p>
-              <p className="text-xs">{label}</p>
-            </button>
-          ))}
-          {/* 삭제된 주문 탭 */}
-          <button
-            onClick={() => handleStatusChange('deleted')}
-            className={`p-3 rounded-lg text-center transition-colors ${
-              showDeleted ? 'bg-red-500 text-white' : 'bg-muted hover:bg-muted/80'
-            }`}
-          >
-            <p className="text-lg font-bold">{stats.deleted || 0}</p>
-            <p className="text-xs flex items-center justify-center gap-1">
-              <Trash2 className="h-3 w-3" />
-              삭제됨
-            </p>
-          </button>
-        </div>
-      )}
-
-      {/* 검색 */}
-      <Card>
-        <CardContent className="pt-6">
-          <form onSubmit={handleSearch} className="flex gap-2">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="주문번호, 주문자명, 연락처 검색..."
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                className="pl-10"
-              />
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold">
+                {showDeleted ? (
+                  <span className="flex items-center gap-2">
+                    <Trash2 className="h-6 w-6 text-red-500" />
+                    삭제된 주문
+                  </span>
+                ) : '주문 관리'}
+              </h1>
+              <p className="text-muted-foreground">
+                총 {total}개의 {showDeleted ? '삭제된 ' : ''}주문
+              </p>
             </div>
-            <Button type="submit">검색</Button>
-          </form>
-        </CardContent>
-      </Card>
+            <Button variant="outline" onClick={fetchOrders}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              새로고침
+            </Button>
+          </div>
 
-      {/* 주문 목록 */}
-      <Card>
-        <CardContent className="p-0">
-          {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          {/* 상태별 통계 */}
+          {stats && (
+            <div className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-11 gap-2">
+              <button
+                onClick={() => handleStatusChange('all')}
+                className={`p-3 rounded-lg text-center transition-colors ${
+                  !status && !showDeleted ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'
+                }`}
+              >
+                <p className="text-lg font-bold">{stats.all}</p>
+                <p className="text-xs">전체</p>
+              </button>
+              {Object.entries(STATUS_LABELS).map(([key, { label }]) => (
+                <button
+                  key={key}
+                  onClick={() => handleStatusChange(key)}
+                  className={`p-3 rounded-lg text-center transition-colors ${
+                    status === key && !showDeleted ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'
+                  }`}
+                >
+                  <p className="text-lg font-bold">{stats[key as keyof Stats] || 0}</p>
+                  <p className="text-xs">{label}</p>
+                </button>
+              ))}
+              <button
+                onClick={() => handleStatusChange('deleted')}
+                className={`p-3 rounded-lg text-center transition-colors ${
+                  showDeleted ? 'bg-red-500 text-white' : 'bg-muted hover:bg-muted/80'
+                }`}
+              >
+                <p className="text-lg font-bold">{stats.deleted || 0}</p>
+                <p className="text-xs flex items-center justify-center gap-1">
+                  <Trash2 className="h-3 w-3" />
+                  삭제됨
+                </p>
+              </button>
             </div>
-          ) : orders.length === 0 ? (
-            <div className="text-center py-20">
-              <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">주문이 없습니다.</p>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[140px]">주문번호</TableHead>
-                  <TableHead>주문상품</TableHead>
-                  <TableHead>주문자</TableHead>
-                  <TableHead className="text-right">결제금액</TableHead>
-                  <TableHead>결제방법</TableHead>
-                  <TableHead>상태</TableHead>
-                  <TableHead>주문일시</TableHead>
-                  <TableHead className="w-[80px]"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {orders.map((order) => (
-                  <TableRow key={order.id}>
-                    <TableCell>
-                      <div className="font-mono text-sm leading-tight">
-                        <div>{order.orderNo.split('-')[0]}</div>
-                        <div className="text-muted-foreground">-{order.orderNo.split('-')[1]}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {order.items[0]?.productImage ? (
-                          <img
-                            src={order.items[0].productImage}
-                            alt=""
-                            className="w-10 h-10 rounded object-cover"
-                          />
-                        ) : (
-                          <div className="w-10 h-10 rounded bg-muted flex items-center justify-center">
-                            <Package className="h-4 w-4 text-muted-foreground" />
-                          </div>
-                        )}
-                        <div>
-                          <p className="font-medium line-clamp-1">
-                            {order.items[0]?.productName}
-                            {order.items.length > 1 && ` 외 ${order.items.length - 1}건`}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            총 {order.items.reduce((sum, item) => sum + item.quantity, 0)}개
-                          </p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">{order.ordererName}</p>
-                        <p className="text-xs text-muted-foreground">{order.ordererPhone}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {formatPrice(order.finalPrice)}
-                    </TableCell>
-                    <TableCell>
-                      {order.paymentMethod === 'bank' ? '무통장' : '카드'}
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={STATUS_LABELS[order.status]?.color || 'bg-gray-500'}>
-                        {STATUS_LABELS[order.status]?.label || order.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {formatDate(order.createdAt)}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        <Link href={`/admin/shop/orders/${order.id}`}>
-                          <Button variant="ghost" size="icon">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                        {showDeleted && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleRestore(order.id)}
-                            title="복원"
-                          >
-                            <RotateCcw className="h-4 w-4 text-green-600" />
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
           )}
-        </CardContent>
-      </Card>
 
-      {/* 페이지네이션 */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setPage(p => Math.max(1, p - 1))}
-            disabled={page === 1}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <span className="text-sm text-muted-foreground px-4">
-            {page} / {totalPages}
-          </span>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-            disabled={page === totalPages}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-      )}
+          {/* 검색 */}
+          <Card>
+            <CardContent className="pt-6">
+              <form onSubmit={handleSearch} className="flex gap-2">
+                <div className="relative flex-1 max-w-md">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="주문번호, 주문자명, 연락처 검색..."
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <Button type="submit">검색</Button>
+              </form>
+            </CardContent>
+          </Card>
+
+          {/* 주문 목록 */}
+          <Card>
+            <CardContent className="p-0">
+              {loading ? (
+                <div className="flex items-center justify-center py-20">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : orders.length === 0 ? (
+                <div className="text-center py-20">
+                  <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">주문이 없습니다.</p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[140px]">주문번호</TableHead>
+                      <TableHead>주문상품</TableHead>
+                      <TableHead>주문자</TableHead>
+                      <TableHead className="text-right">결제금액</TableHead>
+                      <TableHead>결제방법</TableHead>
+                      <TableHead>상태</TableHead>
+                      <TableHead>주문일시</TableHead>
+                      <TableHead className="w-[80px]"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {orders.map((order) => (
+                      <TableRow key={order.id}>
+                        <TableCell>
+                          <div className="font-mono text-sm leading-tight">
+                            <div>{order.orderNo.split('-')[0]}</div>
+                            <div className="text-muted-foreground">-{order.orderNo.split('-')[1]}</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            {order.items[0]?.productImage ? (
+                              <img
+                                src={order.items[0].productImage}
+                                alt=""
+                                className="w-10 h-10 rounded object-cover"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 rounded bg-muted flex items-center justify-center">
+                                <Package className="h-4 w-4 text-muted-foreground" />
+                              </div>
+                            )}
+                            <div>
+                              <p className="font-medium line-clamp-1">
+                                {order.items[0]?.productName}
+                                {order.items.length > 1 && ` 외 ${order.items.length - 1}건`}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                총 {order.items.reduce((sum, item) => sum + item.quantity, 0)}개
+                              </p>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium">{order.ordererName}</p>
+                            <p className="text-xs text-muted-foreground">{order.ordererPhone}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right font-medium">
+                          {formatPrice(order.finalPrice)}
+                        </TableCell>
+                        <TableCell>
+                          {order.paymentMethod === 'bank' ? '무통장' : '카드'}
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={STATUS_LABELS[order.status]?.color || 'bg-gray-500'}>
+                            {STATUS_LABELS[order.status]?.label || order.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {formatDate(order.createdAt)}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <Link href={`/admin/shop/orders/${order.id}`}>
+                              <Button variant="ghost" size="icon">
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            </Link>
+                            {showDeleted && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleRestore(order.id)}
+                                title="복원"
+                              >
+                                <RotateCcw className="h-4 w-4 text-green-600" />
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* 페이지네이션 */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="text-sm text-muted-foreground px-4">
+                {page} / {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
         </div>
       </main>
     </div>
