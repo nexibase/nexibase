@@ -3,8 +3,12 @@
  * 환경 변수 NEXT_PUBLIC_THEME에 따라 테마 index.ts 생성
  *
  * 사용법:
- * 1. .env 파일에서 NEXT_PUBLIC_THEME=custom 설정
+ * 1. .env 파일에서 NEXT_PUBLIC_THEME=user 설정
  * 2. npm run build 실행 (자동으로 이 스크립트 실행됨)
+ *
+ * 동작 방식:
+ * - 지정 테마에 컴포넌트가 있으면 해당 컴포넌트 사용
+ * - 없으면 default 테마에서 fallback
  */
 
 const fs = require('fs')
@@ -29,35 +33,50 @@ loadEnv()
 const theme = process.env.NEXT_PUBLIC_THEME || 'default'
 const themesDir = path.join(process.cwd(), 'src', 'themes')
 const themeDir = path.join(themesDir, theme)
+const defaultDir = path.join(themesDir, 'default')
 const indexPath = path.join(themesDir, 'index.ts')
 
 console.log(`[prebuild] 테마: ${theme}`)
 
 // 테마 폴더 존재 확인
-if (!fs.existsSync(themeDir)) {
+if (theme !== 'default' && !fs.existsSync(themeDir)) {
   console.log(`[prebuild] 경고: ${theme} 테마 폴더가 없습니다. default 테마를 사용합니다.`)
-  process.env.NEXT_PUBLIC_THEME = 'default'
 }
 
-const actualTheme = fs.existsSync(themeDir) ? theme : 'default'
-
-// 테마 폴더 내 컴포넌트 확인
+// 기본 컴포넌트 목록
 const components = ['Header', 'Footer', 'HomePage']
-const availableComponents = components.filter(comp => {
-  const compPath = path.join(themesDir, actualTheme, `${comp}.tsx`)
-  return fs.existsSync(compPath)
+
+// 각 컴포넌트별로 어느 테마에서 가져올지 결정
+const componentSources = components.map(comp => {
+  const themeCompPath = path.join(themeDir, `${comp}.tsx`)
+  const defaultCompPath = path.join(defaultDir, `${comp}.tsx`)
+
+  // 지정 테마에 있으면 지정 테마에서, 없으면 default에서
+  if (theme !== 'default' && fs.existsSync(themeCompPath)) {
+    return { name: comp, source: theme }
+  } else if (fs.existsSync(defaultCompPath)) {
+    return { name: comp, source: 'default' }
+  } else {
+    return { name: comp, source: null }
+  }
 })
 
+// 사용 가능한 컴포넌트만 필터
+const availableComponents = componentSources.filter(c => c.source !== null)
+
 if (availableComponents.length === 0) {
-  console.error(`[prebuild] 에러: ${actualTheme} 테마에 컴포넌트가 없습니다.`)
+  console.error(`[prebuild] 에러: 사용 가능한 컴포넌트가 없습니다.`)
   process.exit(1)
 }
 
 // index.ts 생성
+const customComponents = availableComponents.filter(c => c.source === theme)
+const fallbackComponents = availableComponents.filter(c => c.source === 'default' && theme !== 'default')
+
 const indexContent = `/**
  * 테마 컴포넌트 export (자동 생성됨)
  *
- * 현재 테마: ${actualTheme}
+ * 현재 테마: ${theme}
  * 생성 시간: ${new Date().toISOString()}
  *
  * 테마 변경 방법:
@@ -65,11 +84,21 @@ const indexContent = `/**
  * 2. npm run build 실행
  */
 
-${availableComponents.map(comp =>
-  `export { default as ${comp} } from './${actualTheme}/${comp}'`
+${availableComponents.map(c =>
+  `export { default as ${c.name} } from './${c.source}/${c.name}'`
 ).join('\n')}
 `
 
 fs.writeFileSync(indexPath, indexContent)
-console.log(`[prebuild] src/themes/index.ts 생성 완료 (테마: ${actualTheme})`)
-console.log(`[prebuild] 포함된 컴포넌트: ${availableComponents.join(', ')}`)
+console.log(`[prebuild] src/themes/index.ts 생성 완료`)
+
+if (theme === 'default') {
+  console.log(`[prebuild] 컴포넌트: ${availableComponents.map(c => c.name).join(', ')}`)
+} else {
+  if (customComponents.length > 0) {
+    console.log(`[prebuild] ${theme} 테마: ${customComponents.map(c => c.name).join(', ')}`)
+  }
+  if (fallbackComponents.length > 0) {
+    console.log(`[prebuild] default fallback: ${fallbackComponents.map(c => c.name).join(', ')}`)
+  }
+}
