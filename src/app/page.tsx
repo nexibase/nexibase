@@ -1,4 +1,4 @@
-import HomePage from '@/themes/default/HomePage'
+import { HomePage } from '@/themes'
 
 export default function Page() {
   return <HomePage />
