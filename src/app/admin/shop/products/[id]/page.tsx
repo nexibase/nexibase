@@ -304,7 +304,8 @@ export default function ProductEditPage({ params }: { params: Promise<{ id: stri
     for (const file of Array.from(files)) {
       const formData = new FormData()
       formData.append('file', file)
-      formData.append('folder', 'products')  // 상품 이미지 전용 폴더
+      formData.append('folder', 'products')
+      formData.append('productId', id)  // 상품별 폴더 분리
 
       try {
         const res = await fetch('/api/tiptap-image-upload', {

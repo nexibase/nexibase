@@ -9,7 +9,9 @@ import sharp from 'sharp'
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
 const MAX_SIZE = 10 * 1024 * 1024 // 10MB (리사이징 전)
 const MAX_WIDTH = 1200 // 최대 너비
+const THUMB_WIDTH = 200 // 썸네일 너비
 const QUALITY = 80 // 압축 품질
+const THUMB_QUALITY = 70 // 썸네일 압축 품질
 
 // 사용자 확인
 async function getUser(request: NextRequest): Promise<{ userId: number | null }> {
@@ -44,6 +46,8 @@ export async function POST(request: NextRequest) {
     const file = (formData.get('file') || formData.get('image')) as File | null
     // 폴더 지정 (기본값: 년/월 기반)
     const folder = formData.get('folder') as string | null
+    // 상품 ID (folder가 'products'일 때 사용)
+    const productId = formData.get('productId') as string | null
 
     if (!file) {
       return NextResponse.json(
@@ -77,8 +81,12 @@ export async function POST(request: NextRequest) {
     let uploadDir: string
     let urlPath: string
 
-    if (folder === 'products') {
-      // 상품 이미지: /uploads/products/
+    if (folder === 'products' && productId) {
+      // 상품 이미지: /uploads/products/{productId}/
+      uploadDir = path.join(process.cwd(), 'public', 'uploads', 'products', productId)
+      urlPath = `/uploads/products/${productId}`
+    } else if (folder === 'products') {
+      // 상품 이미지 (ID 없음): /uploads/products/
       uploadDir = path.join(process.cwd(), 'public', 'uploads', 'products')
       urlPath = '/uploads/products'
     } else {
@@ -101,7 +109,10 @@ export async function POST(request: NextRequest) {
 
     // GIF는 애니메이션 유지를 위해 그대로 저장
     let outputBuffer: Buffer
+    let thumbBuffer: Buffer
     let outputFilename = filename
+    let thumbFilename = `${timestamp}-${random}-thumb.webp`
+    const isProductImage = folder === 'products'
 
     if (file.type === 'image/gif') {
       // GIF는 리사이징만 (애니메이션 유지)
@@ -110,27 +121,46 @@ export async function POST(request: NextRequest) {
         .gif()
         .toBuffer()
       outputFilename = `${timestamp}-${random}.gif`
+      // GIF 썸네일은 첫 프레임만 추출해서 WebP로 변환
+      thumbBuffer = await sharp(inputBuffer, { animated: false })
+        .resize({ width: THUMB_WIDTH, height: THUMB_WIDTH, fit: 'cover' })
+        .webp({ quality: THUMB_QUALITY })
+        .toBuffer()
     } else {
       // 나머지는 WebP로 변환 + 리사이징
       outputBuffer = await sharp(inputBuffer)
         .resize({ width: MAX_WIDTH, withoutEnlargement: true })
         .webp({ quality: QUALITY })
         .toBuffer()
+      // 썸네일 생성 (정사각형, 중앙 크롭)
+      thumbBuffer = await sharp(inputBuffer)
+        .resize({ width: THUMB_WIDTH, height: THUMB_WIDTH, fit: 'cover' })
+        .webp({ quality: THUMB_QUALITY })
+        .toBuffer()
     }
 
-    // 파일 저장
+    // 원본 파일 저장
     const filePath = path.join(uploadDir, outputFilename)
     await sharp(outputBuffer).toFile(filePath)
+
+    // 썸네일 파일 저장 (상품 이미지인 경우에만)
+    let thumbnailUrl: string | undefined
+    if (isProductImage) {
+      const thumbPath = path.join(uploadDir, thumbFilename)
+      await sharp(thumbBuffer).toFile(thumbPath)
+      thumbnailUrl = `${urlPath}/${thumbFilename}`
+    }
 
     // URL 반환
     const url = `${urlPath}/${outputFilename}`
 
     // 원본 크기와 변환 후 크기 로깅
-    console.log(`이미지 업로드: ${file.name} (${(file.size / 1024).toFixed(1)}KB) → ${outputFilename} (${(outputBuffer.length / 1024).toFixed(1)}KB)`)
+    console.log(`이미지 업로드: ${file.name} (${(file.size / 1024).toFixed(1)}KB) → ${outputFilename} (${(outputBuffer.length / 1024).toFixed(1)}KB)${isProductImage ? `, 썸네일: ${thumbFilename}` : ''}`)
 
     return NextResponse.json({
       success: true,
       url,
+      thumbnailUrl,
       originalSize: file.size,
       compressedSize: outputBuffer.length
     })
