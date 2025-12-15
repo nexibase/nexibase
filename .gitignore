@@ -46,3 +46,7 @@ next-env.d.ts
 # 사용자 커스터마이징용 app 폴더
 # src/app을 복사해서 사용 (app/이 있으면 src/app보다 우선)
 /app
+
+# 사용자 커스텀 테마
+# src/themes/default를 복사해서 사용
+/src/themes/custom
