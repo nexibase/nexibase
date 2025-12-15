@@ -195,10 +195,9 @@ export async function POST(request: NextRequest) {
 
       // URL 설정
       returnUrl: `${process.env.NEXT_PUBLIC_URL || 'http://localhost:3004'}/api/shop/payment/inicis/return`,
-      // closeUrl은 결제창 닫기 버튼 클릭시 호출됨
-      // about:blank를 사용하여 Private Network Access 오류 방지
-      // 결제 취소 처리는 주문서 페이지의 focus 이벤트에서 처리
-      closeUrl: 'about:blank',
+      // closeUrl은 결제창 닫기 버튼 클릭시 호출됨 (요청 페이지와 동일 도메인 필수)
+      // 로컬 개발 환경에서는 Private Network Access 오류가 발생할 수 있으나 무시 가능
+      closeUrl: `${process.env.NEXT_PUBLIC_URL || 'http://localhost:3004'}/shop/order`,
 
       // 결제 방식
       gopaymethod: 'Card',
