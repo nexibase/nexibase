@@ -28,6 +28,7 @@ import {
   Package,
   Settings,
   Image as ImageIcon,
+  ExternalLink,
 } from "lucide-react"
 import Link from "next/link"
 
@@ -349,10 +350,18 @@ export default function ProductEditPage({ params }: { params: Promise<{ id: stri
                 <p className="text-muted-foreground">{product.name}</p>
               </div>
             </div>
-            <Button onClick={handleSave} disabled={saving}>
-              {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
-              저장
-            </Button>
+            <div className="flex items-center gap-2">
+              <Link href={`/shop/${product.slug}`} target="_blank">
+                <Button variant="outline">
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  바로가기
+                </Button>
+              </Link>
+              <Button onClick={handleSave} disabled={saving}>
+                {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                저장
+              </Button>
+            </div>
           </div>
 
           {/* 탭 */}
