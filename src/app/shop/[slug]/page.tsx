@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useState, useEffect, useMemo, useCallback } from "react"
+import { useParams, useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Header, Footer } from "@/themes"
 import { Button } from "@/components/ui/button"
@@ -114,7 +114,23 @@ interface ReviewableOrder {
 export default function ProductDetailPage() {
   const params = useParams()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const slug = params.slug as string
+
+  // URL 기반 탭 상태
+  const tabParam = searchParams.get('tab')
+  const activeTab: 'detail' | 'review' | 'qna' = (tabParam === 'review' || tabParam === 'qna') ? tabParam : 'detail'
+
+  const setActiveTab = useCallback((tab: 'detail' | 'review' | 'qna') => {
+    const newParams = new URLSearchParams(searchParams.toString())
+    if (tab === 'detail') {
+      newParams.delete('tab')
+    } else {
+      newParams.set('tab', tab)
+    }
+    const queryString = newParams.toString()
+    router.replace(`/shop/${slug}${queryString ? `?${queryString}` : ''}`, { scroll: false })
+  }, [router, slug, searchParams])
 
   const [product, setProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)
@@ -133,9 +149,6 @@ export default function ProductDetailPage() {
   const [addingToCart, setAddingToCart] = useState(false)
   const [cartMessage, setCartMessage] = useState<string | null>(null)
   const [showCartModal, setShowCartModal] = useState(false)
-
-  // 탭 상태
-  const [activeTab, setActiveTab] = useState<'detail' | 'review' | 'qna'>('detail')
 
   // 리뷰 상태
   const [reviews, setReviews] = useState<Review[]>([])
