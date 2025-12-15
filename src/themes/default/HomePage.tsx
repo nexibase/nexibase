@@ -8,8 +8,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
 import { Users, MessageCircle, TrendingUp, Star, Heart, Share2, User } from "lucide-react"
 import Link from "next/link"
-import { Header } from "@/components/layout/Header"
-import { Footer } from "@/components/layout/Footer"
+import Header from "@/themes/default/Header"
+import Footer from "@/themes/default/Footer"
 
 interface UserInfo {
   id: string
