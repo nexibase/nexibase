@@ -26,30 +26,18 @@ async function getShopSettings() {
   return settingsMap
 }
 
-// 주문번호 생성 (순차 번호)
-async function generateOrderNo(): Promise<string> {
-  const today = new Date()
-  const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '')
-  const prefix = `ORD${dateStr}`
+// 주문번호 생성 (YYMMDDHHmmss + 랜덤 4자리 = 16자리)
+function generateOrderNo(): string {
+  const now = new Date()
+  const yy = String(now.getFullYear()).slice(-2)
+  const mm = String(now.getMonth() + 1).padStart(2, '0')
+  const dd = String(now.getDate()).padStart(2, '0')
+  const hh = String(now.getHours()).padStart(2, '0')
+  const mi = String(now.getMinutes()).padStart(2, '0')
+  const ss = String(now.getSeconds()).padStart(2, '0')
+  const rand = String(Math.floor(Math.random() * 10000)).padStart(4, '0')
 
-  // 오늘 마지막 주문번호 조회
-  const lastOrder = await prisma.order.findFirst({
-    where: {
-      orderNo: { startsWith: prefix }
-    },
-    orderBy: { orderNo: 'desc' }
-  })
-
-  let sequence = 1
-  if (lastOrder) {
-    // ORD20251215-0001 형식에서 마지막 4자리 추출
-    const lastSeq = parseInt(lastOrder.orderNo.slice(-4))
-    if (!isNaN(lastSeq)) {
-      sequence = lastSeq + 1
-    }
-  }
-
-  return `${prefix}-${String(sequence).padStart(4, '0')}`
+  return `${yy}${mm}${dd}${hh}${mi}${ss}${rand}`
 }
 
 // SHA256 해시 생성
@@ -149,7 +137,7 @@ export async function POST(request: NextRequest) {
     const finalPrice = totalPrice + deliveryFee
 
     // 임시 주문 데이터 생성 (결제 완료 전까지 pending 상태)
-    const orderNo = await generateOrderNo()
+    const orderNo = generateOrderNo()
 
     const order = await prisma.order.create({
       data: {
