@@ -187,7 +187,7 @@ async function restoreStock(items: { productId: number; optionId: number | null;
   }
 }
 
-// 주문 삭제
+// 주문 삭제 (소프트 삭제)
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -202,14 +202,21 @@ export async function DELETE(
     const orderId = parseInt(id)
 
     const order = await prisma.order.findUnique({
-      where: { id: orderId },
-      include: { items: true }
+      where: { id: orderId }
     })
 
     if (!order) {
       return NextResponse.json(
         { error: '주문을 찾을 수 없습니다.' },
         { status: 404 }
+      )
+    }
+
+    // 이미 삭제된 주문인지 확인
+    if (order.deletedAt) {
+      return NextResponse.json(
+        { error: '이미 삭제된 주문입니다.' },
+        { status: 400 }
       )
     }
 
@@ -221,9 +228,10 @@ export async function DELETE(
       )
     }
 
-    // 주문 삭제 (items는 cascade로 자동 삭제)
-    await prisma.order.delete({
-      where: { id: orderId }
+    // 소프트 삭제 (deletedAt 설정)
+    await prisma.order.update({
+      where: { id: orderId },
+      data: { deletedAt: new Date() }
     })
 
     return NextResponse.json({
@@ -234,6 +242,67 @@ export async function DELETE(
     console.error('주문 삭제 에러:', error)
     return NextResponse.json(
       { error: '주문 삭제 중 오류가 발생했습니다.' },
+      { status: 500 }
+    )
+  }
+}
+
+// 주문 복원
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await getSession()
+    if (!session || session.role !== 'admin') {
+      return NextResponse.json({ error: '권한이 없습니다.' }, { status: 403 })
+    }
+
+    const { id } = await params
+    const orderId = parseInt(id)
+    const body = await request.json()
+    const { action } = body
+
+    if (action !== 'restore') {
+      return NextResponse.json(
+        { error: '지원하지 않는 작업입니다.' },
+        { status: 400 }
+      )
+    }
+
+    const order = await prisma.order.findUnique({
+      where: { id: orderId }
+    })
+
+    if (!order) {
+      return NextResponse.json(
+        { error: '주문을 찾을 수 없습니다.' },
+        { status: 404 }
+      )
+    }
+
+    // 삭제되지 않은 주문인지 확인
+    if (!order.deletedAt) {
+      return NextResponse.json(
+        { error: '삭제되지 않은 주문입니다.' },
+        { status: 400 }
+      )
+    }
+
+    // 복원 (deletedAt을 null로 설정)
+    await prisma.order.update({
+      where: { id: orderId },
+      data: { deletedAt: null }
+    })
+
+    return NextResponse.json({
+      success: true,
+      message: '주문이 복원되었습니다.'
+    })
+  } catch (error) {
+    console.error('주문 복원 에러:', error)
+    return NextResponse.json(
+      { error: '주문 복원 중 오류가 발생했습니다.' },
       { status: 500 }
     )
   }

@@ -17,11 +17,19 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search') || ''
     const startDate = searchParams.get('startDate') || ''
     const endDate = searchParams.get('endDate') || ''
+    const deleted = searchParams.get('deleted') === 'true'  // 삭제된 주문만 보기
 
     const skip = (page - 1) * limit
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = {}
+
+    // 삭제 필터 (기본: 삭제되지 않은 주문만)
+    if (deleted) {
+      where.deletedAt = { not: null }
+    } else {
+      where.deletedAt = null
+    }
 
     // 상태 필터
     if (status) {
@@ -77,14 +85,21 @@ export async function GET(request: NextRequest) {
       prisma.order.count({ where })
     ])
 
-    // 상태별 통계
-    const statusCounts = await prisma.order.groupBy({
-      by: ['status'],
-      _count: { id: true }
-    })
+    // 상태별 통계 (삭제되지 않은 주문 기준)
+    const [statusCounts, deletedCount] = await Promise.all([
+      prisma.order.groupBy({
+        by: ['status'],
+        where: { deletedAt: null },
+        _count: { id: true }
+      }),
+      prisma.order.count({ where: { deletedAt: { not: null } } })
+    ])
+
+    // 삭제되지 않은 전체 주문 수
+    const activeTotal = await prisma.order.count({ where: { deletedAt: null } })
 
     const stats = {
-      all: total,
+      all: activeTotal,
       pending: 0,
       paid: 0,
       preparing: 0,
@@ -94,6 +109,7 @@ export async function GET(request: NextRequest) {
       cancelled: 0,
       refund_requested: 0,
       refunded: 0,
+      deleted: deletedCount,
     }
 
     statusCounts.forEach(s => {

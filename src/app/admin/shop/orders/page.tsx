@@ -30,6 +30,8 @@ import {
   Package,
   Eye,
   RefreshCw,
+  Trash2,
+  RotateCcw,
 } from "lucide-react"
 
 interface Order {
@@ -68,6 +70,7 @@ interface Stats {
   cancelled: number
   refund_requested: number
   refunded: number
+  deleted: number
 }
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
@@ -95,6 +98,7 @@ export default function AdminOrdersPage() {
 
   const status = searchParams.get('status') || ''
   const search = searchParams.get('search') || ''
+  const showDeleted = searchParams.get('deleted') === 'true'
   const [searchInput, setSearchInput] = useState(search)
 
   const fetchOrders = useCallback(async () => {
@@ -105,6 +109,7 @@ export default function AdminOrdersPage() {
         limit: '20',
         ...(status && { status }),
         ...(search && { search }),
+        ...(showDeleted && { deleted: 'true' }),
       })
 
       const res = await fetch(`/api/admin/shop/orders?${params}`)
@@ -120,7 +125,7 @@ export default function AdminOrdersPage() {
     } finally {
       setLoading(false)
     }
-  }, [page, status, search])
+  }, [page, status, search, showDeleted])
 
   useEffect(() => {
     fetchOrders()
@@ -128,17 +133,46 @@ export default function AdminOrdersPage() {
 
   useEffect(() => {
     setPage(1)
-  }, [status, search])
+  }, [status, search, showDeleted])
 
   const handleStatusChange = (newStatus: string) => {
     const params = new URLSearchParams(searchParams.toString())
-    if (newStatus && newStatus !== 'all') {
-      params.set('status', newStatus)
-    } else {
+    // 삭제된 주문 탭 클릭 시
+    if (newStatus === 'deleted') {
+      params.set('deleted', 'true')
       params.delete('status')
+    } else {
+      params.delete('deleted')
+      if (newStatus && newStatus !== 'all') {
+        params.set('status', newStatus)
+      } else {
+        params.delete('status')
+      }
     }
     params.delete('page')
     router.push(`/admin/shop/orders?${params}`)
+  }
+
+  const handleRestore = async (orderId: number) => {
+    if (!confirm('이 주문을 복원하시겠습니까?')) return
+
+    try {
+      const res = await fetch(`/api/admin/shop/orders/${orderId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'restore' })
+      })
+
+      if (res.ok) {
+        fetchOrders()
+      } else {
+        const data = await res.json()
+        alert(data.error || '복원에 실패했습니다.')
+      }
+    } catch (error) {
+      console.error('복원 에러:', error)
+      alert('복원 중 오류가 발생했습니다.')
+    }
   }
 
   const handleSearch = (e: React.FormEvent) => {
@@ -168,9 +202,16 @@ export default function AdminOrdersPage() {
       {/* 헤더 */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">주문 관리</h1>
+          <h1 className="text-2xl font-bold">
+            {showDeleted ? (
+              <span className="flex items-center gap-2">
+                <Trash2 className="h-6 w-6 text-red-500" />
+                삭제된 주문
+              </span>
+            ) : '주문 관리'}
+          </h1>
           <p className="text-muted-foreground">
-            총 {total}개의 주문
+            총 {total}개의 {showDeleted ? '삭제된 ' : ''}주문
           </p>
         </div>
         <Button variant="outline" onClick={fetchOrders}>
@@ -181,11 +222,11 @@ export default function AdminOrdersPage() {
 
       {/* 상태별 통계 */}
       {stats && (
-        <div className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-10 gap-2">
+        <div className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-11 gap-2">
           <button
             onClick={() => handleStatusChange('all')}
             className={`p-3 rounded-lg text-center transition-colors ${
-              !status ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'
+              !status && !showDeleted ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'
             }`}
           >
             <p className="text-lg font-bold">{stats.all}</p>
@@ -196,13 +237,26 @@ export default function AdminOrdersPage() {
               key={key}
               onClick={() => handleStatusChange(key)}
               className={`p-3 rounded-lg text-center transition-colors ${
-                status === key ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'
+                status === key && !showDeleted ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'
               }`}
             >
               <p className="text-lg font-bold">{stats[key as keyof Stats] || 0}</p>
               <p className="text-xs">{label}</p>
             </button>
           ))}
+          {/* 삭제된 주문 탭 */}
+          <button
+            onClick={() => handleStatusChange('deleted')}
+            className={`p-3 rounded-lg text-center transition-colors ${
+              showDeleted ? 'bg-red-500 text-white' : 'bg-muted hover:bg-muted/80'
+            }`}
+          >
+            <p className="text-lg font-bold">{stats.deleted || 0}</p>
+            <p className="text-xs flex items-center justify-center gap-1">
+              <Trash2 className="h-3 w-3" />
+              삭제됨
+            </p>
+          </button>
         </div>
       )}
 
@@ -304,11 +358,23 @@ export default function AdminOrdersPage() {
                       {formatDate(order.createdAt)}
                     </TableCell>
                     <TableCell>
-                      <Link href={`/admin/shop/orders/${order.id}`}>
-                        <Button variant="ghost" size="icon">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </Link>
+                      <div className="flex items-center gap-1">
+                        <Link href={`/admin/shop/orders/${order.id}`}>
+                          <Button variant="ghost" size="icon">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </Link>
+                        {showDeleted && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleRestore(order.id)}
+                            title="복원"
+                          >
+                            <RotateCcw className="h-4 w-4 text-green-600" />
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

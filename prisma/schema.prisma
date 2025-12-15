@@ -424,6 +424,7 @@ model Order {
 
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
+  deletedAt       DateTime?                     // 소프트 삭제 (null이면 삭제되지 않음)
 
   // 관계
   user            User        @relation(fields: [userId], references: [id])
@@ -433,6 +434,7 @@ model Order {
   @@index([status])
   @@index([orderNo])
   @@index([createdAt])
+  @@index([deletedAt])
   @@map("orders")
 }
 
