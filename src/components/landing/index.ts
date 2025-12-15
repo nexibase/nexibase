@@ -1,6 +1,0 @@
-export { Header } from "./Header"
-export { Hero } from "./Hero"
-export { Features } from "./Features"
-export { TechStack } from "./TechStack"
-export { GettingStarted } from "./GettingStarted"
-export { Footer } from "./Footer"
