@@ -73,7 +73,7 @@ function ShopContent() {
   const [totalPages, setTotalPages] = useState(1)
   const [total, setTotal] = useState(0)
 
-  const categorySlug = searchParams.get('category') || ''
+  const categorySlug = searchParams.get('category') || 'all'
   const sortBy = searchParams.get('sort') || 'latest'
   const searchQuery = searchParams.get('search') || ''
 
@@ -86,7 +86,7 @@ function ShopContent() {
         page: String(page),
         limit: '12',
         sort: sortBy,
-        ...(categorySlug && { category: categorySlug }),
+        ...(categorySlug && categorySlug !== 'all' && { category: categorySlug }),
         ...(searchQuery && { search: searchQuery })
       })
 
@@ -130,7 +130,7 @@ function ShopContent() {
 
   const handleCategoryChange = (slug: string) => {
     const params = new URLSearchParams(searchParams.toString())
-    if (slug) {
+    if (slug && slug !== 'all') {
       params.set('category', slug)
     } else {
       params.delete('category')
@@ -206,7 +206,7 @@ function ShopContent() {
                   <SelectValue placeholder="카테고리" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">전체</SelectItem>
+                  <SelectItem value="all">전체</SelectItem>
                   {categories.map(cat => (
                     <SelectItem key={cat.id} value={cat.slug}>
                       {cat.name} ({cat.productCount})
@@ -234,9 +234,9 @@ function ShopContent() {
           {categories.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-6">
               <Badge
-                variant={categorySlug === '' ? 'default' : 'outline'}
+                variant={categorySlug === 'all' ? 'default' : 'outline'}
                 className="cursor-pointer"
-                onClick={() => handleCategoryChange('')}
+                onClick={() => handleCategoryChange('all')}
               >
                 전체
               </Badge>
