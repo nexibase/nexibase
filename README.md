@@ -145,7 +145,74 @@ src/
 
 ---
 
+## 커스터마이징 (고급)
+
+> **주의:** 이 방법은 **권장하지 않습니다.** 코어 코드를 직접 수정하면 향후 업데이트 시 충돌이 발생할 수 있으며, 버그 수정이나 새로운 기능을 적용받기 어려워집니다. 가능하면 기본 제공되는 기능을 활용하고, 정말 필요한 경우에만 사용하세요.
+
+NexiBase는 사용자가 코어 코드를 직접 수정하지 않고도 커스터마이징할 수 있는 구조를 제공합니다.
+
+### 동작 원리
+
+- `app/` 폴더가 있으면 → `app/` 우선 사용
+- `app/` 폴더가 없으면 → `src/app/` 사용 (기본)
+- `@/components`, `@/lib` 등의 import도 동일하게 `app/` 우선, 없으면 `src/` 사용
+
+### 커스터마이징 방법
+
+```bash
+# 1. app 폴더 생성 및 코어 복사
+mkdir -p app
+cp -r src/app/* app/
+cp -r src/components app/
+cp -r src/lib app/
+```
+
+### 폴더 구조
+
+```
+nexibase/
+├── src/                    # 코어 코드 (git 추적, 업데이트 시 변경됨)
+│   ├── app/
+│   ├── components/
+│   └── lib/
+├── app/                    # 사용자 커스텀 (git 무시, 업데이트 영향 없음)
+│   ├── page.tsx           # 커스텀 페이지
+│   ├── components/        # 커스텀 컴포넌트
+│   └── lib/               # 커스텀 유틸리티
+└── prisma/                 # 데이터베이스 스키마
+```
+
+### 부분 커스터마이징
+
+전체를 복사하지 않고, 수정이 필요한 파일만 복사할 수도 있습니다:
+
+```bash
+# 예: 메인 페이지만 커스터마이징
+mkdir -p app
+cp src/app/page.tsx app/
+cp src/app/layout.tsx app/
+cp src/app/globals.css app/
+
+# 예: 특정 컴포넌트만 커스터마이징
+mkdir -p app/components/layout
+cp src/components/layout/Header.tsx app/components/layout/
+```
+
+### 주의사항
+
+1. **업데이트 충돌**: `git pull` 시 `src/` 폴더는 업데이트되지만, `app/` 폴더는 영향받지 않습니다. 새로운 기능이나 버그 수정을 적용하려면 수동으로 병합해야 합니다.
+
+2. **의존성 문제**: 코어 코드가 업데이트되면서 새로운 컴포넌트나 함수가 추가될 수 있습니다. 커스텀 코드에서 이를 사용하려면 해당 파일도 복사해야 합니다.
+
+3. **되돌리기**: 커스터마이징을 취소하고 기본 상태로 돌아가려면 `app/` 폴더를 삭제하면 됩니다.
+   ```bash
+   rm -rf app/
+   ```
+
+4. **권장 방식**: 가능하면 `src/` 코드를 직접 수정하지 말고, 환경설정(`/admin/settings`)이나 콘텐츠 관리(`/admin/contents`)를 통해 커스터마이징하세요.
+
+---
+
 ## 라이선스
 
 MIT
-# _nexibase.com
