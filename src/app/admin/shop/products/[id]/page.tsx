@@ -222,6 +222,29 @@ export default function ProductEditPage({ params }: { params: Promise<{ id: stri
     }
   }
 
+  // 옵션 수정
+  const handleUpdateOption = async (optionId: number, field: string, value: string | number) => {
+    try {
+      const res = await fetch(`/api/admin/shop/products/${id}/options`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          optionId,
+          [field]: value
+        })
+      })
+
+      if (res.ok) {
+        fetchProduct()
+      } else {
+        const error = await res.json()
+        alert(error.error || '수정 실패')
+      }
+    } catch (error) {
+      console.error('옵션 수정 에러:', error)
+    }
+  }
+
   // 옵션 삭제
   const handleDeleteOption = async (optionId: number) => {
     if (!confirm('이 옵션을 삭제하시겠습니까?')) return
@@ -628,13 +651,45 @@ export default function ProductEditPage({ params }: { params: Promise<{ id: stri
                               {formData.optionName1 && <td className="p-2">{option.option1 || '-'}</td>}
                               {formData.optionName2 && <td className="p-2">{option.option2 || '-'}</td>}
                               {formData.optionName3 && <td className="p-2">{option.option3 || '-'}</td>}
-                              <td className="p-2">{option.price.toLocaleString()}원</td>
                               <td className="p-2">
-                                <span className={option.stock <= 0 ? 'text-red-600' : ''}>
-                                  {option.stock}
-                                </span>
+                                <Input
+                                  type="number"
+                                  defaultValue={option.price}
+                                  className="w-24 h-8 text-sm"
+                                  onBlur={(e) => {
+                                    const newPrice = parseInt(e.target.value)
+                                    if (newPrice !== option.price) {
+                                      handleUpdateOption(option.id, 'price', newPrice)
+                                    }
+                                  }}
+                                />
                               </td>
-                              <td className="p-2 text-sm text-muted-foreground">{option.sku || '-'}</td>
+                              <td className="p-2">
+                                <Input
+                                  type="number"
+                                  defaultValue={option.stock}
+                                  className={`w-20 h-8 text-sm ${option.stock <= 0 ? 'text-red-600' : ''}`}
+                                  onBlur={(e) => {
+                                    const newStock = parseInt(e.target.value)
+                                    if (newStock !== option.stock) {
+                                      handleUpdateOption(option.id, 'stock', newStock)
+                                    }
+                                  }}
+                                />
+                              </td>
+                              <td className="p-2">
+                                <Input
+                                  type="text"
+                                  defaultValue={option.sku || ''}
+                                  className="w-24 h-8 text-sm"
+                                  placeholder="-"
+                                  onBlur={(e) => {
+                                    if (e.target.value !== (option.sku || '')) {
+                                      handleUpdateOption(option.id, 'sku', e.target.value)
+                                    }
+                                  }}
+                                />
+                              </td>
                               <td className="p-2">
                                 <Button
                                   variant="ghost"
