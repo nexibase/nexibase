@@ -55,6 +55,9 @@ interface Product {
     option2: string[]
     option3: string[]
   }
+  optionName1: string | null
+  optionName2: string | null
+  optionName3: string | null
 }
 
 interface CartItem {
@@ -443,11 +446,11 @@ export default function ProductDetailPage() {
                     {product.optionValues.option1.length > 0 && (
                       <div>
                         <label className="text-sm font-medium mb-2 block">
-                          옵션 1 선택
+                          {product.optionName1 || "옵션1"} 선택
                         </label>
                         <Select value={selectedOption1} onValueChange={handleOption1Change}>
                           <SelectTrigger>
-                            <SelectValue placeholder="선택해주세요" />
+                            <SelectValue placeholder={`${product.optionName1 || "옵션1"} 선택`} />
                           </SelectTrigger>
                           <SelectContent>
                             {product.optionValues.option1.map(val => (
@@ -464,7 +467,7 @@ export default function ProductDetailPage() {
                     {product.optionValues.option2.length > 0 && (
                       <div>
                         <label className="text-sm font-medium mb-2 block">
-                          옵션 2 선택
+                          {product.optionName2 || "옵션2"} 선택
                         </label>
                         <Select
                           value={selectedOption2}
@@ -472,7 +475,7 @@ export default function ProductDetailPage() {
                           disabled={!selectedOption1}
                         >
                           <SelectTrigger>
-                            <SelectValue placeholder={selectedOption1 ? "선택해주세요" : "옵션 1을 먼저 선택해주세요"} />
+                            <SelectValue placeholder={selectedOption1 ? `${product.optionName2 || "옵션2"} 선택` : `${product.optionName1 || "옵션1"}을 먼저 선택해주세요`} />
                           </SelectTrigger>
                           <SelectContent>
                             {availableOption2Values.map(val => (
@@ -489,7 +492,7 @@ export default function ProductDetailPage() {
                     {product.optionValues.option3.length > 0 && (
                       <div>
                         <label className="text-sm font-medium mb-2 block">
-                          옵션 3 선택
+                          {product.optionName3 || "옵션3"} 선택
                         </label>
                         <Select
                           value={selectedOption3}
@@ -497,7 +500,7 @@ export default function ProductDetailPage() {
                           disabled={!selectedOption2}
                         >
                           <SelectTrigger>
-                            <SelectValue placeholder={selectedOption2 ? "선택해주세요" : "옵션 2를 먼저 선택해주세요"} />
+                            <SelectValue placeholder={selectedOption2 ? `${product.optionName3 || "옵션3"} 선택` : `${product.optionName2 || "옵션2"}를 먼저 선택해주세요`} />
                           </SelectTrigger>
                           <SelectContent>
                             {availableOption3Values.map(val => (
