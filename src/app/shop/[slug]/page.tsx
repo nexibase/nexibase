@@ -28,6 +28,7 @@ import {
   MessageSquare,
   Lock,
   Send,
+  Pencil,
 } from "lucide-react"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
@@ -89,6 +90,7 @@ interface Review {
   repliedAt: string | null
   createdAt: string
   user: { id: number; name: string; image: string | null }
+  isOwner: boolean
 }
 
 interface Qna {
@@ -162,6 +164,7 @@ export default function ProductDetailPage() {
   const [reviewRating, setReviewRating] = useState(5)
   const [reviewContent, setReviewContent] = useState('')
   const [submittingReview, setSubmittingReview] = useState(false)
+  const [editingReview, setEditingReview] = useState<Review | null>(null)
 
   // Q&A 상태
   const [qnas, setQnas] = useState<Qna[]>([])
@@ -187,6 +190,13 @@ export default function ProductDetailPage() {
       fetchQnas()
     }
   }, [activeTab])
+
+  // 리뷰 작성 가능 주문이 1건이면 자동 선택
+  useEffect(() => {
+    if (showReviewForm && reviewableOrders.length === 1 && !selectedOrderItem) {
+      setSelectedOrderItem(reviewableOrders[0].orderItemId)
+    }
+  }, [showReviewForm, reviewableOrders, selectedOrderItem])
 
   // 리뷰 가져오기
   const fetchReviews = async (page = 1) => {
@@ -265,6 +275,51 @@ export default function ProductDetailPage() {
       }
     } catch (err) {
       alert('리뷰 작성에 실패했습니다.')
+    } finally {
+      setSubmittingReview(false)
+    }
+  }
+
+  // 리뷰 수정 시작
+  const startEditReview = (review: Review) => {
+    setEditingReview(review)
+    setReviewRating(review.rating)
+    setReviewContent(review.content)
+    setShowReviewForm(false)
+  }
+
+  // 리뷰 수정 취소
+  const cancelEditReview = () => {
+    setEditingReview(null)
+    setReviewRating(5)
+    setReviewContent('')
+  }
+
+  // 리뷰 수정 제출
+  const submitEditReview = async () => {
+    if (!editingReview || !reviewContent.trim()) return
+    setSubmittingReview(true)
+    try {
+      const res = await fetch(`/api/shop/products/${slug}/reviews`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reviewId: editingReview.id,
+          rating: reviewRating,
+          content: reviewContent.trim()
+        })
+      })
+      if (res.ok) {
+        setEditingReview(null)
+        setReviewRating(5)
+        setReviewContent('')
+        fetchReviews(reviewPage)
+      } else {
+        const data = await res.json()
+        alert(data.error || '리뷰 수정에 실패했습니다.')
+      }
+    } catch (err) {
+      alert('리뷰 수정에 실패했습니다.')
     } finally {
       setSubmittingReview(false)
     }
@@ -923,24 +978,39 @@ export default function ProductDetailPage() {
                   {showReviewForm && (
                     <Card className="mb-6">
                       <CardContent className="p-4 space-y-4">
-                        <div>
-                          <Label>주문 선택</Label>
-                          <Select
-                            value={selectedOrderItem?.toString() || ''}
-                            onValueChange={(v) => setSelectedOrderItem(parseInt(v))}
-                          >
-                            <SelectTrigger className="mt-1">
-                              <SelectValue placeholder="리뷰를 작성할 주문을 선택하세요" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {reviewableOrders.map(order => (
-                                <SelectItem key={order.orderItemId} value={order.orderItemId.toString()}>
-                                  {order.orderNo} - {order.optionText || '기본'}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
+                        {/* 주문 선택 - 여러 건일 때만 표시 */}
+                        {reviewableOrders.length > 1 ? (
+                          <div>
+                            <Label>주문 선택</Label>
+                            <Select
+                              value={selectedOrderItem?.toString() || ''}
+                              onValueChange={(v) => setSelectedOrderItem(parseInt(v))}
+                            >
+                              <SelectTrigger className="mt-1">
+                                <SelectValue placeholder="리뷰를 작성할 주문을 선택하세요" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {reviewableOrders.map(order => (
+                                  <SelectItem key={order.orderItemId} value={order.orderItemId.toString()}>
+                                    [{order.orderNo}] {order.optionText || '기본 옵션'}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        ) : reviewableOrders.length === 1 ? (
+                          <div className="p-3 bg-muted rounded-lg text-sm">
+                            <span className="text-muted-foreground">주문번호:</span>{' '}
+                            <span className="font-medium">{reviewableOrders[0].orderNo}</span>
+                            {reviewableOrders[0].optionText && (
+                              <>
+                                <span className="mx-2 text-muted-foreground">|</span>
+                                <span className="text-muted-foreground">옵션:</span>{' '}
+                                <span className="font-medium">{reviewableOrders[0].optionText}</span>
+                              </>
+                            )}
+                          </div>
+                        ) : null}
 
                         <div>
                           <Label>별점</Label>
@@ -991,6 +1061,63 @@ export default function ProductDetailPage() {
                     </Card>
                   )}
 
+                  {/* 리뷰 수정 폼 */}
+                  {editingReview && (
+                    <Card className="mb-6">
+                      <CardContent className="p-4 space-y-4">
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-medium">리뷰 수정</h4>
+                        </div>
+
+                        <div>
+                          <Label>별점</Label>
+                          <div className="flex gap-1 mt-1">
+                            {[1, 2, 3, 4, 5].map(i => (
+                              <button
+                                key={i}
+                                type="button"
+                                onClick={() => setReviewRating(i)}
+                                className="p-1"
+                              >
+                                <Star
+                                  className={`h-8 w-8 transition-colors ${
+                                    i <= reviewRating
+                                      ? 'fill-yellow-400 text-yellow-400'
+                                      : 'text-muted-foreground hover:text-yellow-400'
+                                  }`}
+                                />
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div>
+                          <Label>리뷰 내용</Label>
+                          <Textarea
+                            value={reviewContent}
+                            onChange={(e) => setReviewContent(e.target.value)}
+                            placeholder="상품에 대한 솔직한 리뷰를 작성해주세요."
+                            className="mt-1"
+                            rows={4}
+                          />
+                        </div>
+
+                        <div className="flex gap-2 justify-end">
+                          <Button variant="outline" onClick={cancelEditReview}>
+                            취소
+                          </Button>
+                          <Button
+                            onClick={submitEditReview}
+                            disabled={submittingReview || !reviewContent.trim()}
+                          >
+                            {submittingReview ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Pencil className="h-4 w-4 mr-2" />}
+                            수정
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
                   {/* 리뷰 목록 */}
                   {reviewsLoading ? (
                     <div className="flex justify-center py-12">
@@ -1005,19 +1132,32 @@ export default function ProductDetailPage() {
                               <AvatarFallback>{review.user.name[0]}</AvatarFallback>
                             </Avatar>
                             <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="font-medium">{review.user.name}</span>
-                                <div className="flex gap-0.5">
-                                  {[1, 2, 3, 4, 5].map(i => (
-                                    <Star
-                                      key={i}
-                                      className={`h-3 w-3 ${i <= review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'}`}
-                                    />
-                                  ))}
+                              <div className="flex items-center justify-between mb-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium">{review.user.name}</span>
+                                  <div className="flex gap-0.5">
+                                    {[1, 2, 3, 4, 5].map(i => (
+                                      <Star
+                                        key={i}
+                                        className={`h-3 w-3 ${i <= review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'}`}
+                                      />
+                                    ))}
+                                  </div>
+                                  <span className="text-sm text-muted-foreground">
+                                    {new Date(review.createdAt).toLocaleDateString('ko-KR')}
+                                  </span>
                                 </div>
-                                <span className="text-sm text-muted-foreground">
-                                  {new Date(review.createdAt).toLocaleDateString('ko-KR')}
-                                </span>
+                                {review.isOwner && !editingReview && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => startEditReview(review)}
+                                    className="h-7 px-2 text-muted-foreground hover:text-foreground"
+                                  >
+                                    <Pencil className="h-3 w-3 mr-1" />
+                                    수정
+                                  </Button>
+                                )}
                               </div>
                               <p className="text-sm whitespace-pre-wrap">{review.content}</p>
 
