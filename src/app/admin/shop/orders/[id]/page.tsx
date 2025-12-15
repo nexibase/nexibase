@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
+import { Sidebar } from "@/components/admin/Sidebar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -229,20 +230,30 @@ export default function AdminOrderDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="flex">
+        <Sidebar />
+        <main className="flex-1 p-6">
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        </main>
       </div>
     )
   }
 
   if (error && !order) {
     return (
-      <div className="text-center py-20">
-        <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-        <p className="text-muted-foreground mb-4">{error}</p>
-        <Button onClick={() => router.push("/admin/shop/orders")}>
-          목록으로
-        </Button>
+      <div className="flex">
+        <Sidebar />
+        <main className="flex-1 p-6">
+          <div className="text-center py-20">
+            <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <p className="text-muted-foreground mb-4">{error}</p>
+            <Button onClick={() => router.push("/admin/shop/orders")}>
+              목록으로
+            </Button>
+          </div>
+        </main>
       </div>
     )
   }
@@ -250,7 +261,10 @@ export default function AdminOrderDetailPage() {
   if (!order) return null
 
   return (
-    <div className="space-y-6">
+    <div className="flex">
+      <Sidebar />
+      <main className="flex-1 p-6">
+        <div className="space-y-6">
       {/* 헤더 */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -623,6 +637,8 @@ export default function AdminOrderDetailPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+        </div>
+      </main>
     </div>
   )
 }

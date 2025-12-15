@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
+import { Sidebar } from "@/components/admin/Sidebar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -198,8 +199,11 @@ export default function AdminOrdersPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* 헤더 */}
+    <div className="flex">
+      <Sidebar />
+      <main className="flex-1 p-6">
+        <div className="space-y-6">
+          {/* 헤더 */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">
@@ -408,6 +412,8 @@ export default function AdminOrdersPage() {
           </Button>
         </div>
       )}
+        </div>
+      </main>
     </div>
   )
 }

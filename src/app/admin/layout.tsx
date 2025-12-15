@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Sidebar } from "@/components/admin/Sidebar"
 
 export default function AdminLayout({
   children,
@@ -56,12 +55,7 @@ export default function AdminLayout({
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="flex">
-        <Sidebar />
-        <main className="flex-1 lg:ml-0 p-6">
-          {children}
-        </main>
-      </div>
+      {children}
     </div>
   )
 }
