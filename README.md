@@ -22,6 +22,7 @@
 - 이미지 업로드 (자동 리사이징, WebP 변환)
 - 댓글/대댓글
 - 리액션 (좋아요, 추천 등)
+- **전문 검색** (MySQL FULLTEXT 검색)
 - 관리자 페이지
 
 ## 기술 스택
@@ -96,11 +97,21 @@ MySQL에서 데이터베이스 생성:
 CREATE DATABASE nexibase CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-Prisma 스키마 적용:
+#### 신규 설치 (처음 설치하는 경우)
 
 ```bash
-npx prisma db push
+# 마이그레이션 적용 및 Prisma Client 생성
+npm run db:setup
 ```
+
+#### 기존 사용자 (업데이트 시)
+
+```bash
+# 새로운 마이그레이션 적용
+npm run db:migrate
+```
+
+> **참고:** `db push` 대신 `migrate`를 사용하면 스키마 변경 히스토리가 관리되어 안전한 업데이트가 가능합니다.
 
 ### 5. 개발 서버 실행
 
@@ -231,6 +242,32 @@ cp -r src/lib app/
 1. **라우트 전체 복사 필수**: `app/` 폴더가 존재하면 모든 라우트를 복사해야 합니다.
 2. **업데이트 충돌**: `git pull` 시 수동 병합이 필요합니다.
 3. **되돌리기**: `rm -rf app/`으로 기본 상태로 복원
+
+---
+
+## 검색 기능
+
+NexiBase는 MySQL FULLTEXT 인덱스를 활용한 고성능 검색을 지원합니다.
+
+### 검색 특징
+
+- **Boolean 모드 검색**: 정확한 단어 매칭
+- **정렬 옵션**: 정확도순, 최신순, 인기순
+- **게시판 필터**: 특정 게시판 내에서만 검색
+- **자동 폴백**: FULLTEXT 인덱스가 없는 환경에서는 자동으로 LIKE 검색 사용
+
+### 검색 URL
+
+```
+/search?q=검색어&board=free&sort=relevance
+```
+
+| 파라미터 | 설명 | 기본값 |
+|---------|------|--------|
+| `q` | 검색어 (2자 이상) | 필수 |
+| `board` | 게시판 slug (all=전체) | all |
+| `sort` | 정렬 (relevance, latest, popular) | relevance |
+| `page` | 페이지 번호 | 1 |
 
 ---
 

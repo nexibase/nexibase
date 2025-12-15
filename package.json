@@ -7,7 +7,11 @@
     "prebuild": "node scripts/prebuild.js",
     "build": "npm run prebuild && next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "db:setup": "prisma migrate deploy && prisma generate",
+    "db:migrate": "prisma migrate deploy",
+    "db:push": "prisma db push",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^6.12.0",
