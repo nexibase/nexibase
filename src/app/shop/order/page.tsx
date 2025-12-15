@@ -271,24 +271,36 @@ export default function OrderPage() {
       form.appendChild(input)
     })
 
-    // 결제창 닫힘 감지를 위한 focus 이벤트 리스너
-    const handleFocus = () => {
-      // 결제창이 닫히고 페이지에 포커스가 돌아왔을 때
-      setTimeout(async () => {
-        // 아직 페이지에 있고 결제가 완료되지 않았으면 취소로 간주
-        // (결제 완료 시 페이지가 리다이렉트되므로 이 코드가 실행되지 않음)
-        setSubmitting(false)
-        setError("결제가 취소되었습니다. 다시 시도해주세요.")
-        // PendingOrder 삭제 (API에서 처리)
-        setPendingOrderNo(null)
-        // 장바구니와 orderItems는 그대로 유지 (미리 삭제하지 않았으므로)
-      }, 1000)
-      window.removeEventListener("focus", handleFocus)
-    }
-    window.addEventListener("focus", handleFocus)
+    // overlay 모드에서 결제창 닫힘 감지
+    // 이니시스 overlay는 INIStdPay.pay() 호출 후 동기적으로 실행되고,
+    // 결제 완료/취소 시 returnUrl/closeUrl로 리다이렉트됨
+    // 취소 시에는 페이지가 그대로 남아있으므로 submitting 상태만 해제
 
     // 이니시스 결제창 호출
     win.INIStdPay.pay("inicisPayForm")
+
+    // overlay 모드에서 결제창이 닫히면 (취소 등) submitting 해제
+    // 이니시스 close 스크립트가 실행되면 페이지에 남아있음
+    setTimeout(() => {
+      // 5초 후에도 페이지에 있으면 결제가 진행 중이거나 취소된 것
+      // 결제 완료 시에는 페이지가 리다이렉트되므로 이 코드가 실행되지 않음
+      const checkOverlay = setInterval(() => {
+        // 이니시스 overlay iframe이 없으면 결제창이 닫힌 것
+        const overlay = document.querySelector('iframe[name="INIpayPopup"]') ||
+                       document.querySelector('iframe[src*="inicis"]') ||
+                       document.querySelector('.INIpay_overlay')
+        if (!overlay) {
+          clearInterval(checkOverlay)
+          setSubmitting(false)
+          // 에러 메시지는 사용자가 취소한 경우에만 표시
+          // (결제 진행 중일 수도 있으므로 메시지 표시하지 않음)
+          setPendingOrderNo(null)
+        }
+      }, 500)
+
+      // 30초 후 체크 중지 (타임아웃)
+      setTimeout(() => clearInterval(checkOverlay), 30000)
+    }, 3000)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {

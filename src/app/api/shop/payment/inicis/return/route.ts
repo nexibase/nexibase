@@ -47,8 +47,8 @@ function getNetCancelUrl(idcName: string): string {
   }
 }
 
-// 팝업 창에서 부모 창을 리다이렉트하고 팝업을 닫는 HTML 반환
-function createPopupRedirectHtml(redirectUrl: string) {
+// overlay/popup 모드에서 부모 창을 리다이렉트하는 HTML 반환
+function createRedirectHtml(redirectUrl: string) {
   const html = `
 <!DOCTYPE html>
 <html>
@@ -56,19 +56,29 @@ function createPopupRedirectHtml(redirectUrl: string) {
   <meta charset="UTF-8">
   <title>결제 처리중...</title>
   <script>
-    // 부모 창으로 리다이렉트
-    if (window.opener) {
-      window.opener.location.href = '${redirectUrl}';
-      window.close();
-    } else {
-      // opener가 없으면 직접 이동
+    // overlay 모드: 부모 페이지를 직접 리다이렉트
+    // popup 모드: opener를 통해 리다이렉트
+    try {
+      if (window.parent && window.parent !== window) {
+        // iframe (overlay 모드)
+        window.parent.location.href = '${redirectUrl}';
+      } else if (window.opener) {
+        // popup 모드
+        window.opener.location.href = '${redirectUrl}';
+        window.close();
+      } else {
+        // 직접 접근
+        window.location.href = '${redirectUrl}';
+      }
+    } catch (e) {
+      // 크로스 오리진 에러 등의 경우 직접 이동
       window.location.href = '${redirectUrl}';
     }
   </script>
 </head>
 <body>
   <p>결제 처리중입니다. 잠시만 기다려주세요...</p>
-  <p>창이 자동으로 닫히지 않으면 <a href="${redirectUrl}">여기를 클릭</a>하세요.</p>
+  <p>창이 자동으로 이동하지 않으면 <a href="${redirectUrl}">여기를 클릭</a>하세요.</p>
 </body>
 </html>
 `
@@ -92,14 +102,14 @@ export async function GET(request: NextRequest) {
 
   if (error) {
     const redirectUrl = `${baseUrl}/shop/order/complete?error=${error}&message=${encodeURIComponent(message || '결제에 실패했습니다.')}`
-    return createPopupRedirectHtml(redirectUrl)
+    return createRedirectHtml(redirectUrl)
   }
 
   // 주문번호가 있으면 완료 페이지로
   const orderNo = searchParams.get('orderNo') || searchParams.get('MOID')
   if (orderNo) {
     const redirectUrl = `${baseUrl}/shop/order/complete?orderNo=${orderNo}`
-    return createPopupRedirectHtml(redirectUrl)
+    return createRedirectHtml(redirectUrl)
   }
 
   // 기타 경우 (파라미터 없이 GET 접근) - 결제 처리중 표시
@@ -128,10 +138,10 @@ export async function POST(request: NextRequest) {
   const protocol = request.headers.get('x-forwarded-proto') || 'http'
   const baseUrl = process.env.NEXT_PUBLIC_URL || `${protocol}://${host}`
 
-  // 팝업에서 부모 창 리다이렉트 헬퍼 함수
+  // overlay/popup에서 부모 창 리다이렉트 헬퍼 함수
   const redirectTo = (path: string) => {
     const url = new URL(path, baseUrl)
-    return createPopupRedirectHtml(url.toString())
+    return createRedirectHtml(url.toString())
   }
 
   try {

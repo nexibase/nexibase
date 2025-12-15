@@ -246,7 +246,7 @@ export async function POST(request: NextRequest) {
 
       // 결제 방식
       gopaymethod: 'Card',
-      payViewType: 'popup',  // popup: 새창 (overlay는 불안정)
+      payViewType: 'overlay',  // overlay: 모달 (부모 페이지 위에 레이어로 표시)
 
       // 추가 옵션
       acceptmethod: 'below1000:centerCd(Y)',  // 1000원 미만 결제 허용, 결제창 가운데 표시
