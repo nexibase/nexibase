@@ -141,89 +141,93 @@ export default function HomePage() {
 
       <main className="flex-1">
         <div className="max-w-6xl mx-auto px-4 py-6">
-          {/* Bento Grid 레이아웃 */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 auto-rows-[minmax(120px,auto)]">
-
-            {/* 환영/히어로 카드 - 큰 카드 (2x2) */}
-            <Card className="md:col-span-2 md:row-span-2 bg-gradient-to-br from-primary/10 via-primary/5 to-background border-primary/20 overflow-hidden relative group">
-              <CardContent className="p-6 h-full flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center gap-2 mb-4">
+          {/* 환영 배너 + 통계 - 컴팩트한 1행 */}
+          <div className="flex flex-col lg:flex-row gap-4 mb-6">
+            {/* 환영 메시지 */}
+            <Card className="flex-1 bg-gradient-to-r from-primary/10 via-primary/5 to-background border-primary/20">
+              <CardContent className="p-4 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="hidden sm:flex w-10 h-10 rounded-lg bg-primary/10 items-center justify-center">
                     <Sparkles className="h-5 w-5 text-primary" />
-                    <span className="text-sm font-medium text-primary">Welcome</span>
                   </div>
-                  <h1 className="text-2xl md:text-3xl font-bold mb-2">
-                    {user
-                      ? `${user.nickname || user.name || '사용자'}님, 환영합니다!`
-                      : `${settings.site_name}에 오신 것을 환영합니다`
-                    }
-                  </h1>
-                  <p className="text-muted-foreground">
-                    {settings.site_description || '함께 성장하는 커뮤니티에서 다양한 이야기를 나눠보세요.'}
-                  </p>
+                  <div>
+                    <h1 className="text-lg font-bold">
+                      {user
+                        ? `${user.nickname || user.name || '사용자'}님, 환영합니다!`
+                        : `${settings.site_name}에 오신 것을 환영합니다`
+                      }
+                    </h1>
+                    <p className="text-sm text-muted-foreground hidden sm:block">
+                      {settings.site_description || '함께 성장하는 커뮤니티'}
+                    </p>
+                  </div>
                 </div>
-                <div className="flex gap-3 mt-4">
+                <div className="flex gap-2">
                   {boards.length > 0 && (
                     <Link href={`/board/${boards[0].slug}`}>
-                      <Button className="group-hover:translate-x-1 transition-transform">
+                      <Button size="sm">
                         시작하기
-                        <ArrowRight className="h-4 w-4 ml-2" />
+                        <ArrowRight className="h-4 w-4 ml-1" />
                       </Button>
                     </Link>
                   )}
-                  <Link href="/content/about">
-                    <Button variant="outline">더 알아보기</Button>
-                  </Link>
                 </div>
-                {/* 배경 장식 */}
-                <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-primary/10 rounded-full blur-2xl" />
               </CardContent>
             </Card>
 
-            {/* 통계 카드들 - 각각 1x1 */}
+            {/* 통계 - 가로 1줄 */}
             {stats && (
-              <>
-                <Card className="group hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-500/10 transition-all duration-300">
-                  <CardContent className="p-4 h-full flex flex-col justify-center items-center text-center">
-                    <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                      <Users className="h-6 w-6 text-blue-500" />
+              <div className="flex gap-2">
+                <Card className="flex-1 min-w-0">
+                  <CardContent className="p-3 flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
+                      <Users className="h-4 w-4 text-blue-500" />
                     </div>
-                    <div className="text-3xl font-bold">{stats.memberCount.toLocaleString()}</div>
-                    <div className="text-sm text-muted-foreground">회원</div>
+                    <div className="min-w-0">
+                      <div className="text-lg font-bold leading-tight">{stats.memberCount.toLocaleString()}</div>
+                      <div className="text-xs text-muted-foreground">회원</div>
+                    </div>
                   </CardContent>
                 </Card>
-
-                <Card className="group hover:border-green-500/50 hover:shadow-lg hover:shadow-green-500/10 transition-all duration-300">
-                  <CardContent className="p-4 h-full flex flex-col justify-center items-center text-center">
-                    <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                      <FileText className="h-6 w-6 text-green-500" />
+                <Card className="flex-1 min-w-0">
+                  <CardContent className="p-3 flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center shrink-0">
+                      <FileText className="h-4 w-4 text-green-500" />
                     </div>
-                    <div className="text-3xl font-bold">{stats.postCount.toLocaleString()}</div>
-                    <div className="text-sm text-muted-foreground">게시글</div>
+                    <div className="min-w-0">
+                      <div className="text-lg font-bold leading-tight">{stats.postCount.toLocaleString()}</div>
+                      <div className="text-xs text-muted-foreground">게시글</div>
+                    </div>
                   </CardContent>
                 </Card>
-
-                <Card className="group hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-300">
-                  <CardContent className="p-4 h-full flex flex-col justify-center items-center text-center">
-                    <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                      <MessageSquare className="h-6 w-6 text-purple-500" />
+                <Card className="flex-1 min-w-0 hidden sm:block">
+                  <CardContent className="p-3 flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center shrink-0">
+                      <MessageSquare className="h-4 w-4 text-purple-500" />
                     </div>
-                    <div className="text-3xl font-bold">{stats.commentCount.toLocaleString()}</div>
-                    <div className="text-sm text-muted-foreground">댓글</div>
+                    <div className="min-w-0">
+                      <div className="text-lg font-bold leading-tight">{stats.commentCount.toLocaleString()}</div>
+                      <div className="text-xs text-muted-foreground">댓글</div>
+                    </div>
                   </CardContent>
                 </Card>
-
-                <Card className="group hover:border-orange-500/50 hover:shadow-lg hover:shadow-orange-500/10 transition-all duration-300">
-                  <CardContent className="p-4 h-full flex flex-col justify-center items-center text-center">
-                    <div className="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                      <TrendingUp className="h-6 w-6 text-orange-500" />
+                <Card className="flex-1 min-w-0 hidden md:block">
+                  <CardContent className="p-3 flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center shrink-0">
+                      <TrendingUp className="h-4 w-4 text-orange-500" />
                     </div>
-                    <div className="text-3xl font-bold">{stats.boardCount.toLocaleString()}</div>
-                    <div className="text-sm text-muted-foreground">게시판</div>
+                    <div className="min-w-0">
+                      <div className="text-lg font-bold leading-tight">{stats.boardCount.toLocaleString()}</div>
+                      <div className="text-xs text-muted-foreground">게시판</div>
+                    </div>
                   </CardContent>
                 </Card>
-              </>
+              </div>
             )}
+          </div>
+
+          {/* Bento Grid 레이아웃 */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 auto-rows-[minmax(100px,auto)]">
 
             {/* 최근 게시글 - 넓은 카드 (2x2) */}
             <Card className="md:col-span-2 lg:row-span-2">
