@@ -1,8 +1,7 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import Script from "next/script"
 import { Header, Footer } from "@/themes"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -45,31 +44,6 @@ interface ShopSettings {
   refund_policy: string
 }
 
-interface InicisPaymentData {
-  version: string
-  mid: string
-  oid: string
-  goodname: string
-  price: number
-  currency: string
-  buyername: string
-  buyertel: string
-  buyeremail: string
-  timestamp: string
-  signature: string
-  verification: string
-  mKey: string
-  use_chkfake: string
-  returnUrl: string
-  popupUrl: string  // overlay 모드용
-  closeUrl: string
-  gopaymethod: string
-  payViewType: string
-  acceptmethod: string
-  quotabase: string
-  payUrl: string
-  testMode: boolean
-}
 
 export default function OrderPage() {
   const router = useRouter()
@@ -81,10 +55,6 @@ export default function OrderPage() {
   // 쇼핑몰 설정
   const [shopSettings, setShopSettings] = useState<ShopSettings | null>(null)
 
-  // 이니시스 결제
-  const [inicisReady, setInicisReady] = useState(false)
-  const paymentFormRef = useRef<HTMLFormElement>(null)
-  const [, setPendingOrderNo] = useState<string | null>(null)
 
   // 배송비
   const [deliveryFee, setDeliveryFee] = useState(0)
@@ -215,94 +185,6 @@ export default function OrderPage() {
     }
   }
 
-  // 이니시스 결제창 호출
-  const openInicisPayment = (paymentData: InicisPaymentData, orderNo: string) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const win = window as any
-
-    if (!win.INIStdPay) {
-      setError("결제 모듈을 로딩 중입니다. 잠시 후 다시 시도해주세요.")
-      setSubmitting(false)
-      return
-    }
-
-    // 결제 폼 생성
-    const form = paymentFormRef.current
-    if (!form) {
-      setError("결제 폼을 찾을 수 없습니다.")
-      setSubmitting(false)
-      return
-    }
-
-    // pending 주문번호 저장
-    setPendingOrderNo(orderNo)
-
-    // 폼 필드 설정
-    form.innerHTML = ""
-    const fields = {
-      version: paymentData.version,
-      mid: paymentData.mid,
-      oid: paymentData.oid,
-      goodname: paymentData.goodname,
-      price: paymentData.price.toString(),
-      currency: paymentData.currency,
-      buyername: paymentData.buyername,
-      buyertel: paymentData.buyertel,
-      buyeremail: paymentData.buyeremail,
-      timestamp: paymentData.timestamp,
-      signature: paymentData.signature,
-      verification: paymentData.verification,
-      mKey: paymentData.mKey,
-      use_chkfake: paymentData.use_chkfake,
-      returnUrl: paymentData.returnUrl,
-      popupUrl: paymentData.popupUrl,  // overlay 모드용
-      closeUrl: paymentData.closeUrl,
-      gopaymethod: paymentData.gopaymethod,
-      payViewType: paymentData.payViewType,
-      acceptmethod: paymentData.acceptmethod,
-      quotabase: paymentData.quotabase,
-    }
-
-    Object.entries(fields).forEach(([name, value]) => {
-      const input = document.createElement("input")
-      input.type = "hidden"
-      input.name = name
-      input.value = value
-      form.appendChild(input)
-    })
-
-    // overlay 모드에서 결제창 닫힘 감지
-    // 이니시스 overlay는 INIStdPay.pay() 호출 후 동기적으로 실행되고,
-    // 결제 완료/취소 시 returnUrl/closeUrl로 리다이렉트됨
-    // 취소 시에는 페이지가 그대로 남아있으므로 submitting 상태만 해제
-
-    // 이니시스 결제창 호출
-    win.INIStdPay.pay("inicisPayForm")
-
-    // overlay 모드에서 결제창이 닫히면 (취소 등) submitting 해제
-    // 이니시스 close 스크립트가 실행되면 페이지에 남아있음
-    setTimeout(() => {
-      // 5초 후에도 페이지에 있으면 결제가 진행 중이거나 취소된 것
-      // 결제 완료 시에는 페이지가 리다이렉트되므로 이 코드가 실행되지 않음
-      const checkOverlay = setInterval(() => {
-        // 이니시스 overlay iframe이 없으면 결제창이 닫힌 것
-        const overlay = document.querySelector('iframe[name="INIpayPopup"]') ||
-                       document.querySelector('iframe[src*="inicis"]') ||
-                       document.querySelector('.INIpay_overlay')
-        if (!overlay) {
-          clearInterval(checkOverlay)
-          setSubmitting(false)
-          // 에러 메시지는 사용자가 취소한 경우에만 표시
-          // (결제 진행 중일 수도 있으므로 메시지 표시하지 않음)
-          setPendingOrderNo(null)
-        }
-      }, 500)
-
-      // 30초 후 체크 중지 (타임아웃)
-      setTimeout(() => clearInterval(checkOverlay), 30000)
-    }, 3000)
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
@@ -359,24 +241,31 @@ export default function OrderPage() {
         // 카드결제는 장바구니를 미리 삭제하지 않음 (결제 완료 페이지에서 삭제)
         // 결제 취소 시에도 장바구니가 유지됨
 
-        // 결제창 호출 (스크립트는 페이지 로드 시 미리 로드됨)
-        const orderNo = data.order.orderNo
+        // 별도의 결제 페이지로 이동 (이니시스 overlay가 현재 페이지를 덮어쓰는 문제 방지)
+        const paymentDataEncoded = encodeURIComponent(JSON.stringify(data.payment))
+        const paymentUrl = `/shop/payment?data=${paymentDataEncoded}`
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const win = window as any
-        if (win.INIStdPay) {
-          openInicisPayment(data.payment, orderNo)
-        } else {
-          // 스크립트 로드 대기
-          const checkAndPay = () => {
-            if (win.INIStdPay) {
-              openInicisPayment(data.payment, orderNo)
-            } else {
-              setTimeout(checkAndPay, 100)
-            }
-          }
-          setTimeout(checkAndPay, 100)
+        // 새 창에서 결제 페이지 열기
+        const paymentWindow = window.open(paymentUrl, "inicis_payment", "width=500,height=700,scrollbars=yes")
+
+        if (!paymentWindow) {
+          // 팝업이 차단된 경우 현재 페이지에서 이동
+          setError("팝업이 차단되었습니다. 팝업 차단을 해제하거나, 아래 버튼을 클릭하세요.")
+          setSubmitting(false)
+          // 대안으로 새 탭에서 열기
+          window.open(paymentUrl, "_blank")
+          return
         }
+
+        // 결제창 닫힘 감지
+        const checkClosed = setInterval(() => {
+          if (paymentWindow.closed) {
+            clearInterval(checkClosed)
+            setSubmitting(false)
+            // 결제 완료 여부 확인을 위해 페이지 새로고침하지 않음
+            // 사용자가 직접 확인하도록 함
+          }
+        }, 500)
 
         return
       }
@@ -481,22 +370,6 @@ export default function OrderPage() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
-
-      {/* 이니시스 결제 스크립트 - 항상 로드 */}
-      <Script
-        src="https://stgstdpay.inicis.com/stdjs/INIStdPay.js"
-        strategy="afterInteractive"
-        onLoad={() => setInicisReady(true)}
-      />
-
-      {/* 이니시스 결제 폼 - body 레벨에서 작동하도록 portal 없이 직접 배치 */}
-      <form
-        id="inicisPayForm"
-        ref={paymentFormRef}
-        method="post"
-        acceptCharset="UTF-8"
-        style={{ display: "none" }}
-      />
 
       <main className="flex-1">
         <div className="max-w-4xl mx-auto px-4 py-6">
