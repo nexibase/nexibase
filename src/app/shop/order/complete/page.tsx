@@ -107,10 +107,38 @@ function OrderCompleteContent() {
       }
       const data = await res.json()
       setOrder(data.order)
+
+      // 주문 완료 시 장바구니에서 주문한 상품 삭제
+      if (data.order) {
+        clearOrderedItemsFromCart(data.order.items)
+      }
     } catch (err) {
       setError("주문 정보를 불러오는데 실패했습니다.")
     } finally {
       setLoading(false)
+    }
+  }
+
+  // 주문한 상품을 장바구니에서 삭제
+  const clearOrderedItemsFromCart = (orderedItems: Order["items"]) => {
+    try {
+      const cart = JSON.parse(localStorage.getItem("cart") || "[]")
+      // 주문된 상품의 productId + optionId 조합으로 필터링
+      const orderedKeys = new Set(
+        orderedItems.map(item => `${item.productSlug || ""}-${item.optionText || ""}`)
+      )
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const newCart = cart.filter((item: any) => {
+        const key = `${item.productSlug || ""}-${item.optionText || ""}`
+        return !orderedKeys.has(key)
+      })
+
+      localStorage.setItem("cart", JSON.stringify(newCart))
+      localStorage.removeItem("orderItems")
+      window.dispatchEvent(new Event("cartUpdated"))
+    } catch (err) {
+      console.error("장바구니 정리 에러:", err)
     }
   }
 

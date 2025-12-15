@@ -241,14 +241,15 @@ export async function POST(request: NextRequest) {
 
       // URL 설정
       returnUrl: `${baseUrl}/api/shop/payment/inicis/return`,
+      popupUrl: `${baseUrl}/api/shop/payment/inicis/return`,  // overlay 모드에서 사용
       closeUrl: `${baseUrl}/api/shop/payment/inicis/close`,
 
       // 결제 방식
       gopaymethod: 'Card',
-      payViewType: 'overlay',
+      payViewType: 'overlay',  // overlay: 모달, popup: 새창
 
       // 추가 옵션
-      acceptmethod: 'below1000:centerCd(Y)',  // 1000원 미만 결제 허용, 결제창 가운데 표시
+      acceptmethod: 'below1000:centerCd(Y):SKIN(ORIGINAL)',  // 1000원 미만 결제 허용, 결제창 가운데 표시
       quotabase: '2:3:4:5:6:7:8:9:10:11:12',  // 할부 개월 수
 
       // 결제 스크립트 URL

@@ -61,6 +61,7 @@ interface InicisPaymentData {
   mKey: string
   use_chkfake: string
   returnUrl: string
+  popupUrl: string  // overlay 모드용
   closeUrl: string
   gopaymethod: string
   payViewType: string
@@ -255,6 +256,7 @@ export default function OrderPage() {
       mKey: paymentData.mKey,
       use_chkfake: paymentData.use_chkfake,
       returnUrl: paymentData.returnUrl,
+      popupUrl: paymentData.popupUrl,  // overlay 모드용
       closeUrl: paymentData.closeUrl,
       gopaymethod: paymentData.gopaymethod,
       payViewType: paymentData.payViewType,
@@ -278,10 +280,9 @@ export default function OrderPage() {
         // (결제 완료 시 페이지가 리다이렉트되므로 이 코드가 실행되지 않음)
         setSubmitting(false)
         setError("결제가 취소되었습니다. 다시 시도해주세요.")
-        await cancelPendingOrder(orderNo)
+        // PendingOrder 삭제 (API에서 처리)
         setPendingOrderNo(null)
-        // 장바구니에서 orderItems 복원
-        loadOrderItems()
+        // 장바구니와 orderItems는 그대로 유지 (미리 삭제하지 않았으므로)
       }, 1000)
       window.removeEventListener("focus", handleFocus)
     }
@@ -344,17 +345,8 @@ export default function OrderPage() {
           return
         }
 
-        // 장바구니에서 주문 상품 제거 (결제 완료 후 처리되므로 미리 제거)
-        const cart: OrderItem[] = JSON.parse(localStorage.getItem("cart") || "[]")
-        const orderedKeys = new Set(
-          orderItems.map(item => `${item.productId}-${item.optionId || "none"}`)
-        )
-        const newCart = cart.filter(
-          item => !orderedKeys.has(`${item.productId}-${item.optionId || "none"}`)
-        )
-        localStorage.setItem("cart", JSON.stringify(newCart))
-        localStorage.removeItem("orderItems")
-        window.dispatchEvent(new Event("cartUpdated"))
+        // 카드결제는 장바구니를 미리 삭제하지 않음 (결제 완료 페이지에서 삭제)
+        // 결제 취소 시에도 장바구니가 유지됨
 
         // 이니시스 스크립트 URL 설정 및 결제창 호출
         setInicisScriptUrl(data.payment.payUrl)
