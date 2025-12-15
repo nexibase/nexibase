@@ -262,6 +262,67 @@ export async function PUT(
   }
 }
 
+// 리뷰 삭제
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ slug: string }> }
+) {
+  try {
+    const session = await getSession()
+    if (!session) {
+      return NextResponse.json({ error: '로그인이 필요합니다.' }, { status: 401 })
+    }
+
+    const { slug } = await params
+    const { searchParams } = new URL(request.url)
+    const reviewId = parseInt(searchParams.get('reviewId') || '0')
+
+    if (!reviewId) {
+      return NextResponse.json({ error: '리뷰 ID가 필요합니다.' }, { status: 400 })
+    }
+
+    // 상품 찾기
+    const product = await prisma.product.findUnique({
+      where: { slug },
+      select: { id: true }
+    })
+
+    if (!product) {
+      return NextResponse.json({ error: '상품을 찾을 수 없습니다.' }, { status: 404 })
+    }
+
+    // 리뷰 찾기
+    const existingReview = await prisma.productReview.findUnique({
+      where: { id: reviewId }
+    })
+
+    if (!existingReview) {
+      return NextResponse.json({ error: '리뷰를 찾을 수 없습니다.' }, { status: 404 })
+    }
+
+    // 본인 리뷰인지 확인
+    if (existingReview.userId !== session.id) {
+      return NextResponse.json({ error: '본인의 리뷰만 삭제할 수 있습니다.' }, { status: 403 })
+    }
+
+    // 해당 상품의 리뷰인지 확인
+    if (existingReview.productId !== product.id) {
+      return NextResponse.json({ error: '해당 상품의 리뷰가 아닙니다.' }, { status: 400 })
+    }
+
+    // 리뷰 삭제 (소프트 삭제)
+    await prisma.productReview.update({
+      where: { id: reviewId },
+      data: { isActive: false }
+    })
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('리뷰 삭제 에러:', error)
+    return NextResponse.json({ error: '리뷰 삭제에 실패했습니다.' }, { status: 500 })
+  }
+}
+
 // 이름 마스킹 (홍*동)
 function maskName(name: string): string {
   if (name.length <= 1) return '*'

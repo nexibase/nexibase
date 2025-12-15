@@ -18,6 +18,7 @@ import {
   Loader2,
   ShoppingCart,
   ChevronLeft,
+  ChevronRight,
   Package,
   Minus,
   Plus,
@@ -168,6 +169,11 @@ export default function ProductDetailPage() {
   const [uploadingImage, setUploadingImage] = useState(false)
   const [submittingReview, setSubmittingReview] = useState(false)
   const [editingReview, setEditingReview] = useState<Review | null>(null)
+
+  // 리뷰 이미지 뷰어 상태
+  const [viewerImages, setViewerImages] = useState<string[]>([])
+  const [viewerIndex, setViewerIndex] = useState(0)
+  const [showImageViewer, setShowImageViewer] = useState(false)
 
   // Q&A 상태
   const [qnas, setQnas] = useState<Qna[]>([])
@@ -411,6 +417,33 @@ export default function ProductDetailPage() {
       alert('리뷰 수정에 실패했습니다.')
     } finally {
       setSubmittingReview(false)
+    }
+  }
+
+  // 리뷰 이미지 뷰어 열기
+  const openImageViewer = (images: string[], startIndex: number) => {
+    setViewerImages(images)
+    setViewerIndex(startIndex)
+    setShowImageViewer(true)
+  }
+
+  // 리뷰 삭제
+  const deleteReview = async (reviewId: number) => {
+    if (!confirm('리뷰를 삭제하시겠습니까?')) return
+
+    try {
+      const res = await fetch(`/api/shop/products/${slug}/reviews?reviewId=${reviewId}`, {
+        method: 'DELETE'
+      })
+      if (res.ok) {
+        fetchReviews(reviewPage)
+        fetchReviewableOrders()
+      } else {
+        const data = await res.json()
+        alert(data.error || '리뷰 삭제에 실패했습니다.')
+      }
+    } catch {
+      alert('리뷰 삭제에 실패했습니다.')
     }
   }
 
@@ -1315,15 +1348,26 @@ export default function ProductDetailPage() {
                                   </span>
                                 </div>
                                 {review.isOwner && !editingReview && (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => startEditReview(review)}
-                                    className="h-7 px-2 text-muted-foreground hover:text-foreground"
-                                  >
-                                    <Pencil className="h-3 w-3 mr-1" />
-                                    수정
-                                  </Button>
+                                  <div className="flex gap-1">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => startEditReview(review)}
+                                      className="h-7 px-2 text-muted-foreground hover:text-foreground"
+                                    >
+                                      <Pencil className="h-3 w-3 mr-1" />
+                                      수정
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => deleteReview(review.id)}
+                                      className="h-7 px-2 text-muted-foreground hover:text-red-500"
+                                    >
+                                      <X className="h-3 w-3 mr-1" />
+                                      삭제
+                                    </Button>
+                                  </div>
                                 )}
                               </div>
                               <p className="text-sm whitespace-pre-wrap">{review.content}</p>
@@ -1336,15 +1380,14 @@ export default function ProductDetailPage() {
                                     return (
                                       <div className="mt-3 flex flex-wrap gap-2">
                                         {images.map((img: string, idx: number) => (
-                                          <a
+                                          <button
                                             key={idx}
-                                            href={img}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
+                                            type="button"
+                                            onClick={() => openImageViewer(images, idx)}
                                             className="block w-20 h-20 rounded-lg overflow-hidden hover:opacity-80 transition-opacity"
                                           >
                                             <img src={img} alt="" className="w-full h-full object-cover" />
-                                          </a>
+                                          </button>
                                         ))}
                                       </div>
                                     )
@@ -1596,6 +1639,69 @@ export default function ProductDetailPage() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* 리뷰 이미지 뷰어 모달 */}
+      {showImageViewer && viewerImages.length > 0 && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90">
+          {/* 닫기 버튼 */}
+          <button
+            onClick={() => setShowImageViewer(false)}
+            className="absolute top-4 right-4 text-white hover:text-gray-300 z-10"
+          >
+            <X className="h-8 w-8" />
+          </button>
+
+          {/* 이미지 카운터 */}
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 text-white text-sm">
+            {viewerIndex + 1} / {viewerImages.length}
+          </div>
+
+          {/* 이전 버튼 */}
+          {viewerImages.length > 1 && (
+            <button
+              onClick={() => setViewerIndex(prev => (prev === 0 ? viewerImages.length - 1 : prev - 1))}
+              className="absolute left-4 text-white hover:text-gray-300 p-2"
+            >
+              <ChevronLeft className="h-10 w-10" />
+            </button>
+          )}
+
+          {/* 이미지 */}
+          <img
+            src={viewerImages[viewerIndex]}
+            alt=""
+            className="max-h-[85vh] max-w-[90vw] object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+
+          {/* 다음 버튼 */}
+          {viewerImages.length > 1 && (
+            <button
+              onClick={() => setViewerIndex(prev => (prev === viewerImages.length - 1 ? 0 : prev + 1))}
+              className="absolute right-4 text-white hover:text-gray-300 p-2"
+            >
+              <ChevronRight className="h-10 w-10" />
+            </button>
+          )}
+
+          {/* 썸네일 */}
+          {viewerImages.length > 1 && (
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+              {viewerImages.map((img, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setViewerIndex(idx)}
+                  className={`w-12 h-12 rounded overflow-hidden border-2 transition-all ${
+                    idx === viewerIndex ? 'border-white' : 'border-transparent opacity-60 hover:opacity-100'
+                  }`}
+                >
+                  <img src={img} alt="" className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
