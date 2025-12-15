@@ -467,3 +467,17 @@ model ShopSetting {
 
   @@map("shop_settings")
 }
+
+// 결제 대기 주문 (카드결제 완료 전 임시 저장)
+model PendingOrder {
+  id        Int      @id @default(autoincrement())
+  orderNo   String   @unique @db.VarChar(20)
+  userId    Int
+  orderData String   @db.LongText          // JSON 형태의 주문 데이터
+  expiresAt DateTime                       // 만료 시간 (30분)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("pending_orders")
+}

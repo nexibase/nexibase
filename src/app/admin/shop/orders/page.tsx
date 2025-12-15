@@ -254,7 +254,10 @@ export default function AdminOrdersPage() {
                 {orders.map((order) => (
                   <TableRow key={order.id}>
                     <TableCell>
-                      <span className="font-mono text-sm">{order.orderNo}</span>
+                      <div className="font-mono text-sm leading-tight">
+                        <div>{order.orderNo.split('-')[0]}</div>
+                        <div className="text-muted-foreground">-{order.orderNo.split('-')[1]}</div>
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">

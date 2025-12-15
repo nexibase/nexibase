@@ -147,30 +147,50 @@ export async function POST(request: NextRequest) {
 
     const finalPrice = totalPrice + deliveryFee
 
-    // 임시 주문 데이터 생성 (결제 완료 전까지 pending 상태)
+    // 주문번호만 생성 (주문은 결제 완료 후 생성)
     const orderNo = await generateOrderNo()
 
-    const order = await prisma.order.create({
-      data: {
+    // 주문 데이터를 임시 저장 (PendingOrder 테이블 또는 캐시)
+    // 여기서는 간단히 PendingOrder 테이블 사용
+    await prisma.pendingOrder.upsert({
+      where: { orderNo },
+      create: {
         orderNo,
         userId: user.id,
-        ordererName,
-        ordererPhone,
-        ordererEmail: ordererEmail || null,
-        recipientName,
-        recipientPhone,
-        zipCode,
-        address,
-        addressDetail: addressDetail || null,
-        deliveryMemo: deliveryMemo || null,
-        totalPrice,
-        deliveryFee,
-        finalPrice,
-        status: 'pending',
-        paymentMethod: 'card',
-        items: {
-          create: orderItems
-        }
+        orderData: JSON.stringify({
+          ordererName,
+          ordererPhone,
+          ordererEmail: ordererEmail || null,
+          recipientName,
+          recipientPhone,
+          zipCode,
+          address,
+          addressDetail: addressDetail || null,
+          deliveryMemo: deliveryMemo || null,
+          totalPrice,
+          deliveryFee,
+          finalPrice,
+          items: orderItems
+        }),
+        expiresAt: new Date(Date.now() + 30 * 60 * 1000) // 30분 후 만료
+      },
+      update: {
+        orderData: JSON.stringify({
+          ordererName,
+          ordererPhone,
+          ordererEmail: ordererEmail || null,
+          recipientName,
+          recipientPhone,
+          zipCode,
+          address,
+          addressDetail: addressDetail || null,
+          deliveryMemo: deliveryMemo || null,
+          totalPrice,
+          deliveryFee,
+          finalPrice,
+          items: orderItems
+        }),
+        expiresAt: new Date(Date.now() + 30 * 60 * 1000)
       }
     })
 
@@ -237,8 +257,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       order: {
-        orderNo: order.orderNo,
-        finalPrice: order.finalPrice
+        orderNo,
+        finalPrice
       },
       payment: paymentData
     })

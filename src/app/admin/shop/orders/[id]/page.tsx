@@ -17,6 +17,14 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import {
   Loader2,
   ChevronLeft,
   Package,
@@ -25,6 +33,7 @@ import {
   CreditCard,
   Save,
   AlertCircle,
+  Trash2,
 } from "lucide-react"
 
 interface Order {
@@ -125,6 +134,10 @@ export default function AdminOrderDetailPage() {
   const [trackingNumber, setTrackingNumber] = useState("")
   const [adminMemo, setAdminMemo] = useState("")
 
+  // 삭제 다이얼로그 상태
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+
   useEffect(() => {
     fetchOrder()
   }, [orderId])
@@ -185,6 +198,29 @@ export default function AdminOrderDetailPage() {
     }
   }
 
+  const handleDelete = async () => {
+    setDeleting(true)
+    try {
+      const res = await fetch(`/api/admin/shop/orders/${orderId}`, {
+        method: "DELETE",
+      })
+
+      if (!res.ok) {
+        const data = await res.json()
+        setError(data.error || "삭제에 실패했습니다.")
+        setDeleteDialogOpen(false)
+        return
+      }
+
+      router.push("/admin/shop/orders")
+    } catch (err) {
+      setError("삭제 중 오류가 발생했습니다.")
+      setDeleteDialogOpen(false)
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   const formatPrice = (price: number) => price.toLocaleString() + "원"
   const formatDate = (date: string | null) => {
     if (!date) return "-"
@@ -227,9 +263,20 @@ export default function AdminOrderDetailPage() {
             <p className="text-muted-foreground font-mono">{order.orderNo}</p>
           </div>
         </div>
-        <Badge className={STATUS_COLORS[order.status] || "bg-gray-500"}>
-          {STATUS_OPTIONS.find(s => s.value === order.status)?.label || order.status}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Badge className={STATUS_COLORS[order.status] || "bg-gray-500"}>
+            {STATUS_OPTIONS.find(s => s.value === order.status)?.label || order.status}
+          </Badge>
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-red-500 hover:text-red-600 hover:bg-red-50"
+            onClick={() => setDeleteDialogOpen(true)}
+          >
+            <Trash2 className="h-4 w-4 mr-1" />
+            삭제
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -546,6 +593,36 @@ export default function AdminOrderDetailPage() {
           </Card>
         </div>
       </div>
+
+      {/* 삭제 확인 다이얼로그 */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>주문 삭제</DialogTitle>
+            <DialogDescription>
+              주문번호 <span className="font-mono font-bold">{order.orderNo}</span>을(를) 삭제하시겠습니까?
+              <br />
+              이 작업은 되돌릴 수 없습니다.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+              취소
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={deleting}
+            >
+              {deleting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "삭제"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

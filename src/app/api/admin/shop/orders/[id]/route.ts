@@ -186,3 +186,55 @@ async function restoreStock(items: { productId: number; optionId: number | null;
     })
   }
 }
+
+// 주문 삭제
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await getSession()
+    if (!session || session.role !== 'admin') {
+      return NextResponse.json({ error: '권한이 없습니다.' }, { status: 403 })
+    }
+
+    const { id } = await params
+    const orderId = parseInt(id)
+
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: { items: true }
+    })
+
+    if (!order) {
+      return NextResponse.json(
+        { error: '주문을 찾을 수 없습니다.' },
+        { status: 404 }
+      )
+    }
+
+    // 결제 완료 상태에서는 삭제 불가 (환불/취소 후 삭제 가능)
+    if (['paid', 'preparing', 'shipping', 'delivered'].includes(order.status)) {
+      return NextResponse.json(
+        { error: '결제 완료된 주문은 취소/환불 처리 후 삭제할 수 있습니다.' },
+        { status: 400 }
+      )
+    }
+
+    // 주문 삭제 (items는 cascade로 자동 삭제)
+    await prisma.order.delete({
+      where: { id: orderId }
+    })
+
+    return NextResponse.json({
+      success: true,
+      message: '주문이 삭제되었습니다.'
+    })
+  } catch (error) {
+    console.error('주문 삭제 에러:', error)
+    return NextResponse.json(
+      { error: '주문 삭제 중 오류가 발생했습니다.' },
+      { status: 500 }
+    )
+  }
+}
