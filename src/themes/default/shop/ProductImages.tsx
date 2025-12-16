@@ -4,7 +4,7 @@ import { useState } from "react"
 import { ChevronLeft, ChevronRight, Package } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 
-interface ProductImagesProps {
+export interface ProductImagesProps {
   images: string[]
   productName: string
   isSoldOut: boolean
@@ -19,7 +19,7 @@ export const getThumbnailUrl = (url: string) => {
 
 const VISIBLE_THUMBS = 5 // 한 번에 보이는 썸네일 개수
 
-export function ProductImages({
+export default function ProductImages({
   images,
   productName,
   isSoldOut,

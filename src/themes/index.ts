@@ -2,7 +2,7 @@
  * 테마 컴포넌트 export (자동 생성됨)
  *
  * 현재 테마: custom
- * 생성 시간: 2025-12-16T01:58:03.920Z
+ * 생성 시간: 2025-12-16T02:03:57.373Z
  *
  * 테마 변경 방법:
  * 1. .env 파일에서 NEXT_PUBLIC_THEME 값 변경
@@ -21,3 +21,6 @@ export { default as BoardEditPage } from './default/board/BoardEditPage'
 export { default as ContentPage } from './default/content/ContentPage'
 export { default as PolicyPage } from './default/policy/PolicyPage'
 export { default as SearchPage } from './default/search/SearchPage'
+export { default as ShopProductImages } from './default/shop/ProductImages'
+export { default as ShopReviewSection } from './default/shop/ReviewSection'
+export { default as ShopQnaSection } from './default/shop/QnaSection'

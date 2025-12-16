@@ -25,7 +25,7 @@ import {
 } from "lucide-react"
 import { getThumbnailUrl } from "./ProductImages"
 
-interface Review {
+export interface Review {
   id: number
   rating: number
   content: string
@@ -37,7 +37,7 @@ interface Review {
   isOwner: boolean
 }
 
-interface ReviewableOrder {
+export interface ReviewableOrder {
   orderId: number
   orderItemId: number
   productName: string
@@ -45,7 +45,7 @@ interface ReviewableOrder {
   orderNo: string
 }
 
-interface ReviewSectionProps {
+export interface ReviewSectionProps {
   slug: string
   productId: number
   reviews: Review[]
@@ -58,7 +58,7 @@ interface ReviewSectionProps {
   onFetchReviewableOrders: () => void
 }
 
-export function ReviewSection({
+export default function ReviewSection({
   slug,
   productId,
   reviews,

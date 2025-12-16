@@ -27,7 +27,7 @@ import {
   Settings,
   ChevronLeft,
 } from "lucide-react"
-import { ProductImages, ReviewSection, QnaSection } from "@/components/shop/ProductDetail"
+import { ShopProductImages, ShopReviewSection, ShopQnaSection } from "@/themes"
 
 interface ProductOption {
   id: number
@@ -526,7 +526,7 @@ export default function ProductDetailPage() {
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
             {/* 왼쪽: 이미지 갤러리 */}
             <div className="md:col-span-6 lg:col-span-5">
-              <ProductImages
+              <ShopProductImages
                 images={product.images}
                 productName={product.name}
                 isSoldOut={product.isSoldOut}
@@ -871,7 +871,7 @@ export default function ProductDetailPage() {
 
               {/* 리뷰 탭 */}
               {activeTab === 'review' && product && (
-                <ReviewSection
+                <ShopReviewSection
                   slug={slug}
                   productId={product.id}
                   reviews={reviews}
@@ -887,7 +887,7 @@ export default function ProductDetailPage() {
 
               {/* Q&A 탭 */}
               {activeTab === 'qna' && (
-                <QnaSection
+                <ShopQnaSection
                   slug={slug}
                   qnas={qnas}
                   qnasLoading={qnasLoading}

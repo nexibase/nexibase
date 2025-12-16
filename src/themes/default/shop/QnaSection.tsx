@@ -14,7 +14,7 @@ import {
   Send,
 } from "lucide-react"
 
-interface Qna {
+export interface Qna {
   id: number
   question: string
   answer: string | null
@@ -26,7 +26,7 @@ interface Qna {
   user: { id: number; name: string }
 }
 
-interface QnaSectionProps {
+export interface QnaSectionProps {
   slug: string
   qnas: Qna[]
   qnasLoading: boolean
@@ -35,7 +35,7 @@ interface QnaSectionProps {
   onFetchQnas: (page: number) => void
 }
 
-export function QnaSection({
+export default function QnaSection({
   slug,
   qnas,
   qnasLoading,
