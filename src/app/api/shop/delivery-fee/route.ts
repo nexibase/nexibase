@@ -61,7 +61,10 @@ export async function POST(request: NextRequest) {
 
     // 매칭된 정책이 없으면 기본 배송비 사용
     if (!matchedPolicy) {
-      matchedPolicy = deliveryFees.find(p => p.isDefault) || deliveryFees[0]
+      // isDefault가 true인 정책 우선, 없으면 regions가 비어있는 정책 사용
+      matchedPolicy = deliveryFees.find(p => p.isDefault)
+        || deliveryFees.find(p => !p.regions || JSON.parse(p.regions).length === 0)
+        || deliveryFees[deliveryFees.length - 1]  // 마지막 정책 (sortOrder가 가장 큰)
     }
 
     // 무료배송 체크
