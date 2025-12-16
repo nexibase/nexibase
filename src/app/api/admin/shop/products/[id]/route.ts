@@ -77,7 +77,7 @@ export async function PUT(
 
     const {
       name, slug, categoryId, description, content,
-      price, originPrice, images,
+      price, originPrice, stock, images,
       optionName1, optionName2, optionName3,
       isActive, isSoldOut, sortOrder
     } = body
@@ -102,6 +102,7 @@ export async function PUT(
     if (content !== undefined) updateData.content = content || null
     if (price !== undefined) updateData.price = parseInt(price)
     if (originPrice !== undefined) updateData.originPrice = originPrice ? parseInt(originPrice) : null
+    if (stock !== undefined) updateData.stock = parseInt(stock) || 0
     if (images !== undefined) updateData.images = images ? JSON.stringify(images) : null
     if (optionName1 !== undefined) updateData.optionName1 = optionName1 || null
     if (optionName2 !== undefined) updateData.optionName2 = optionName2 || null

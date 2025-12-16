@@ -316,6 +316,9 @@ model Product {
   optionName2 String?          @db.VarChar(20)    // 2단계 옵션명 (예: "사이즈")
   optionName3 String?          @db.VarChar(20)    // 3단계 옵션명 (예: "모델")
 
+  // 재고 (옵션 없는 상품용)
+  stock       Int              @default(0)
+
   // 상태
   isActive    Boolean          @default(true)
   isSoldOut   Boolean          @default(false)

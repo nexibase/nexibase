@@ -43,10 +43,10 @@ export async function GET(
       option3: [...new Set(product.options.map(o => o.option3).filter(Boolean))] as string[]
     }
 
-    // 가격 범위
+    // 가격 범위 및 재고
     let minPrice = product.price
     let maxPrice = product.price
-    let totalStock = 0
+    let totalStock = product.stock // 옵션 없는 상품용 기본 재고
 
     if (product.options.length > 0) {
       const prices = product.options.map(o => o.price)
@@ -83,7 +83,9 @@ export async function GET(
         })),
         optionValues,
         hasOptions: product.options.length > 0,
-        isSoldOut: product.isSoldOut || (product.options.length > 0 && totalStock <= 0),
+        stock: product.stock,
+        totalStock,
+        isSoldOut: product.isSoldOut || totalStock <= 0,
         viewCount: product.viewCount + 1,
         soldCount: product.soldCount
       }

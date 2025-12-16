@@ -50,6 +50,7 @@ interface Product {
   content: string | null
   price: number
   originPrice: number | null
+  stock: number
   images: string[]
   optionName1: string | null
   optionName2: string | null
@@ -115,6 +116,7 @@ export default function ProductEditPage({ params }: { params: Promise<{ id: stri
     content: '',
     price: '',
     originPrice: '',
+    stock: '',
     optionName1: '',
     optionName2: '',
     optionName3: '',
@@ -153,6 +155,7 @@ export default function ProductEditPage({ params }: { params: Promise<{ id: stri
           content: p.content || '',
           price: String(p.price),
           originPrice: p.originPrice ? String(p.originPrice) : '',
+          stock: String(p.stock || 0),
           optionName1: p.optionName1 || '',
           optionName2: p.optionName2 || '',
           optionName3: p.optionName3 || '',
@@ -198,6 +201,7 @@ export default function ProductEditPage({ params }: { params: Promise<{ id: stri
           categoryId: formData.categoryId ? parseInt(formData.categoryId) : null,
           price: parseInt(formData.price) || 0,
           originPrice: formData.originPrice ? parseInt(formData.originPrice) : null,
+          stock: parseInt(formData.stock) || 0,
           images
         })
       })
@@ -514,6 +518,22 @@ export default function ProductEditPage({ params }: { params: Promise<{ id: stri
                       value={formData.originPrice}
                       onChange={(e) => setFormData({ ...formData, originPrice: e.target.value })}
                     />
+                  </div>
+                  <div>
+                    <Label htmlFor="stock">재고 (옵션 없는 상품용)</Label>
+                    <Input
+                      id="stock"
+                      type="number"
+                      min="0"
+                      value={formData.stock}
+                      onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
+                      disabled={options.length > 0}
+                    />
+                    {options.length > 0 && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        옵션이 있는 상품은 옵션 탭에서 재고를 관리합니다.
+                      </p>
+                    )}
                   </div>
                 </div>
 

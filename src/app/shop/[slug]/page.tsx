@@ -56,6 +56,8 @@ interface Product {
   content: string | null
   price: number
   originPrice: number | null
+  stock: number
+  totalStock: number
   images: string[]
   category: { id: number; name: string; slug: string } | null
   isSoldOut: boolean
@@ -590,14 +592,18 @@ export default function ProductDetailPage() {
   // 재고
   const currentStock = useMemo(() => {
     if (selectedOption) return selectedOption.stock
+    // 옵션이 없는 상품의 경우 product.stock 사용
+    if (product && !product.hasOptions) return product.stock
     return null
-  }, [selectedOption])
+  }, [selectedOption, product])
 
   // 품절 여부
   const isOutOfStock = useMemo(() => {
     if (!product) return true
     if (product.isSoldOut) return true
     if (selectedOption && selectedOption.stock <= 0) return true
+    // 옵션 없는 상품의 경우 product.stock으로 품절 여부 확인
+    if (!product.hasOptions && product.stock <= 0) return true
     return false
   }, [product, selectedOption])
 
