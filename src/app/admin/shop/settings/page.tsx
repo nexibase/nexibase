@@ -16,6 +16,7 @@ import {
   AlertCircle,
   Check,
   CreditCard,
+  RotateCcw,
 } from "lucide-react"
 import { Sidebar } from "@/components/admin/Sidebar"
 
@@ -27,6 +28,9 @@ interface ShopSettings {
   delivery_notice: string
   refund_policy: string
   return_shipping_fee: string  // 반품 배송비
+  exchange_info: string  // 교환 안내
+  return_info: string  // 반품 안내
+  return_address: string  // 반품 주소
   option1_name: string
   option2_name: string
   option3_name: string
@@ -45,6 +49,9 @@ const DEFAULT_SETTINGS: ShopSettings = {
   delivery_notice: "",
   refund_policy: "",
   return_shipping_fee: "5000",  // 기본 반품 배송비 5,000원
+  exchange_info: "",
+  return_info: "",
+  return_address: "",
   option1_name: "색상",
   option2_name: "사이즈",
   option3_name: "모델",
@@ -302,6 +309,55 @@ export default function ShopSettingsPage() {
                 placeholder="예: 상품 수령 후 7일 이내 환불 가능합니다. 단, 신선식품은 환불이 불가합니다."
                 rows={5}
               />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 반품/교환 안내 */}
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <RotateCcw className="h-5 w-5" />
+              반품/교환 안내
+            </CardTitle>
+            <CardDescription>
+              반품/교환 관련 안내 정보를 입력합니다. 주문서 및 상품 상세 페이지에 표시됩니다.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="exchange_info">교환 안내</Label>
+                <Textarea
+                  id="exchange_info"
+                  value={settings.exchange_info}
+                  onChange={(e) => handleChange("exchange_info", e.target.value)}
+                  placeholder="예: 상품 수령 후 7일 이내 교환 가능합니다. 단, 상품 하자가 아닌 경우 왕복 배송비는 고객 부담입니다."
+                  rows={4}
+                />
+              </div>
+              <div>
+                <Label htmlFor="return_info">반품 안내</Label>
+                <Textarea
+                  id="return_info"
+                  value={settings.return_info}
+                  onChange={(e) => handleChange("return_info", e.target.value)}
+                  placeholder="예: 상품 수령 후 7일 이내 반품 가능합니다. 단순 변심의 경우 반품 배송비가 차감됩니다."
+                  rows={4}
+                />
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="return_address">반품/교환 주소</Label>
+              <Input
+                id="return_address"
+                value={settings.return_address}
+                onChange={(e) => handleChange("return_address", e.target.value)}
+                placeholder="예: 경기도 OO시 OO구 OO로 123, 물류센터"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                고객이 반품/교환 시 발송할 주소입니다.
+              </p>
             </div>
           </CardContent>
         </Card>

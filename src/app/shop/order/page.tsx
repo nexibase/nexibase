@@ -66,6 +66,10 @@ interface ShopSettings {
   bank_info: string
   delivery_notice: string
   refund_policy: string
+  return_shipping_fee: string
+  exchange_info: string
+  return_info: string
+  return_address: string
 }
 
 
@@ -790,6 +794,73 @@ export default function OrderPage() {
                     )}
                   </CardContent>
                 </Card>
+
+                {/* 배송/환불/반품교환 정책 */}
+                {shopSettings && (shopSettings.delivery_notice || shopSettings.refund_policy || shopSettings.exchange_info || shopSettings.return_info) && (
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <AlertCircle className="h-5 w-5 text-muted-foreground" />
+                        주문 안내
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4 text-sm">
+                      {shopSettings.delivery_notice && (
+                        <div>
+                          <h4 className="font-medium mb-1 flex items-center gap-2">
+                            <Truck className="h-4 w-4" />
+                            배송 안내
+                          </h4>
+                          <p className="text-muted-foreground whitespace-pre-wrap pl-6">
+                            {shopSettings.delivery_notice}
+                          </p>
+                        </div>
+                      )}
+                      {shopSettings.refund_policy && (
+                        <div>
+                          <h4 className="font-medium mb-1">환불 정책</h4>
+                          <p className="text-muted-foreground whitespace-pre-wrap pl-6">
+                            {shopSettings.refund_policy}
+                          </p>
+                          {shopSettings.return_shipping_fee && (
+                            <p className="text-muted-foreground pl-6 mt-1">
+                              * 배송 후 취소/반품 시 반품 배송비 {parseInt(shopSettings.return_shipping_fee).toLocaleString()}원이 차감됩니다.
+                            </p>
+                          )}
+                        </div>
+                      )}
+                      {(shopSettings.exchange_info || shopSettings.return_info) && (
+                        <div>
+                          <h4 className="font-medium mb-1">교환/반품 안내</h4>
+                          {shopSettings.exchange_info && (
+                            <div className="pl-6 mb-2">
+                              <p className="text-xs font-medium text-muted-foreground">교환</p>
+                              <p className="text-muted-foreground whitespace-pre-wrap">
+                                {shopSettings.exchange_info}
+                              </p>
+                            </div>
+                          )}
+                          {shopSettings.return_info && (
+                            <div className="pl-6 mb-2">
+                              <p className="text-xs font-medium text-muted-foreground">반품</p>
+                              <p className="text-muted-foreground whitespace-pre-wrap">
+                                {shopSettings.return_info}
+                              </p>
+                            </div>
+                          )}
+                          {shopSettings.return_address && (
+                            <div className="pl-6">
+                              <p className="text-xs font-medium text-muted-foreground">반품/교환 주소</p>
+                              <p className="text-muted-foreground">
+                                {shopSettings.return_address}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
               </div>
 
               {/* 결제 요약 */}
