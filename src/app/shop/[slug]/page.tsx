@@ -65,6 +65,9 @@ interface Product {
   optionName1: string | null
   optionName2: string | null
   optionName3: string | null
+  reviewCount: number
+  avgRating: number
+  qnaCount: number
 }
 
 interface CartItem {
@@ -317,6 +320,10 @@ export default function ProductDetailPage() {
       }
       const data = await res.json()
       setProduct(data.product)
+      // 리뷰/Q&A 개수 초기화 (API에서 받은 값으로)
+      setReviewTotal(data.product.reviewCount || 0)
+      setAvgRating(data.product.avgRating || 0)
+      setQnaTotal(data.product.qnaCount || 0)
       // 찜 여부 확인
       checkWishlist(data.product.id)
     } catch {

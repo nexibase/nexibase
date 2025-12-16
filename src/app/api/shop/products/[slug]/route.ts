@@ -67,6 +67,18 @@ export async function GET(
       totalStock = product.options.reduce((sum, o) => sum + o.stock, 0)
     }
 
+    // 리뷰/Q&A 개수 및 평균 평점 조회
+    const [reviewStats, qnaCount] = await Promise.all([
+      prisma.productReview.aggregate({
+        where: { productId: product.id },
+        _count: true,
+        _avg: { rating: true }
+      }),
+      prisma.productQna.count({
+        where: { productId: product.id }
+      })
+    ])
+
     const response = NextResponse.json({
       success: true,
       product: {
@@ -99,7 +111,10 @@ export async function GET(
         totalStock,
         isSoldOut: product.isSoldOut || totalStock <= 0,
         viewCount,
-        soldCount: product.soldCount
+        soldCount: product.soldCount,
+        reviewCount: reviewStats._count,
+        avgRating: reviewStats._avg.rating || 0,
+        qnaCount
       }
     })
 
