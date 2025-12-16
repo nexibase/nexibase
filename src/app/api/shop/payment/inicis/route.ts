@@ -203,12 +203,12 @@ export async function POST(request: NextRequest) {
     const baseUrl = clientBaseUrl || process.env.NEXT_PUBLIC_URL || 'http://localhost:3003'
 
     // 해시 데이터 생성 (이니시스 웹표준 방식)
-    // signature: oid, price, timestamp 해시
+    // signature: oid + price + timestamp 해시
     const signature = sha256(`oid=${orderNo}&price=${finalPrice}&timestamp=${timestamp}`)
-    // verification: oid, price, signKey, timestamp 해시 (위변조 검증용)
-    const verification = sha256(`oid=${orderNo}&price=${finalPrice}&signKey=${signKey}&timestamp=${timestamp}`)
     // mKey: signKey 해시
     const mKey = sha256(signKey)
+
+    console.log('이니시스 결제 데이터:', { mid, orderNo, finalPrice, timestamp, testMode })
 
     // 결제 요청에 필요한 데이터
     const paymentData = {
@@ -228,9 +228,7 @@ export async function POST(request: NextRequest) {
       // 타임스탬프 및 서명
       timestamp,
       signature,
-      verification,
       mKey,
-      use_chkfake: 'Y',
 
       // URL 설정 (데모와 동일하게 popupUrl 추가)
       returnUrl: `${baseUrl}/api/shop/payment/inicis/return`,
