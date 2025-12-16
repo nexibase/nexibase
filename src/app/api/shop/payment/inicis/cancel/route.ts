@@ -28,7 +28,7 @@ function getTimestamp(): string {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { orderNo, cancelAmount, cancelReason } = body
+    const { orderNo, cancelReason } = body
 
     if (!orderNo) {
       return NextResponse.json({ error: '주문번호가 필요합니다.' }, { status: 400 })
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
 
     // 테스트 모드에서는 외부 API 호출 없이 바로 성공 처리
     if (testMode) {
-      console.log('테스트 모드: 실제 PG 취소 API 호출 생략')
+      console.log('테스트 모드: 실제 PG 취소 API 호출 생략, tid:', tid)
       return NextResponse.json({
         success: true,
         message: '테스트 모드 - 취소 처리 완료',
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
 
     // 실제 운영 모드에서만 이니시스 API 호출
     const mid = settings.pg_mid || 'INIpayTest'
-    const iniApiKey = settings.pg_apikey || settings.pg_signkey || ''
+    const iniApiKey = settings.pg_apikey || ''
 
     if (!iniApiKey) {
       return NextResponse.json({
@@ -114,17 +114,12 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    // 취소 금액 (미지정시 전액)
-    const amount = cancelAmount || order.totalPrice
-
     // 이니시스 취소 API 호출
     const cancelResult = await cancelInicisPayment({
       mid,
       iniApiKey,
       tid,
-      cancelAmount: amount,
-      cancelReason: cancelReason || '고객 요청에 의한 취소',
-      partialCancel: amount < order.totalPrice
+      cancelReason: cancelReason || '고객 요청에 의한 취소'
     })
 
     if (cancelResult.success) {
@@ -150,63 +145,62 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// 이니시스 결제 취소 함수 (실제 운영 모드에서만 호출)
+// 이니시스 결제 취소 함수 (v2 API - 공식 샘플 기준)
 async function cancelInicisPayment({
   mid,
   iniApiKey,
   tid,
-  cancelAmount,
-  cancelReason,
-  partialCancel
+  cancelReason
 }: {
   mid: string
   iniApiKey: string
   tid: string
-  cancelAmount: number
   cancelReason: string
-  partialCancel: boolean
 }) {
   // AbortController로 타임아웃 설정 (10초)
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), 10000)
 
   try {
-    // 이니시스 취소 API URL
-    const cancelUrl = 'https://iniapi.inicis.com/api/v1/refund'
+    // 이니시스 취소 API URL (v2)
+    const apiUrl = 'https://iniapi.inicis.com/v2/pg/refund'
 
     const timestamp = getTimestamp()
-    const type = partialCancel ? 'Partial' : 'FullCancel'
-    const paymethod = 'Card'
+    const type = 'refund'
     const clientIp = '127.0.0.1'
 
-    // 해시 데이터 생성 (이니시스 매뉴얼 순서: INIAPIKey + type + paymethod + timestamp + clientIp + mid + tid)
-    const hashData = `${iniApiKey}${type}${paymethod}${timestamp}${clientIp}${mid}${tid}`
-    const hashString = crypto.createHash('sha512').update(hashData).digest('hex')
-
-    // URL-encoded form data 생성
-    const formData = new URLSearchParams()
-    formData.append('type', type)
-    formData.append('paymethod', paymethod)
-    formData.append('timestamp', timestamp)
-    formData.append('clientIp', clientIp)
-    formData.append('mid', mid)
-    formData.append('tid', tid)
-    formData.append('msg', cancelReason)
-    formData.append('hashData', hashString)
-
-    // 부분취소인 경우 금액 정보 추가
-    if (partialCancel) {
-      formData.append('price', cancelAmount.toString())
+    // data 객체 생성
+    const data = {
+      tid: tid,
+      msg: cancelReason
     }
 
-    console.log('이니시스 취소 요청:', { mid, tid, type, cancelAmount, partialCancel, timestamp })
+    // 해시 데이터 생성 (공식 샘플: key + mid + type + timestamp + JSON.stringify(data))
+    const dataStr = JSON.stringify(data)
+    const plainTxt = iniApiKey + mid + type + timestamp + dataStr
+    const hashData = crypto.createHash('sha512').update(plainTxt).digest('hex')
 
-    const response = await fetch(cancelUrl, {
+    // 요청 파라미터
+    const params = {
+      mid: mid,
+      type: type,
+      timestamp: timestamp,
+      clientIp: clientIp,
+      data: data,
+      hashData: hashData
+    }
+
+    console.log('이니시스 취소 요청:', { mid, tid, type, timestamp })
+    console.log('PLAINTXT:', plainTxt)
+    console.log('HASHDATA:', hashData)
+    console.log('REQUEST:', JSON.stringify(params))
+
+    const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+        'Content-Type': 'application/json'
       },
-      body: formData.toString(),
+      body: JSON.stringify(params),
       signal: controller.signal
     })
 
