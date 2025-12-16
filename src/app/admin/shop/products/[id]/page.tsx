@@ -48,6 +48,7 @@ import {
   sortableKeyboardCoordinates,
   useSortable,
   rectSortingStrategy,
+  verticalListSortingStrategy,
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 
@@ -96,6 +97,109 @@ interface Category {
   id: number
   name: string
   slug: string
+}
+
+// 드래그 가능한 옵션 행 컴포넌트
+function SortableOptionRow({
+  option,
+  formData,
+  onUpdate,
+  onDelete,
+}: {
+  option: ProductOption
+  formData: {
+    optionName1: string
+    optionName2: string
+    optionName3: string
+  }
+  onUpdate: (optionId: number, field: string, value: string | number) => void
+  onDelete: (optionId: number) => void
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: option.id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  }
+
+  return (
+    <tr
+      ref={setNodeRef}
+      style={style}
+      className={`border-b hover:bg-muted/30 ${isDragging ? 'bg-muted/50' : ''}`}
+    >
+      <td className="p-2 w-10">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="cursor-grab active:cursor-grabbing h-8 w-8"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className="h-4 w-4 text-muted-foreground" />
+        </Button>
+      </td>
+      {formData.optionName1 && <td className="p-2">{option.option1 || '-'}</td>}
+      {formData.optionName2 && <td className="p-2">{option.option2 || '-'}</td>}
+      {formData.optionName3 && <td className="p-2">{option.option3 || '-'}</td>}
+      <td className="p-2">
+        <Input
+          type="number"
+          defaultValue={option.price}
+          className="w-24 h-8 text-sm"
+          onBlur={(e) => {
+            const newPrice = parseInt(e.target.value)
+            if (newPrice !== option.price) {
+              onUpdate(option.id, 'price', newPrice)
+            }
+          }}
+        />
+      </td>
+      <td className="p-2">
+        <Input
+          type="number"
+          defaultValue={option.stock}
+          className={`w-20 h-8 text-sm ${option.stock <= 0 ? 'text-red-600' : ''}`}
+          onBlur={(e) => {
+            const newStock = parseInt(e.target.value)
+            if (newStock !== option.stock) {
+              onUpdate(option.id, 'stock', newStock)
+            }
+          }}
+        />
+      </td>
+      <td className="p-2">
+        <Input
+          type="text"
+          defaultValue={option.sku || ''}
+          className="w-24 h-8 text-sm"
+          placeholder="-"
+          onBlur={(e) => {
+            if (e.target.value !== (option.sku || '')) {
+              onUpdate(option.id, 'sku', e.target.value)
+            }
+          }}
+        />
+      </td>
+      <td className="p-2">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => onDelete(option.id)}
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </td>
+    </tr>
+  )
 }
 
 // 드래그 가능한 이미지 컴포넌트
@@ -237,8 +341,8 @@ export default function ProductEditPage({ params }: { params: Promise<{ id: stri
     })
   )
 
-  // 드래그 종료 핸들러
-  const handleDragEnd = (event: DragEndEvent) => {
+  // 이미지 드래그 종료 핸들러
+  const handleImageDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
     if (over && active.id !== over.id) {
       setImages((items) => {
@@ -246,6 +350,34 @@ export default function ProductEditPage({ params }: { params: Promise<{ id: stri
         const newIndex = items.indexOf(over.id as string)
         return arrayMove(items, oldIndex, newIndex)
       })
+    }
+  }
+
+  // 옵션 드래그 종료 핸들러
+  const handleOptionDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event
+    if (over && active.id !== over.id) {
+      const oldIndex = options.findIndex(o => o.id === active.id)
+      const newIndex = options.findIndex(o => o.id === over.id)
+      const newOptions = arrayMove(options, oldIndex, newIndex)
+      setOptions(newOptions)
+
+      // 서버에 순서 저장
+      try {
+        const optionsWithOrder = newOptions.map((opt, idx) => ({
+          ...opt,
+          sortOrder: idx
+        }))
+
+        await fetch(`/api/admin/shop/products/${id}/options`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ options: optionsWithOrder })
+        })
+      } catch (error) {
+        console.error('옵션 순서 저장 에러:', error)
+        fetchProduct() // 실패 시 원래 순서로 복원
+      }
     }
   }
 
@@ -828,78 +960,45 @@ export default function ProductEditPage({ params }: { params: Promise<{ id: stri
                       등록된 옵션이 없습니다.
                     </p>
                   ) : (
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead>
-                          <tr className="border-b">
-                            {formData.optionName1 && <th className="p-2 text-left font-medium">{formData.optionName1}</th>}
-                            {formData.optionName2 && <th className="p-2 text-left font-medium">{formData.optionName2}</th>}
-                            {formData.optionName3 && <th className="p-2 text-left font-medium">{formData.optionName3}</th>}
-                            <th className="p-2 text-left font-medium">가격</th>
-                            <th className="p-2 text-left font-medium">재고</th>
-                            <th className="p-2 text-left font-medium">SKU</th>
-                            <th className="p-2 text-left font-medium w-16"></th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {options.map((option) => (
-                            <tr key={option.id} className="border-b hover:bg-muted/30">
-                              {formData.optionName1 && <td className="p-2">{option.option1 || '-'}</td>}
-                              {formData.optionName2 && <td className="p-2">{option.option2 || '-'}</td>}
-                              {formData.optionName3 && <td className="p-2">{option.option3 || '-'}</td>}
-                              <td className="p-2">
-                                <Input
-                                  type="number"
-                                  defaultValue={option.price}
-                                  className="w-24 h-8 text-sm"
-                                  onBlur={(e) => {
-                                    const newPrice = parseInt(e.target.value)
-                                    if (newPrice !== option.price) {
-                                      handleUpdateOption(option.id, 'price', newPrice)
-                                    }
-                                  }}
-                                />
-                              </td>
-                              <td className="p-2">
-                                <Input
-                                  type="number"
-                                  defaultValue={option.stock}
-                                  className={`w-20 h-8 text-sm ${option.stock <= 0 ? 'text-red-600' : ''}`}
-                                  onBlur={(e) => {
-                                    const newStock = parseInt(e.target.value)
-                                    if (newStock !== option.stock) {
-                                      handleUpdateOption(option.id, 'stock', newStock)
-                                    }
-                                  }}
-                                />
-                              </td>
-                              <td className="p-2">
-                                <Input
-                                  type="text"
-                                  defaultValue={option.sku || ''}
-                                  className="w-24 h-8 text-sm"
-                                  placeholder="-"
-                                  onBlur={(e) => {
-                                    if (e.target.value !== (option.sku || '')) {
-                                      handleUpdateOption(option.id, 'sku', e.target.value)
-                                    }
-                                  }}
-                                />
-                              </td>
-                              <td className="p-2">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => handleDeleteOption(option.id)}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </td>
+                    <DndContext
+                      sensors={sensors}
+                      collisionDetection={closestCenter}
+                      onDragEnd={handleOptionDragEnd}
+                    >
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="border-b">
+                              <th className="p-2 text-left font-medium w-10"></th>
+                              {formData.optionName1 && <th className="p-2 text-left font-medium">{formData.optionName1}</th>}
+                              {formData.optionName2 && <th className="p-2 text-left font-medium">{formData.optionName2}</th>}
+                              {formData.optionName3 && <th className="p-2 text-left font-medium">{formData.optionName3}</th>}
+                              <th className="p-2 text-left font-medium">가격</th>
+                              <th className="p-2 text-left font-medium">재고</th>
+                              <th className="p-2 text-left font-medium">SKU</th>
+                              <th className="p-2 text-left font-medium w-16"></th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                          </thead>
+                          <SortableContext items={options.map(o => o.id)} strategy={verticalListSortingStrategy}>
+                            <tbody>
+                              {options.map((option) => (
+                                <SortableOptionRow
+                                  key={option.id}
+                                  option={option}
+                                  formData={formData}
+                                  onUpdate={handleUpdateOption}
+                                  onDelete={handleDeleteOption}
+                                />
+                              ))}
+                            </tbody>
+                          </SortableContext>
+                        </table>
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-4">
+                        <GripVertical className="h-4 w-4 inline mr-1" />
+                        아이콘을 드래그하여 옵션 순서를 변경할 수 있습니다.
+                      </p>
+                    </DndContext>
                   )}
                 </CardContent>
               </Card>
@@ -916,7 +1015,7 @@ export default function ProductEditPage({ params }: { params: Promise<{ id: stri
                 <DndContext
                   sensors={sensors}
                   collisionDetection={closestCenter}
-                  onDragEnd={handleDragEnd}
+                  onDragEnd={handleImageDragEnd}
                 >
                   <SortableContext items={images} strategy={rectSortingStrategy}>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
