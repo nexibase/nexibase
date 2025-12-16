@@ -21,7 +21,8 @@ interface CartItem {
   productId: number
   productName: string
   productSlug: string
-  productImage: string | null
+  productImage?: string | null
+  image?: string | null  // 이전 데이터 호환용
   optionId: number | null
   optionText: string
   price: number
@@ -211,9 +212,9 @@ export default function CartPage() {
                           {/* 이미지 */}
                           <Link href={`/shop/${item.productSlug}`} className="flex-shrink-0">
                             <div className="w-20 h-20 bg-muted rounded-md overflow-hidden">
-                              {item.productImage ? (
+                              {(item.productImage || item.image) ? (
                                 <img
-                                  src={item.productImage}
+                                  src={item.productImage || item.image || ''}
                                   alt={item.productName}
                                   className="w-full h-full object-cover"
                                 />
