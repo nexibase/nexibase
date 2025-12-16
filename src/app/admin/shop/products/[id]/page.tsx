@@ -33,6 +33,23 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import dynamic from "next/dynamic"
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core"
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  rectSortingStrategy,
+} from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
 
 const TiptapEditor = dynamic(
   () => import("@/components/editor/TiptapEditor").then(mod => mod.TiptapEditor),
@@ -79,6 +96,74 @@ interface Category {
   id: number
   name: string
   slug: string
+}
+
+// 드래그 가능한 이미지 컴포넌트
+function SortableImage({
+  id,
+  url,
+  index,
+  isFirst,
+  onRemove
+}: {
+  id: string
+  url: string
+  index: number
+  isFirst: boolean
+  onRemove: () => void
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : undefined,
+    opacity: isDragging ? 0.8 : 1,
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`relative group ${isDragging ? 'ring-2 ring-primary' : ''}`}
+    >
+      <img
+        src={url}
+        alt={`상품 이미지 ${index + 1}`}
+        className="w-full aspect-square object-cover rounded-lg border"
+      />
+      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-2">
+        <Button
+          size="icon"
+          variant="secondary"
+          className="cursor-grab active:cursor-grabbing"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className="h-4 w-4" />
+        </Button>
+        <Button
+          size="icon"
+          variant="destructive"
+          onClick={onRemove}
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
+      {isFirst && (
+        <span className="absolute top-2 left-2 bg-primary text-primary-foreground text-xs px-2 py-1 rounded">
+          대표
+        </span>
+      )}
+    </div>
+  )
 }
 
 export default function ProductEditPage({ params }: { params: Promise<{ id: string }> }) {
@@ -139,6 +224,30 @@ export default function ProductEditPage({ params }: { params: Promise<{ id: stri
   // 이미지 상태
   const [images, setImages] = useState<string[]>([])
   const [uploading, setUploading] = useState(false)
+
+  // 드래그앤드랍 센서
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // 8px 이동 후에 드래그 시작 (클릭과 구분)
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
+
+  // 드래그 종료 핸들러
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+    if (over && active.id !== over.id) {
+      setImages((items) => {
+        const oldIndex = items.indexOf(active.id as string)
+        const newIndex = items.indexOf(over.id as string)
+        return arrayMove(items, oldIndex, newIndex)
+      })
+    }
+  }
 
   const fetchProduct = useCallback(async () => {
     try {
@@ -350,14 +459,6 @@ export default function ProductEditPage({ params }: { params: Promise<{ id: stri
 
     // 상태에서 제거
     setImages(images.filter((_, i) => i !== index))
-  }
-
-  // 이미지 순서 변경
-  const moveImage = (from: number, to: number) => {
-    const newImages = [...images]
-    const [removed] = newImages.splice(from, 1)
-    newImages.splice(to, 0, removed)
-    setImages(newImages)
   }
 
   if (loading) {
@@ -812,72 +913,49 @@ export default function ProductEditPage({ params }: { params: Promise<{ id: stri
                 <CardTitle className="text-lg">상품 이미지</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                  {images.map((image, index) => (
-                    <div key={index} className="relative group">
-                      <img
-                        src={image}
-                        alt={`상품 이미지 ${index + 1}`}
-                        className="w-full aspect-square object-cover rounded-lg border"
-                      />
-                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-2">
-                        {index > 0 && (
-                          <Button
-                            size="icon"
-                            variant="secondary"
-                            onClick={() => moveImage(index, index - 1)}
-                          >
-                            <ArrowLeft className="h-4 w-4" />
-                          </Button>
-                        )}
-                        <Button
-                          size="icon"
-                          variant="destructive"
-                          onClick={() => handleRemoveImage(index)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                        {index < images.length - 1 && (
-                          <Button
-                            size="icon"
-                            variant="secondary"
-                            onClick={() => moveImage(index, index + 1)}
-                          >
-                            <ArrowLeft className="h-4 w-4 rotate-180" />
-                          </Button>
-                        )}
-                      </div>
-                      {index === 0 && (
-                        <span className="absolute top-2 left-2 bg-primary text-primary-foreground text-xs px-2 py-1 rounded">
-                          대표
-                        </span>
-                      )}
-                    </div>
-                  ))}
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext items={images} strategy={rectSortingStrategy}>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                      {images.map((image, index) => (
+                        <SortableImage
+                          key={image}
+                          id={image}
+                          url={image}
+                          index={index}
+                          isFirst={index === 0}
+                          onRemove={() => handleRemoveImage(index)}
+                        />
+                      ))}
 
-                  {/* 업로드 버튼 */}
-                  <label className="w-full aspect-square border-2 border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      onChange={handleImageUpload}
-                      className="hidden"
-                      disabled={uploading}
-                    />
-                    {uploading ? (
-                      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                    ) : (
-                      <>
-                        <Upload className="h-8 w-8 text-muted-foreground mb-2" />
-                        <span className="text-sm text-muted-foreground">이미지 추가</span>
-                      </>
-                    )}
-                  </label>
-                </div>
+                      {/* 업로드 버튼 */}
+                      <label className="w-full aspect-square border-2 border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          onChange={handleImageUpload}
+                          className="hidden"
+                          disabled={uploading}
+                        />
+                        {uploading ? (
+                          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                        ) : (
+                          <>
+                            <Upload className="h-8 w-8 text-muted-foreground mb-2" />
+                            <span className="text-sm text-muted-foreground">이미지 추가</span>
+                          </>
+                        )}
+                      </label>
+                    </div>
+                  </SortableContext>
+                </DndContext>
 
                 <p className="text-sm text-muted-foreground">
-                  첫 번째 이미지가 대표 이미지로 사용됩니다. 드래그하여 순서를 변경할 수 있습니다.
+                  첫 번째 이미지가 대표 이미지로 사용됩니다. 이미지 위에 마우스를 올리고 <GripVertical className="h-4 w-4 inline" /> 아이콘을 드래그하여 순서를 변경할 수 있습니다.
                 </p>
               </CardContent>
             </Card>
