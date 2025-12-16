@@ -5,7 +5,7 @@ import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { LogOut, Sun, Moon, ChevronDown, Search, Menu, X, Bell, ShoppingCart, Package, Settings } from "lucide-react"
+import { LogOut, Sun, Moon, ChevronDown, Search, Menu, X, Bell, ShoppingCart, User, Settings } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter, usePathname } from "next/navigation"
@@ -224,10 +224,10 @@ export default function Header() {
                   <>
                     {user ? (
                       <>
-                        {/* 주문내역 */}
-                        <Link href="/shop/orders">
+                        {/* 마이페이지 */}
+                        <Link href="/shop/mypage">
                           <Button variant="ghost" size="icon" className="relative">
-                            <Package className="h-5 w-5" />
+                            <User className="h-5 w-5" />
                           </Button>
                         </Link>
                         {/* 알림 */}
@@ -518,13 +518,13 @@ export default function Header() {
               </Link>
               {user && (
                 <Link
-                  href="/shop/orders"
+                  href="/shop/mypage"
                   className={`block px-3 py-2 text-sm rounded-md ${
-                    pathname === '/shop/orders' ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
+                    pathname?.startsWith('/shop/mypage') ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
                   }`}
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  주문내역
+                  마이페이지
                 </Link>
               )}
               <div className="border-t my-2" />
