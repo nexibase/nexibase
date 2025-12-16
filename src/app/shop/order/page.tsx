@@ -397,6 +397,7 @@ export default function OrderPage() {
             address,
             addressDetail: addressDetail || null,
             deliveryMemo: deliveryMemo || null,
+            deliveryFee,  // 화면에 표시된 배송비 전달
             baseUrl: currentBaseUrl,  // 현재 접속 URL 전달
           }),
         })

@@ -78,6 +78,7 @@ export async function POST(request: NextRequest) {
       address,
       addressDetail,
       deliveryMemo,
+      deliveryFee: clientDeliveryFee,  // 클라이언트에서 계산된 배송비
       baseUrl: clientBaseUrl  // 클라이언트에서 전달받은 baseUrl
     } = body
 
@@ -134,19 +135,8 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // 배송비 계산
-    let deliveryFee = 0
-    if (zipCode) {
-      const deliveryRes = await fetch(`${process.env.NEXT_PUBLIC_URL || 'http://localhost:3004'}/api/shop/delivery-fee`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ zipCode, totalPrice })
-      })
-      if (deliveryRes.ok) {
-        const deliveryData = await deliveryRes.json()
-        deliveryFee = deliveryData.fee || 0
-      }
-    }
+    // 배송비는 클라이언트에서 전달된 값 사용 (화면에 표시된 금액과 일치하도록)
+    const deliveryFee = typeof clientDeliveryFee === 'number' ? clientDeliveryFee : 0
 
     const finalPrice = totalPrice + deliveryFee
 
