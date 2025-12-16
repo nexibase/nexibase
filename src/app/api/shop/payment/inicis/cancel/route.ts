@@ -86,9 +86,33 @@ export async function POST(request: NextRequest) {
     // 쇼핑몰 설정 가져오기
     const settings = await getShopSettings()
     const testMode = settings.pg_test_mode !== 'false'
-    const mid = testMode ? 'INIpayTest' : (settings.pg_mid || 'INIpayTest')
-    // INIAPIKey (API 취소용 키) - signKey와 다름
-    const iniApiKey = testMode ? 'ItEQKi3rY7uvDS8l' : (settings.pg_apikey || settings.pg_signkey || '')
+
+    // 테스트 모드에서는 외부 API 호출 없이 바로 성공 처리
+    if (testMode) {
+      console.log('테스트 모드: 실제 PG 취소 API 호출 생략')
+      return NextResponse.json({
+        success: true,
+        message: '테스트 모드 - 취소 처리 완료',
+        needsPGCancel: false,
+        cancelResult: {
+          success: true,
+          message: '테스트 모드 - PG 취소 API 호출 생략',
+          data: null
+        }
+      })
+    }
+
+    // 실제 운영 모드에서만 이니시스 API 호출
+    const mid = settings.pg_mid || 'INIpayTest'
+    const iniApiKey = settings.pg_apikey || settings.pg_signkey || ''
+
+    if (!iniApiKey) {
+      return NextResponse.json({
+        success: false,
+        error: 'PG API Key가 설정되지 않았습니다.',
+        needsPGCancel: false
+      }, { status: 400 })
+    }
 
     // 취소 금액 (미지정시 전액)
     const amount = cancelAmount || order.totalPrice
@@ -100,8 +124,7 @@ export async function POST(request: NextRequest) {
       tid,
       cancelAmount: amount,
       cancelReason: cancelReason || '고객 요청에 의한 취소',
-      partialCancel: amount < order.totalPrice,
-      testMode
+      partialCancel: amount < order.totalPrice
     })
 
     if (cancelResult.success) {
@@ -127,15 +150,14 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// 이니시스 결제 취소 함수
+// 이니시스 결제 취소 함수 (실제 운영 모드에서만 호출)
 async function cancelInicisPayment({
   mid,
   iniApiKey,
   tid,
   cancelAmount,
   cancelReason,
-  partialCancel,
-  testMode
+  partialCancel
 }: {
   mid: string
   iniApiKey: string
@@ -143,8 +165,11 @@ async function cancelInicisPayment({
   cancelAmount: number
   cancelReason: string
   partialCancel: boolean
-  testMode: boolean
 }) {
+  // AbortController로 타임아웃 설정 (10초)
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 10000)
+
   try {
     // 이니시스 취소 API URL
     const cancelUrl = 'https://iniapi.inicis.com/api/v1/refund'
@@ -174,15 +199,18 @@ async function cancelInicisPayment({
       formData.append('price', cancelAmount.toString())
     }
 
-    console.log('이니시스 취소 요청:', { mid, tid, type, cancelAmount, partialCancel, testMode, timestamp })
+    console.log('이니시스 취소 요청:', { mid, tid, type, cancelAmount, partialCancel, timestamp })
 
     const response = await fetch(cancelUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
       },
-      body: formData.toString()
+      body: formData.toString(),
+      signal: controller.signal
     })
+
+    clearTimeout(timeoutId)
 
     const result = await response.json()
     console.log('이니시스 취소 응답:', result)
@@ -196,16 +224,6 @@ async function cancelInicisPayment({
         data: result
       }
     } else {
-      // 테스트 모드에서는 취소 API가 동작하지 않을 수 있음
-      if (testMode) {
-        console.log('테스트 모드: 실제 취소 API 미지원, 성공으로 처리')
-        return {
-          success: true,
-          message: '테스트 모드 - 취소 처리 완료',
-          data: result
-        }
-      }
-
       return {
         success: false,
         message: result.resultMsg || '결제 취소 실패',
@@ -213,17 +231,19 @@ async function cancelInicisPayment({
       }
     }
   } catch (error) {
-    console.error('이니시스 취소 API 호출 에러:', error)
+    clearTimeout(timeoutId)
 
-    // 테스트 모드에서 API 오류시에도 성공 처리
-    if (testMode) {
+    // 타임아웃 에러 처리
+    if (error instanceof Error && error.name === 'AbortError') {
+      console.error('이니시스 취소 API 타임아웃')
       return {
-        success: true,
-        message: '테스트 모드 - 취소 처리 완료 (API 미지원)',
-        data: null
+        success: false,
+        message: '결제 취소 API 응답 시간 초과',
+        error: 'TIMEOUT'
       }
     }
 
+    console.error('이니시스 취소 API 호출 에러:', error)
     return {
       success: false,
       message: '결제 취소 API 호출 실패',
