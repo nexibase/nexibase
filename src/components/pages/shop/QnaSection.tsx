@@ -163,8 +163,8 @@ export default function QnaSection({
 
                   {/* 질문 */}
                   <div className="mb-3">
-                    <span className="inline-block px-2 py-0.5 bg-primary text-primary-foreground text-xs font-medium rounded mr-2">Q</span>
-                    <span className={`text-sm ${!qna.canView ? 'text-muted-foreground italic' : ''}`}>
+                    <span className="inline-block px-2 py-0.5 bg-primary text-primary-foreground text-xs font-medium rounded mr-2 align-top">Q</span>
+                    <span className={`text-sm whitespace-pre-wrap ${!qna.canView ? 'text-muted-foreground italic' : ''}`}>
                       {qna.question}
                     </span>
                   </div>
@@ -181,7 +181,7 @@ export default function QnaSection({
                           </span>
                         )}
                       </div>
-                      <span className={`text-sm ${!qna.canView ? 'text-muted-foreground italic' : ''}`}>
+                      <span className={`text-sm whitespace-pre-wrap ${!qna.canView ? 'text-muted-foreground italic' : ''}`}>
                         {qna.answer}
                       </span>
                     </div>

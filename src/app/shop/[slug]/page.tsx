@@ -1081,11 +1081,11 @@ export default function ProductDetailPage() {
 
           {/* 탭 영역 */}
           <div className="mt-12">
-            {/* 탭 버튼 */}
-            <div className="flex border-b">
+            {/* 탭 버튼 - 3분할 */}
+            <div className="grid grid-cols-3 border-b">
               <button
                 onClick={() => setActiveTab('detail')}
-                className={`px-6 py-3 text-sm font-medium border-b-2 -mb-px transition-colors ${
+                className={`py-4 text-base font-semibold border-b-2 -mb-px transition-colors text-center ${
                   activeTab === 'detail'
                     ? 'border-primary text-primary'
                     : 'border-transparent text-muted-foreground hover:text-foreground'
@@ -1095,24 +1095,24 @@ export default function ProductDetailPage() {
               </button>
               <button
                 onClick={() => setActiveTab('review')}
-                className={`px-6 py-3 text-sm font-medium border-b-2 -mb-px transition-colors flex items-center gap-2 ${
+                className={`py-4 text-base font-semibold border-b-2 -mb-px transition-colors text-center flex items-center justify-center gap-2 ${
                   activeTab === 'review'
                     ? 'border-primary text-primary'
                     : 'border-transparent text-muted-foreground hover:text-foreground'
                 }`}
               >
-                <Star className="h-4 w-4" />
+                <Star className="h-5 w-5" />
                 리뷰 ({reviewTotal})
               </button>
               <button
                 onClick={() => setActiveTab('qna')}
-                className={`px-6 py-3 text-sm font-medium border-b-2 -mb-px transition-colors flex items-center gap-2 ${
+                className={`py-4 text-base font-semibold border-b-2 -mb-px transition-colors text-center flex items-center justify-center gap-2 ${
                   activeTab === 'qna'
                     ? 'border-primary text-primary'
                     : 'border-transparent text-muted-foreground hover:text-foreground'
                 }`}
               >
-                <MessageSquare className="h-4 w-4" />
+                <MessageSquare className="h-5 w-5" />
                 Q&A ({qnaTotal})
               </button>
             </div>

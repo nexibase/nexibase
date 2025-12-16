@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
@@ -72,10 +72,17 @@ export default function ReviewSection({
 }: ReviewSectionProps) {
   // 리뷰 작성 상태
   const [showReviewForm, setShowReviewForm] = useState(false)
-  const [selectedOrderItem, setSelectedOrderItem] = useState<number | null>(
-    reviewableOrders.length === 1 ? reviewableOrders[0].orderItemId : null
-  )
+  const [selectedOrderItem, setSelectedOrderItem] = useState<number | null>(null)
   const [reviewRating, setReviewRating] = useState(5)
+
+  // reviewableOrders가 변경되면 selectedOrderItem 업데이트
+  useEffect(() => {
+    if (reviewableOrders.length === 1) {
+      setSelectedOrderItem(reviewableOrders[0].orderItemId)
+    } else if (reviewableOrders.length === 0) {
+      setSelectedOrderItem(null)
+    }
+  }, [reviewableOrders])
   const [reviewContent, setReviewContent] = useState('')
   const [reviewImages, setReviewImages] = useState<string[]>([])
   const [uploadingImage, setUploadingImage] = useState(false)
@@ -168,7 +175,7 @@ export default function ReviewSection({
       })
       if (res.ok) {
         setShowReviewForm(false)
-        setSelectedOrderItem(reviewableOrders.length === 1 ? reviewableOrders[0]?.orderItemId : null)
+        setSelectedOrderItem(null)  // useEffect에서 reviewableOrders 변경 시 자동 설정됨
         setReviewRating(5)
         setReviewContent('')
         setReviewImages([])
