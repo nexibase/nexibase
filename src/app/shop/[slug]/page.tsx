@@ -783,10 +783,13 @@ export default function ProductDetailPage() {
             </Button>
           </div>
 
-          {/* 아마존 스타일 3컬럼 레이아웃 */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* 아마존 스타일 반응형 레이아웃 */}
+          {/* lg: 이미지(5) | 상품정보(4) | 구매박스(3) */}
+          {/* md: 이미지(6) | 상품정보+구매박스(6) */}
+          {/* sm: 이미지 → 상품정보 → 구매박스 (1컬럼) */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
             {/* 왼쪽: 이미지 갤러리 (썸네일 + 메인 이미지) */}
-            <div className="lg:col-span-5">
+            <div className="md:col-span-6 lg:col-span-5">
               <div className="flex gap-3">
                 {/* 썸네일 세로 배열 (최대 5개 표시 + 화살표) */}
                 {product.images.length > 1 && (
@@ -914,8 +917,10 @@ export default function ProductDetailPage() {
               </div>
             </div>
 
-            {/* 중앙: 상품 정보 */}
-            <div className="lg:col-span-4">
+            {/* 오른쪽: 상품 정보 + 구매박스 (md에서는 같은 컬럼) */}
+            <div className="md:col-span-6 lg:col-span-7 grid grid-cols-1 lg:grid-cols-7 gap-6">
+              {/* 상품 정보 */}
+              <div className="lg:col-span-4">
               {/* 카테고리 */}
               {product.category && (
                 <Link href={`/shop?category=${product.category.slug}`}>
@@ -982,10 +987,10 @@ export default function ProductDetailPage() {
                   </div>
                 )}
               </div>
-            </div>
+              </div>
 
-            {/* 오른쪽: 구매 박스 */}
-            <div className="lg:col-span-3">
+              {/* 구매 박스 */}
+              <div className="lg:col-span-3">
               <Card className="sticky top-4">
                 <CardContent className="p-4 space-y-4">
                   {/* 가격 */}
@@ -1187,6 +1192,7 @@ export default function ProductDetailPage() {
                 </CardContent>
               </Card>
             </div>
+          </div>
           </div>
 
           {/* 탭 영역 */}

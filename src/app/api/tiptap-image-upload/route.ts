@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
     let outputBuffer: Buffer
     let thumbBuffer: Buffer
     let outputFilename = filename
-    let thumbFilename = `${timestamp}-${random}-thumb.webp`
+    const thumbFilename = `${timestamp}-${random}-thumb.webp`
     const isProductImage = folder === 'products'
 
     if (file.type === 'image/gif') {

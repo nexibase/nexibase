@@ -133,7 +133,7 @@ export default function Header() {
     e.preventDefault()
     if (searchQuery.trim()) {
       router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
-      setSearchOpen(false)
+      setMobileMenuOpen(false)
       setSearchQuery("")
     }
   }
