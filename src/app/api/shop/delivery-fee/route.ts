@@ -12,14 +12,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '우편번호가 필요합니다.' }, { status: 400 })
     }
 
-    // 모든 배송비 정책 조회 (활성화된 것 + 기본 정책은 비활성화여도 폴백용으로 조회)
+    // 활성화된 배송비 정책만 조회
     const deliveryFees = await prisma.deliveryFee.findMany({
-      where: {
-        OR: [
-          { isActive: true },
-          { isDefault: true }  // 기본 정책은 비활성화여도 폴백용으로 사용
-        ]
-      },
+      where: { isActive: true },
       orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }]
     })
 
@@ -37,12 +32,9 @@ export async function POST(request: NextRequest) {
     let matchedPolicy = null
 
     for (const policy of deliveryFees) {
-      // 비활성화된 정책은 지역 매칭에서 제외 (폴백용으로만 사용)
-      if (!policy.isActive) continue
-
       const regions: string[] = policy.regions ? JSON.parse(policy.regions) : []
 
-      // 기본 배송비는 건너뜀 (나중에 폴백으로 사용)
+      // 기본 배송비(regions가 비어있거나 isDefault)는 건너뜀 (나중에 폴백으로 사용)
       if (policy.isDefault || regions.length === 0) continue
 
       // 우편번호 범위 체크
@@ -72,7 +64,16 @@ export async function POST(request: NextRequest) {
       // isDefault가 true인 정책 우선, 없으면 regions가 비어있는 정책 사용
       matchedPolicy = deliveryFees.find(p => p.isDefault)
         || deliveryFees.find(p => !p.regions || JSON.parse(p.regions).length === 0)
-        || deliveryFees[deliveryFees.length - 1]  // 마지막 정책 (sortOrder가 가장 큰)
+
+      // 그래도 없으면 무료배송
+      if (!matchedPolicy) {
+        return NextResponse.json({
+          success: true,
+          fee: 0,
+          policyName: '무료배송',
+          message: '해당 지역의 배송비 정책이 없습니다.'
+        })
+      }
     }
 
     // 무료배송 체크
