@@ -5,7 +5,7 @@ import { useParams } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2, FileText, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Header, Footer } from "@/themes"
+import { Header, Footer } from "@/components/layout"
 import Link from "next/link"
 
 interface Content {

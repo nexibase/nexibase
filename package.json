@@ -3,9 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "npm run prebuild && next dev --turbopack",
-    "prebuild": "node scripts/prebuild.js",
-    "build": "npm run prebuild && next build",
+    "dev": "next dev --turbopack",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "db:setup": "prisma migrate deploy && prisma generate",

@@ -1,6 +1,6 @@
 "use client"
 
-import { Header, Footer } from "@/themes"
+import { Header, Footer } from "@/components/layout"
 
 interface UserLayoutProps {
   children: React.ReactNode

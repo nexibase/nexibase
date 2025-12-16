@@ -9,7 +9,7 @@ import {
   Clock, ArrowRight, Sparkles, Flame, BookOpen, ShoppingBag
 } from "lucide-react"
 import Link from "next/link"
-import { Header, Footer } from "@/themes"
+import { Header, Footer } from "@/components/layout"
 
 interface UserInfo {
   id: string

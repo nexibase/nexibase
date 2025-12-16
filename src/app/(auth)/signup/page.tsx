@@ -1,4 +1,4 @@
-import { SignupPage } from "@/themes"
+import { SignupPage } from "@/components/pages"
 
 export default function Page() {
   return <SignupPage />

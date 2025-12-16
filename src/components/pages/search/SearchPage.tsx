@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Header, Footer } from "@/themes"
+import { Header, Footer } from "@/components/layout"
 import {
   Search, Loader2, FileText, Eye, MessageSquare, ThumbsUp,
   ChevronLeft, ChevronRight, Clock, TrendingUp, Sparkles,

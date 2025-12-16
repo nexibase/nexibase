@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
-import { Header, Footer } from "@/themes"
+import { Header, Footer } from "@/components/layout"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -27,7 +27,7 @@ import {
   Settings,
   ChevronLeft,
 } from "lucide-react"
-import { ShopProductImages, ShopReviewSection, ShopQnaSection } from "@/themes"
+import { ShopProductImages, ShopReviewSection, ShopQnaSection } from "@/components/pages"
 
 interface ProductOption {
   id: number

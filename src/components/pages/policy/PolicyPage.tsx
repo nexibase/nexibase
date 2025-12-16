@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2, FileText, ArrowLeft, History } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Header } from "@/themes"
+import { Header } from "@/components/layout"
 import Link from "next/link"
 
 interface Policy {

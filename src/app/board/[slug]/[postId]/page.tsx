@@ -1,4 +1,4 @@
-import { BoardPostPage } from "@/themes"
+import { BoardPostPage } from "@/components/pages"
 
 export default function Page() {
   return <BoardPostPage />
