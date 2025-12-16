@@ -51,8 +51,8 @@ next-env.d.ts
 # src/themes/default를 복사해서 사용
 /src/themes/custom
 
-# 사용자 커스텀 설정 폴더 (프로젝트별 설정 오버라이드)
-/src/app/custom/
+# 사용자 커스텀 CSS (프로젝트별 스타일 오버라이드)
+/src/app/custom.css
 
 # 테마 index.ts (prebuild 스크립트로 자동 생성)
 /src/themes/index.ts
