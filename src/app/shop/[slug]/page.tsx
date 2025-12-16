@@ -152,6 +152,10 @@ export default function ProductDetailPage() {
   const [thumbStartIndex, setThumbStartIndex] = useState(0)
   const VISIBLE_THUMBS = 5 // 한 번에 보이는 썸네일 개수
 
+  // 이미지 줌 상태
+  const [isZooming, setIsZooming] = useState(false)
+  const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 })
+
   // 장바구니 추가 상태
   const [addingToCart, setAddingToCart] = useState(false)
   const [cartMessage, setCartMessage] = useState<string | null>(null)
@@ -844,12 +848,23 @@ export default function ProductDetailPage() {
 
                 {/* 메인 이미지 */}
                 <div className="flex-1 relative">
-                  <div className="relative aspect-square bg-muted rounded-lg overflow-hidden">
+                  <div
+                    className="relative aspect-square bg-muted rounded-lg overflow-hidden cursor-crosshair"
+                    onMouseEnter={() => product.images.length > 0 && setIsZooming(true)}
+                    onMouseLeave={() => setIsZooming(false)}
+                    onMouseMove={(e) => {
+                      if (product.images.length === 0) return
+                      const rect = e.currentTarget.getBoundingClientRect()
+                      const x = ((e.clientX - rect.left) / rect.width) * 100
+                      const y = ((e.clientY - rect.top) / rect.height) * 100
+                      setZoomPosition({ x, y })
+                    }}
+                  >
                     {product.images.length > 0 ? (
                       <img
                         src={product.images[selectedImageIndex]}
                         alt={product.name}
-                        className="w-full h-full object-contain"
+                        className="w-full h-full object-contain pointer-events-none"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
@@ -866,7 +881,35 @@ export default function ProductDetailPage() {
                         {Math.round((1 - product.price / product.originPrice) * 100)}% OFF
                       </Badge>
                     )}
+
+                    {/* 줌 영역 표시 (마우스 위치) */}
+                    {isZooming && product.images.length > 0 && (
+                      <div
+                        className="absolute w-24 h-24 border-2 border-primary/50 bg-primary/10 pointer-events-none hidden lg:block"
+                        style={{
+                          left: `${Math.min(Math.max(zoomPosition.x - 12, 0), 76)}%`,
+                          top: `${Math.min(Math.max(zoomPosition.y - 12, 0), 76)}%`,
+                        }}
+                      />
+                    )}
                   </div>
+
+                  {/* 줌 미리보기 (데스크톱만) */}
+                  {isZooming && product.images.length > 0 && (
+                    <div
+                      className="absolute left-full top-0 ml-4 w-[400px] h-[400px] border rounded-lg bg-white shadow-xl overflow-hidden z-50 hidden lg:block"
+                    >
+                      <div
+                        className="w-[1200px] h-[1200px]"
+                        style={{
+                          backgroundImage: `url(${product.images[selectedImageIndex]})`,
+                          backgroundSize: '1200px 1200px',
+                          backgroundPosition: `${-zoomPosition.x * 12 + 200}px ${-zoomPosition.y * 12 + 200}px`,
+                          backgroundRepeat: 'no-repeat',
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
