@@ -31,7 +31,7 @@ export async function GET(
     const viewKey = `product_view_${product.id}_${clientIp}`
     const viewedCookie = request.cookies.get(viewKey)?.value
 
-    let shouldIncrement = !viewedCookie
+    const shouldIncrement = !viewedCookie
     let viewCount = product.viewCount
 
     if (shouldIncrement) {

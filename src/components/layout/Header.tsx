@@ -52,13 +52,12 @@ export default function Header() {
     setMounted(true)
   }, [])
 
-  // 장바구니 개수 업데이트
+  // 장바구니 개수 업데이트 (상품 가짓수)
   useEffect(() => {
     const updateCartCount = () => {
       try {
         const cart = JSON.parse(localStorage.getItem("cart") || "[]")
-        const count = cart.reduce((sum: number, item: { quantity: number }) => sum + item.quantity, 0)
-        setCartCount(count)
+        setCartCount(cart.length) // 상품 가짓수로 표시
       } catch {
         setCartCount(0)
       }
