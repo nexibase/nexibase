@@ -61,6 +61,7 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
     { id: "shop-products", label: "상품관리", icon: Package, path: "/admin/shop/products" },
     { id: "shop-categories", label: "카테고리", icon: ShoppingBag, path: "/admin/shop/categories" },
     { id: "shop-orders", label: "주문관리", icon: ClipboardList, path: "/admin/shop/orders" },
+    { id: "shop-qna", label: "Q&A관리", icon: MessageSquare, path: "/admin/shop/qna" },
     { id: "shop-delivery", label: "배송비정책", icon: Truck, path: "/admin/shop/delivery" },
     { id: "shop-settings", label: "쇼핑몰설정", icon: Settings, path: "/admin/shop/settings" },
   ]
