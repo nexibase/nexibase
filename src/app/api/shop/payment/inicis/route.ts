@@ -205,6 +205,8 @@ export async function POST(request: NextRequest) {
     // 해시 데이터 생성 (이니시스 웹표준 방식)
     // signature: oid + price + timestamp 해시
     const signature = sha256(`oid=${orderNo}&price=${finalPrice}&timestamp=${timestamp}`)
+    // verification: oid + price + signKey + timestamp 해시
+    const verification = sha256(`oid=${orderNo}&price=${finalPrice}&signKey=${signKey}&timestamp=${timestamp}`)
     // mKey: signKey 해시
     const mKey = sha256(signKey)
 
@@ -228,7 +230,9 @@ export async function POST(request: NextRequest) {
       // 타임스탬프 및 서명
       timestamp,
       signature,
+      verification,
       mKey,
+      use_chkfake: 'Y',
 
       // URL 설정 (데모와 동일하게 popupUrl 추가)
       returnUrl: `${baseUrl}/api/shop/payment/inicis/return`,
