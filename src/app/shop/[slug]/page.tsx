@@ -777,270 +777,332 @@ export default function ProductDetailPage() {
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* 이미지 갤러리 */}
-            <div>
-              <div className="relative aspect-square bg-muted rounded-lg overflow-hidden mb-4">
-                {product.images.length > 0 ? (
-                  <img
-                    src={product.images[selectedImageIndex]}
-                    alt={product.name}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <Package className="h-20 w-20 text-muted-foreground" />
+          {/* 아마존 스타일 3컬럼 레이아웃 */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            {/* 왼쪽: 이미지 갤러리 (썸네일 + 메인 이미지) */}
+            <div className="lg:col-span-5">
+              <div className="flex gap-3">
+                {/* 썸네일 세로 배열 */}
+                {product.images.length > 1 && (
+                  <div className="flex flex-col gap-2 w-16 flex-shrink-0">
+                    {product.images.map((img, idx) => (
+                      <button
+                        key={idx}
+                        onMouseEnter={() => setSelectedImageIndex(idx)}
+                        onClick={() => setSelectedImageIndex(idx)}
+                        className={`w-14 h-14 rounded border-2 overflow-hidden transition-all ${
+                          idx === selectedImageIndex
+                            ? "border-primary ring-1 ring-primary"
+                            : "border-muted hover:border-primary/50"
+                        }`}
+                      >
+                        <img src={img} alt="" className="w-full h-full object-cover" />
+                      </button>
+                    ))}
                   </div>
                 )}
-                {product.isSoldOut && (
-                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                    <span className="text-white font-bold text-2xl">품절</span>
-                  </div>
-                )}
-                {product.originPrice && product.originPrice > product.price && (
-                  <Badge className="absolute top-4 left-4 bg-red-500 text-lg px-3 py-1">
-                    {Math.round((1 - product.price / product.originPrice) * 100)}% OFF
-                  </Badge>
-                )}
-              </div>
 
-              {/* 썸네일 */}
-              {product.images.length > 1 && (
-                <div className="flex gap-2 overflow-x-auto pb-2">
-                  {product.images.map((img, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setSelectedImageIndex(idx)}
-                      className={`flex-shrink-0 w-20 h-20 rounded-md overflow-hidden border-2 ${
-                        idx === selectedImageIndex ? "border-primary" : "border-transparent"
-                      }`}
-                    >
-                      <img src={img} alt="" className="w-full h-full object-cover" />
-                    </button>
-                  ))}
+                {/* 메인 이미지 */}
+                <div className="flex-1 relative">
+                  <div className="relative aspect-square bg-muted rounded-lg overflow-hidden">
+                    {product.images.length > 0 ? (
+                      <img
+                        src={product.images[selectedImageIndex]}
+                        alt={product.name}
+                        className="w-full h-full object-contain"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Package className="h-20 w-20 text-muted-foreground" />
+                      </div>
+                    )}
+                    {product.isSoldOut && (
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                        <span className="text-white font-bold text-2xl">품절</span>
+                      </div>
+                    )}
+                    {product.originPrice && product.originPrice > product.price && (
+                      <Badge className="absolute top-3 left-3 bg-red-500 text-sm px-2 py-0.5">
+                        {Math.round((1 - product.price / product.originPrice) * 100)}% OFF
+                      </Badge>
+                    )}
+                  </div>
                 </div>
-              )}
+              </div>
             </div>
 
-            {/* 상품 정보 */}
-            <div>
+            {/* 중앙: 상품 정보 */}
+            <div className="lg:col-span-4">
               {/* 카테고리 */}
               {product.category && (
                 <Link href={`/shop?category=${product.category.slug}`}>
-                  <Badge variant="outline" className="mb-2">
+                  <Badge variant="outline" className="mb-2 text-xs">
                     {product.category.name}
                   </Badge>
                 </Link>
               )}
 
               {/* 상품명 */}
-              <div className="flex items-center gap-2 mb-2">
-                <h1 className="text-2xl font-bold">{product.name}</h1>
+              <div className="flex items-start gap-2 mb-3">
+                <h1 className="text-xl font-semibold leading-tight">{product.name}</h1>
                 {isAdmin && (
                   <Link
                     href={`/admin/shop/products/${product.id}`}
-                    className="text-muted-foreground hover:text-primary transition-colors"
+                    className="text-muted-foreground hover:text-primary transition-colors flex-shrink-0"
                     title="상품 수정"
                   >
-                    <Settings className="h-5 w-5" />
+                    <Settings className="h-4 w-4" />
                   </Link>
                 )}
               </div>
 
-              {/* 설명 */}
-              {product.description && (
-                <p className="text-muted-foreground mb-4">{product.description}</p>
-              )}
-
-              {/* 가격 */}
-              <div className="flex items-end gap-3 mb-6">
-                <span className="text-3xl font-bold text-primary">
-                  {formatPrice(currentPrice)}
-                </span>
-                {product.originPrice && product.originPrice > currentPrice && (
-                  <span className="text-lg text-muted-foreground line-through">
-                    {formatPrice(product.originPrice)}
-                  </span>
-                )}
-              </div>
-
               {/* 판매/조회 정보 */}
-              <div className="flex gap-4 text-sm text-muted-foreground mb-6">
+              <div className="flex gap-3 text-sm text-muted-foreground mb-4 pb-4 border-b">
                 <span>판매 {product.soldCount}개</span>
                 <span>조회 {product.viewCount}</span>
               </div>
 
-              {/* 옵션 선택 */}
-              {product.hasOptions && product.options.length > 0 && (
-                <Card className="mb-6">
-                  <CardContent className="p-4 space-y-4">
-                    {/* 1단계 옵션 */}
-                    {product.optionValues.option1.length > 0 && (
-                      <div>
-                        <label className="text-sm font-medium mb-2 block">
-                          {product.optionName1 || "옵션1"} 선택
-                        </label>
-                        <Select value={selectedOption1} onValueChange={handleOption1Change}>
-                          <SelectTrigger>
-                            <SelectValue placeholder={`${product.optionName1 || "옵션1"} 선택`} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {product.optionValues.option1.map(val => (
-                              <SelectItem key={val} value={val}>
-                                {val}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
+              {/* 가격 (모바일에서만 표시) */}
+              <div className="lg:hidden mb-4">
+                <div className="flex items-baseline gap-2">
+                  {product.originPrice && product.originPrice > currentPrice && (
+                    <span className="text-sm text-muted-foreground line-through">
+                      {formatPrice(product.originPrice)}
+                    </span>
+                  )}
+                  <span className="text-2xl font-bold text-primary">
+                    {formatPrice(currentPrice)}
+                  </span>
+                </div>
+              </div>
 
-                    {/* 2단계 옵션 */}
-                    {product.optionValues.option2.length > 0 && (
-                      <div>
-                        <label className="text-sm font-medium mb-2 block">
-                          {product.optionName2 || "옵션2"} 선택
-                        </label>
-                        <Select
-                          value={selectedOption2}
-                          onValueChange={handleOption2Change}
-                          disabled={!selectedOption1}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder={selectedOption1 ? `${product.optionName2 || "옵션2"} 선택` : `${product.optionName1 || "옵션1"}을 먼저 선택해주세요`} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {availableOption2Values.map(val => (
-                              <SelectItem key={val} value={val}>
-                                {val}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
-
-                    {/* 3단계 옵션 */}
-                    {product.optionValues.option3.length > 0 && (
-                      <div>
-                        <label className="text-sm font-medium mb-2 block">
-                          {product.optionName3 || "옵션3"} 선택
-                        </label>
-                        <Select
-                          value={selectedOption3}
-                          onValueChange={setSelectedOption3}
-                          disabled={!selectedOption2}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder={selectedOption2 ? `${product.optionName3 || "옵션3"} 선택` : `${product.optionName2 || "옵션2"}를 먼저 선택해주세요`} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {availableOption3Values.map(val => (
-                              <SelectItem key={val} value={val}>
-                                {val}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
-
-                    {/* 선택된 옵션 정보 */}
-                    {selectedOption && (
-                      <div className="pt-4 border-t">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-muted-foreground">
-                            {getOptionText()}
-                          </span>
-                          <div className="text-right">
-                            <p className="font-bold">{formatPrice(selectedOption.price)}</p>
-                            <p className={`text-sm ${selectedOption.stock <= 0 ? "text-red-500" : "text-muted-foreground"}`}>
-                              {selectedOption.stock <= 0 ? "품절" : `재고 ${selectedOption.stock}개`}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+              {/* 설명 */}
+              {product.description && (
+                <div className="mb-4">
+                  <h3 className="text-sm font-medium mb-2">상품 설명</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{product.description}</p>
+                </div>
               )}
 
-              {/* 수량 선택 */}
-              <div className="flex items-center gap-4 mb-6">
-                <span className="text-sm font-medium">수량</span>
-                <div className="flex items-center border rounded-md">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleQuantityChange(-1)}
-                    disabled={quantity <= 1}
-                  >
-                    <Minus className="h-4 w-4" />
-                  </Button>
-                  <span className="w-12 text-center">{quantity}</span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleQuantityChange(1)}
-                    disabled={currentStock !== null && quantity >= currentStock}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-                {currentStock !== null && currentStock > 0 && (
-                  <span className="text-sm text-muted-foreground">
-                    (재고: {currentStock}개)
-                  </span>
+              {/* 상품 정보 요약 */}
+              <div className="space-y-2 text-sm">
+                {product.hasOptions && product.optionValues.option1.length > 0 && (
+                  <div className="flex">
+                    <span className="text-muted-foreground w-20">{product.optionName1 || "옵션1"}</span>
+                    <span>{product.optionValues.option1.join(", ")}</span>
+                  </div>
+                )}
+                {product.hasOptions && product.optionValues.option2.length > 0 && (
+                  <div className="flex">
+                    <span className="text-muted-foreground w-20">{product.optionName2 || "옵션2"}</span>
+                    <span>{product.optionValues.option2.join(", ")}</span>
+                  </div>
                 )}
               </div>
+            </div>
 
-              {/* 총 금액 */}
-              <div className="flex justify-between items-center p-4 bg-muted rounded-lg mb-6">
-                <span className="font-medium">총 금액</span>
-                <span className="text-2xl font-bold text-primary">
-                  {formatPrice(currentPrice * quantity)}
-                </span>
-              </div>
+            {/* 오른쪽: 구매 박스 */}
+            <div className="lg:col-span-3">
+              <Card className="sticky top-4">
+                <CardContent className="p-4 space-y-4">
+                  {/* 가격 */}
+                  <div>
+                    {product.originPrice && product.originPrice > currentPrice && (
+                      <div className="text-sm text-muted-foreground line-through">
+                        {formatPrice(product.originPrice)}
+                      </div>
+                    )}
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-2xl font-bold text-primary">
+                        {formatPrice(currentPrice)}
+                      </span>
+                    </div>
+                  </div>
 
-              {/* 메시지 */}
-              {cartMessage && (
-                <div className={`flex items-center gap-2 p-3 rounded-lg mb-4 ${
-                  cartMessage.includes("추가") ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                }`}>
-                  {cartMessage.includes("추가") ? (
-                    <Check className="h-4 w-4" />
-                  ) : (
-                    <AlertCircle className="h-4 w-4" />
+                  {/* 배송 정보 */}
+                  <div className="text-sm text-muted-foreground pb-3 border-b">
+                    무료배송
+                  </div>
+
+                  {/* 재고 상태 */}
+                  {!product.isSoldOut && (
+                    <p className={`text-sm font-medium ${
+                      currentStock !== null && currentStock <= 5
+                        ? "text-orange-600"
+                        : "text-green-600"
+                    }`}>
+                      {currentStock !== null
+                        ? currentStock <= 0
+                          ? "품절"
+                          : currentStock <= 5
+                            ? `재고 ${currentStock}개 남음`
+                            : "재고 있음"
+                        : "재고 있음"
+                      }
+                    </p>
                   )}
-                  {cartMessage}
-                </div>
-              )}
 
-              {/* 버튼 */}
-              <div className="flex gap-3">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="flex-1"
-                  onClick={addToCart}
-                  disabled={addingToCart || isOutOfStock || !isOptionSelected}
-                >
-                  {addingToCart ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <ShoppingCart className="h-4 w-4 mr-2" />
+                  {/* 옵션 선택 */}
+                  {product.hasOptions && product.options.length > 0 && (
+                    <div className="space-y-3">
+                      {/* 1단계 옵션 */}
+                      {product.optionValues.option1.length > 0 && (
+                        <div>
+                          <label className="text-xs font-medium mb-1.5 block text-muted-foreground">
+                            {product.optionName1 || "옵션1"}
+                          </label>
+                          <Select value={selectedOption1} onValueChange={handleOption1Change}>
+                            <SelectTrigger className="h-9 text-sm">
+                              <SelectValue placeholder="선택" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {product.optionValues.option1.map(val => (
+                                <SelectItem key={val} value={val}>
+                                  {val}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+
+                      {/* 2단계 옵션 */}
+                      {product.optionValues.option2.length > 0 && (
+                        <div>
+                          <label className="text-xs font-medium mb-1.5 block text-muted-foreground">
+                            {product.optionName2 || "옵션2"}
+                          </label>
+                          <Select
+                            value={selectedOption2}
+                            onValueChange={handleOption2Change}
+                            disabled={!selectedOption1}
+                          >
+                            <SelectTrigger className="h-9 text-sm">
+                              <SelectValue placeholder={selectedOption1 ? "선택" : "상위 옵션 먼저 선택"} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {availableOption2Values.map(val => (
+                                <SelectItem key={val} value={val}>
+                                  {val}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+
+                      {/* 3단계 옵션 */}
+                      {product.optionValues.option3.length > 0 && (
+                        <div>
+                          <label className="text-xs font-medium mb-1.5 block text-muted-foreground">
+                            {product.optionName3 || "옵션3"}
+                          </label>
+                          <Select
+                            value={selectedOption3}
+                            onValueChange={setSelectedOption3}
+                            disabled={!selectedOption2}
+                          >
+                            <SelectTrigger className="h-9 text-sm">
+                              <SelectValue placeholder={selectedOption2 ? "선택" : "상위 옵션 먼저 선택"} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {availableOption3Values.map(val => (
+                                <SelectItem key={val} value={val}>
+                                  {val}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+
+                      {/* 선택된 옵션 정보 */}
+                      {selectedOption && (
+                        <div className="text-xs pt-2 border-t">
+                          <div className="flex justify-between text-muted-foreground">
+                            <span>{getOptionText()}</span>
+                            <span className={selectedOption.stock <= 0 ? "text-red-500" : ""}>
+                              {selectedOption.stock <= 0 ? "품절" : `${selectedOption.stock}개`}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   )}
-                  장바구니
-                </Button>
-                <Button
-                  size="lg"
-                  className="flex-1"
-                  onClick={buyNow}
-                  disabled={isOutOfStock || !isOptionSelected}
-                >
-                  바로 구매
-                </Button>
-              </div>
+
+                  {/* 수량 선택 */}
+                  <div>
+                    <label className="text-xs font-medium mb-1.5 block text-muted-foreground">수량</label>
+                    <div className="flex items-center border rounded-md w-fit">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => handleQuantityChange(-1)}
+                        disabled={quantity <= 1}
+                      >
+                        <Minus className="h-3 w-3" />
+                      </Button>
+                      <span className="w-10 text-center text-sm">{quantity}</span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => handleQuantityChange(1)}
+                        disabled={currentStock !== null && quantity >= currentStock}
+                      >
+                        <Plus className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* 총 금액 */}
+                  <div className="flex justify-between items-center pt-3 border-t">
+                    <span className="text-sm text-muted-foreground">총 금액</span>
+                    <span className="text-lg font-bold text-primary">
+                      {formatPrice(currentPrice * quantity)}
+                    </span>
+                  </div>
+
+                  {/* 메시지 */}
+                  {cartMessage && (
+                    <div className={`flex items-center gap-2 p-2 rounded text-xs ${
+                      cartMessage.includes("추가") ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                    }`}>
+                      {cartMessage.includes("추가") ? (
+                        <Check className="h-3 w-3" />
+                      ) : (
+                        <AlertCircle className="h-3 w-3" />
+                      )}
+                      {cartMessage}
+                    </div>
+                  )}
+
+                  {/* 버튼 */}
+                  <div className="space-y-2">
+                    <Button
+                      className="w-full"
+                      onClick={buyNow}
+                      disabled={isOutOfStock || !isOptionSelected}
+                    >
+                      바로 구매
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={addToCart}
+                      disabled={addingToCart || isOutOfStock || !isOptionSelected}
+                    >
+                      {addingToCart ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <ShoppingCart className="h-4 w-4 mr-2" />
+                      )}
+                      장바구니
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
 
