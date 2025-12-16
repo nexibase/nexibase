@@ -13,7 +13,7 @@ import {
   Lock,
   Send,
   Pencil,
-  Trash2,
+  X,
 } from "lucide-react"
 
 export interface Qna {
@@ -234,28 +234,30 @@ export default function QnaSection({
                       </Badge>
                     )}
                     {/* 수정/삭제 버튼: 본인 글이고 답변 전에만 표시 */}
-                    {qna.isOwner && !qna.answer && (
-                      <div className="ml-auto flex items-center gap-1">
+                    {qna.isOwner && !qna.answer && !editingQna && (
+                      <div className="ml-auto flex gap-1">
                         <Button
                           variant="ghost"
                           size="sm"
                           className="h-7 px-2 text-muted-foreground hover:text-foreground"
                           onClick={() => startEdit(qna)}
                         >
-                          <Pencil className="h-3.5 w-3.5" />
+                          <Pencil className="h-3 w-3 mr-1" />
+                          수정
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-7 px-2 text-muted-foreground hover:text-destructive"
+                          className="h-7 px-2 text-muted-foreground hover:text-red-500"
                           onClick={() => deleteQna(qna.id)}
                           disabled={deletingId === qna.id}
                         >
                           {deletingId === qna.id ? (
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
                           ) : (
-                            <Trash2 className="h-3.5 w-3.5" />
+                            <X className="h-3 w-3 mr-1" />
                           )}
+                          삭제
                         </Button>
                       </div>
                     )}
