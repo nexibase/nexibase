@@ -17,9 +17,6 @@ import {
 import {
   Loader2,
   ShoppingCart,
-  ChevronLeft,
-  ChevronRight,
-  Package,
   Minus,
   Plus,
   Check,
@@ -27,16 +24,10 @@ import {
   X,
   Star,
   MessageSquare,
-  Lock,
-  Send,
-  Pencil,
-  ImagePlus,
   Settings,
+  ChevronLeft,
 } from "lucide-react"
-import { Textarea } from "@/components/ui/textarea"
-import { Switch } from "@/components/ui/switch"
-import { Label } from "@/components/ui/label"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { ProductImages, ReviewSection, QnaSection } from "@/components/shop/ProductDetail"
 
 interface ProductOption {
   id: number
@@ -149,50 +140,24 @@ export default function ProductDetailPage() {
   const [selectedOption3, setSelectedOption3] = useState<string>("")
   const [quantity, setQuantity] = useState(1)
 
-  // 이미지 갤러리
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0)
-  const [thumbStartIndex, setThumbStartIndex] = useState(0)
-  const VISIBLE_THUMBS = 5 // 한 번에 보이는 썸네일 개수
-
-  // 이미지 줌 상태
-  const [isZooming, setIsZooming] = useState(false)
-  const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 })
-
   // 장바구니 추가 상태
   const [addingToCart, setAddingToCart] = useState(false)
   const [cartMessage, setCartMessage] = useState<string | null>(null)
   const [showCartModal, setShowCartModal] = useState(false)
 
-  // 리뷰 상태
+  // 리뷰 상태 (데이터만 - UI 상태는 ReviewSection에서 관리)
   const [reviews, setReviews] = useState<Review[]>([])
   const [reviewsLoading, setReviewsLoading] = useState(false)
   const [reviewPage, setReviewPage] = useState(1)
   const [reviewTotal, setReviewTotal] = useState(0)
   const [avgRating, setAvgRating] = useState(0)
   const [reviewableOrders, setReviewableOrders] = useState<ReviewableOrder[]>([])
-  const [showReviewForm, setShowReviewForm] = useState(false)
-  const [selectedOrderItem, setSelectedOrderItem] = useState<number | null>(null)
-  const [reviewRating, setReviewRating] = useState(5)
-  const [reviewContent, setReviewContent] = useState('')
-  const [reviewImages, setReviewImages] = useState<string[]>([])
-  const [uploadingImage, setUploadingImage] = useState(false)
-  const [submittingReview, setSubmittingReview] = useState(false)
-  const [editingReview, setEditingReview] = useState<Review | null>(null)
 
-  // 리뷰 이미지 뷰어 상태
-  const [viewerImages, setViewerImages] = useState<string[]>([])
-  const [viewerIndex, setViewerIndex] = useState(0)
-  const [showImageViewer, setShowImageViewer] = useState(false)
-
-  // Q&A 상태
+  // Q&A 상태 (데이터만 - UI 상태는 QnaSection에서 관리)
   const [qnas, setQnas] = useState<Qna[]>([])
   const [qnasLoading, setQnasLoading] = useState(false)
   const [qnaPage, setQnaPage] = useState(1)
   const [qnaTotal, setQnaTotal] = useState(0)
-  const [showQnaForm, setShowQnaForm] = useState(false)
-  const [qnaContent, setQnaContent] = useState('')
-  const [qnaIsSecret, setQnaIsSecret] = useState(false)
-  const [submittingQna, setSubmittingQna] = useState(false)
 
   // 관리자 여부
   const [isAdmin, setIsAdmin] = useState(false)
@@ -225,13 +190,6 @@ export default function ProductDetailPage() {
       fetchQnas()
     }
   }, [activeTab])
-
-  // 리뷰 작성 가능 주문이 1건이면 자동 선택
-  useEffect(() => {
-    if (showReviewForm && reviewableOrders.length === 1 && !selectedOrderItem) {
-      setSelectedOrderItem(reviewableOrders[0].orderItemId)
-    }
-  }, [showReviewForm, reviewableOrders, selectedOrderItem])
 
   // 리뷰 가져오기
   const fetchReviews = async (page = 1) => {
@@ -280,234 +238,6 @@ export default function ProductDetailPage() {
       console.error('Q&A 로드 실패:', err)
     } finally {
       setQnasLoading(false)
-    }
-  }
-
-  // 원본 URL에서 썸네일 URL 생성 (xxx.webp -> xxx-thumb.webp)
-  const getThumbnailUrl = (url: string) => {
-    // .webp 또는 .gif 확장자 앞에 -thumb 삽입
-    return url.replace(/(\.(webp|gif))$/i, '-thumb.webp')
-  }
-
-  // 리뷰 이미지 업로드
-  const handleReviewImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
-    if (!files || files.length === 0) return
-
-    // 최대 5장 제한
-    if (reviewImages.length + files.length > 5) {
-      alert('이미지는 최대 5장까지 첨부할 수 있습니다.')
-      return
-    }
-
-    setUploadingImage(true)
-
-    const successUrls: string[] = []
-    const failedFiles: { name: string; size: string; reason: string }[] = []
-
-    // 파일 크기 포맷팅 함수
-    const formatFileSize = (bytes: number) => {
-      if (bytes < 1024) return `${bytes}B`
-      if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`
-      return `${(bytes / (1024 * 1024)).toFixed(1)}MB`
-    }
-
-    // 개별적으로 업로드 처리
-    for (const file of Array.from(files)) {
-      try {
-        const formData = new FormData()
-        formData.append('file', file)
-        formData.append('folder', 'reviews')
-        if (product) {
-          formData.append('productId', String(product.id))
-        }
-
-        const res = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData
-        })
-
-        const data = await res.json()
-
-        if (!res.ok) {
-          failedFiles.push({ name: file.name, size: formatFileSize(file.size), reason: data.error || '업로드 실패' })
-        } else {
-          successUrls.push(data.url)
-        }
-      } catch {
-        failedFiles.push({ name: file.name, size: formatFileSize(file.size), reason: '네트워크 오류' })
-      }
-    }
-
-    // 성공한 이미지 추가
-    if (successUrls.length > 0) {
-      setReviewImages(prev => [...prev, ...successUrls])
-    }
-
-    // 실패한 이미지가 있으면 알림
-    if (failedFiles.length > 0) {
-      const failedMessage = failedFiles
-        .map(f => `• ${f.name} (${f.size}): ${f.reason}`)
-        .join('\n')
-      alert(`일부 이미지 업로드 실패:\n${failedMessage}`)
-    }
-
-    setUploadingImage(false)
-    // input 초기화
-    e.target.value = ''
-  }
-
-  // 리뷰 이미지 삭제
-  const removeReviewImage = (index: number) => {
-    setReviewImages(prev => prev.filter((_, i) => i !== index))
-  }
-
-  // 리뷰 작성
-  const submitReview = async () => {
-    if (!selectedOrderItem || !reviewContent.trim()) return
-    setSubmittingReview(true)
-    try {
-      const res = await fetch(`/api/shop/products/${slug}/reviews`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          orderItemId: selectedOrderItem,
-          rating: reviewRating,
-          content: reviewContent.trim(),
-          images: reviewImages.length > 0 ? reviewImages : null
-        })
-      })
-      if (res.ok) {
-        setShowReviewForm(false)
-        setSelectedOrderItem(null)
-        setReviewRating(5)
-        setReviewContent('')
-        setReviewImages([])
-        fetchReviews(1)
-        fetchReviewableOrders()
-      } else {
-        const data = await res.json()
-        alert(data.error || '리뷰 작성에 실패했습니다.')
-      }
-    } catch (err) {
-      alert('리뷰 작성에 실패했습니다.')
-    } finally {
-      setSubmittingReview(false)
-    }
-  }
-
-  // 리뷰 수정 시작
-  const startEditReview = (review: Review) => {
-    setEditingReview(review)
-    setReviewRating(review.rating)
-    setReviewContent(review.content)
-    // 기존 이미지 로드
-    if (review.images) {
-      try {
-        const parsed = JSON.parse(review.images)
-        setReviewImages(Array.isArray(parsed) ? parsed : [])
-      } catch {
-        setReviewImages([])
-      }
-    } else {
-      setReviewImages([])
-    }
-    setShowReviewForm(false)
-  }
-
-  // 리뷰 수정 취소
-  const cancelEditReview = () => {
-    setEditingReview(null)
-    setReviewRating(5)
-    setReviewContent('')
-    setReviewImages([])
-  }
-
-  // 리뷰 수정 제출
-  const submitEditReview = async () => {
-    if (!editingReview || !reviewContent.trim()) return
-    setSubmittingReview(true)
-    try {
-      const res = await fetch(`/api/shop/products/${slug}/reviews`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          reviewId: editingReview.id,
-          rating: reviewRating,
-          content: reviewContent.trim(),
-          images: reviewImages.length > 0 ? reviewImages : null
-        })
-      })
-      if (res.ok) {
-        setEditingReview(null)
-        setReviewRating(5)
-        setReviewContent('')
-        setReviewImages([])
-        fetchReviews(reviewPage)
-      } else {
-        const data = await res.json()
-        alert(data.error || '리뷰 수정에 실패했습니다.')
-      }
-    } catch (err) {
-      alert('리뷰 수정에 실패했습니다.')
-    } finally {
-      setSubmittingReview(false)
-    }
-  }
-
-  // 리뷰 이미지 뷰어 열기
-  const openImageViewer = (images: string[], startIndex: number) => {
-    setViewerImages(images)
-    setViewerIndex(startIndex)
-    setShowImageViewer(true)
-  }
-
-  // 리뷰 삭제
-  const deleteReview = async (reviewId: number) => {
-    if (!confirm('리뷰를 삭제하시겠습니까?')) return
-
-    try {
-      const res = await fetch(`/api/shop/products/${slug}/reviews?reviewId=${reviewId}`, {
-        method: 'DELETE'
-      })
-      if (res.ok) {
-        fetchReviews(reviewPage)
-        fetchReviewableOrders()
-      } else {
-        const data = await res.json()
-        alert(data.error || '리뷰 삭제에 실패했습니다.')
-      }
-    } catch {
-      alert('리뷰 삭제에 실패했습니다.')
-    }
-  }
-
-  // Q&A 작성
-  const submitQna = async () => {
-    if (!qnaContent.trim()) return
-    setSubmittingQna(true)
-    try {
-      const res = await fetch(`/api/shop/products/${slug}/qna`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          question: qnaContent.trim(),
-          isSecret: qnaIsSecret
-        })
-      })
-      if (res.ok) {
-        setShowQnaForm(false)
-        setQnaContent('')
-        setQnaIsSecret(false)
-        fetchQnas(1)
-      } else {
-        const data = await res.json()
-        alert(data.error || 'Q&A 작성에 실패했습니다.')
-      }
-    } catch (err) {
-      alert('Q&A 작성에 실패했습니다.')
-    } finally {
-      setSubmittingQna(false)
     }
   }
 
@@ -794,133 +524,15 @@ export default function ProductDetailPage() {
           {/* md: 이미지(6) | 상품정보+구매박스(6) */}
           {/* sm: 이미지 → 상품정보 → 구매박스 (1컬럼) */}
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-            {/* 왼쪽: 이미지 갤러리 (썸네일 + 메인 이미지) */}
+            {/* 왼쪽: 이미지 갤러리 */}
             <div className="md:col-span-6 lg:col-span-5">
-              <div className="flex gap-3">
-                {/* 썸네일 세로 배열 (최대 5개 표시 + 화살표) */}
-                {product.images.length > 1 && (
-                  <div className="flex flex-col items-center gap-1 w-16 flex-shrink-0">
-                    {/* 위 화살표 */}
-                    {product.images.length > VISIBLE_THUMBS && (
-                      <button
-                        onClick={() => setThumbStartIndex(Math.max(0, thumbStartIndex - 1))}
-                        disabled={thumbStartIndex === 0}
-                        className={`w-14 h-6 flex items-center justify-center rounded border transition-all ${
-                          thumbStartIndex === 0
-                            ? "border-muted text-muted-foreground/30 cursor-not-allowed"
-                            : "border-muted hover:border-primary hover:text-primary"
-                        }`}
-                      >
-                        <ChevronLeft className="h-4 w-4 rotate-90" />
-                      </button>
-                    )}
-
-                    {/* 썸네일 목록 */}
-                    <div className="flex flex-col gap-2">
-                      {product.images
-                        .slice(thumbStartIndex, thumbStartIndex + VISIBLE_THUMBS)
-                        .map((img, idx) => {
-                          const actualIdx = thumbStartIndex + idx
-                          return (
-                            <button
-                              key={actualIdx}
-                              onMouseEnter={() => setSelectedImageIndex(actualIdx)}
-                              onClick={() => setSelectedImageIndex(actualIdx)}
-                              className={`w-14 h-14 rounded border-2 overflow-hidden transition-all ${
-                                actualIdx === selectedImageIndex
-                                  ? "border-primary ring-1 ring-primary"
-                                  : "border-muted hover:border-primary/50"
-                              }`}
-                            >
-                              <img src={getThumbnailUrl(img)} alt="" className="w-full h-full object-cover" />
-                            </button>
-                          )
-                        })}
-                    </div>
-
-                    {/* 아래 화살표 */}
-                    {product.images.length > VISIBLE_THUMBS && (
-                      <button
-                        onClick={() => setThumbStartIndex(Math.min(product.images.length - VISIBLE_THUMBS, thumbStartIndex + 1))}
-                        disabled={thumbStartIndex >= product.images.length - VISIBLE_THUMBS}
-                        className={`w-14 h-6 flex items-center justify-center rounded border transition-all ${
-                          thumbStartIndex >= product.images.length - VISIBLE_THUMBS
-                            ? "border-muted text-muted-foreground/30 cursor-not-allowed"
-                            : "border-muted hover:border-primary hover:text-primary"
-                        }`}
-                      >
-                        <ChevronRight className="h-4 w-4 rotate-90" />
-                      </button>
-                    )}
-                  </div>
-                )}
-
-                {/* 메인 이미지 */}
-                <div className="flex-1 relative">
-                  <div
-                    className="relative aspect-square bg-muted rounded-lg overflow-hidden cursor-crosshair"
-                    onMouseEnter={() => product.images.length > 0 && setIsZooming(true)}
-                    onMouseLeave={() => setIsZooming(false)}
-                    onMouseMove={(e) => {
-                      if (product.images.length === 0) return
-                      const rect = e.currentTarget.getBoundingClientRect()
-                      const x = ((e.clientX - rect.left) / rect.width) * 100
-                      const y = ((e.clientY - rect.top) / rect.height) * 100
-                      setZoomPosition({ x, y })
-                    }}
-                  >
-                    {product.images.length > 0 ? (
-                      <img
-                        src={product.images[selectedImageIndex]}
-                        alt={product.name}
-                        className="w-full h-full object-contain pointer-events-none"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <Package className="h-20 w-20 text-muted-foreground" />
-                      </div>
-                    )}
-                    {product.isSoldOut && (
-                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                        <span className="text-white font-bold text-2xl">품절</span>
-                      </div>
-                    )}
-                    {product.originPrice && product.originPrice > product.price && (
-                      <Badge className="absolute top-3 left-3 bg-red-500 text-sm px-2 py-0.5">
-                        {Math.round((1 - product.price / product.originPrice) * 100)}% OFF
-                      </Badge>
-                    )}
-
-                    {/* 줌 영역 표시 (마우스 위치) */}
-                    {isZooming && product.images.length > 0 && (
-                      <div
-                        className="absolute w-24 h-24 border-2 border-primary/50 bg-primary/10 pointer-events-none hidden lg:block"
-                        style={{
-                          left: `${Math.min(Math.max(zoomPosition.x - 12, 0), 76)}%`,
-                          top: `${Math.min(Math.max(zoomPosition.y - 12, 0), 76)}%`,
-                        }}
-                      />
-                    )}
-                  </div>
-
-                  {/* 줌 미리보기 (데스크톱만) */}
-                  {isZooming && product.images.length > 0 && (
-                    <div
-                      className="absolute left-full top-0 ml-4 w-[400px] h-[400px] border rounded-lg bg-white shadow-xl overflow-hidden z-50 hidden lg:block"
-                    >
-                      <div
-                        className="w-[1200px] h-[1200px]"
-                        style={{
-                          backgroundImage: `url(${product.images[selectedImageIndex]})`,
-                          backgroundSize: '1200px 1200px',
-                          backgroundPosition: `${-zoomPosition.x * 12 + 200}px ${-zoomPosition.y * 12 + 200}px`,
-                          backgroundRepeat: 'no-repeat',
-                        }}
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
+              <ProductImages
+                images={product.images}
+                productName={product.name}
+                isSoldOut={product.isSoldOut}
+                price={product.price}
+                originPrice={product.originPrice}
+              />
             </div>
 
             {/* 오른쪽: 상품 정보 + 구매박스 (md에서는 같은 컬럼) */}
@@ -1258,524 +870,31 @@ export default function ProductDetailPage() {
               )}
 
               {/* 리뷰 탭 */}
-              {activeTab === 'review' && (
-                <div>
-                  {/* 평균 별점 */}
-                  {reviewTotal > 0 && (
-                    <div className="flex items-center gap-4 mb-6 p-4 bg-muted rounded-lg">
-                      <div className="text-center">
-                        <div className="text-3xl font-bold">{avgRating.toFixed(1)}</div>
-                        <div className="flex gap-0.5 mt-1">
-                          {[1, 2, 3, 4, 5].map(i => (
-                            <Star
-                              key={i}
-                              className={`h-4 w-4 ${i <= Math.round(avgRating) ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'}`}
-                            />
-                          ))}
-                        </div>
-                        <p className="text-sm text-muted-foreground mt-1">{reviewTotal}개 리뷰</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 리뷰 작성 버튼 */}
-                  {reviewableOrders.length > 0 && !showReviewForm && (
-                    <div className="mb-6">
-                      <Button onClick={() => setShowReviewForm(true)}>
-                        <Star className="h-4 w-4 mr-2" />
-                        리뷰 작성
-                      </Button>
-                      <p className="text-sm text-muted-foreground mt-2">
-                        작성 가능한 리뷰: {reviewableOrders.length}건
-                      </p>
-                    </div>
-                  )}
-
-                  {/* 리뷰 작성 폼 */}
-                  {showReviewForm && (
-                    <Card className="mb-6">
-                      <CardContent className="p-4 space-y-4">
-                        {/* 주문 선택 - 여러 건일 때만 표시 */}
-                        {reviewableOrders.length > 1 ? (
-                          <div>
-                            <Label>주문 선택</Label>
-                            <Select
-                              value={selectedOrderItem?.toString() || ''}
-                              onValueChange={(v) => setSelectedOrderItem(parseInt(v))}
-                            >
-                              <SelectTrigger className="mt-1">
-                                <SelectValue placeholder="리뷰를 작성할 주문을 선택하세요" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {reviewableOrders.map(order => (
-                                  <SelectItem key={order.orderItemId} value={order.orderItemId.toString()}>
-                                    [{order.orderNo}] {order.optionText || '기본 옵션'}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        ) : reviewableOrders.length === 1 ? (
-                          <div className="p-3 bg-muted rounded-lg text-sm">
-                            <span className="text-muted-foreground">주문번호:</span>{' '}
-                            <span className="font-medium">{reviewableOrders[0].orderNo}</span>
-                            {reviewableOrders[0].optionText && (
-                              <>
-                                <span className="mx-2 text-muted-foreground">|</span>
-                                <span className="text-muted-foreground">옵션:</span>{' '}
-                                <span className="font-medium">{reviewableOrders[0].optionText}</span>
-                              </>
-                            )}
-                          </div>
-                        ) : null}
-
-                        <div>
-                          <Label>별점</Label>
-                          <div className="flex gap-1 mt-1">
-                            {[1, 2, 3, 4, 5].map(i => (
-                              <button
-                                key={i}
-                                type="button"
-                                onClick={() => setReviewRating(i)}
-                                className="p-1"
-                              >
-                                <Star
-                                  className={`h-8 w-8 transition-colors ${
-                                    i <= reviewRating
-                                      ? 'fill-yellow-400 text-yellow-400'
-                                      : 'text-muted-foreground hover:text-yellow-400'
-                                  }`}
-                                />
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div>
-                          <Label>리뷰 내용</Label>
-                          <Textarea
-                            value={reviewContent}
-                            onChange={(e) => setReviewContent(e.target.value)}
-                            placeholder="상품에 대한 솔직한 리뷰를 작성해주세요."
-                            className="mt-1"
-                            rows={4}
-                          />
-                        </div>
-
-                        {/* 이미지 업로드 */}
-                        <div>
-                          <Label>사진 첨부 (최대 5장)</Label>
-                          <div className="mt-2 flex flex-wrap gap-2">
-                            {reviewImages.map((img, idx) => (
-                              <div key={idx} className="relative w-20 h-20">
-                                <img src={img} alt="" className="w-full h-full object-cover rounded-lg" />
-                                <button
-                                  type="button"
-                                  onClick={() => removeReviewImage(idx)}
-                                  className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600"
-                                >
-                                  <X className="h-3 w-3" />
-                                </button>
-                              </div>
-                            ))}
-                            {reviewImages.length < 5 && (
-                              <label className="w-20 h-20 border-2 border-dashed border-muted-foreground/30 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-muted-foreground/50 transition-colors">
-                                {uploadingImage ? (
-                                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                                ) : (
-                                  <>
-                                    <ImagePlus className="h-5 w-5 text-muted-foreground" />
-                                    <span className="text-xs text-muted-foreground mt-1">추가</span>
-                                  </>
-                                )}
-                                <input
-                                  type="file"
-                                  accept="image/*"
-                                  multiple
-                                  onChange={handleReviewImageUpload}
-                                  className="hidden"
-                                  disabled={uploadingImage}
-                                />
-                              </label>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="flex gap-2 justify-end">
-                          <Button variant="outline" onClick={() => { setShowReviewForm(false); setReviewImages([]) }}>
-                            취소
-                          </Button>
-                          <Button
-                            onClick={submitReview}
-                            disabled={submittingReview || uploadingImage || !selectedOrderItem || !reviewContent.trim()}
-                          >
-                            {submittingReview ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
-                            등록
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {/* 리뷰 수정 폼 */}
-                  {editingReview && (
-                    <Card className="mb-6">
-                      <CardContent className="p-4 space-y-4">
-                        <div className="flex items-center justify-between">
-                          <h4 className="font-medium">리뷰 수정</h4>
-                        </div>
-
-                        <div>
-                          <Label>별점</Label>
-                          <div className="flex gap-1 mt-1">
-                            {[1, 2, 3, 4, 5].map(i => (
-                              <button
-                                key={i}
-                                type="button"
-                                onClick={() => setReviewRating(i)}
-                                className="p-1"
-                              >
-                                <Star
-                                  className={`h-8 w-8 transition-colors ${
-                                    i <= reviewRating
-                                      ? 'fill-yellow-400 text-yellow-400'
-                                      : 'text-muted-foreground hover:text-yellow-400'
-                                  }`}
-                                />
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div>
-                          <Label>리뷰 내용</Label>
-                          <Textarea
-                            value={reviewContent}
-                            onChange={(e) => setReviewContent(e.target.value)}
-                            placeholder="상품에 대한 솔직한 리뷰를 작성해주세요."
-                            className="mt-1"
-                            rows={4}
-                          />
-                        </div>
-
-                        {/* 이미지 업로드 */}
-                        <div>
-                          <Label>사진 첨부 (최대 5장)</Label>
-                          <div className="mt-2 flex flex-wrap gap-2">
-                            {reviewImages.map((img, idx) => (
-                              <div key={idx} className="relative w-20 h-20">
-                                <img src={img} alt="" className="w-full h-full object-cover rounded-lg" />
-                                <button
-                                  type="button"
-                                  onClick={() => removeReviewImage(idx)}
-                                  className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600"
-                                >
-                                  <X className="h-3 w-3" />
-                                </button>
-                              </div>
-                            ))}
-                            {reviewImages.length < 5 && (
-                              <label className="w-20 h-20 border-2 border-dashed border-muted-foreground/30 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-muted-foreground/50 transition-colors">
-                                {uploadingImage ? (
-                                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                                ) : (
-                                  <>
-                                    <ImagePlus className="h-5 w-5 text-muted-foreground" />
-                                    <span className="text-xs text-muted-foreground mt-1">추가</span>
-                                  </>
-                                )}
-                                <input
-                                  type="file"
-                                  accept="image/*"
-                                  multiple
-                                  onChange={handleReviewImageUpload}
-                                  className="hidden"
-                                  disabled={uploadingImage}
-                                />
-                              </label>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="flex gap-2 justify-end">
-                          <Button variant="outline" onClick={cancelEditReview}>
-                            취소
-                          </Button>
-                          <Button
-                            onClick={submitEditReview}
-                            disabled={submittingReview || uploadingImage || !reviewContent.trim()}
-                          >
-                            {submittingReview ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Pencil className="h-4 w-4 mr-2" />}
-                            수정
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {/* 리뷰 목록 */}
-                  {reviewsLoading ? (
-                    <div className="flex justify-center py-12">
-                      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                    </div>
-                  ) : reviews.length > 0 ? (
-                    <div className="space-y-4">
-                      {reviews.map(review => (
-                        <div key={review.id} className="border rounded-lg p-4">
-                          <div className="flex items-start gap-3">
-                            <Avatar className="h-10 w-10">
-                              <AvatarFallback>{review.user.name[0]}</AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1">
-                              <div className="flex items-center justify-between mb-1">
-                                <div className="flex items-center gap-2">
-                                  <span className="font-medium">{review.user.name}</span>
-                                  <div className="flex gap-0.5">
-                                    {[1, 2, 3, 4, 5].map(i => (
-                                      <Star
-                                        key={i}
-                                        className={`h-3 w-3 ${i <= review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'}`}
-                                      />
-                                    ))}
-                                  </div>
-                                  <span className="text-sm text-muted-foreground">
-                                    {new Date(review.createdAt).toLocaleDateString('ko-KR')}
-                                  </span>
-                                </div>
-                                {review.isOwner && !editingReview && (
-                                  <div className="flex gap-1">
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => startEditReview(review)}
-                                      className="h-7 px-2 text-muted-foreground hover:text-foreground"
-                                    >
-                                      <Pencil className="h-3 w-3 mr-1" />
-                                      수정
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => deleteReview(review.id)}
-                                      className="h-7 px-2 text-muted-foreground hover:text-red-500"
-                                    >
-                                      <X className="h-3 w-3 mr-1" />
-                                      삭제
-                                    </Button>
-                                  </div>
-                                )}
-                              </div>
-                              <p className="text-sm whitespace-pre-wrap">{review.content}</p>
-
-                              {/* 리뷰 이미지 */}
-                              {review.images && (() => {
-                                try {
-                                  const images = JSON.parse(review.images)
-                                  if (Array.isArray(images) && images.length > 0) {
-                                    return (
-                                      <div className="mt-3 flex flex-wrap gap-2">
-                                        {images.map((img: string, idx: number) => (
-                                          <button
-                                            key={idx}
-                                            type="button"
-                                            onClick={() => openImageViewer(images, idx)}
-                                            className="block w-20 h-20 rounded-lg overflow-hidden hover:opacity-80 transition-opacity"
-                                          >
-                                            <img src={getThumbnailUrl(img)} alt="" className="w-full h-full object-cover" />
-                                          </button>
-                                        ))}
-                                      </div>
-                                    )
-                                  }
-                                } catch {
-                                  return null
-                                }
-                                return null
-                              })()}
-
-                              {/* 관리자 답변 */}
-                              {review.reply && (
-                                <div className="mt-3 p-3 bg-muted rounded-lg">
-                                  <p className="text-sm font-medium mb-1">판매자 답변</p>
-                                  <p className="text-sm whitespace-pre-wrap">{review.reply}</p>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-
-                      {/* 페이지네이션 */}
-                      {reviewTotal > 10 && (
-                        <div className="flex justify-center gap-2 mt-4">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => fetchReviews(reviewPage - 1)}
-                            disabled={reviewPage <= 1}
-                          >
-                            이전
-                          </Button>
-                          <span className="flex items-center px-3 text-sm">
-                            {reviewPage} / {Math.ceil(reviewTotal / 10)}
-                          </span>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => fetchReviews(reviewPage + 1)}
-                            disabled={reviewPage >= Math.ceil(reviewTotal / 10)}
-                          >
-                            다음
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <p className="text-muted-foreground text-center py-12">
-                      아직 등록된 리뷰가 없습니다.
-                    </p>
-                  )}
-                </div>
+              {activeTab === 'review' && product && (
+                <ReviewSection
+                  slug={slug}
+                  productId={product.id}
+                  reviews={reviews}
+                  reviewsLoading={reviewsLoading}
+                  reviewTotal={reviewTotal}
+                  avgRating={avgRating}
+                  reviewPage={reviewPage}
+                  reviewableOrders={reviewableOrders}
+                  onFetchReviews={fetchReviews}
+                  onFetchReviewableOrders={fetchReviewableOrders}
+                />
               )}
 
               {/* Q&A 탭 */}
               {activeTab === 'qna' && (
-                <div>
-                  {/* Q&A 작성 버튼 */}
-                  {!showQnaForm && (
-                    <div className="mb-6">
-                      <Button onClick={() => setShowQnaForm(true)}>
-                        <MessageSquare className="h-4 w-4 mr-2" />
-                        문의하기
-                      </Button>
-                    </div>
-                  )}
-
-                  {/* Q&A 작성 폼 */}
-                  {showQnaForm && (
-                    <Card className="mb-6">
-                      <CardContent className="p-4 space-y-4">
-                        <div>
-                          <Label>문의 내용</Label>
-                          <Textarea
-                            value={qnaContent}
-                            onChange={(e) => setQnaContent(e.target.value)}
-                            placeholder="상품에 대해 궁금한 점을 문의해주세요."
-                            className="mt-1"
-                            rows={4}
-                          />
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          <Switch
-                            id="qna-secret"
-                            checked={qnaIsSecret}
-                            onCheckedChange={setQnaIsSecret}
-                          />
-                          <Label htmlFor="qna-secret" className="flex items-center gap-1 cursor-pointer">
-                            <Lock className="h-4 w-4" />
-                            비밀글로 작성
-                          </Label>
-                        </div>
-
-                        <div className="flex gap-2 justify-end">
-                          <Button variant="outline" onClick={() => setShowQnaForm(false)}>
-                            취소
-                          </Button>
-                          <Button
-                            onClick={submitQna}
-                            disabled={submittingQna || !qnaContent.trim()}
-                          >
-                            {submittingQna ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
-                            등록
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {/* Q&A 목록 */}
-                  {qnasLoading ? (
-                    <div className="flex justify-center py-12">
-                      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                    </div>
-                  ) : qnas.length > 0 ? (
-                    <div className="space-y-4">
-                      {qnas.map(qna => (
-                        <div key={qna.id} className="border rounded-lg p-4">
-                          <div className="flex items-start gap-3">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-2">
-                                {qna.isSecret && (
-                                  <Badge variant="secondary" className="text-xs">
-                                    <Lock className="h-3 w-3 mr-1" />
-                                    비밀글
-                                  </Badge>
-                                )}
-                                <span className="font-medium text-sm">{qna.user.name}</span>
-                                <span className="text-sm text-muted-foreground">
-                                  {new Date(qna.createdAt).toLocaleDateString('ko-KR')}
-                                </span>
-                                {qna.answer && (
-                                  <Badge variant="outline" className="text-xs text-green-600 border-green-600">
-                                    답변완료
-                                  </Badge>
-                                )}
-                              </div>
-
-                              {/* 질문 */}
-                              <div className="mb-3">
-                                <span className="inline-block px-2 py-0.5 bg-primary text-primary-foreground text-xs font-medium rounded mr-2">Q</span>
-                                <span className={`text-sm ${!qna.canView ? 'text-muted-foreground italic' : ''}`}>
-                                  {qna.question}
-                                </span>
-                              </div>
-
-                              {/* 답변 */}
-                              {qna.answer && (
-                                <div className="p-3 bg-muted rounded-lg">
-                                  <span className="inline-block px-2 py-0.5 bg-green-600 text-white text-xs font-medium rounded mr-2">A</span>
-                                  <span className={`text-sm ${!qna.canView ? 'text-muted-foreground italic' : ''}`}>
-                                    {qna.answer}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-
-                      {/* 페이지네이션 */}
-                      {qnaTotal > 10 && (
-                        <div className="flex justify-center gap-2 mt-4">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => fetchQnas(qnaPage - 1)}
-                            disabled={qnaPage <= 1}
-                          >
-                            이전
-                          </Button>
-                          <span className="flex items-center px-3 text-sm">
-                            {qnaPage} / {Math.ceil(qnaTotal / 10)}
-                          </span>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => fetchQnas(qnaPage + 1)}
-                            disabled={qnaPage >= Math.ceil(qnaTotal / 10)}
-                          >
-                            다음
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <p className="text-muted-foreground text-center py-12">
-                      아직 등록된 Q&A가 없습니다.
-                    </p>
-                  )}
-                </div>
+                <QnaSection
+                  slug={slug}
+                  qnas={qnas}
+                  qnasLoading={qnasLoading}
+                  qnaTotal={qnaTotal}
+                  qnaPage={qnaPage}
+                  onFetchQnas={fetchQnas}
+                />
               )}
             </div>
           </div>
@@ -1834,69 +953,6 @@ export default function ProductDetailPage() {
               </button>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* 리뷰 이미지 뷰어 모달 */}
-      {showImageViewer && viewerImages.length > 0 && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90">
-          {/* 닫기 버튼 */}
-          <button
-            onClick={() => setShowImageViewer(false)}
-            className="absolute top-4 right-4 text-white hover:text-gray-300 z-10"
-          >
-            <X className="h-8 w-8" />
-          </button>
-
-          {/* 이미지 카운터 */}
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 text-white text-sm">
-            {viewerIndex + 1} / {viewerImages.length}
-          </div>
-
-          {/* 이전 버튼 */}
-          {viewerImages.length > 1 && (
-            <button
-              onClick={() => setViewerIndex(prev => (prev === 0 ? viewerImages.length - 1 : prev - 1))}
-              className="absolute left-4 text-white hover:text-gray-300 p-2"
-            >
-              <ChevronLeft className="h-10 w-10" />
-            </button>
-          )}
-
-          {/* 이미지 */}
-          <img
-            src={viewerImages[viewerIndex]}
-            alt=""
-            className="max-h-[85vh] max-w-[90vw] object-contain"
-            onClick={(e) => e.stopPropagation()}
-          />
-
-          {/* 다음 버튼 */}
-          {viewerImages.length > 1 && (
-            <button
-              onClick={() => setViewerIndex(prev => (prev === viewerImages.length - 1 ? 0 : prev + 1))}
-              className="absolute right-4 text-white hover:text-gray-300 p-2"
-            >
-              <ChevronRight className="h-10 w-10" />
-            </button>
-          )}
-
-          {/* 썸네일 */}
-          {viewerImages.length > 1 && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-              {viewerImages.map((img, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setViewerIndex(idx)}
-                  className={`w-12 h-12 rounded overflow-hidden border-2 transition-all ${
-                    idx === viewerIndex ? 'border-white' : 'border-transparent opacity-60 hover:opacity-100'
-                  }`}
-                >
-                  <img src={getThumbnailUrl(img)} alt="" className="w-full h-full object-cover" />
-                </button>
-              ))}
-            </div>
-          )}
         </div>
       )}
 
