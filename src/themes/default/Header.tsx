@@ -174,7 +174,7 @@ export default function Header() {
                   </span>
                 </div>
               )}
-              <span className="text-xl font-bold text-foreground">{settings.site_name}</span>
+              <span className="text-xl font-bold text-foreground hidden md:block">{settings.site_name}</span>
             </Link>
 
             {/* 검색 (데스크톱) */}
