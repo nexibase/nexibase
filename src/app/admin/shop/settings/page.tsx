@@ -38,6 +38,7 @@ interface ShopSettings {
   pg_provider: string
   pg_mid: string
   pg_signkey: string
+  pg_apikey: string  // 결제 취소용 API Key
   pg_test_mode: string
 }
 
@@ -59,6 +60,7 @@ const DEFAULT_SETTINGS: ShopSettings = {
   pg_provider: "inicis",
   pg_mid: "",
   pg_signkey: "",
+  pg_apikey: "",
   pg_test_mode: "true",
 }
 
@@ -441,7 +443,20 @@ export default function ShopSettingsPage() {
                   placeholder="SignKey를 입력하세요"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  이니시스에서 발급받은 서명키
+                  이니시스에서 발급받은 서명키 (결제 승인용)
+                </p>
+              </div>
+              <div>
+                <Label htmlFor="pg_apikey">API Key (취소용)</Label>
+                <Input
+                  id="pg_apikey"
+                  type="password"
+                  value={settings.pg_apikey}
+                  onChange={(e) => handleChange("pg_apikey", e.target.value)}
+                  placeholder="API Key를 입력하세요"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  이니시스에서 발급받은 INIAPIKey (결제 취소용)
                 </p>
               </div>
             </div>
@@ -461,6 +476,7 @@ export default function ShopSettingsPage() {
               <p className="font-medium text-yellow-800 mb-2">테스트 모드 안내</p>
               <ul className="list-disc list-inside text-yellow-700 space-y-1">
                 <li>테스트 MID: <code className="bg-yellow-100 px-1 rounded">INIpayTest</code></li>
+                <li>테스트 API Key: <code className="bg-yellow-100 px-1 rounded">ItEQKi3rY7uvDS8l</code></li>
                 <li>테스트 SignKey: 이니시스 개발자센터에서 확인</li>
                 <li>실제 운영 시 테스트 모드를 해제하세요</li>
               </ul>

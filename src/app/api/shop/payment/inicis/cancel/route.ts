@@ -12,6 +12,18 @@ async function getShopSettings() {
   return settingsMap
 }
 
+// 타임스탬프 생성 (YYYYMMDDhhmmss 형식)
+function getTimestamp(): string {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  const hours = String(now.getHours()).padStart(2, '0')
+  const minutes = String(now.getMinutes()).padStart(2, '0')
+  const seconds = String(now.getSeconds()).padStart(2, '0')
+  return `${year}${month}${day}${hours}${minutes}${seconds}`
+}
+
 // 이니시스 결제 취소 API
 export async function POST(request: NextRequest) {
   try {
@@ -75,7 +87,8 @@ export async function POST(request: NextRequest) {
     const settings = await getShopSettings()
     const testMode = settings.pg_test_mode !== 'false'
     const mid = testMode ? 'INIpayTest' : (settings.pg_mid || 'INIpayTest')
-    const signKey = testMode ? 'SU5JTElURV9UUklQTEVERVNfS0VZU1RS' : (settings.pg_signkey || 'SU5JTElURV9UUklQTEVERVNfS0VZU1RS')
+    // INIAPIKey (API 취소용 키) - signKey와 다름
+    const iniApiKey = testMode ? 'ItEQKi3rY7uvDS8l' : (settings.pg_apikey || settings.pg_signkey || '')
 
     // 취소 금액 (미지정시 전액)
     const amount = cancelAmount || order.totalPrice
@@ -83,7 +96,7 @@ export async function POST(request: NextRequest) {
     // 이니시스 취소 API 호출
     const cancelResult = await cancelInicisPayment({
       mid,
-      signKey,
+      iniApiKey,
       tid,
       cancelAmount: amount,
       cancelReason: cancelReason || '고객 요청에 의한 취소',
@@ -117,7 +130,7 @@ export async function POST(request: NextRequest) {
 // 이니시스 결제 취소 함수
 async function cancelInicisPayment({
   mid,
-  signKey,
+  iniApiKey,
   tid,
   cancelAmount,
   cancelReason,
@@ -125,7 +138,7 @@ async function cancelInicisPayment({
   testMode
 }: {
   mid: string
-  signKey: string
+  iniApiKey: string
   tid: string
   cancelAmount: number
   cancelReason: string
@@ -134,35 +147,41 @@ async function cancelInicisPayment({
 }) {
   try {
     // 이니시스 취소 API URL
-    const cancelUrl = testMode
-      ? 'https://iniapi.inicis.com/api/v1/refund'
-      : 'https://iniapi.inicis.com/api/v1/refund'
+    const cancelUrl = 'https://iniapi.inicis.com/api/v1/refund'
 
-    const timestamp = Date.now().toString()
+    const timestamp = getTimestamp()
+    const type = partialCancel ? 'Partial' : 'FullCancel'
+    const paymethod = 'Card'
+    const clientIp = '127.0.0.1'
 
-    // 취소 요청용 해시 생성
-    const hashData = `${mid}${tid}${timestamp}${cancelAmount}${signKey}`
+    // 해시 데이터 생성 (이니시스 매뉴얼 순서: INIAPIKey + type + paymethod + timestamp + clientIp + mid + tid)
+    const hashData = `${iniApiKey}${type}${paymethod}${timestamp}${clientIp}${mid}${tid}`
     const hashString = crypto.createHash('sha512').update(hashData).digest('hex')
 
-    const requestBody = {
-      mid,
-      tid,
-      type: partialCancel ? 'Partial' : 'FullCancel',
-      msg: cancelReason,
-      price: cancelAmount.toString(),
-      timestamp,
-      hashString,
-      clientIp: '127.0.0.1'
+    // URL-encoded form data 생성
+    const formData = new URLSearchParams()
+    formData.append('type', type)
+    formData.append('paymethod', paymethod)
+    formData.append('timestamp', timestamp)
+    formData.append('clientIp', clientIp)
+    formData.append('mid', mid)
+    formData.append('tid', tid)
+    formData.append('msg', cancelReason)
+    formData.append('hashData', hashString)
+
+    // 부분취소인 경우 금액 정보 추가
+    if (partialCancel) {
+      formData.append('price', cancelAmount.toString())
     }
 
-    console.log('이니시스 취소 요청:', { mid, tid, cancelAmount, partialCancel, testMode })
+    console.log('이니시스 취소 요청:', { mid, tid, type, cancelAmount, partialCancel, testMode, timestamp })
 
     const response = await fetch(cancelUrl, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
       },
-      body: JSON.stringify(requestBody)
+      body: formData.toString()
     })
 
     const result = await response.json()
@@ -178,7 +197,6 @@ async function cancelInicisPayment({
       }
     } else {
       // 테스트 모드에서는 취소 API가 동작하지 않을 수 있음
-      // 그 경우 성공으로 처리 (실제 결제가 안되었으므로)
       if (testMode) {
         console.log('테스트 모드: 실제 취소 API 미지원, 성공으로 처리')
         return {
