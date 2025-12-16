@@ -82,13 +82,13 @@ export async function POST(request: NextRequest) {
     let urlPath: string
 
     if (folder === 'reviews' && productId) {
-      // 리뷰 이미지: /uploads/reviews/{productId}/
-      uploadDir = path.join(process.cwd(), 'public', 'uploads', 'reviews', productId)
-      urlPath = `/uploads/reviews/${productId}`
+      // 리뷰 이미지: /uploads/shop/reviews/{productId}/
+      uploadDir = path.join(process.cwd(), 'public', 'uploads', 'shop', 'reviews', productId)
+      urlPath = `/uploads/shop/reviews/${productId}`
     } else if (folder === 'reviews') {
-      // 리뷰 이미지 (ID 없음): /uploads/reviews/
-      uploadDir = path.join(process.cwd(), 'public', 'uploads', 'reviews')
-      urlPath = '/uploads/reviews'
+      // 리뷰 이미지 (ID 없음): /uploads/shop/reviews/
+      uploadDir = path.join(process.cwd(), 'public', 'uploads', 'shop', 'reviews')
+      urlPath = '/uploads/shop/reviews'
     } else {
       // 기본: 년/월 폴더 구조
       const now = new Date()
