@@ -557,6 +557,17 @@ export default function OrderDetailPage() {
             </DialogDescription>
           </DialogHeader>
 
+          {/* 준비중 상태에서 취소 요청 안내 */}
+          {dialogAction === "cancel" && order?.status === "preparing" && (
+            <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
+              <p className="font-medium mb-1">안내</p>
+              <p>
+                상품 준비 중에는 이미 배송이 시작되었을 수 있어 즉시 취소가 어려울 수 있습니다.
+                관리자 확인 후 취소 또는 반품(배송 후 환불) 처리가 진행되오니 이점 양지하시기 바랍니다.
+              </p>
+            </div>
+          )}
+
           {dialogAction !== "confirm" && (
             <div className="space-y-4">
               <RadioGroup value={selectedReason} onValueChange={setSelectedReason}>
