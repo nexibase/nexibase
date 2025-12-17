@@ -253,9 +253,19 @@ export default function AdminOrderDetailPage() {
         return
       }
 
-      setSuccessMessage(`${typeLabel} 요청이 ${actionLabel}되었습니다.`)
+      // 카드 결제 취소/환불 결과 메시지 생성
+      let message = `${typeLabel} 요청이 ${actionLabel}되었습니다.`
+      if (action === "approve" && data.pgCancelResult) {
+        if (data.pgCancelResult.success) {
+          message += " (카드 결제 승인 취소 완료)"
+        } else {
+          message += ` (카드 취소 실패: ${data.pgCancelResult.message})`
+        }
+      }
+
+      setSuccessMessage(message)
       fetchOrder()
-      setTimeout(() => setSuccessMessage(null), 2000)
+      setTimeout(() => setSuccessMessage(null), 3000)
     } catch (err) {
       setError(`${actionLabel} 중 오류가 발생했습니다.`)
     } finally {
