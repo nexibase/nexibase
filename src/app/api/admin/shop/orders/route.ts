@@ -106,6 +106,7 @@ export async function GET(request: NextRequest) {
       shipping: 0,
       delivered: 0,
       confirmed: 0,
+      cancel_requested: 0,
       cancelled: 0,
       refund_requested: 0,
       refunded: 0,

@@ -63,6 +63,7 @@ interface Stats {
   shipping: number
   delivered: number
   confirmed: number
+  cancel_requested: number
   cancelled: number
   refund_requested: number
   refunded: number
@@ -76,8 +77,9 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   shipping: { label: "배송중", color: "bg-purple-500" },
   delivered: { label: "배송완료", color: "bg-green-500" },
   confirmed: { label: "구매확정", color: "bg-green-700" },
+  cancel_requested: { label: "취소요청", color: "bg-orange-500" },
   cancelled: { label: "주문취소", color: "bg-gray-500" },
-  refund_requested: { label: "환불요청", color: "bg-orange-500" },
+  refund_requested: { label: "환불요청", color: "bg-amber-500" },
   refunded: { label: "환불완료", color: "bg-red-500" },
 }
 
@@ -301,7 +303,7 @@ export default function AdminOrdersPage() {
 
           {/* 상태별 통계 */}
           {stats && (
-            <div className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-11 gap-2">
+            <div className="grid grid-cols-2 md:grid-cols-6 lg:grid-cols-12 gap-2">
               <button
                 onClick={() => handleStatusChange('all')}
                 className={`p-3 rounded-lg text-center transition-colors ${
