@@ -60,7 +60,7 @@ const DEFAULT_SETTINGS: ShopSettings = {
   return_address: "",
   option1_name: "색상",
   option2_name: "사이즈",
-  option3_name: "모델",
+  option3_name: "소재",
   // PG 설정
   pg_provider: "inicis",
   pg_mid: "",
@@ -410,7 +410,7 @@ export default function ShopSettingsPage() {
                   id="option3_name"
                   value={settings.option3_name}
                   onChange={(e) => handleChange("option3_name", e.target.value)}
-                  placeholder="예: 모델"
+                  placeholder="예: 소재"
                 />
               </div>
             </div>
