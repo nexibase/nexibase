@@ -24,7 +24,7 @@ import {
   BarChart3,
   Star,
   Home,
-  ExternalLink,
+  User,
 } from "lucide-react"
 
 interface SidebarProps {
@@ -32,10 +32,18 @@ interface SidebarProps {
   onMenuChange?: (menu: string) => void
 }
 
+interface UserInfo {
+  id: number
+  name: string
+  email: string
+  role: string
+}
+
 export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [shopMenuOpen, setShopMenuOpen] = useState(false)
+  const [user, setUser] = useState<UserInfo | null>(null)
   const router = useRouter()
   const pathname = usePathname()
   const { theme, setTheme } = useTheme()
@@ -46,6 +54,11 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
     if (pathname.startsWith('/admin/shop')) {
       setShopMenuOpen(true)
     }
+    // 사용자 정보 가져오기
+    fetch('/api/me')
+      .then(res => res.ok ? res.json() : null)
+      .then(data => data?.user && setUser(data.user))
+      .catch(() => {})
   }, [pathname])
 
   const menuItems = [
@@ -161,15 +174,6 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
                 variant="outline"
                 size="icon"
                 className="h-9 w-9"
-                onClick={() => window.open('/', '_blank')}
-                title="새창으로 열기"
-              >
-                <ExternalLink className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-9 w-9"
                 onClick={toggleTheme}
                 title={`${getThemeLabel()} 모드`}
               >
@@ -231,9 +235,19 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
             </div>
           </nav>
 
-          {/* 하단 정보 */}
+          {/* 하단 사용자 정보 */}
           <div className="p-4 border-t border-border">
-            <p className="text-sm text-muted-foreground">관리자 계정</p>
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                <User className="h-4 w-4 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{user?.name || '로딩중...'}</p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {user?.role === 'admin' ? '관리자' : user?.role === 'manager' ? '부관리자' : user?.role || ''}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
