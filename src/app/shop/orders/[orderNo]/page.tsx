@@ -105,7 +105,7 @@ export default function OrderDetailPage() {
 
   // 취소 사유 옵션
   const cancelReasons = [
-    "주문 실수 (수량/옵션 오선택)",
+    "주문 실수",
     "단순 변심",
     "다른 상품으로 재주문",
     "배송이 너무 느림",
