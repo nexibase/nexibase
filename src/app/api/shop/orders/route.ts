@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/lib/auth'
-import { createNewOrderNotificationForAdmins } from '@/lib/notification'
+import { createNewOrderNotificationForAdmins, createOrderCompletedNotification } from '@/lib/notification'
 
 // 주문 생성
 export async function POST(request: NextRequest) {
@@ -212,6 +212,10 @@ export async function POST(request: NextRequest) {
 
       return newOrder
     })
+
+    // 주문자에게 주문 완료 알림 발송 (비동기 - 응답 지연 방지)
+    createOrderCompletedNotification(session.id, order.orderNo, order.finalPrice)
+      .catch(err => console.error('주문자 알림 발송 실패:', err))
 
     // 관리자/부관리자에게 새 주문 알림 발송 (비동기 - 응답 지연 방지)
     createNewOrderNotificationForAdmins(order.id, order.orderNo, order.finalPrice, ordererName)

@@ -73,6 +73,23 @@ export async function createOrderStatusNotification(
 }
 
 /**
+ * 주문 완료 알림을 주문자에게 전송
+ */
+export async function createOrderCompletedNotification(
+  userId: number,
+  orderNo: string,
+  totalAmount: number
+) {
+  return createNotification({
+    userId,
+    type: 'order_status',
+    title: '🛒 주문이 완료되었습니다',
+    message: `[주문번호: ${orderNo}] ${totalAmount.toLocaleString()}원 주문이 접수되었습니다.`,
+    link: `/shop/orders/${orderNo}`,
+  })
+}
+
+/**
  * 새 주문 알림을 관리자/부관리자에게 전송
  */
 export async function createNewOrderNotificationForAdmins(
