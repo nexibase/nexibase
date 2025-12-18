@@ -74,6 +74,39 @@ interface Order {
   }[]
 }
 
+// 카드사 코드 -> 이름 변환
+const CARD_NAMES: Record<string, string> = {
+  "01": "하나(외환)카드",
+  "02": "KB국민카드",
+  "03": "삼성카드",
+  "04": "현대카드",
+  "06": "롯데카드",
+  "07": "신한카드",
+  "08": "NH농협카드",
+  "11": "BC카드",
+  "12": "씨티카드",
+  "13": "카카오뱅크",
+  "14": "케이뱅크",
+  "15": "토스뱅크",
+  "21": "해외비자",
+  "22": "해외마스터",
+  "23": "해외JCB",
+  "24": "해외아멕스",
+  "25": "해외다이너스",
+  "26": "수협",
+  "27": "신협",
+  "28": "우리카드",
+  "29": "하나카드",
+  "30": "전북카드",
+  "31": "광주카드",
+  "32": "우체국",
+  "33": "새마을금고",
+  "34": "MG카드",
+  "35": "제주카드",
+  "36": "산업카드",
+  "41": "BC(페이북)",
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const STATUS_LABELS: Record<string, { label: string; color: string; icon: any }> = {
   pending: { label: "결제대기", color: "bg-yellow-500", icon: AlertCircle },
@@ -95,6 +128,14 @@ export default function OrderDetailPage() {
 
   const [order, setOrder] = useState<Order | null>(null)
   const [bankInfo, setBankInfo] = useState<string | null>(null)
+  const [cardInfo, setCardInfo] = useState<{
+    cardName: string | null
+    cardNo: string | null
+    applNum: string | null
+    cardQuota: string
+    applDate: string | null
+    applTime: string | null
+  } | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -141,6 +182,7 @@ export default function OrderDetailPage() {
       const data = await res.json()
       setOrder(data.order)
       setBankInfo(data.bankInfo)
+      setCardInfo(data.cardInfo)
     } catch (err) {
       setError("주문을 불러오는데 실패했습니다.")
     } finally {
@@ -433,6 +475,37 @@ export default function OrderDetailPage() {
                 <div className="mt-3 pt-3 border-t border-dashed">
                   <p className="text-sm text-muted-foreground mb-1">입금 계좌</p>
                   <p className="text-sm whitespace-pre-line">{bankInfo}</p>
+                </div>
+              )}
+
+              {/* 카드결제 정보 */}
+              {order.paymentMethod === "card" && cardInfo && (
+                <div className="mt-3 pt-3 border-t border-dashed space-y-1">
+                  <p className="text-sm font-medium mb-2">결제 카드 정보</p>
+                  {cardInfo.cardName && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">카드사</span>
+                      <span>{CARD_NAMES[cardInfo.cardName] || cardInfo.cardName}</span>
+                    </div>
+                  )}
+                  {cardInfo.cardNo && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">카드번호</span>
+                      <span>{cardInfo.cardNo}</span>
+                    </div>
+                  )}
+                  {cardInfo.applNum && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">승인번호</span>
+                      <span>{cardInfo.applNum}</span>
+                    </div>
+                  )}
+                  {cardInfo.cardQuota && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">할부</span>
+                      <span>{cardInfo.cardQuota === "00" ? "일시불" : `${cardInfo.cardQuota}개월`}</span>
+                    </div>
+                  )}
                 </div>
               )}
 
