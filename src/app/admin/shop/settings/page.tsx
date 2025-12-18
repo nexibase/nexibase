@@ -275,7 +275,7 @@ export default function ShopSettingsPage() {
                 id="delivery_notice"
                 value={settings.delivery_notice}
                 onChange={(e) => handleChange("delivery_notice", e.target.value)}
-                placeholder="예: 평일 오후 2시 이전 주문 시 당일 발송&#10;제주/도서산간 지역은 추가 배송비 3,000원이 발생합니다."
+                placeholder="예: 평일 오후 2시 이전 주문 시 당일 발송&#10;제주/도서산간 지역은 추가 배송비가 발생합니다."
                 rows={5}
               />
             </div>
@@ -353,7 +353,7 @@ export default function ShopSettingsPage() {
                   id="return_info"
                   value={settings.return_info}
                   onChange={(e) => handleChange("return_info", e.target.value)}
-                  placeholder="예: 상품 수령 후 7일 이내 반품 가능&#10;택 제거/착용 흔적 있는 경우 반품 불가&#10;단순 변심 시 반품 배송비 5,000원 차감"
+                  placeholder="예: 상품 수령 후 7일 이내 반품 가능&#10;택 제거/착용 흔적 있는 경우 반품 불가&#10;단순 변심 시 반품 배송비 차감"
                   rows={4}
                 />
               </div>
