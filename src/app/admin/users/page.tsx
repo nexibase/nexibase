@@ -275,7 +275,7 @@ function UserModal({
                     id="level"
                     type="number"
                     min={1}
-                    max={10}
+                    max={99}
                     value={formData.level}
                     onChange={(e) => setFormData({ ...formData, level: parseInt(e.target.value) || 1 })}
                   />
