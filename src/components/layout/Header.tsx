@@ -338,7 +338,7 @@ export default function Header() {
 
                   {/* 알림 드롭다운 */}
                   {notificationOpen && (
-                    <div className="absolute right-0 top-full mt-2 w-80 bg-background border rounded-lg shadow-lg z-50">
+                    <div className="fixed md:absolute left-2 right-2 md:left-auto md:right-0 top-16 md:top-full md:mt-2 md:w-80 bg-background border rounded-lg shadow-lg z-50">
                       <div className="flex items-center justify-between px-4 py-3 border-b">
                         <span className="font-medium">알림</span>
                         {unreadCount > 0 && (
@@ -350,7 +350,7 @@ export default function Header() {
                           </button>
                         )}
                       </div>
-                      <div className="max-h-80 overflow-y-auto">
+                      <div className="max-h-[60vh] md:max-h-80 overflow-y-auto">
                         {notifications.length === 0 ? (
                           <div className="px-4 py-8 text-center text-muted-foreground text-sm">
                             알림이 없습니다
