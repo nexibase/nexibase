@@ -971,19 +971,6 @@ export default function AdminOrderDetailPage() {
                 </div>
               )}
 
-              {/* 관리자 주문 취소 버튼 (취소/환불 상태가 아닌 경우) */}
-              {!["cancelled", "refunded", "cancel_requested", "refund_requested"].includes(order.status) && (
-                <Button
-                  variant="outline"
-                  className="w-full text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
-                  onClick={() => setCancelDialogOpen(true)}
-                  disabled={!!processingAction}
-                >
-                  <AlertCircle className="h-4 w-4 mr-2" />
-                  관리자 주문 취소
-                </Button>
-              )}
-
               {error && (
                 <div className="flex items-center gap-2 p-3 bg-red-100 text-red-800 rounded-lg text-sm">
                   <AlertCircle className="h-4 w-4" />
@@ -1054,6 +1041,21 @@ export default function AdminOrderDetailPage() {
                   <span>{formatDate(order.refundedAt)}</span>
                 </div>
               )}
+
+              {/* 관리자 주문 취소 버튼 (취소/환불 상태가 아닌 경우) */}
+              {!["cancelled", "refunded", "cancel_requested", "refund_requested"].includes(order.status) && (
+                <div className="pt-4 mt-4 border-t">
+                  <Button
+                    variant="outline"
+                    className="w-full text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                    onClick={() => setCancelDialogOpen(true)}
+                    disabled={!!processingAction}
+                  >
+                    <AlertCircle className="h-4 w-4 mr-2" />
+                    관리자 주문 취소
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -1095,7 +1097,7 @@ export default function AdminOrderDetailPage() {
           <DialogHeader>
             <DialogTitle>관리자 주문 취소</DialogTitle>
             <DialogDescription>
-              주문번호 <span className="font-mono font-bold">{order.orderNo}</span>을(를) 취소합니다.
+              주문자 <span className="font-bold">{order.ordererName}</span> 님, 주문번호 <span className="font-mono font-bold">{order.orderNo}</span>을(를) 취소합니다.
               <br />
               취소 사유는 고객에게 알림으로 전송됩니다.
             </DialogDescription>
