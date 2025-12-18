@@ -84,9 +84,27 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
 
   // 현재 경로에 따라 활성 메뉴 결정
   const getActiveMenu = () => {
-    const shopItem = shopMenuItems.find(item => item.path === pathname)
+    // 쇼핑몰 메뉴 체크 (하위 경로도 포함)
+    // 정확히 일치하는 것을 먼저 찾고, 없으면 startsWith로 찾기
+    const exactShopItem = shopMenuItems.find(item => item.path === pathname)
+    if (exactShopItem) return exactShopItem.id
+
+    // 하위 경로 매칭 (예: /admin/shop/orders/123 -> shop-orders)
+    const shopItem = shopMenuItems.find(item =>
+      item.path !== '/admin/shop' && pathname.startsWith(item.path + '/')
+    )
     if (shopItem) return shopItem.id
-    return menuItems.find(item => item.path === pathname)?.id || "dashboard"
+
+    // 일반 메뉴 체크
+    const exactItem = menuItems.find(item => item.path === pathname)
+    if (exactItem) return exactItem.id
+
+    const menuItem = menuItems.find(item =>
+      item.path !== '/admin' && pathname.startsWith(item.path + '/')
+    )
+    if (menuItem) return menuItem.id
+
+    return "dashboard"
   }
 
   const handleMenuClick = (item: typeof menuItems[0]) => {
