@@ -10,6 +10,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
   Search,
   Plus,
   Loader2,
@@ -245,29 +252,35 @@ function UserModal({
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="role">권한</Label>
-                  <select
-                    id="role"
+                  <Select
                     value={formData.role}
-                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                    className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    onValueChange={(value) => setFormData({ ...formData, role: value })}
                   >
-                    <option value="user" className="bg-background text-foreground">일반 사용자</option>
-                    <option value="manager" className="bg-background text-foreground">부관리자</option>
-                    <option value="admin" className="bg-background text-foreground">관리자</option>
-                  </select>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="권한 선택" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="user">일반 사용자</SelectItem>
+                      <SelectItem value="manager">부관리자</SelectItem>
+                      <SelectItem value="admin">관리자</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="status">상태</Label>
-                  <select
-                    id="status"
+                  <Select
                     value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                    className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    onValueChange={(value) => setFormData({ ...formData, status: value })}
                   >
-                    <option value="active" className="bg-background text-foreground">활성</option>
-                    <option value="inactive" className="bg-background text-foreground">비활성</option>
-                    <option value="banned" className="bg-background text-foreground">차단</option>
-                  </select>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="상태 선택" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">활성</SelectItem>
+                      <SelectItem value="inactive">비활성</SelectItem>
+                      <SelectItem value="banned">차단</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </CardContent>
