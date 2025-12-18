@@ -24,6 +24,7 @@ import {
   ChevronRight,
   BarChart3,
   Star,
+  Home,
 } from "lucide-react"
 
 interface SidebarProps {
@@ -141,6 +142,28 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
 
           {/* 메뉴 */}
           <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+            {/* 홈 링크 & 다크모드 토글 */}
+            <div className="flex items-center gap-2 pb-2 mb-2 border-b border-border">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 justify-start"
+                onClick={() => router.push('/')}
+              >
+                <Home className="mr-2 h-4 w-4" />
+                홈으로
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-9 w-9"
+                onClick={cycleTheme}
+                title={`${getThemeLabel()} 모드`}
+              >
+                {getThemeIcon()}
+              </Button>
+            </div>
+
             {menuItems.map((item) => {
               const Icon = item.icon
               return (
@@ -196,17 +219,7 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
           </nav>
 
           {/* 하단 정보 */}
-          <div className="p-4 border-t border-border space-y-3">
-            {/* 테마 토글 */}
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full justify-start"
-              onClick={cycleTheme}
-            >
-              {getThemeIcon()}
-              <span className="ml-2">{getThemeLabel()} 모드</span>
-            </Button>
+          <div className="p-4 border-t border-border">
             <p className="text-sm text-muted-foreground">관리자 계정</p>
           </div>
         </div>
