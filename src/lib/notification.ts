@@ -152,3 +152,91 @@ export async function createNewOrderNotificationForAdmins(
     return []
   }
 }
+
+/**
+ * 주문 취소 알림을 주문자에게 전송
+ */
+export async function createOrderCancelledNotification(
+  userId: number,
+  orderNo: string,
+  refundAmount: number
+) {
+  return createNotification({
+    userId,
+    type: 'order_status',
+    title: '❌ 주문이 취소되었습니다',
+    message: `[주문번호: ${orderNo}] 주문이 취소되고 ${refundAmount.toLocaleString()}원이 환불 처리됩니다.`,
+    link: `/shop/orders/${orderNo}`,
+  })
+}
+
+/**
+ * 취소/환불 요청 알림을 관리자에게 전송
+ */
+export async function createCancelRequestNotificationForAdmins(
+  orderNo: string,
+  customerName: string,
+  requestType: 'cancel' | 'refund'
+) {
+  try {
+    // 쇼핑몰 설정에서 알림 수신 대상 조회
+    const shopSetting = await prisma.shopSetting.findUnique({
+      where: { key: 'order_notification_target' }
+    })
+
+    const notificationTarget = shopSetting?.value || 'admin'
+
+    // 알림을 안 받는 설정이면 종료
+    if (notificationTarget === 'none') {
+      return []
+    }
+
+    // 알림 대상 역할 결정
+    let targetRoles: string[] = []
+    switch (notificationTarget) {
+      case 'admin':
+        targetRoles = ['admin']
+        break
+      case 'manager':
+        targetRoles = ['manager']
+        break
+      case 'both':
+        targetRoles = ['admin', 'manager']
+        break
+    }
+
+    // 대상 관리자 조회
+    const admins = await prisma.user.findMany({
+      where: {
+        role: { in: targetRoles }
+      },
+      select: { id: true }
+    })
+
+    const title = requestType === 'cancel'
+      ? '⚠️ 주문 취소 요청이 접수되었습니다'
+      : '⚠️ 환불 요청이 접수되었습니다'
+
+    const message = requestType === 'cancel'
+      ? `[주문번호: ${orderNo}] ${customerName}님이 주문 취소를 요청했습니다. 확인이 필요합니다.`
+      : `[주문번호: ${orderNo}] ${customerName}님이 환불을 요청했습니다. 확인이 필요합니다.`
+
+    // 각 관리자에게 알림 생성
+    const notifications = await Promise.all(
+      admins.map(admin =>
+        createNotification({
+          userId: admin.id,
+          type: 'order_status',
+          title,
+          message,
+          link: `/admin/shop/orders/${orderNo}`,
+        })
+      )
+    )
+
+    return notifications.filter(n => n !== null)
+  } catch (error) {
+    console.error('관리자 취소/환불 요청 알림 생성 에러:', error)
+    return []
+  }
+}
