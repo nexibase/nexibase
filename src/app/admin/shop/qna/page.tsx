@@ -261,15 +261,15 @@ export default function AdminQnaPage() {
 
                     {/* 질문 */}
                     <div className="mb-3">
-                      <span className="inline-block px-2 py-0.5 bg-primary text-primary-foreground text-xs font-medium rounded mr-2">Q</span>
-                      <span className="text-sm">{qna.question}</span>
+                      <span className="inline-block px-2 py-0.5 bg-primary text-primary-foreground text-xs font-medium rounded mr-2 align-top">Q</span>
+                      <span className="text-sm whitespace-pre-wrap">{qna.question}</span>
                     </div>
 
                     {/* 답변 */}
                     {qna.answer ? (
                       <div className="p-3 bg-muted rounded-lg mb-3">
-                        <span className="inline-block px-2 py-0.5 bg-green-600 text-white text-xs font-medium rounded mr-2">A</span>
-                        <span className="text-sm">{qna.answer}</span>
+                        <span className="inline-block px-2 py-0.5 bg-green-600 text-white text-xs font-medium rounded mr-2 align-top">A</span>
+                        <span className="text-sm whitespace-pre-wrap">{qna.answer}</span>
                         <div className="text-xs text-muted-foreground mt-2">
                           {qna.answeredAt && new Date(qna.answeredAt).toLocaleString('ko-KR')}
                         </div>
@@ -345,8 +345,8 @@ export default function AdminQnaPage() {
                 {answerModal.product.name}
               </div>
               <div className="text-sm">
-                <span className="inline-block px-2 py-0.5 bg-primary text-primary-foreground text-xs font-medium rounded mr-2">Q</span>
-                {answerModal.question}
+                <span className="inline-block px-2 py-0.5 bg-primary text-primary-foreground text-xs font-medium rounded mr-2 align-top">Q</span>
+                <span className="whitespace-pre-wrap">{answerModal.question}</span>
               </div>
             </div>
 
