@@ -214,7 +214,7 @@ export async function POST(request: NextRequest) {
     })
 
     // 관리자/부관리자에게 새 주문 알림 발송 (비동기 - 응답 지연 방지)
-    createNewOrderNotificationForAdmins(order.orderNo, order.finalPrice, ordererName)
+    createNewOrderNotificationForAdmins(order.id, order.orderNo, order.finalPrice, ordererName)
       .catch(err => console.error('관리자 알림 발송 실패:', err))
 
     return NextResponse.json({
