@@ -53,11 +53,12 @@ export async function GET(request: NextRequest) {
       prisma.user.count({ where })
     ])
 
-    // 통계 - 삭제되지 않은 사용자만
-    const [totalUsers, activeUsers, bannedUsers] = await Promise.all([
+    // 통계 - 삭제되지 않은 사용자 + 삭제된 사용자
+    const [totalUsers, activeUsers, bannedUsers, deletedUsers] = await Promise.all([
       prisma.user.count({ where: { deletedAt: null } }),
       prisma.user.count({ where: { status: 'active', deletedAt: null } }),
       prisma.user.count({ where: { status: 'banned', deletedAt: null } }),
+      prisma.user.count({ where: { deletedAt: { not: null } } }),
     ])
 
     return NextResponse.json({
@@ -76,7 +77,8 @@ export async function GET(request: NextRequest) {
       stats: {
         totalUsers,
         activeUsers,
-        bannedUsers
+        bannedUsers,
+        deletedUsers
       }
     })
   } catch (error) {

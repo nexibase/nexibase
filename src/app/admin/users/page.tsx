@@ -19,6 +19,7 @@ import {
   Users,
   UserCheck,
   UserX,
+  UserMinus,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react"
@@ -43,6 +44,7 @@ interface UserStats {
   totalUsers: number
   activeUsers: number
   bannedUsers: number
+  deletedUsers: number
 }
 
 // Provider 배지
@@ -325,7 +327,8 @@ export default function UsersPage() {
   const [stats, setStats] = useState<UserStats>({
     totalUsers: 0,
     activeUsers: 0,
-    bannedUsers: 0
+    bannedUsers: 0,
+    deletedUsers: 0
   })
   const [loading, setLoading] = useState(true)
   const [currentPage, setCurrentPage] = useState(1)
@@ -481,7 +484,7 @@ export default function UsersPage() {
           </div>
 
           {/* Stats */}
-          <div className="grid gap-4 md:grid-cols-3 mb-8">
+          <div className="grid gap-4 md:grid-cols-4 mb-8">
             <StatCard
               title="전체 사용자"
               value={stats.totalUsers}
@@ -502,6 +505,11 @@ export default function UsersPage() {
               icon={UserX}
               active={statusFilter === 'banned'}
               onClick={() => { setStatusFilter('banned'); setCurrentPage(1) }}
+            />
+            <StatCard
+              title="삭제된 사용자"
+              value={stats.deletedUsers}
+              icon={UserMinus}
             />
           </div>
 
