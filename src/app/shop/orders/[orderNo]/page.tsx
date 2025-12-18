@@ -108,7 +108,6 @@ export default function OrderDetailPage() {
     "주문 실수",
     "단순 변심",
     "다른 상품으로 재주문",
-    "배송이 너무 느림",
     "기타"
   ]
 
