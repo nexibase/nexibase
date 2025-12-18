@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { UserLayout } from "@/components/layout/UserLayout"
 import { TiptapEditor } from "@/components/editor/TiptapEditor"
+import { useSession } from "@/components/providers/SessionProvider"
 import {
   Loader2,
   ArrowLeft,
@@ -28,6 +29,7 @@ export default function BoardWritePage() {
   const params = useParams()
   const router = useRouter()
   const slug = params.slug as string
+  const { user, loading: sessionLoading } = useSession()
 
   const [board, setBoard] = useState<Board | null>(null)
   const [loading, setLoading] = useState(true)
@@ -37,7 +39,18 @@ export default function BoardWritePage() {
   const [content, setContent] = useState("")
   const [isSecret, setIsSecret] = useState(false)
 
+  // 로그인 체크 - 글쓰기는 회원만 가능
   useEffect(() => {
+    if (!sessionLoading && !user) {
+      alert('로그인이 필요합니다.')
+      router.push(`/login?callbackUrl=/board/${slug}/write`)
+    }
+  }, [sessionLoading, user, router, slug])
+
+  useEffect(() => {
+    // 로그인 체크 후에 게시판 정보 로드
+    if (sessionLoading || !user) return
+
     const fetchBoard = async () => {
       try {
         const response = await fetch(`/api/boards/${slug}`)
@@ -58,7 +71,7 @@ export default function BoardWritePage() {
     }
 
     fetchBoard()
-  }, [slug])
+  }, [slug, sessionLoading, user])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -112,7 +125,8 @@ export default function BoardWritePage() {
     }
   }
 
-  if (loading) {
+  // 세션 로딩 중이거나 비로그인 상태면 로딩 표시 (리다이렉트 중)
+  if (sessionLoading || !user || loading) {
     return (
       <UserLayout>
         <div className="flex items-center justify-center py-20">
