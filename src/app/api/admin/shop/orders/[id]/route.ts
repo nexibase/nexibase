@@ -130,11 +130,11 @@ export async function GET(
 
     const { id } = await params
 
-    // 하이픈이 포함되면 주문번호, 아니면 ID로 판단
-    const isOrderNo = id.includes('-')
+    // 순수 숫자이고 8자리 이하면 ID, 그 외에는 주문번호로 판단
+    const isId = /^\d+$/.test(id) && id.length <= 8
 
     const order = await prisma.order.findUnique({
-      where: isOrderNo ? { orderNo: id } : { id: parseInt(id) },
+      where: isId ? { id: parseInt(id) } : { orderNo: id },
       include: {
         user: {
           select: { id: true, name: true, email: true, phone: true }
@@ -201,7 +201,7 @@ export async function PUT(
     }
 
     const { id } = await params
-    const isOrderNo = id.includes('-')
+    const isId = /^\d+$/.test(id) && id.length <= 8
     const body = await request.json()
     const {
       action,
@@ -213,7 +213,7 @@ export async function PUT(
     } = body
 
     const order = await prisma.order.findUnique({
-      where: isOrderNo ? { orderNo: id } : { id: parseInt(id) },
+      where: isId ? { id: parseInt(id) } : { orderNo: id },
       include: { items: true }
     })
 
@@ -621,10 +621,10 @@ export async function DELETE(
     }
 
     const { id } = await params
-    const isOrderNo = id.includes('-')
+    const isId = /^\d+$/.test(id) && id.length <= 8
 
     const order = await prisma.order.findUnique({
-      where: isOrderNo ? { orderNo: id } : { id: parseInt(id) },
+      where: isId ? { id: parseInt(id) } : { orderNo: id },
       include: { items: true }
     })
 
@@ -688,7 +688,7 @@ export async function PATCH(
     }
 
     const { id } = await params
-    const isOrderNo = id.includes('-')
+    const isId = /^\d+$/.test(id) && id.length <= 8
     const body = await request.json()
     const { action } = body
 
@@ -700,7 +700,7 @@ export async function PATCH(
     }
 
     const order = await prisma.order.findUnique({
-      where: isOrderNo ? { orderNo: id } : { id: parseInt(id) }
+      where: isId ? { id: parseInt(id) } : { orderNo: id }
     })
 
     if (!order) {
