@@ -170,9 +170,9 @@ export async function GET(
       )
     }
 
-    // 무통장입금인 경우 계좌정보 조회
+    // 무통장입금인 경우 계좌정보 조회 (항상 표시)
     let bankInfo = null
-    if (order.paymentMethod === 'bank' && order.status === 'pending') {
+    if (order.paymentMethod === 'bank') {
       const bankSetting = await prisma.shopSetting.findUnique({
         where: { key: 'bank_info' }
       })

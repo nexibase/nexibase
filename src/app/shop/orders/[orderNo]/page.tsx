@@ -428,6 +428,14 @@ export default function OrderDetailPage() {
                 </div>
               )}
 
+              {/* 무통장입금 계좌 정보 */}
+              {order.paymentMethod === "bank" && bankInfo && (
+                <div className="mt-3 pt-3 border-t border-dashed">
+                  <p className="text-sm text-muted-foreground mb-1">입금 계좌</p>
+                  <p className="text-sm whitespace-pre-line">{bankInfo}</p>
+                </div>
+              )}
+
               {/* 환불 정보 */}
               {(order.refundAmount !== null || ["cancelled", "refunded", "refund_requested"].includes(order.status)) && (
                 <div className="pt-3 mt-3 border-t border-dashed space-y-2">
