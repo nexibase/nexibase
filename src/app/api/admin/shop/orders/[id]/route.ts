@@ -165,6 +165,25 @@ export async function GET(
       bankInfo = bankSetting?.value || null
     }
 
+    // 카드결제 정보 파싱
+    let cardInfo = null
+    if (order.paymentMethod === 'card' && order.paymentInfo) {
+      try {
+        const paymentData = JSON.parse(order.paymentInfo)
+        cardInfo = {
+          cardName: paymentData.cardName || null,  // 카드사 코드
+          cardNo: paymentData.cardNo || null,      // 카드 번호 (마스킹됨)
+          applNum: paymentData.applNum || null,    // 승인번호
+          cardQuota: paymentData.cardQuota || '00', // 할부 개월 (00=일시불)
+          applDate: paymentData.applDate || null,  // 승인일자
+          applTime: paymentData.applTime || null,   // 승인시간
+          tid: paymentData.tid || null             // 거래번호
+        }
+      } catch {
+        cardInfo = null
+      }
+    }
+
     // 이미지 처리
     const orderWithImages = {
       ...order,
@@ -188,7 +207,7 @@ export async function GET(
       })
     }
 
-    return NextResponse.json({ order: orderWithImages, bankInfo })
+    return NextResponse.json({ order: orderWithImages, bankInfo, cardInfo })
   } catch (error) {
     console.error('주문 상세 조회 에러:', error)
     return NextResponse.json(

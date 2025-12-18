@@ -88,6 +88,47 @@ interface Order {
   }
 }
 
+// 카드사 코드 -> 카드사명 매핑
+const CARD_NAMES: Record<string, string> = {
+  "01": "하나(외환)카드",
+  "02": "KB국민카드",
+  "03": "삼성카드",
+  "04": "현대카드",
+  "06": "롯데카드",
+  "07": "신한카드",
+  "08": "구)외환카드",
+  "11": "BC카드",
+  "12": "NH농협카드",
+  "13": "한미카드",
+  "14": "신세계한미카드",
+  "15": "씨티카드",
+  "16": "우리카드",
+  "17": "하나SK카드",
+  "21": "해외비자카드",
+  "22": "해외마스터카드",
+  "23": "JCB카드",
+  "24": "해외아멕스카드",
+  "25": "해외다이너스카드",
+  "26": "중국은련카드",
+  "27": "브이패스",
+  "28": "마스터",
+  "29": "디스커버",
+  "31": "SK주유전용카드",
+  "32": "S-OIL카드",
+  "33": "현대오일뱅크",
+  "34": "GS칼텍스",
+  "35": "우리비씨카드",
+  "36": "하이패스카드",
+  "37": "저축은행카드",
+  "38": "수협카드",
+  "39": "전북은행카드",
+  "40": "광주은행카드",
+  "41": "제주은행카드",
+  "42": "카카오뱅크카드",
+  "43": "케이뱅크카드",
+  "44": "토스뱅크카드",
+}
+
 const STATUS_OPTIONS = [
   { value: "pending", label: "결제대기" },
   { value: "paid", label: "결제완료" },
@@ -123,6 +164,15 @@ export default function AdminOrderDetailPage() {
 
   const [order, setOrder] = useState<Order | null>(null)
   const [bankInfo, setBankInfo] = useState<string | null>(null)
+  const [cardInfo, setCardInfo] = useState<{
+    cardName: string | null
+    cardNo: string | null
+    applNum: string | null
+    cardQuota: string
+    applDate: string | null
+    applTime: string | null
+    tid: string | null
+  } | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -156,6 +206,7 @@ export default function AdminOrderDetailPage() {
       const data = await res.json()
       setOrder(data.order)
       setBankInfo(data.bankInfo)
+      setCardInfo(data.cardInfo)
       setStatus(data.order.status)
       setTrackingCompany(data.order.trackingCompany || "")
       setTrackingNumber(data.order.trackingNumber || "")
@@ -559,6 +610,42 @@ export default function AdminOrderDetailPage() {
                   <span>{formatDate(order.paidAt)}</span>
                 </div>
               )}
+
+              {/* 카드 결제 정보 */}
+              {cardInfo && (
+                <div className="pt-3 mt-3 border-t space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground">카드 결제 정보</p>
+                  {cardInfo.cardName && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">카드사</span>
+                      <span>{CARD_NAMES[cardInfo.cardName] || cardInfo.cardName}</span>
+                    </div>
+                  )}
+                  {cardInfo.cardNo && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">카드번호</span>
+                      <span className="font-mono">{cardInfo.cardNo}</span>
+                    </div>
+                  )}
+                  {cardInfo.applNum && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">승인번호</span>
+                      <span className="font-mono">{cardInfo.applNum}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">할부</span>
+                    <span>{cardInfo.cardQuota === "00" ? "일시불" : `${cardInfo.cardQuota}개월`}</span>
+                  </div>
+                  {cardInfo.tid && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">거래번호(TID)</span>
+                      <span className="font-mono text-xs">{cardInfo.tid}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {order.refundAmount && (
                 <div className="flex justify-between text-red-500">
                   <span>환불금액</span>
