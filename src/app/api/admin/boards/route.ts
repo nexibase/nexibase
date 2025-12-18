@@ -107,6 +107,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 게시판 생성
+    // 글쓰기/댓글쓰기는 항상 회원만 가능 (비회원 글쓰기는 이름/비번 필드가 필요하므로 지원하지 않음)
     const newBoard = await prisma.board.create({
       data: {
         slug,
@@ -115,8 +116,8 @@ export async function POST(request: NextRequest) {
         category: category || null,
         listMemberOnly: listMemberOnly ?? false,
         readMemberOnly: readMemberOnly ?? false,
-        writeMemberOnly: writeMemberOnly ?? true,
-        commentMemberOnly: commentMemberOnly ?? true,
+        writeMemberOnly: true,  // 항상 회원만 가능
+        commentMemberOnly: true,  // 항상 회원만 가능
         useComment: useComment ?? true,
         useReaction: useReaction ?? true,
         useFile: useFile ?? true,

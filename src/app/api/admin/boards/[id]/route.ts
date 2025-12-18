@@ -101,6 +101,7 @@ export async function PUT(
     }
 
     // 게시판 업데이트
+    // 글쓰기/댓글쓰기는 항상 회원만 가능 (비회원 글쓰기는 이름/비번 필드가 필요하므로 지원하지 않음)
     const updatedBoard = await prisma.board.update({
       where: { id: boardId },
       data: {
@@ -110,8 +111,8 @@ export async function PUT(
         category: category !== undefined ? category : existingBoard.category,
         listMemberOnly: listMemberOnly ?? existingBoard.listMemberOnly,
         readMemberOnly: readMemberOnly ?? existingBoard.readMemberOnly,
-        writeMemberOnly: writeMemberOnly ?? existingBoard.writeMemberOnly,
-        commentMemberOnly: commentMemberOnly ?? existingBoard.commentMemberOnly,
+        writeMemberOnly: true,  // 항상 회원만 가능
+        commentMemberOnly: true,  // 항상 회원만 가능
         useComment: useComment ?? existingBoard.useComment,
         useReaction: useReaction ?? existingBoard.useReaction,
         useFile: useFile ?? existingBoard.useFile,

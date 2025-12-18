@@ -271,23 +271,23 @@ function BoardModal({
                 />
                 <span className="text-sm">글 읽기</span>
               </label>
-              <label className="flex items-center space-x-2 cursor-pointer p-3 border rounded-lg hover:bg-muted/50">
+              <label className="flex items-center space-x-2 p-3 border rounded-lg bg-muted/30 cursor-not-allowed opacity-70" title="비회원 글쓰기는 지원하지 않습니다">
                 <input
                   type="checkbox"
-                  checked={formData.writeMemberOnly}
-                  onChange={(e) => setFormData({ ...formData, writeMemberOnly: e.target.checked })}
+                  checked={true}
+                  disabled
                   className="rounded border-gray-300"
                 />
-                <span className="text-sm">글 쓰기</span>
+                <span className="text-sm">글 쓰기 <span className="text-xs text-muted-foreground">(회원전용)</span></span>
               </label>
-              <label className="flex items-center space-x-2 cursor-pointer p-3 border rounded-lg hover:bg-muted/50">
+              <label className="flex items-center space-x-2 p-3 border rounded-lg bg-muted/30 cursor-not-allowed opacity-70" title="비회원 댓글쓰기는 지원하지 않습니다">
                 <input
                   type="checkbox"
-                  checked={formData.commentMemberOnly}
-                  onChange={(e) => setFormData({ ...formData, commentMemberOnly: e.target.checked })}
+                  checked={true}
+                  disabled
                   className="rounded border-gray-300"
                 />
-                <span className="text-sm">댓글 쓰기</span>
+                <span className="text-sm">댓글 쓰기 <span className="text-xs text-muted-foreground">(회원전용)</span></span>
               </label>
             </div>
           </div>
