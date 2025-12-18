@@ -347,8 +347,8 @@ export default function OrderDetailPage() {
 
               {/* 취소/환불 사유 */}
               {order.cancelReason && (
-                <div className="mt-4 p-4 bg-red-50 rounded-lg">
-                  <p className="text-sm text-red-800">
+                <div className="mt-4 p-4 bg-red-100 dark:bg-red-950 border border-red-200 dark:border-red-900 rounded-lg">
+                  <p className="text-sm text-red-800 dark:text-red-200">
                     <span className="font-medium">취소/환불 사유:</span> {order.cancelReason}
                   </p>
                 </div>
