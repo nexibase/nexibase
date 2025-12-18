@@ -802,7 +802,7 @@ export default function ProductEditPage({ params }: { params: Promise<{ id: stri
                         id="optionName3"
                         value={formData.optionName3}
                         onChange={(e) => setFormData({ ...formData, optionName3: e.target.value })}
-                        placeholder="예: 모델"
+                        placeholder="예: 소재"
                       />
                     </div>
                   </div>
