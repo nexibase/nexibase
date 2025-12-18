@@ -505,22 +505,22 @@ function MyPageContent() {
 
           {/* 탭 */}
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="mb-6">
-              <TabsTrigger value="orders" className="flex items-center gap-2">
-                <ShoppingBag className="h-4 w-4" />
-                주문내역
+            <TabsList className="mb-6 w-full flex overflow-x-auto">
+              <TabsTrigger value="orders" className="flex items-center gap-1.5 flex-1 min-w-0 px-2 sm:px-4">
+                <ShoppingBag className="h-4 w-4 flex-shrink-0" />
+                <span className="truncate">주문내역</span>
               </TabsTrigger>
-              <TabsTrigger value="wishlist" className="flex items-center gap-2">
-                <Heart className="h-4 w-4" />
-                찜 목록
+              <TabsTrigger value="wishlist" className="flex items-center gap-1.5 flex-1 min-w-0 px-2 sm:px-4">
+                <Heart className="h-4 w-4 flex-shrink-0" />
+                <span className="truncate">찜 목록</span>
               </TabsTrigger>
-              <TabsTrigger value="addresses" className="flex items-center gap-2">
-                <MapPin className="h-4 w-4" />
-                배송지
+              <TabsTrigger value="addresses" className="flex items-center gap-1.5 flex-1 min-w-0 px-2 sm:px-4">
+                <MapPin className="h-4 w-4 flex-shrink-0" />
+                <span className="truncate">배송지</span>
               </TabsTrigger>
-              <TabsTrigger value="notifications" className="flex items-center gap-2">
-                <Bell className="h-4 w-4" />
-                알림
+              <TabsTrigger value="notifications" className="flex items-center gap-1.5 flex-1 min-w-0 px-2 sm:px-4">
+                <Bell className="h-4 w-4 flex-shrink-0" />
+                <span className="truncate">알림</span>
               </TabsTrigger>
             </TabsList>
 
