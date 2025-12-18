@@ -30,6 +30,7 @@ model User {
   lastLoginIp   String?   @db.VarChar(50)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?                                    // 소프트 삭제 (null이면 삭제되지 않음)
 
   // 관계
   accounts      Account[]
@@ -47,6 +48,7 @@ model User {
   @@index([email])
   @@index([status])
   @@index([createdAt])
+  @@index([deletedAt])
   @@map("users")
 }
 

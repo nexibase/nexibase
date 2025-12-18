@@ -14,8 +14,10 @@ export async function GET(request: NextRequest) {
 
     const skip = (page - 1) * limit
 
-    // 검색 조건
-    const where: Record<string, unknown> = {}
+    // 검색 조건 - 삭제되지 않은 사용자만 조회
+    const where: Record<string, unknown> = {
+      deletedAt: null
+    }
 
     if (search) {
       where.OR = [
@@ -51,11 +53,11 @@ export async function GET(request: NextRequest) {
       prisma.user.count({ where })
     ])
 
-    // 통계
+    // 통계 - 삭제되지 않은 사용자만
     const [totalUsers, activeUsers, bannedUsers] = await Promise.all([
-      prisma.user.count(),
-      prisma.user.count({ where: { status: 'active' } }),
-      prisma.user.count({ where: { status: 'banned' } }),
+      prisma.user.count({ where: { deletedAt: null } }),
+      prisma.user.count({ where: { status: 'active', deletedAt: null } }),
+      prisma.user.count({ where: { status: 'banned', deletedAt: null } }),
     ])
 
     return NextResponse.json({
@@ -92,9 +94,9 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { email, name, nickname, password, phone, role, status } = body
 
-    // 이메일 중복 확인
-    const existingUser = await prisma.user.findUnique({
-      where: { email }
+    // 이메일 중복 확인 (삭제되지 않은 사용자 중)
+    const existingUser = await prisma.user.findFirst({
+      where: { email, deletedAt: null }
     })
 
     if (existingUser) {
@@ -133,7 +135,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// 사용자 일괄 삭제
+// 사용자 일괄 삭제 (소프트 삭제)
 export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
@@ -147,18 +149,19 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    // 삭제 대상 중 관리자 수 확인
+    // 삭제 대상 중 관리자 수 확인 (삭제되지 않은 사용자 중)
     const adminsToDelete = await prisma.user.count({
       where: {
         id: { in: ids },
-        role: 'admin'
+        role: 'admin',
+        deletedAt: null
       }
     })
 
     if (adminsToDelete > 0) {
-      // 전체 관리자 수 확인
+      // 전체 관리자 수 확인 (삭제되지 않은 사용자 중)
       const totalAdmins = await prisma.user.count({
-        where: { role: 'admin' }
+        where: { role: 'admin', deletedAt: null }
       })
 
       // 삭제 후 관리자가 0명이 되면 방지
@@ -170,10 +173,13 @@ export async function DELETE(request: NextRequest) {
       }
     }
 
-    await prisma.user.deleteMany({
+    // 소프트 삭제: deletedAt에 현재 시간 설정
+    await prisma.user.updateMany({
       where: {
-        id: { in: ids }
-      }
+        id: { in: ids },
+        deletedAt: null
+      },
+      data: { deletedAt: new Date() }
     })
 
     return NextResponse.json({ success: true })

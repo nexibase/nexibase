@@ -11,8 +11,8 @@ export async function GET(
     const { id } = await params
     const userId = parseInt(id)
 
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
+    const user = await prisma.user.findFirst({
+      where: { id: userId, deletedAt: null },
       include: {
         accounts: {
           select: {
@@ -56,9 +56,9 @@ export async function PUT(
     const body = await request.json()
     const { email, name, nickname, password, phone, role, status } = body
 
-    // 기존 사용자 확인
-    const existingUser = await prisma.user.findUnique({
-      where: { id: userId }
+    // 기존 사용자 확인 (삭제되지 않은 사용자)
+    const existingUser = await prisma.user.findFirst({
+      where: { id: userId, deletedAt: null }
     })
 
     if (!existingUser) {
@@ -71,7 +71,7 @@ export async function PUT(
     // 관리자 최소 1명 유지 체크
     if (existingUser.role === 'admin' && role !== 'admin') {
       const adminCount = await prisma.user.count({
-        where: { role: 'admin' }
+        where: { role: 'admin', deletedAt: null }
       })
       if (adminCount <= 1) {
         return NextResponse.json(
@@ -81,10 +81,10 @@ export async function PUT(
       }
     }
 
-    // 이메일 중복 확인 (다른 사용자)
+    // 이메일 중복 확인 (다른 삭제되지 않은 사용자)
     if (email !== existingUser.email) {
-      const emailExists = await prisma.user.findUnique({
-        where: { email }
+      const emailExists = await prisma.user.findFirst({
+        where: { email, deletedAt: null }
       })
       if (emailExists) {
         return NextResponse.json(
@@ -127,7 +127,7 @@ export async function PUT(
   }
 }
 
-// 사용자 삭제
+// 사용자 삭제 (소프트 삭제)
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -138,7 +138,7 @@ export async function DELETE(
 
     // 삭제하려는 사용자 확인
     const userToDelete = await prisma.user.findUnique({
-      where: { id: userId }
+      where: { id: userId, deletedAt: null }
     })
 
     if (!userToDelete) {
@@ -151,7 +151,7 @@ export async function DELETE(
     // 관리자 최소 1명 유지 체크
     if (userToDelete.role === 'admin') {
       const adminCount = await prisma.user.count({
-        where: { role: 'admin' }
+        where: { role: 'admin', deletedAt: null }
       })
       if (adminCount <= 1) {
         return NextResponse.json(
@@ -161,8 +161,10 @@ export async function DELETE(
       }
     }
 
-    await prisma.user.delete({
-      where: { id: userId }
+    // 소프트 삭제: deletedAt에 현재 시간 설정
+    await prisma.user.update({
+      where: { id: userId },
+      data: { deletedAt: new Date() }
     })
 
     return NextResponse.json({ success: true })
