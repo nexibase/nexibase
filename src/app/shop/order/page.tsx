@@ -24,8 +24,6 @@ import {
   Truck,
   AlertCircle,
   Check,
-  MapPin,
-  Star,
 } from "lucide-react"
 import {
   Dialog,
@@ -734,73 +732,49 @@ export default function OrderPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {/* 저장된 배송지 선택 */}
+                    {/* 저장된 배송지 칩 선택 */}
                     {savedAddresses.length > 0 && (
-                      <div className="space-y-3">
-                        <Label className="text-sm font-medium">저장된 배송지</Label>
-                        <div className="grid gap-2">
-                          {savedAddresses.slice(0, 3).map((addr) => (
-                            <button
-                              key={addr.id}
-                              type="button"
-                              onClick={() => applyAddress(addr)}
-                              className={`w-full text-left p-3 rounded-lg border transition-colors hover:border-primary ${
-                                selectedAddressId === addr.id
-                                  ? 'border-primary bg-primary/5 ring-1 ring-primary'
-                                  : 'border-border'
-                              }`}
-                            >
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                  <span className="font-medium text-sm">{addr.name}</span>
-                                  {addr.isDefault && (
-                                    <span className="inline-flex items-center text-xs text-primary bg-primary/10 px-1.5 py-0.5 rounded">
-                                      <Star className="h-3 w-3 mr-0.5 fill-current" />
-                                      기본
-                                    </span>
-                                  )}
-                                </div>
-                                {selectedAddressId === addr.id && (
-                                  <Check className="h-4 w-4 text-primary" />
-                                )}
-                              </div>
-                              <p className="text-xs text-muted-foreground mt-1">
-                                {addr.recipientName} | {addr.recipientPhone}
-                              </p>
-                              <p className="text-xs mt-0.5 truncate">
-                                [{addr.zipCode}] {addr.address}
-                                {addr.addressDetail && `, ${addr.addressDetail}`}
-                              </p>
-                            </button>
-                          ))}
-                        </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        {savedAddresses.slice(0, 3).map((addr) => (
+                          <button
+                            key={addr.id}
+                            type="button"
+                            onClick={() => applyAddress(addr)}
+                            className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                              selectedAddressId === addr.id
+                                ? 'border-primary bg-primary text-primary-foreground'
+                                : 'border-border bg-muted/50 hover:border-primary hover:bg-muted'
+                            }`}
+                          >
+                            <span className="font-medium">{addr.name}</span>
+                            <span className="text-xs opacity-75">({addr.recipientName})</span>
+                          </button>
+                        ))}
                         {savedAddresses.length > 3 && (
-                          <Button
+                          <button
                             type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="w-full"
                             onClick={() => setAddressModalOpen(true)}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm border border-dashed border-border hover:border-primary text-muted-foreground hover:text-foreground transition-colors"
                           >
-                            <MapPin className="h-4 w-4 mr-1" />
-                            더보기 ({savedAddresses.length - 3}개)
-                          </Button>
+                            +{savedAddresses.length - 3}개 더보기
+                          </button>
                         )}
-                        <div className="border-t pt-3">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={clearAddressForNewInput}
-                          >
-                            + 새 배송지 입력
-                          </Button>
-                        </div>
+                        <button
+                          type="button"
+                          onClick={clearAddressForNewInput}
+                          className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                            !selectedAddressId && zipCode
+                              ? 'border-primary bg-primary text-primary-foreground'
+                              : 'border-dashed border-border hover:border-primary text-muted-foreground hover:text-foreground'
+                          }`}
+                        >
+                          + 새 배송지
+                        </button>
                       </div>
                     )}
 
-                    {/* 새 배송지 입력 또는 저장된 주소가 없을 때 */}
-                    {(savedAddresses.length === 0 || (!zipCode && !address)) && (
+                    {/* 주문자 정보와 동일 체크박스 (저장된 주소가 없거나 새 배송지 입력 모드일 때) */}
+                    {(savedAddresses.length === 0 || !selectedAddressId) && (
                       <div className="flex items-center gap-2">
                         <input
                           type="checkbox"
@@ -1142,10 +1116,7 @@ export default function OrderPage() {
       <Dialog open={addressModalOpen} onOpenChange={setAddressModalOpen}>
         <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <MapPin className="h-5 w-5" />
-              배송지 선택
-            </DialogTitle>
+            <DialogTitle>배송지 선택</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             {savedAddresses.map((addr) => (
@@ -1161,10 +1132,7 @@ export default function OrderPage() {
                   <div className="flex items-center gap-2">
                     <span className="font-medium">{addr.name}</span>
                     {addr.isDefault && (
-                      <span className="inline-flex items-center text-xs text-primary">
-                        <Star className="h-3 w-3 mr-0.5 fill-current" />
-                        기본
-                      </span>
+                      <span className="text-xs text-primary bg-primary/10 px-1.5 py-0.5 rounded">기본</span>
                     )}
                   </div>
                   {selectedAddressId === addr.id && (
