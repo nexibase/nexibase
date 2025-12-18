@@ -700,37 +700,99 @@ export default function OrderPage() {
                 {/* 배송지 정보 */}
                 <Card>
                   <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg flex items-center gap-2">
-                        <Truck className="h-5 w-5" />
-                        배송지 정보
-                      </CardTitle>
-                      {savedAddresses.length > 0 && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setAddressModalOpen(true)}
-                        >
-                          <MapPin className="h-4 w-4 mr-1" />
-                          주소록
-                        </Button>
-                      )}
-                    </div>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Truck className="h-5 w-5" />
+                      배송지 정보
+                    </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        id="sameAsOrderer"
-                        checked={sameAsOrderer}
-                        onChange={(e) => setSameAsOrderer(e.target.checked)}
-                        className="rounded"
-                      />
-                      <label htmlFor="sameAsOrderer" className="text-sm cursor-pointer">
-                        주문자 정보와 동일
-                      </label>
-                    </div>
+                    {/* 저장된 배송지 선택 */}
+                    {savedAddresses.length > 0 && (
+                      <div className="space-y-3">
+                        <Label className="text-sm font-medium">저장된 배송지</Label>
+                        <div className="grid gap-2">
+                          {savedAddresses.slice(0, 3).map((addr) => (
+                            <button
+                              key={addr.id}
+                              type="button"
+                              onClick={() => applyAddress(addr)}
+                              className={`w-full text-left p-3 rounded-lg border transition-colors hover:border-primary ${
+                                zipCode === addr.zipCode && address === addr.address
+                                  ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                                  : 'border-border'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium text-sm">{addr.name}</span>
+                                  {addr.isDefault && (
+                                    <span className="inline-flex items-center text-xs text-primary bg-primary/10 px-1.5 py-0.5 rounded">
+                                      <Star className="h-3 w-3 mr-0.5 fill-current" />
+                                      기본
+                                    </span>
+                                  )}
+                                </div>
+                                {zipCode === addr.zipCode && address === addr.address && (
+                                  <Check className="h-4 w-4 text-primary" />
+                                )}
+                              </div>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {addr.recipientName} | {addr.recipientPhone}
+                              </p>
+                              <p className="text-xs mt-0.5 truncate">
+                                [{addr.zipCode}] {addr.address}
+                                {addr.addressDetail && `, ${addr.addressDetail}`}
+                              </p>
+                            </button>
+                          ))}
+                        </div>
+                        {savedAddresses.length > 3 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="w-full"
+                            onClick={() => setAddressModalOpen(true)}
+                          >
+                            <MapPin className="h-4 w-4 mr-1" />
+                            더보기 ({savedAddresses.length - 3}개)
+                          </Button>
+                        )}
+                        <div className="border-t pt-3">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSameAsOrderer(false)
+                              setRecipientName("")
+                              setRecipientPhone("")
+                              setZipCode("")
+                              setAddress("")
+                              setAddressDetail("")
+                            }}
+                          >
+                            + 새 배송지 입력
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 새 배송지 입력 또는 저장된 주소가 없을 때 */}
+                    {(savedAddresses.length === 0 || (!zipCode && !address)) && (
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          id="sameAsOrderer"
+                          checked={sameAsOrderer}
+                          onChange={(e) => setSameAsOrderer(e.target.checked)}
+                          className="rounded"
+                        />
+                        <label htmlFor="sameAsOrderer" className="text-sm cursor-pointer">
+                          주문자 정보와 동일
+                        </label>
+                      </div>
+                    )}
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
