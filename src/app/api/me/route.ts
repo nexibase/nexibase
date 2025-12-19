@@ -234,16 +234,16 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    const body = await request.json()
-    const { password, confirmText } = body
-
-    // 관리자는 탈퇴 불가
+    // 관리자는 탈퇴 불가 (body 파싱 전에 체크)
     if (user.role === 'admin') {
       return NextResponse.json(
         { error: '관리자 계정은 탈퇴할 수 없습니다. 다른 관리자에게 권한을 이전한 후 탈퇴해주세요.' },
         { status: 403 }
       )
     }
+
+    const body = await request.json()
+    const { password, confirmText } = body
 
     // 탈퇴 확인 문구 검증
     if (confirmText !== '회원탈퇴') {
