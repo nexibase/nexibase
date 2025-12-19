@@ -58,7 +58,7 @@ interface UserStats {
   activeUsers: number
   inactiveUsers: number
   bannedUsers: number
-  deletedUsers: number
+  withdrawnUsers: number
 }
 
 // Provider 배지
@@ -352,7 +352,6 @@ function UsersPageContent() {
 
   // URL에서 초기값 읽기
   const initialStatus = searchParams.get('status') || ''
-  const initialDeleted = searchParams.get('deleted') === 'true'
   const initialRole = searchParams.get('role') || ''
   const initialPage = parseInt(searchParams.get('page') || '1')
 
@@ -362,7 +361,7 @@ function UsersPageContent() {
     activeUsers: 0,
     inactiveUsers: 0,
     bannedUsers: 0,
-    deletedUsers: 0
+    withdrawnUsers: 0
   })
   const [loading, setLoading] = useState(true)
   const [currentPage, setCurrentPage] = useState(initialPage)
@@ -370,15 +369,13 @@ function UsersPageContent() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState(initialStatus)
   const [roleFilter, setRoleFilter] = useState(initialRole)
-  const [deletedFilter, setDeletedFilter] = useState(initialDeleted)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
 
   // URL 업데이트 함수
-  const updateURL = useCallback((status: string, deleted: boolean, role: string, page: number) => {
+  const updateURL = useCallback((status: string, role: string, page: number) => {
     const params = new URLSearchParams()
     if (status) params.set('status', status)
-    if (deleted) params.set('deleted', 'true')
     if (role) params.set('role', role)
     if (page > 1) params.set('page', String(page))
     const query = params.toString()
@@ -394,7 +391,6 @@ function UsersPageContent() {
         search,
         status: statusFilter,
         role: roleFilter,
-        deleted: deletedFilter ? 'true' : '',
       })
 
       const response = await fetch(`/api/admin/users?${params}`)
@@ -410,7 +406,7 @@ function UsersPageContent() {
     } finally {
       setLoading(false)
     }
-  }, [currentPage, search, statusFilter, roleFilter, deletedFilter])
+  }, [currentPage, search, statusFilter, roleFilter])
 
   useEffect(() => {
     fetchUsers()
@@ -511,6 +507,7 @@ function UsersPageContent() {
       active: { variant: 'default', label: '활성' },
       inactive: { variant: 'secondary', label: '비활성' },
       banned: { variant: 'destructive', label: '차단' },
+      withdrawn: { variant: 'outline', label: '탈퇴' },
     }
     const { variant, label } = config[status] || { variant: 'outline' as const, label: status }
     return <Badge variant={variant}>{label}</Badge>
@@ -557,36 +554,36 @@ function UsersPageContent() {
               title="전체 사용자"
               value={stats.totalUsers}
               icon={Users}
-              active={statusFilter === '' && !deletedFilter}
-              onClick={() => { setStatusFilter(''); setDeletedFilter(false); setCurrentPage(1); updateURL('', false, roleFilter, 1) }}
+              active={statusFilter === ''}
+              onClick={() => { setStatusFilter(''); setCurrentPage(1); updateURL('', roleFilter, 1) }}
             />
             <StatCard
               title="활성 사용자"
               value={stats.activeUsers}
               icon={UserCheck}
-              active={statusFilter === 'active' && !deletedFilter}
-              onClick={() => { setStatusFilter('active'); setDeletedFilter(false); setCurrentPage(1); updateURL('active', false, roleFilter, 1) }}
+              active={statusFilter === 'active'}
+              onClick={() => { setStatusFilter('active'); setCurrentPage(1); updateURL('active', roleFilter, 1) }}
             />
             <StatCard
               title="비활성 사용자"
               value={stats.inactiveUsers}
               icon={UserCog}
-              active={statusFilter === 'inactive' && !deletedFilter}
-              onClick={() => { setStatusFilter('inactive'); setDeletedFilter(false); setCurrentPage(1); updateURL('inactive', false, roleFilter, 1) }}
+              active={statusFilter === 'inactive'}
+              onClick={() => { setStatusFilter('inactive'); setCurrentPage(1); updateURL('inactive', roleFilter, 1) }}
             />
             <StatCard
               title="차단된 사용자"
               value={stats.bannedUsers}
               icon={UserX}
-              active={statusFilter === 'banned' && !deletedFilter}
-              onClick={() => { setStatusFilter('banned'); setDeletedFilter(false); setCurrentPage(1); updateURL('banned', false, roleFilter, 1) }}
+              active={statusFilter === 'banned'}
+              onClick={() => { setStatusFilter('banned'); setCurrentPage(1); updateURL('banned', roleFilter, 1) }}
             />
             <StatCard
-              title="삭제된 사용자"
-              value={stats.deletedUsers}
+              title="탈퇴 회원"
+              value={stats.withdrawnUsers}
               icon={UserMinus}
-              active={deletedFilter}
-              onClick={() => { setStatusFilter(''); setDeletedFilter(true); setCurrentPage(1); updateURL('', true, roleFilter, 1) }}
+              active={statusFilter === 'withdrawn'}
+              onClick={() => { setStatusFilter('withdrawn'); setCurrentPage(1); updateURL('withdrawn', roleFilter, 1) }}
             />
           </div>
 
@@ -608,7 +605,7 @@ function UsersPageContent() {
                   </div>
                   <select
                     value={roleFilter}
-                    onChange={(e) => { setRoleFilter(e.target.value); setCurrentPage(1); updateURL(statusFilter, deletedFilter, e.target.value, 1) }}
+                    onChange={(e) => { setRoleFilter(e.target.value); setCurrentPage(1); updateURL(statusFilter, e.target.value, 1) }}
                     className="flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                   >
                     <option value="">전체 권한</option>
@@ -659,7 +656,7 @@ function UsersPageContent() {
                         가입일
                       </th>
                       <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                        {deletedFilter ? '삭제일' : '최근 로그인'}
+                        {statusFilter === 'withdrawn' ? '탈퇴일' : '최근 로그인'}
                       </th>
                       <th className="h-12 px-4 text-right align-middle font-medium text-muted-foreground">
                         <span className="sr-only">Actions</span>
@@ -730,10 +727,10 @@ function UsersPageContent() {
                             {formatDate(user.createdAt)}
                           </td>
                           <td className="p-4 align-middle text-sm text-muted-foreground">
-                            {deletedFilter ? formatDate(user.deletedAt) : formatDate(user.lastLoginAt)}
+                            {statusFilter === 'withdrawn' ? formatDate(user.deletedAt) : formatDate(user.lastLoginAt)}
                           </td>
                           <td className="p-4 align-middle text-right">
-                            {deletedFilter ? (
+                            {statusFilter === 'withdrawn' ? (
                               <Button
                                 variant="ghost"
                                 size="icon"
@@ -782,7 +779,7 @@ function UsersPageContent() {
                       variant="outline"
                       size="icon"
                       className="h-8 w-8"
-                      onClick={() => { const newPage = Math.max(1, currentPage - 1); setCurrentPage(newPage); updateURL(statusFilter, deletedFilter, roleFilter, newPage) }}
+                      onClick={() => { const newPage = Math.max(1, currentPage - 1); setCurrentPage(newPage); updateURL(statusFilter, roleFilter, newPage) }}
                       disabled={currentPage === 1}
                     >
                       <ChevronLeft className="h-4 w-4" />
@@ -804,7 +801,7 @@ function UsersPageContent() {
                           variant={currentPage === page ? "default" : "outline"}
                           size="icon"
                           className="h-8 w-8"
-                          onClick={() => { setCurrentPage(page); updateURL(statusFilter, deletedFilter, roleFilter, page) }}
+                          onClick={() => { setCurrentPage(page); updateURL(statusFilter, roleFilter, page) }}
                         >
                           {page}
                         </Button>
@@ -814,7 +811,7 @@ function UsersPageContent() {
                       variant="outline"
                       size="icon"
                       className="h-8 w-8"
-                      onClick={() => { const newPage = Math.min(totalPages, currentPage + 1); setCurrentPage(newPage); updateURL(statusFilter, deletedFilter, roleFilter, newPage) }}
+                      onClick={() => { const newPage = Math.min(totalPages, currentPage + 1); setCurrentPage(newPage); updateURL(statusFilter, roleFilter, newPage) }}
                       disabled={currentPage === totalPages}
                     >
                       <ChevronRight className="h-4 w-4" />

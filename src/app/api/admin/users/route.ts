@@ -11,24 +11,28 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search') || ''
     const status = searchParams.get('status') || ''
     const role = searchParams.get('role') || ''
-    const deleted = searchParams.get('deleted') === 'true'
 
     const skip = (page - 1) * limit
 
-    // 검색 조건 - 삭제된 사용자 필터 여부에 따라 조회
-    const where: Record<string, unknown> = deleted
-      ? { deletedAt: { not: null } }  // 삭제된 사용자만
-      : { deletedAt: null }           // 삭제되지 않은 사용자만
+    // 검색 조건
+    const where: Record<string, unknown> = {}
+
+    // 탈퇴 회원(withdrawn)은 deletedAt이 있는 사용자
+    // 그 외 상태는 deletedAt이 null인 사용자만
+    if (status === 'withdrawn') {
+      where.status = 'withdrawn'
+    } else {
+      where.deletedAt = null
+      if (status) {
+        where.status = status
+      }
+    }
 
     if (search) {
       where.OR = [
         { email: { contains: search } },
         { nickname: { contains: search } },
       ]
-    }
-
-    if (status) {
-      where.status = status
     }
 
     if (role) {
@@ -53,13 +57,13 @@ export async function GET(request: NextRequest) {
       prisma.user.count({ where })
     ])
 
-    // 통계 - 삭제되지 않은 사용자 + 삭제된 사용자
-    const [totalUsers, activeUsers, inactiveUsers, bannedUsers, deletedUsers] = await Promise.all([
+    // 통계 - 상태별 사용자 수
+    const [totalUsers, activeUsers, inactiveUsers, bannedUsers, withdrawnUsers] = await Promise.all([
       prisma.user.count({ where: { deletedAt: null } }),
       prisma.user.count({ where: { status: 'active', deletedAt: null } }),
       prisma.user.count({ where: { status: 'inactive', deletedAt: null } }),
       prisma.user.count({ where: { status: 'banned', deletedAt: null } }),
-      prisma.user.count({ where: { deletedAt: { not: null } } }),
+      prisma.user.count({ where: { status: 'withdrawn' } }), // 탈퇴 회원
     ])
 
     return NextResponse.json({
@@ -80,7 +84,7 @@ export async function GET(request: NextRequest) {
         activeUsers,
         inactiveUsers,
         bannedUsers,
-        deletedUsers
+        withdrawnUsers
       }
     })
   } catch (error) {

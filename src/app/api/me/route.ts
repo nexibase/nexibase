@@ -292,7 +292,7 @@ export async function DELETE(request: NextRequest) {
           password: null,
           phone: null,
           image: null,
-          status: 'inactive',
+          status: 'withdrawn',
           deletedAt: new Date()
         }
       })
