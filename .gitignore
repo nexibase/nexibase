@@ -58,3 +58,7 @@ next-env.d.ts
 /src/themes/index.ts
 
 /public
+
+# Claude Code 관련 파일
+.claude/
+CLAUDE.md
