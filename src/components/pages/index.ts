@@ -24,3 +24,7 @@ export { default as ShopQnaSection } from './shop/QnaSection'
 
 // Home
 export { default as HomePage } from './HomePage'
+
+// Popular & Recent
+export { default as PopularPage } from './PopularPage'
+export { default as RecentPage } from './RecentPage'
