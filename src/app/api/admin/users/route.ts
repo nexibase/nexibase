@@ -17,10 +17,14 @@ export async function GET(request: NextRequest) {
     // 검색 조건
     const where: Record<string, unknown> = {}
 
-    // 탈퇴 회원(withdrawn)은 deletedAt이 있는 사용자
-    // 그 외 상태는 deletedAt이 null인 사용자만
+    // 탈퇴 회원(withdrawn): status가 'withdrawn'인 사용자 (직접 탈퇴)
+    // 삭제된 사용자(deleted): deletedAt이 있고 status가 'withdrawn'이 아닌 사용자 (관리자 삭제)
+    // 그 외 상태는 deletedAt이 null인 활성 사용자만
     if (status === 'withdrawn') {
       where.status = 'withdrawn'
+    } else if (status === 'deleted') {
+      where.deletedAt = { not: null }
+      where.status = { not: 'withdrawn' }
     } else {
       where.deletedAt = null
       if (status) {
@@ -58,12 +62,13 @@ export async function GET(request: NextRequest) {
     ])
 
     // 통계 - 상태별 사용자 수
-    const [totalUsers, activeUsers, inactiveUsers, bannedUsers, withdrawnUsers] = await Promise.all([
+    const [totalUsers, activeUsers, inactiveUsers, bannedUsers, withdrawnUsers, deletedUsers] = await Promise.all([
       prisma.user.count({ where: { deletedAt: null } }),
       prisma.user.count({ where: { status: 'active', deletedAt: null } }),
       prisma.user.count({ where: { status: 'inactive', deletedAt: null } }),
       prisma.user.count({ where: { status: 'banned', deletedAt: null } }),
-      prisma.user.count({ where: { status: 'withdrawn' } }), // 탈퇴 회원
+      prisma.user.count({ where: { status: 'withdrawn' } }), // 탈퇴 회원 (직접 탈퇴)
+      prisma.user.count({ where: { deletedAt: { not: null }, status: { not: 'withdrawn' } } }), // 삭제된 사용자 (관리자 삭제)
     ])
 
     return NextResponse.json({
@@ -84,7 +89,8 @@ export async function GET(request: NextRequest) {
         activeUsers,
         inactiveUsers,
         bannedUsers,
-        withdrawnUsers
+        withdrawnUsers,
+        deletedUsers
       }
     })
   } catch (error) {

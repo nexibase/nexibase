@@ -59,6 +59,7 @@ interface UserStats {
   inactiveUsers: number
   bannedUsers: number
   withdrawnUsers: number
+  deletedUsers: number
 }
 
 // Provider 배지
@@ -361,7 +362,8 @@ function UsersPageContent() {
     activeUsers: 0,
     inactiveUsers: 0,
     bannedUsers: 0,
-    withdrawnUsers: 0
+    withdrawnUsers: 0,
+    deletedUsers: 0
   })
   const [loading, setLoading] = useState(true)
   const [currentPage, setCurrentPage] = useState(initialPage)
@@ -549,7 +551,7 @@ function UsersPageContent() {
           </div>
 
           {/* Stats */}
-          <div className="grid gap-4 md:grid-cols-5 mb-8">
+          <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6 mb-8">
             <StatCard
               title="전체 사용자"
               value={stats.totalUsers}
@@ -584,6 +586,13 @@ function UsersPageContent() {
               icon={UserMinus}
               active={statusFilter === 'withdrawn'}
               onClick={() => { setStatusFilter('withdrawn'); setCurrentPage(1); updateURL('withdrawn', roleFilter, 1) }}
+            />
+            <StatCard
+              title="삭제된 사용자"
+              value={stats.deletedUsers}
+              icon={Trash2}
+              active={statusFilter === 'deleted'}
+              onClick={() => { setStatusFilter('deleted'); setCurrentPage(1); updateURL('deleted', roleFilter, 1) }}
             />
           </div>
 
@@ -656,7 +665,7 @@ function UsersPageContent() {
                         가입일
                       </th>
                       <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                        {statusFilter === 'withdrawn' ? '탈퇴일' : '최근 로그인'}
+                        {statusFilter === 'withdrawn' || statusFilter === 'deleted' ? '삭제일' : '최근 로그인'}
                       </th>
                       <th className="h-12 px-4 text-right align-middle font-medium text-muted-foreground">
                         <span className="sr-only">Actions</span>
@@ -727,10 +736,10 @@ function UsersPageContent() {
                             {formatDate(user.createdAt)}
                           </td>
                           <td className="p-4 align-middle text-sm text-muted-foreground">
-                            {statusFilter === 'withdrawn' ? formatDate(user.deletedAt) : formatDate(user.lastLoginAt)}
+                            {statusFilter === 'withdrawn' || statusFilter === 'deleted' ? formatDate(user.deletedAt) : formatDate(user.lastLoginAt)}
                           </td>
                           <td className="p-4 align-middle text-right">
-                            {statusFilter === 'withdrawn' ? (
+                            {statusFilter === 'withdrawn' || statusFilter === 'deleted' ? (
                               <Button
                                 variant="ghost"
                                 size="icon"
