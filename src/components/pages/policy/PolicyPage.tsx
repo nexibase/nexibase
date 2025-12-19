@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2, FileText, ArrowLeft, History } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Header } from "@/components/layout"
+import { Header, Footer } from "@/components/layout"
 import Link from "next/link"
 
 interface Policy {
@@ -69,20 +69,21 @@ export default function PolicyPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background flex flex-col">
         <Header />
-        <div className="flex items-center justify-center py-20">
+        <div className="flex-1 flex items-center justify-center py-20">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
+        <Footer />
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background flex flex-col">
         <Header />
-        <div className="flex items-center justify-center py-20">
+        <div className="flex-1 flex items-center justify-center py-20">
           <Card className="max-w-md w-full mx-4">
             <CardContent className="pt-6 text-center">
               <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
@@ -96,6 +97,7 @@ export default function PolicyPage() {
             </CardContent>
           </Card>
         </div>
+        <Footer />
       </div>
     )
   }
@@ -105,9 +107,9 @@ export default function PolicyPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Header />
-      <div className="container max-w-4xl mx-auto px-4 py-8">
+      <main className="flex-1 container max-w-4xl mx-auto px-4 py-8">
         <Card>
           <CardHeader>
             <div className="flex items-start justify-between gap-4">
@@ -188,7 +190,8 @@ export default function PolicyPage() {
             </Link>
           </Button>
         </div>
-      </div>
+      </main>
+      <Footer />
     </div>
   )
 }
