@@ -236,10 +236,23 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         orders: orders.map(order => ({
           ...order,
-          items: order.items.map(item => ({
-            ...item,
-            productImage: item.product?.images?.[0] || null,
-          })),
+          items: order.items.map(item => {
+            // images는 JSON 문자열로 저장되어 있음
+            let productImage = null
+            if (item.product?.images) {
+              try {
+                const images = JSON.parse(item.product.images as string)
+                productImage = Array.isArray(images) && images.length > 0 ? images[0] : null
+              } catch {
+                productImage = null
+              }
+            }
+            return {
+              ...item,
+              productImage,
+              product: undefined, // product 객체 제거 (불필요한 데이터)
+            }
+          }),
         })),
         pagination: {
           page,
