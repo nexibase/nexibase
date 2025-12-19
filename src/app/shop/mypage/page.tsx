@@ -118,7 +118,7 @@ function MyPageContent() {
 
   // URL에서 탭 상태 읽기
   const tabParam = searchParams.get('tab')
-  const activeTab = (tabParam === 'wishlist' || tabParam === 'addresses' || tabParam === 'notifications') ? tabParam : 'orders'
+  const activeTab = (tabParam === 'orders' || tabParam === 'wishlist' || tabParam === 'addresses' || tabParam === 'notifications') ? tabParam : 'profile'
 
   // 주문 관련 상태
   const [orders, setOrders] = useState<Order[]>([])
@@ -158,15 +158,110 @@ function MyPageContent() {
   const [notificationsTotalPages, setNotificationsTotalPages] = useState(1)
   const [deletingNotificationId, setDeletingNotificationId] = useState<number | null>(null)
 
+  // 프로필 관련 상태
+  const [profileLoading, setProfileLoading] = useState(true)
+  const [profileSaving, setProfileSaving] = useState(false)
+  const [profileForm, setProfileForm] = useState({
+    name: '',
+    nickname: '',
+    phone: '',
+    email: '',
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  })
+  const [profileError, setProfileError] = useState('')
+  const [profileSuccess, setProfileSuccess] = useState('')
+
   // 탭 변경 핸들러
   const setActiveTab = (tab: string) => {
     const params = new URLSearchParams(searchParams.toString())
-    if (tab === 'orders') {
+    if (tab === 'profile') {
       params.delete('tab')
     } else {
       params.set('tab', tab)
     }
     router.replace(`/shop/mypage${params.toString() ? `?${params}` : ''}`)
+  }
+
+  // 프로필 조회
+  const fetchProfile = useCallback(async () => {
+    setProfileLoading(true)
+    try {
+      const res = await fetch('/api/me')
+      if (res.status === 401) {
+        router.push('/login?redirect=/shop/mypage')
+        return
+      }
+      if (res.ok) {
+        const data = await res.json()
+        setProfileForm(prev => ({
+          ...prev,
+          name: data.user.name || '',
+          nickname: data.user.nickname || '',
+          phone: data.user.phone || '',
+          email: data.user.email || '',
+        }))
+      }
+    } catch (error) {
+      console.error('프로필 조회 에러:', error)
+    } finally {
+      setProfileLoading(false)
+    }
+  }, [router])
+
+  // 프로필 저장
+  const saveProfile = async () => {
+    setProfileError('')
+    setProfileSuccess('')
+
+    // 비밀번호 변경 시 확인
+    if (profileForm.newPassword) {
+      if (profileForm.newPassword !== profileForm.confirmPassword) {
+        setProfileError('새 비밀번호가 일치하지 않습니다.')
+        return
+      }
+      if (profileForm.newPassword.length < 6) {
+        setProfileError('새 비밀번호는 6자 이상 입력해주세요.')
+        return
+      }
+    }
+
+    setProfileSaving(true)
+    try {
+      const res = await fetch('/api/me', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: profileForm.name,
+          nickname: profileForm.nickname,
+          phone: profileForm.phone,
+          ...(profileForm.newPassword && {
+            currentPassword: profileForm.currentPassword,
+            newPassword: profileForm.newPassword,
+          }),
+        }),
+      })
+
+      const data = await res.json()
+
+      if (res.ok) {
+        setProfileSuccess('프로필이 수정되었습니다.')
+        setProfileForm(prev => ({
+          ...prev,
+          currentPassword: '',
+          newPassword: '',
+          confirmPassword: '',
+        }))
+      } else {
+        setProfileError(data.error || '프로필 수정에 실패했습니다.')
+      }
+    } catch (error) {
+      console.error('프로필 저장 에러:', error)
+      setProfileError('프로필 저장 중 오류가 발생했습니다.')
+    } finally {
+      setProfileSaving(false)
+    }
   }
 
   // 주문 목록 조회
@@ -329,7 +424,9 @@ function MyPageContent() {
 
   // 탭에 따라 데이터 로드
   useEffect(() => {
-    if (activeTab === 'orders') {
+    if (activeTab === 'profile') {
+      fetchProfile()
+    } else if (activeTab === 'orders') {
       fetchOrders()
     } else if (activeTab === 'wishlist') {
       fetchWishlist()
@@ -338,7 +435,7 @@ function MyPageContent() {
     } else if (activeTab === 'notifications') {
       fetchNotifications()
     }
-  }, [activeTab, fetchOrders, fetchWishlist, fetchAddresses, fetchNotifications])
+  }, [activeTab, fetchProfile, fetchOrders, fetchWishlist, fetchAddresses, fetchNotifications])
 
   // 상태 필터 변경 시 페이지 초기화
   useEffect(() => {
@@ -535,7 +632,11 @@ function MyPageContent() {
 
           {/* 탭 */}
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="mb-6 w-full h-auto grid grid-cols-2 sm:grid-cols-4 gap-1 p-1">
+            <TabsList className="mb-6 w-full h-auto grid grid-cols-3 sm:grid-cols-5 gap-1 p-1">
+              <TabsTrigger value="profile" className="flex items-center justify-center gap-2 py-2">
+                <Pencil className="h-4 w-4" />
+                <span>내 정보</span>
+              </TabsTrigger>
               <TabsTrigger value="orders" className="flex items-center justify-center gap-2 py-2">
                 <ShoppingBag className="h-4 w-4" />
                 <span>주문내역</span>
@@ -553,6 +654,124 @@ function MyPageContent() {
                 <span>알림</span>
               </TabsTrigger>
             </TabsList>
+
+            {/* 프로필 탭 */}
+            <TabsContent value="profile">
+              {profileLoading ? (
+                <div className="flex items-center justify-center py-20">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">내 정보 수정</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {/* 성공/에러 메시지 */}
+                    {profileError && (
+                      <div className="p-3 bg-destructive/10 text-destructive text-sm rounded-lg">
+                        {profileError}
+                      </div>
+                    )}
+                    {profileSuccess && (
+                      <div className="p-3 bg-green-500/10 text-green-600 dark:text-green-400 text-sm rounded-lg">
+                        {profileSuccess}
+                      </div>
+                    )}
+
+                    {/* 기본 정보 */}
+                    <div className="space-y-4">
+                      <h3 className="font-medium text-sm text-muted-foreground">기본 정보</h3>
+                      <div className="grid gap-4">
+                        <div>
+                          <Label htmlFor="email">이메일</Label>
+                          <Input
+                            id="email"
+                            type="email"
+                            value={profileForm.email}
+                            disabled
+                            className="bg-muted"
+                          />
+                          <p className="text-xs text-muted-foreground mt-1">이메일은 변경할 수 없습니다.</p>
+                        </div>
+                        <div>
+                          <Label htmlFor="name">이름 *</Label>
+                          <Input
+                            id="name"
+                            value={profileForm.name}
+                            onChange={(e) => setProfileForm(prev => ({ ...prev, name: e.target.value }))}
+                            placeholder="이름을 입력하세요"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="nickname">닉네임 *</Label>
+                          <Input
+                            id="nickname"
+                            value={profileForm.nickname}
+                            onChange={(e) => setProfileForm(prev => ({ ...prev, nickname: e.target.value }))}
+                            placeholder="닉네임을 입력하세요"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="phone">연락처</Label>
+                          <Input
+                            id="phone"
+                            value={profileForm.phone}
+                            onChange={(e) => setProfileForm(prev => ({ ...prev, phone: formatPhoneNumber(e.target.value) }))}
+                            placeholder="010-0000-0000"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 비밀번호 변경 */}
+                    <div className="space-y-4 pt-4 border-t">
+                      <h3 className="font-medium text-sm text-muted-foreground">비밀번호 변경 (선택)</h3>
+                      <div className="grid gap-4">
+                        <div>
+                          <Label htmlFor="currentPassword">현재 비밀번호</Label>
+                          <Input
+                            id="currentPassword"
+                            type="password"
+                            value={profileForm.currentPassword}
+                            onChange={(e) => setProfileForm(prev => ({ ...prev, currentPassword: e.target.value }))}
+                            placeholder="현재 비밀번호"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="newPassword">새 비밀번호</Label>
+                          <Input
+                            id="newPassword"
+                            type="password"
+                            value={profileForm.newPassword}
+                            onChange={(e) => setProfileForm(prev => ({ ...prev, newPassword: e.target.value }))}
+                            placeholder="새 비밀번호 (6자 이상)"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="confirmPassword">새 비밀번호 확인</Label>
+                          <Input
+                            id="confirmPassword"
+                            type="password"
+                            value={profileForm.confirmPassword}
+                            onChange={(e) => setProfileForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                            placeholder="새 비밀번호 확인"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 저장 버튼 */}
+                    <div className="flex justify-end pt-4">
+                      <Button onClick={saveProfile} disabled={profileSaving}>
+                        {profileSaving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                        저장
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
 
             {/* 주문내역 탭 */}
             <TabsContent value="orders">
