@@ -52,6 +52,62 @@ export async function GET(request: NextRequest) {
         dateFrom = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0, 0)
         dateTo = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999) // 이번달 0일 = 전월 말일
         break
+      case 'q1':
+        // 1분기 (1~3월)
+        dateFrom = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0)
+        dateTo = new Date(now.getFullYear(), 2, 31, 23, 59, 59, 999)
+        break
+      case 'q2':
+        // 2분기 (4~6월)
+        dateFrom = new Date(now.getFullYear(), 3, 1, 0, 0, 0, 0)
+        dateTo = new Date(now.getFullYear(), 5, 30, 23, 59, 59, 999)
+        break
+      case 'q3':
+        // 3분기 (7~9월)
+        dateFrom = new Date(now.getFullYear(), 6, 1, 0, 0, 0, 0)
+        dateTo = new Date(now.getFullYear(), 8, 30, 23, 59, 59, 999)
+        break
+      case 'q4':
+        // 4분기 (10~12월)
+        dateFrom = new Date(now.getFullYear(), 9, 1, 0, 0, 0, 0)
+        dateTo = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999)
+        break
+      case 'prev_quarter':
+        // 지난 분기
+        const currentQuarter = Math.floor(now.getMonth() / 3) // 0=1분기, 1=2분기, ...
+        if (currentQuarter === 0) {
+          // 현재 1분기면 작년 4분기
+          dateFrom = new Date(now.getFullYear() - 1, 9, 1, 0, 0, 0, 0)
+          dateTo = new Date(now.getFullYear() - 1, 11, 31, 23, 59, 59, 999)
+        } else {
+          const prevQuarterStart = (currentQuarter - 1) * 3
+          dateFrom = new Date(now.getFullYear(), prevQuarterStart, 1, 0, 0, 0, 0)
+          dateTo = new Date(now.getFullYear(), prevQuarterStart + 3, 0, 23, 59, 59, 999) // 다음달 0일 = 해당월 말일
+        }
+        break
+      case 'h1':
+        // 상반기 (1~6월)
+        dateFrom = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0)
+        dateTo = new Date(now.getFullYear(), 5, 30, 23, 59, 59, 999)
+        break
+      case 'h2':
+        // 하반기 (7~12월)
+        dateFrom = new Date(now.getFullYear(), 6, 1, 0, 0, 0, 0)
+        dateTo = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999)
+        break
+      case 'prev_half':
+        // 지난 반기
+        const isFirstHalf = now.getMonth() < 6
+        if (isFirstHalf) {
+          // 현재 상반기면 작년 하반기
+          dateFrom = new Date(now.getFullYear() - 1, 6, 1, 0, 0, 0, 0)
+          dateTo = new Date(now.getFullYear() - 1, 11, 31, 23, 59, 59, 999)
+        } else {
+          // 현재 하반기면 올해 상반기
+          dateFrom = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0)
+          dateTo = new Date(now.getFullYear(), 5, 30, 23, 59, 59, 999)
+        }
+        break
       case 'year':
         dateFrom = new Date(now.getFullYear(), 0, 1)
         break
