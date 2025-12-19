@@ -33,7 +33,7 @@ export interface Review {
   reply: string | null
   repliedAt: string | null
   createdAt: string
-  user: { id: number; name: string; image: string | null }
+  user: { id: number; nickname: string; image: string | null }
   isOwner: boolean
 }
 
@@ -544,12 +544,12 @@ export default function ReviewSection({
               <div key={review.id} className="border rounded-lg p-4">
                 <div className="flex items-start gap-3">
                   <Avatar className="h-10 w-10">
-                    <AvatarFallback>{review.user.name[0]}</AvatarFallback>
+                    <AvatarFallback>{review.user.nickname[0]}</AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-2">
-                        <span className="font-medium">{review.user.name}</span>
+                        <span className="font-medium">{review.user.nickname}</span>
                         <div className="flex gap-0.5">
                           {[1, 2, 3, 4, 5].map(i => (
                             <Star

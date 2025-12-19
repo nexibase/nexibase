@@ -32,7 +32,7 @@ interface Review {
   isActive: boolean
   createdAt: string
   product: { id: number; name: string; slug: string }
-  user: { id: number; name: string; email: string }
+  user: { id: number; nickname: string; email: string }
 }
 
 interface Stats {
@@ -347,7 +347,7 @@ export default function AdminReviewsPage() {
 
                     {/* 작성자 정보 */}
                     <div className="text-xs text-muted-foreground mb-2">
-                      {review.user.name} ({review.user.email}) · {new Date(review.createdAt).toLocaleString('ko-KR')}
+                      {review.user.nickname} ({review.user.email}) · {new Date(review.createdAt).toLocaleString('ko-KR')}
                     </div>
 
                     {/* 리뷰 내용 */}

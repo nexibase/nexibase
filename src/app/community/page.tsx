@@ -148,11 +148,11 @@ export default function Home() {
                         <Avatar className="h-8 w-8">
                           <AvatarImage src={user.image || undefined} />
                           <AvatarFallback className="bg-blue-100 text-blue-600 text-sm font-medium">
-                            {(user.nickname || user.name || user.email || '?')[0]?.toUpperCase()}
+                            {(user.nickname || user.email || '?')[0]?.toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         <span className="text-sm font-medium text-gray-700 hidden sm:block">
-                          {user.nickname || user.name || '사용자'}
+                          {user.nickname || '사용자'}
                         </span>
                       </div>
                       <Button
@@ -190,7 +190,7 @@ export default function Home() {
             {/* Hero Section */}
             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-8 mb-8">
               <h2 className="text-3xl font-bold text-gray-900 mb-4">
-                {user ? `${user.nickname || user.name || '사용자'}님, 환영합니다!` : '개발자들의 소통 공간에 오신 것을 환영합니다!'}
+                {user ? `${user.nickname || '사용자'}님, 환영합니다!` : '개발자들의 소통 공간에 오신 것을 환영합니다!'}
               </h2>
               <p className="text-lg text-gray-600 mb-6">
                 질문하고, 답변하고, 함께 성장하는 개발자 커뮤니티
@@ -310,11 +310,11 @@ export default function Home() {
                       <Avatar className="h-12 w-12">
                         <AvatarImage src={user.image || undefined} />
                         <AvatarFallback className="bg-blue-100 text-blue-600 text-lg font-medium">
-                          {(user.nickname || user.name || user.email || '?')[0]?.toUpperCase()}
+                          {(user.nickname || user.email || '?')[0]?.toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <div className="font-medium">{user.nickname || user.name || '사용자'}</div>
+                        <div className="font-medium">{user.nickname || '사용자'}</div>
                         <div className="text-sm text-muted-foreground">{user.email}</div>
                       </div>
                     </div>

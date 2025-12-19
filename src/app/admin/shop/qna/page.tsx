@@ -30,7 +30,7 @@ interface Qna {
   isSecret: boolean
   createdAt: string
   product: { id: number; name: string; slug: string }
-  user: { id: number; name: string; email: string }
+  user: { id: number; nickname: string; email: string }
 }
 
 interface Stats {
@@ -256,7 +256,7 @@ export default function AdminQnaPage() {
 
                     {/* 작성자 정보 */}
                     <div className="text-xs text-muted-foreground mb-2">
-                      {qna.user.name} ({qna.user.email}) · {new Date(qna.createdAt).toLocaleString('ko-KR')}
+                      {qna.user.nickname} ({qna.user.email}) · {new Date(qna.createdAt).toLocaleString('ko-KR')}
                     </div>
 
                     {/* 질문 */}

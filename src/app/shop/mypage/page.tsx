@@ -162,7 +162,6 @@ function MyPageContent() {
   const [profileLoading, setProfileLoading] = useState(true)
   const [profileSaving, setProfileSaving] = useState(false)
   const [profileForm, setProfileForm] = useState({
-    name: '',
     nickname: '',
     phone: '',
     email: '',
@@ -197,7 +196,6 @@ function MyPageContent() {
         const data = await res.json()
         setProfileForm(prev => ({
           ...prev,
-          name: data.user.name || '',
           nickname: data.user.nickname || '',
           phone: data.user.phone || '',
           email: data.user.email || '',
@@ -233,7 +231,6 @@ function MyPageContent() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: profileForm.name,
           nickname: profileForm.nickname,
           phone: profileForm.phone,
           ...(profileForm.newPassword && {
@@ -695,15 +692,6 @@ function MyPageContent() {
                           <p className="text-xs text-muted-foreground mt-1">이메일은 변경할 수 없습니다.</p>
                         </div>
                         <div>
-                          <Label htmlFor="name">이름 *</Label>
-                          <Input
-                            id="name"
-                            value={profileForm.name}
-                            onChange={(e) => setProfileForm(prev => ({ ...prev, name: e.target.value }))}
-                            placeholder="이름을 입력하세요"
-                          />
-                        </div>
-                        <div>
                           <Label htmlFor="nickname">닉네임 *</Label>
                           <Input
                             id="nickname"
@@ -711,6 +699,7 @@ function MyPageContent() {
                             onChange={(e) => setProfileForm(prev => ({ ...prev, nickname: e.target.value }))}
                             placeholder="닉네임을 입력하세요"
                           />
+                          <p className="text-xs text-muted-foreground mt-1">게시판, 리뷰 등에 표시되는 이름입니다.</p>
                         </div>
                         <div>
                           <Label htmlFor="phone">연락처</Label>

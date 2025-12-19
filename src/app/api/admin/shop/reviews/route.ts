@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
             select: { id: true, name: true, slug: true }
           },
           user: {
-            select: { id: true, name: true, nickname: true, email: true }
+            select: { id: true, nickname: true, email: true }
           }
         },
         orderBy: { createdAt: 'desc' },
@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
         images: review.images ? JSON.parse(review.images) : [],
         user: {
           ...review.user,
-          name: review.user.nickname || review.user.name || '익명'
+          nickname: review.user.nickname || '익명'
         }
       })),
       pagination: {

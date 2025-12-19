@@ -163,7 +163,7 @@ export default function OrderPage() {
       if (res.ok) {
         const data = await res.json()
         if (data.user) {
-          setOrdererName(data.user.name || "")
+          setOrdererName(data.user.nickname || "")
           setOrdererPhone(data.user.phone || "")
           setOrdererEmail(data.user.email || "")
         }

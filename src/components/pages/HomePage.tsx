@@ -153,7 +153,7 @@ export default function HomePage() {
                   </div>
                   <h1 className="text-xl md:text-2xl font-bold mb-2">
                     {user
-                      ? `${user.nickname || user.name || '사용자'}님, 환영합니다!`
+                      ? `${user.nickname || '사용자'}님, 환영합니다!`
                       : `${settings.site_name}에 오신 것을 환영합니다`
                     }
                   </h1>
@@ -262,7 +262,7 @@ export default function HomePage() {
                               </span>
                             </div>
                             <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                              <span>{post.author.nickname || post.author.name}</span>
+                              <span>{post.author.nickname}</span>
                               <span className="flex items-center gap-1">
                                 <Eye className="h-3 w-3" />
                                 {post.viewCount}

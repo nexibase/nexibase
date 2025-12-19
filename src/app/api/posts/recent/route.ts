@@ -23,8 +23,7 @@ export async function GET(request: NextRequest) {
         commentCount: true,
         author: {
           select: {
-            nickname: true,
-            name: true
+            nickname: true
           }
         },
         board: {

@@ -70,7 +70,6 @@ export async function POST(request: NextRequest) {
         email: email.toLowerCase(),
         password: hashedPassword,
         nickname,
-        name: nickname,
         role: isFirstUser ? 'admin' : 'user',
         status: 'active'
       }

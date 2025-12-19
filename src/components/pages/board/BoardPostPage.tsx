@@ -393,18 +393,18 @@ export default function BoardPostPage() {
                   {post.author.image ? (
                     <img
                       src={post.author.image}
-                      alt={post.author.nickname || post.author.name}
+                      alt={post.author.nickname || ''}
                       className="w-10 h-10 rounded-full object-cover"
                     />
                   ) : (
                     <span className="text-muted-foreground font-medium">
-                      {(post.author.nickname || post.author.name).charAt(0)}
+                      {(post.author.nickname || '?').charAt(0)}
                     </span>
                   )}
                 </div>
                 <div>
                   <div className="font-medium">
-                    {post.author.nickname || post.author.name}
+                    {post.author.nickname || '익명'}
                   </div>
                   <div className="text-sm text-muted-foreground">
                     {formatDate(post.createdAt)}
@@ -514,13 +514,13 @@ export default function BoardPostPage() {
                       <div className="flex items-start gap-3">
                         <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center shrink-0">
                           <span className="text-muted-foreground text-sm font-medium">
-                            {(comment.author.nickname || comment.author.name).charAt(0)}
+                            {(comment.author.nickname || '?').charAt(0)}
                           </span>
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
                             <span className="font-medium text-sm">
-                              {comment.author.nickname || comment.author.name}
+                              {comment.author.nickname || '익명'}
                             </span>
                             <span className="text-xs text-muted-foreground">
                               {formatDate(comment.createdAt)}
@@ -547,13 +547,13 @@ export default function BoardPostPage() {
                                 <div key={reply.id} className="flex items-start gap-2">
                                   <div className="w-6 h-6 bg-muted/50 rounded-full flex items-center justify-center shrink-0">
                                     <span className="text-muted-foreground text-xs font-medium">
-                                      {(reply.author.nickname || reply.author.name).charAt(0)}
+                                      {(reply.author.nickname || '?').charAt(0)}
                                     </span>
                                   </div>
                                   <div className="flex-1">
                                     <div className="flex items-center gap-2 mb-1">
                                       <span className="font-medium text-xs">
-                                        {reply.author.nickname || reply.author.name}
+                                        {reply.author.nickname || '익명'}
                                       </span>
                                       <span className="text-xs text-muted-foreground">
                                         {formatDate(reply.createdAt)}

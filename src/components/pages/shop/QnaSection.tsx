@@ -25,7 +25,7 @@ export interface Qna {
   canView: boolean
   isOwner: boolean
   createdAt: string
-  user: { id: number; name: string }
+  user: { id: number; nickname: string }
 }
 
 export interface QnaSectionProps {
@@ -224,7 +224,7 @@ export default function QnaSection({
                         비밀글
                       </Badge>
                     )}
-                    <span className="font-medium text-sm">{qna.user.name}</span>
+                    <span className="font-medium text-sm">{qna.user.nickname}</span>
                     <span className="text-sm text-muted-foreground">
                       {new Date(qna.createdAt).toLocaleDateString('ko-KR')}
                     </span>

@@ -69,10 +69,10 @@ export async function createOrderStatusNotification(
   try {
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { email: true, name: true }
+      select: { email: true, nickname: true }
     })
     if (user?.email) {
-      sendOrderStatusEmail(user.email, user.name || '고객', orderNo, newStatus, trackingNumber)
+      sendOrderStatusEmail(user.email, user.nickname || '고객', orderNo, newStatus, trackingNumber)
     }
   } catch (error) {
     console.error('주문 상태 이메일 발송 에러:', error)

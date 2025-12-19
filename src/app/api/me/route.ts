@@ -42,7 +42,6 @@ export async function GET(request: NextRequest) {
           select: {
             id: true,
             email: true,
-            name: true,
             nickname: true,
             image: true,
             phone: true,
@@ -102,22 +101,11 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { name, nickname, phone, currentPassword, newPassword } = body
+    const { nickname, phone, currentPassword, newPassword } = body
 
     // 업데이트할 데이터
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updateData: any = {}
-
-    // 이름 업데이트
-    if (name !== undefined) {
-      if (name.trim().length < 2) {
-        return NextResponse.json(
-          { error: '이름은 2자 이상 입력해주세요.' },
-          { status: 400 }
-        )
-      }
-      updateData.name = name.trim()
-    }
 
     // 닉네임 업데이트
     if (nickname !== undefined) {
@@ -197,7 +185,6 @@ export async function PUT(request: NextRequest) {
       select: {
         id: true,
         email: true,
-        name: true,
         nickname: true,
         image: true,
         phone: true,

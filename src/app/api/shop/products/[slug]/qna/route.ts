@@ -34,7 +34,7 @@ export async function GET(
         },
         include: {
           user: {
-            select: { id: true, nickname: true, name: true }
+            select: { id: true, nickname: true }
           }
         },
         orderBy: { createdAt: 'desc' },
@@ -62,7 +62,7 @@ export async function GET(
         answer: canView ? qna.answer : (qna.answer ? '비밀 답변입니다.' : null),
         user: {
           ...qna.user,
-          name: maskName(qna.user.nickname || qna.user.name || '익명')
+          nickname: maskName(qna.user.nickname || '익명')
         },
         canView,
         isOwner
@@ -123,7 +123,7 @@ export async function POST(
       },
       include: {
         user: {
-          select: { id: true, nickname: true, name: true }
+          select: { id: true, nickname: true }
         }
       }
     })
@@ -134,7 +134,7 @@ export async function POST(
         ...qna,
         user: {
           ...qna.user,
-          name: maskName(qna.user.nickname || qna.user.name || '익명')
+          nickname: maskName(qna.user.nickname || '익명')
         },
         canView: true,
         isOwner: true
@@ -207,7 +207,7 @@ export async function PUT(
       },
       include: {
         user: {
-          select: { id: true, nickname: true, name: true }
+          select: { id: true, nickname: true }
         }
       }
     })
@@ -218,7 +218,7 @@ export async function PUT(
         ...updatedQna,
         user: {
           ...updatedQna.user,
-          name: maskName(updatedQna.user.nickname || updatedQna.user.name || '익명')
+          nickname: maskName(updatedQna.user.nickname || '익명')
         },
         canView: true,
         isOwner: true

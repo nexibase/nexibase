@@ -36,7 +36,7 @@ export async function GET(
         },
         include: {
           user: {
-            select: { id: true, nickname: true, name: true, image: true }
+            select: { id: true, nickname: true, image: true }
           }
         },
         orderBy: { createdAt: 'desc' },
@@ -68,7 +68,7 @@ export async function GET(
         ...review,
         user: {
           ...review.user,
-          name: maskName(review.user.nickname || review.user.name || '익명')
+          nickname: maskName(review.user.nickname || '익명')
         },
         isOwner: currentUserId !== null && currentUserId === review.userId
       })),
@@ -159,7 +159,7 @@ export async function POST(
       },
       include: {
         user: {
-          select: { id: true, nickname: true, name: true, image: true }
+          select: { id: true, nickname: true, image: true }
         }
       }
     })
@@ -170,7 +170,7 @@ export async function POST(
         ...review,
         user: {
           ...review.user,
-          name: maskName(review.user.nickname || review.user.name || '익명')
+          nickname: maskName(review.user.nickname || '익명')
         }
       }
     })
@@ -214,7 +214,7 @@ export async function PUT(
       where: { id: reviewId },
       include: {
         user: {
-          select: { id: true, nickname: true, name: true, image: true }
+          select: { id: true, nickname: true, image: true }
         }
       }
     })
@@ -269,7 +269,7 @@ export async function PUT(
       },
       include: {
         user: {
-          select: { id: true, nickname: true, name: true, image: true }
+          select: { id: true, nickname: true, image: true }
         }
       }
     })
@@ -280,7 +280,7 @@ export async function PUT(
         ...review,
         user: {
           ...review.user,
-          name: maskName(review.user.nickname || review.user.name || '익명')
+          nickname: maskName(review.user.nickname || '익명')
         }
       }
     })

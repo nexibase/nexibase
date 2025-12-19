@@ -82,7 +82,7 @@ interface Order {
   }[]
   user: {
     id: number
-    name: string
+    nickname: string
     email: string
     phone: string | null
   }
@@ -597,7 +597,7 @@ export default function AdminOrderDetailPage() {
                 <div className="flex">
                   <span className="w-24 text-muted-foreground">회원정보</span>
                   <span>
-                    {order.user.name} ({order.user.email})
+                    {order.user.nickname} ({order.user.email})
                   </span>
                 </div>
               </div>

@@ -115,7 +115,6 @@ export async function GET(
             select: {
               id: true,
               nickname: true,
-              name: true,
               image: true
             }
           }

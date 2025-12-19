@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
             select: { id: true, name: true, slug: true }
           },
           user: {
-            select: { id: true, name: true, nickname: true, email: true }
+            select: { id: true, nickname: true, email: true }
           }
         },
         orderBy: [
@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
         ...qna,
         user: {
           ...qna.user,
-          name: qna.user.nickname || qna.user.name || '익명'
+          nickname: qna.user.nickname || '익명'
         }
       })),
       pagination: {

@@ -274,7 +274,7 @@ export default function BoardListPage() {
                         )}
                       </div>
                       <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                        <span>{post.author.nickname || post.author.name}</span>
+                        <span>{post.author.nickname}</span>
                         <span>{formatDate(post.createdAt)}</span>
                         <span className="flex items-center gap-1">
                           <Eye className="h-3 w-3" />

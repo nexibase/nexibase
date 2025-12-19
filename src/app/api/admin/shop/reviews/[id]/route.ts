@@ -39,7 +39,7 @@ export async function PUT(
           select: { id: true, name: true, slug: true }
         },
         user: {
-          select: { id: true, name: true, nickname: true, email: true }
+          select: { id: true, nickname: true, email: true }
         }
       }
     })
@@ -51,7 +51,7 @@ export async function PUT(
         images: updated.images ? JSON.parse(updated.images) : [],
         user: {
           ...updated.user,
-          name: updated.user.nickname || updated.user.name || '익명'
+          nickname: updated.user.nickname || '익명'
         }
       }
     })

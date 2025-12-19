@@ -98,7 +98,7 @@ interface Review {
   reply: string | null
   repliedAt: string | null
   createdAt: string
-  user: { id: number; name: string; image: string | null }
+  user: { id: number; nickname: string; image: string | null }
   isOwner: boolean
 }
 
@@ -111,7 +111,7 @@ interface Qna {
   canView: boolean
   isOwner: boolean
   createdAt: string
-  user: { id: number; name: string }
+  user: { id: number; nickname: string }
 }
 
 interface ReviewableOrder {

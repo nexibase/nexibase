@@ -137,7 +137,7 @@ export async function GET(
       where: isId ? { id: parseInt(id) } : { orderNo: id },
       include: {
         user: {
-          select: { id: true, name: true, email: true, phone: true }
+          select: { id: true, nickname: true, email: true, phone: true }
         },
         items: {
           include: {

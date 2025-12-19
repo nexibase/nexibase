@@ -13,8 +13,7 @@ import { useRouter, usePathname } from "next/navigation"
 interface UserInfo {
   id: string
   email: string
-  name: string | null
-  nickname: string | null
+  nickname: string
   image: string | null
   role: string
 }
@@ -425,11 +424,11 @@ export default function Header() {
                           <Avatar className="h-8 w-8">
                             <AvatarImage src={user.image || undefined} />
                             <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
-                              {(user.nickname || user.name || user.email || '?')[0]?.toUpperCase()}
+                              {(user.nickname || user.email || '?')[0]?.toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
                           <span className="text-sm font-medium max-w-[100px] truncate">
-                            {user.nickname || user.name || '사용자'}
+                            {user.nickname || '사용자'}
                           </span>
                           <Button variant="ghost" size="sm" onClick={handleLogout} className="text-muted-foreground">
                             <LogOut className="h-4 w-4" />
@@ -459,7 +458,7 @@ export default function Header() {
                         <Avatar className="h-8 w-8">
                           <AvatarImage src={user.image || undefined} />
                           <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
-                            {(user.nickname || user.name || user.email || '?')[0]?.toUpperCase()}
+                            {(user.nickname || user.email || '?')[0]?.toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                       </Link>
@@ -630,11 +629,11 @@ export default function Header() {
                     <Avatar className="h-10 w-10">
                       <AvatarImage src={user.image || undefined} />
                       <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
-                        {(user.nickname || user.name || user.email || '?')[0]?.toUpperCase()}
+                        {(user.nickname || user.email || '?')[0]?.toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{user.nickname || user.name || '사용자'}</p>
+                      <p className="text-sm font-medium truncate">{user.nickname || '사용자'}</p>
                       <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                     </div>
                   </div>

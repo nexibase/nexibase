@@ -270,7 +270,7 @@ async function searchPostsLike(
         commentCount: true,
         createdAt: true,
         author: {
-          select: { id: true, nickname: true, name: true }
+          select: { id: true, nickname: true }
         },
         board: {
           select: { id: true, slug: true, name: true }

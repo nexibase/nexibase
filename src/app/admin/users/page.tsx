@@ -117,7 +117,6 @@ function UserModal({
 }) {
   const [formData, setFormData] = useState({
     email: '',
-    name: '',
     nickname: '',
     phone: '',
     password: '',
@@ -131,7 +130,6 @@ function UserModal({
     if (user) {
       setFormData({
         email: user.email || '',
-        name: user.name || '',
         nickname: user.nickname || '',
         phone: user.phone || '',
         password: '',
@@ -142,7 +140,6 @@ function UserModal({
     } else {
       setFormData({
         email: '',
-        name: '',
         nickname: '',
         phone: '',
         password: '',
@@ -205,27 +202,17 @@ function UserModal({
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">이름</Label>
-                  <Input
-                    id="name"
-                    type="text"
-                    placeholder="홍길동"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="nickname">닉네임</Label>
-                  <Input
-                    id="nickname"
-                    type="text"
-                    placeholder="nickname"
-                    value={formData.nickname}
-                    onChange={(e) => setFormData({ ...formData, nickname: e.target.value })}
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="nickname">닉네임 *</Label>
+                <Input
+                  id="nickname"
+                  type="text"
+                  placeholder="닉네임"
+                  value={formData.nickname}
+                  onChange={(e) => setFormData({ ...formData, nickname: e.target.value })}
+                  required
+                />
+                <p className="text-xs text-muted-foreground">게시판, 리뷰 등에 표시되는 이름입니다.</p>
               </div>
 
               <div className="space-y-2">
@@ -690,12 +677,12 @@ export default function UsersPage() {
                               <Avatar className="h-10 w-10">
                                 <AvatarImage src={user.image || undefined} />
                                 <AvatarFallback className="bg-primary/10 text-primary font-medium">
-                                  {(user.name || user.email)[0].toUpperCase()}
+                                  {(user.nickname || user.email)[0].toUpperCase()}
                                 </AvatarFallback>
                               </Avatar>
                               <div className="flex flex-col">
                                 <span className="font-medium">
-                                  {user.name || user.nickname || '-'}
+                                  {user.nickname || '-'}
                                 </span>
                                 <span className="text-sm text-muted-foreground">
                                   {user.email}
