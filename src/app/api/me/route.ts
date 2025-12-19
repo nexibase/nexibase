@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
-import { cookies } from 'next/headers'
 
 // 세션에서 사용자 조회 헬퍼
 async function getUserFromSession(request: NextRequest) {
@@ -299,14 +298,22 @@ export async function DELETE(request: NextRequest) {
       })
     })
 
-    // 쿠키 삭제
-    const cookieStore = await cookies()
-    cookieStore.delete('session-token')
-
-    return NextResponse.json({
+    // 응답 생성 및 쿠키 삭제
+    const response = NextResponse.json({
       success: true,
       message: '회원 탈퇴가 완료되었습니다.'
     })
+
+    // 세션 쿠키 삭제
+    response.cookies.set('session-token', '', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 0,
+      path: '/',
+    })
+
+    return response
 
   } catch (error) {
     console.error('회원 탈퇴 에러:', error)
