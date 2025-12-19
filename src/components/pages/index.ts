@@ -28,3 +28,6 @@ export { default as HomePage } from './HomePage'
 // Popular & Recent
 export { default as PopularPage } from './PopularPage'
 export { default as RecentPage } from './RecentPage'
+
+// Boards
+export { default as BoardsPage } from './BoardsPage'
