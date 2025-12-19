@@ -765,26 +765,15 @@ function UsersPageContent() {
                               <span className="text-xs text-muted-foreground">-</span>
                             ) : statusFilter === 'deleted' ? (
                               // 관리자 삭제: 정보가 보존되어 복원 가능
-                              <div className="flex justify-end gap-1">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 text-green-600 hover:text-green-700"
-                                  onClick={() => handleRestoreUser(user.id)}
-                                  title="복원"
-                                >
-                                  <RotateCcw className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 text-destructive hover:text-destructive"
-                                  onClick={() => handlePermanentDelete(user.id)}
-                                  title="영구 삭제"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-green-600 hover:text-green-700"
+                                onClick={() => handleRestoreUser(user.id)}
+                                title="복원"
+                              >
+                                <RotateCcw className="h-4 w-4" />
+                              </Button>
                             ) : (
                               <div className="flex justify-end gap-1">
                                 <Button
