@@ -183,6 +183,7 @@ function MyPageContent() {
   const [withdrawing, setWithdrawing] = useState(false)
   const [withdrawError, setWithdrawError] = useState('')
   const [isSocialAccount, setIsSocialAccount] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
 
   // 탭 변경 핸들러
   const setActiveTab = (tab: string) => {
@@ -214,6 +215,8 @@ function MyPageContent() {
         }))
         // 소셜 로그인 계정 여부 확인
         setIsSocialAccount(!data.hasPassword)
+        // 관리자 여부 확인
+        setIsAdmin(data.user.role === 'admin')
       }
     } catch (error) {
       console.error('프로필 조회 에러:', error)
@@ -822,25 +825,27 @@ function MyPageContent() {
                       </Button>
                     </div>
 
-                    {/* 회원탈퇴 */}
-                    <div className="space-y-4 pt-6 mt-6 border-t border-destructive/20">
-                      <div className="flex items-center gap-2 text-destructive">
-                        <AlertTriangle className="h-5 w-5" />
-                        <h3 className="font-medium text-sm">회원 탈퇴</h3>
+                    {/* 회원탈퇴 - 관리자는 탈퇴 불가 */}
+                    {!isAdmin && (
+                      <div className="space-y-4 pt-6 mt-6 border-t border-destructive/20">
+                        <div className="flex items-center gap-2 text-destructive">
+                          <AlertTriangle className="h-5 w-5" />
+                          <h3 className="font-medium text-sm">회원 탈퇴</h3>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          회원 탈퇴 시 작성한 게시글, 댓글, 리뷰 등은 삭제되지 않으며, 닉네임이 &quot;탈퇴회원&quot;으로 표시됩니다.
+                          주문 내역은 유지되나 개인정보는 즉시 삭제됩니다.
+                        </p>
+                        <Button
+                          variant="outline"
+                          className="text-destructive border-destructive/50 hover:bg-destructive hover:text-destructive-foreground"
+                          onClick={openWithdrawModal}
+                        >
+                          <UserX className="h-4 w-4 mr-2" />
+                          회원 탈퇴
+                        </Button>
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        회원 탈퇴 시 작성한 게시글, 댓글, 리뷰 등은 삭제되지 않으며, 닉네임이 &quot;탈퇴회원&quot;으로 표시됩니다.
-                        주문 내역은 유지되나 개인정보는 즉시 삭제됩니다.
-                      </p>
-                      <Button
-                        variant="outline"
-                        className="text-destructive border-destructive/50 hover:bg-destructive hover:text-destructive-foreground"
-                        onClick={openWithdrawModal}
-                      >
-                        <UserX className="h-4 w-4 mr-2" />
-                        회원 탈퇴
-                      </Button>
-                    </div>
+                    )}
                   </CardContent>
                 </Card>
               )}
