@@ -25,6 +25,7 @@ import {
   Star,
   Home,
   User,
+  TrendingUp,
 } from "lucide-react"
 
 interface SidebarProps {
@@ -76,6 +77,7 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
     { id: "shop-products", label: "상품관리", icon: Package, path: "/admin/shop/products" },
     { id: "shop-categories", label: "카테고리", icon: ShoppingBag, path: "/admin/shop/categories" },
     { id: "shop-orders", label: "주문관리", icon: ClipboardList, path: "/admin/shop/orders" },
+    { id: "shop-sales", label: "매출관리", icon: TrendingUp, path: "/admin/shop/sales" },
     { id: "shop-reviews", label: "리뷰관리", icon: Star, path: "/admin/shop/reviews" },
     { id: "shop-qna", label: "Q&A관리", icon: MessageSquare, path: "/admin/shop/qna" },
     { id: "shop-delivery", label: "배송비정책", icon: Truck, path: "/admin/shop/delivery" },
