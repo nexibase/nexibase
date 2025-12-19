@@ -420,7 +420,9 @@ export default function AdminSalesPage() {
                     {/* 일별 매출 */}
                     <Card>
                       <CardHeader>
-                        <CardTitle className="text-base">일별 매출 (최근 30일)</CardTitle>
+                        <CardTitle className="text-base">
+                          일별 매출 ({PERIOD_OPTIONS.find(p => p.value === period)?.label || '선택 기간'})
+                        </CardTitle>
                       </CardHeader>
                       <CardContent>
                         {summaryData.dailySales.length === 0 ? (

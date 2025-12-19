@@ -129,7 +129,7 @@ export async function GET(request: NextRequest) {
           },
           _sum: { refundAmount: true },
         }),
-        // 일별 매출 (최근 30일)
+        // 일별 매출 (선택 기간)
         prisma.$queryRaw<{ date: string; amount: number; count: number }[]>`
           SELECT
             DATE(paidAt) as date,
@@ -138,7 +138,8 @@ export async function GET(request: NextRequest) {
           FROM orders
           WHERE status IN ('delivered', 'confirmed')
             AND deletedAt IS NULL
-            AND paidAt >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+            AND paidAt >= ${dateFrom}
+            AND paidAt <= ${dateTo}
           GROUP BY DATE(paidAt)
           ORDER BY date DESC
         `,
