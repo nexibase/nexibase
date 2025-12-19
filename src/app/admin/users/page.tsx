@@ -495,6 +495,27 @@ function UsersPageContent() {
     }
   }
 
+  const handlePermanentDelete = async (id: string) => {
+    if (!confirm('이 사용자를 영구 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.')) return
+
+    try {
+      const response = await fetch(`/api/admin/users/${id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ permanent: true })
+      })
+      const result = await response.json()
+
+      if (result.success) {
+        fetchUsers()
+      } else {
+        alert(result.message || '영구 삭제 실패')
+      }
+    } catch (error) {
+      console.error('사용자 영구 삭제 실패:', error)
+    }
+  }
+
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '-'
     const date = new Date(dateString)
@@ -739,16 +760,39 @@ function UsersPageContent() {
                             {statusFilter === 'withdrawn' || statusFilter === 'deleted' ? formatDate(user.deletedAt) : formatDate(user.lastLoginAt)}
                           </td>
                           <td className="p-4 align-middle text-right">
-                            {statusFilter === 'withdrawn' || statusFilter === 'deleted' ? (
+                            {statusFilter === 'withdrawn' ? (
+                              // 탈퇴 회원: 정보가 익명화되어 복원 불가, 영구 삭제만 가능
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 text-green-600 hover:text-green-700"
-                                onClick={() => handleRestoreUser(user.id)}
-                                title="복원"
+                                className="h-8 w-8 text-destructive hover:text-destructive"
+                                onClick={() => handlePermanentDelete(user.id)}
+                                title="영구 삭제"
                               >
-                                <RotateCcw className="h-4 w-4" />
+                                <Trash2 className="h-4 w-4" />
                               </Button>
+                            ) : statusFilter === 'deleted' ? (
+                              // 관리자 삭제: 정보가 보존되어 복원 가능
+                              <div className="flex justify-end gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-green-600 hover:text-green-700"
+                                  onClick={() => handleRestoreUser(user.id)}
+                                  title="복원"
+                                >
+                                  <RotateCcw className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-destructive hover:text-destructive"
+                                  onClick={() => handlePermanentDelete(user.id)}
+                                  title="영구 삭제"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
                             ) : (
                               <div className="flex justify-end gap-1">
                                 <Button

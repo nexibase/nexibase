@@ -161,7 +161,7 @@ export async function PUT(
   }
 }
 
-// 사용자 삭제 (소프트 삭제)
+// 사용자 삭제 (소프트 삭제 / 영구 삭제)
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -170,7 +170,52 @@ export async function DELETE(
     const { id } = await params
     const userId = parseInt(id)
 
-    // 삭제하려는 사용자 확인
+    // body가 있는지 확인 (영구 삭제 여부)
+    let permanent = false
+    try {
+      const body = await request.json()
+      permanent = body.permanent === true
+    } catch {
+      // body가 없으면 소프트 삭제
+    }
+
+    // 영구 삭제
+    if (permanent) {
+      const userToDelete = await prisma.user.findUnique({
+        where: { id: userId }
+      })
+
+      if (!userToDelete) {
+        return NextResponse.json(
+          { success: false, message: '사용자를 찾을 수 없습니다.' },
+          { status: 404 }
+        )
+      }
+
+      // 이미 삭제된 사용자만 영구 삭제 가능
+      if (!userToDelete.deletedAt) {
+        return NextResponse.json(
+          { success: false, message: '활성 사용자는 영구 삭제할 수 없습니다. 먼저 삭제 처리해주세요.' },
+          { status: 400 }
+        )
+      }
+
+      // 관련 데이터 삭제 후 사용자 삭제
+      await prisma.$transaction(async (tx) => {
+        // 세션 삭제
+        await tx.userSession.deleteMany({ where: { userId } })
+        // 소셜 계정 연결 삭제
+        await tx.account.deleteMany({ where: { userId } })
+        // 알림 삭제
+        await tx.notification.deleteMany({ where: { userId } })
+        // 사용자 영구 삭제
+        await tx.user.delete({ where: { id: userId } })
+      })
+
+      return NextResponse.json({ success: true, message: '사용자가 영구 삭제되었습니다.' })
+    }
+
+    // 소프트 삭제
     const userToDelete = await prisma.user.findUnique({
       where: { id: userId, deletedAt: null }
     })
