@@ -761,16 +761,8 @@ function UsersPageContent() {
                           </td>
                           <td className="p-4 align-middle text-right">
                             {statusFilter === 'withdrawn' ? (
-                              // 탈퇴 회원: 정보가 익명화되어 복원 불가, 영구 삭제만 가능
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-destructive hover:text-destructive"
-                                onClick={() => handlePermanentDelete(user.id)}
-                                title="영구 삭제"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+                              // 탈퇴 회원: 정보가 익명화되어 있으므로 액션 없음
+                              <span className="text-xs text-muted-foreground">-</span>
                             ) : statusFilter === 'deleted' ? (
                               // 관리자 삭제: 정보가 보존되어 복원 가능
                               <div className="flex justify-end gap-1">
