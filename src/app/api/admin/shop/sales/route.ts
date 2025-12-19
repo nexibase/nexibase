@@ -44,6 +44,13 @@ export async function GET(request: NextRequest) {
         dateTo = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysToLastSunday, 23, 59, 59, 999)
         dateFrom = new Date(dateTo.getFullYear(), dateTo.getMonth(), dateTo.getDate() - 6, 0, 0, 0, 0)
         break
+      case 'this_week':
+        // 이번 주 (이번주 월요일 ~ 오늘)
+        const todayDayOfWeek = now.getDay() // 0=일, 1=월, ...
+        const daysFromMonday = todayDayOfWeek === 0 ? 6 : todayDayOfWeek - 1
+        dateFrom = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysFromMonday, 0, 0, 0, 0)
+        // dateTo는 기본값(오늘 23:59:59) 사용
+        break
       case 'month':
         dateFrom = new Date(now.getFullYear(), now.getMonth(), 1)
         break
