@@ -62,3 +62,6 @@ next-env.d.ts
 # Claude Code 관련 파일
 .claude/
 CLAUDE.md
+
+# 이니시스 샘플 코드 (참고용)
+/general_pc/
