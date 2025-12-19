@@ -119,8 +119,11 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
 
 const PERIOD_OPTIONS = [
   { value: 'today', label: '오늘' },
+  { value: 'yesterday', label: '어제' },
   { value: 'week', label: '최근 7일' },
+  { value: 'prev_week', label: '이전 주' },
   { value: 'month', label: '이번 달' },
+  { value: 'prev_month', label: '이전 달' },
   { value: 'year', label: '올해' },
   { value: 'custom', label: '직접 선택' },
 ]

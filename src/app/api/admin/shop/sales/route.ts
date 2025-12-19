@@ -28,13 +28,29 @@ export async function GET(request: NextRequest) {
       case 'today':
         dateFrom = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0)
         break
+      case 'yesterday':
+        dateFrom = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 0, 0, 0, 0)
+        dateTo = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 23, 59, 59, 999)
+        break
       case 'week':
         dateFrom = new Date(now)
         dateFrom.setDate(now.getDate() - 7)
         dateFrom.setHours(0, 0, 0, 0)
         break
+      case 'prev_week':
+        // 이전 주 (지난주 월요일 ~ 일요일)
+        const dayOfWeek = now.getDay() // 0=일, 1=월, ...
+        const daysToLastSunday = dayOfWeek === 0 ? 7 : dayOfWeek
+        dateTo = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysToLastSunday, 23, 59, 59, 999)
+        dateFrom = new Date(dateTo.getFullYear(), dateTo.getMonth(), dateTo.getDate() - 6, 0, 0, 0, 0)
+        break
       case 'month':
         dateFrom = new Date(now.getFullYear(), now.getMonth(), 1)
+        break
+      case 'prev_month':
+        // 이전 달 (전월 1일 ~ 말일)
+        dateFrom = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0, 0)
+        dateTo = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999) // 이번달 0일 = 전월 말일
         break
       case 'year':
         dateFrom = new Date(now.getFullYear(), 0, 1)
