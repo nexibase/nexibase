@@ -20,7 +20,6 @@ export const getSession = async () => {
             email: true,
             nickname: true,
             role: true,
-            phone: true,
           }
         }
       }

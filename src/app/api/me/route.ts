@@ -44,7 +44,6 @@ export async function GET(request: NextRequest) {
             email: true,
             nickname: true,
             image: true,
-            phone: true,
             role: true,
             status: true,
             lastLoginAt: true,
@@ -108,7 +107,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { nickname, phone, currentPassword, newPassword } = body
+    const { nickname, currentPassword, newPassword } = body
 
     // 업데이트할 데이터
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -143,11 +142,6 @@ export async function PUT(request: NextRequest) {
         )
       }
       updateData.nickname = nickname.trim()
-    }
-
-    // 전화번호 업데이트
-    if (phone !== undefined) {
-      updateData.phone = phone.trim() || null
     }
 
     // 비밀번호 변경
@@ -201,7 +195,6 @@ export async function PUT(request: NextRequest) {
         email: true,
         nickname: true,
         image: true,
-        phone: true,
         role: true,
         status: true,
         lastLoginAt: true,
@@ -290,7 +283,6 @@ export async function DELETE(request: NextRequest) {
           email: `**deleted_${user.id}**`,
           nickname: `**탈퇴회원_${user.id}**`,
           password: null,
-          phone: null,
           image: null,
           status: 'withdrawn',
           deletedAt: new Date()

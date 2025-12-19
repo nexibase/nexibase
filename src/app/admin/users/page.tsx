@@ -38,10 +38,8 @@ import {
 interface User {
   id: string
   email: string
-  name: string | null
   nickname: string | null
   image: string | null
-  phone: string | null
   role: string
   status: string
   emailVerified: string | null
@@ -79,32 +77,6 @@ function ProviderBadge({ provider }: { provider: string }) {
   )
 }
 
-// 전화번호 포맷팅 함수
-function formatPhoneNumber(value: string): string {
-  // 숫자만 추출
-  const numbers = value.replace(/\D/g, '')
-
-  // 1588, 1544 등 대표번호 (4자리-4자리)
-  if (/^(15|16|18)\d{2}/.test(numbers)) {
-    if (numbers.length <= 4) return numbers
-    return `${numbers.slice(0, 4)}-${numbers.slice(4, 8)}`
-  }
-
-  // 02 서울 지역번호 (02-XXX-XXXX 또는 02-XXXX-XXXX)
-  if (numbers.startsWith('02')) {
-    if (numbers.length <= 2) return numbers
-    if (numbers.length <= 5) return `${numbers.slice(0, 2)}-${numbers.slice(2)}`
-    if (numbers.length <= 9) return `${numbers.slice(0, 2)}-${numbers.slice(2, 5)}-${numbers.slice(5)}`
-    return `${numbers.slice(0, 2)}-${numbers.slice(2, 6)}-${numbers.slice(6, 10)}`
-  }
-
-  // 휴대폰 및 기타 지역번호 (XXX-XXX-XXXX 또는 XXX-XXXX-XXXX)
-  if (numbers.length <= 3) return numbers
-  if (numbers.length <= 6) return `${numbers.slice(0, 3)}-${numbers.slice(3)}`
-  if (numbers.length <= 10) return `${numbers.slice(0, 3)}-${numbers.slice(3, 6)}-${numbers.slice(6)}`
-  return `${numbers.slice(0, 3)}-${numbers.slice(3, 7)}-${numbers.slice(7, 11)}`
-}
-
 // 사용자 모달
 function UserModal({
   isOpen,
@@ -120,7 +92,6 @@ function UserModal({
   const [formData, setFormData] = useState({
     email: '',
     nickname: '',
-    phone: '',
     password: '',
     role: 'user',
     status: 'active',
@@ -133,7 +104,6 @@ function UserModal({
       setFormData({
         email: user.email || '',
         nickname: user.nickname || '',
-        phone: user.phone || '',
         password: '',
         role: user.role || 'user',
         status: user.status || 'active',
@@ -143,7 +113,6 @@ function UserModal({
       setFormData({
         email: '',
         nickname: '',
-        phone: '',
         password: '',
         role: 'user',
         status: 'active',
@@ -151,11 +120,6 @@ function UserModal({
       })
     }
   }, [user, isOpen])
-
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const formatted = formatPhoneNumber(e.target.value)
-    setFormData({ ...formData, phone: formatted })
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -215,20 +179,6 @@ function UserModal({
                   required
                 />
                 <p className="text-xs text-muted-foreground">게시판, 리뷰 등에 표시되는 이름입니다.</p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="phone">전화번호</Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="010-1234-5678"
-                  value={formData.phone}
-                  onChange={handlePhoneChange}
-                />
-                <p className="text-xs text-muted-foreground">
-                  휴대폰, 지역번호(02), 대표번호(1588) 모두 지원
-                </p>
               </div>
 
               <div className="space-y-2">

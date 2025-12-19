@@ -165,7 +165,6 @@ function MyPageContent() {
   const [profileSaving, setProfileSaving] = useState(false)
   const [profileForm, setProfileForm] = useState({
     nickname: '',
-    phone: '',
     email: '',
     currentPassword: '',
     newPassword: '',
@@ -210,7 +209,6 @@ function MyPageContent() {
         setProfileForm(prev => ({
           ...prev,
           nickname: data.user.nickname || '',
-          phone: data.user.phone || '',
           email: data.user.email || '',
         }))
         // 소셜 로그인 계정 여부 확인
@@ -249,7 +247,6 @@ function MyPageContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           nickname: profileForm.nickname,
-          phone: profileForm.phone,
           ...(profileForm.newPassword && {
             currentPassword: profileForm.currentPassword,
             newPassword: profileForm.newPassword,
@@ -767,15 +764,6 @@ function MyPageContent() {
                             placeholder="닉네임을 입력하세요"
                           />
                           <p className="text-xs text-muted-foreground mt-1">게시판, 리뷰 등에 표시되는 이름입니다.</p>
-                        </div>
-                        <div>
-                          <Label htmlFor="phone">연락처</Label>
-                          <Input
-                            id="phone"
-                            value={profileForm.phone}
-                            onChange={(e) => setProfileForm(prev => ({ ...prev, phone: formatPhoneNumber(e.target.value) }))}
-                            placeholder="010-0000-0000"
-                          />
                         </div>
                       </div>
                     </div>

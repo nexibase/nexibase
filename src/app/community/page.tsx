@@ -15,10 +15,8 @@ import { useRouter } from "next/navigation";
 interface UserInfo {
   id: string
   email: string
-  name: string | null
   nickname: string | null
   image: string | null
-  phone: string | null
   role: string
   status: string
   lastLoginAt: string | null

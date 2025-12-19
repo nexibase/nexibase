@@ -21,7 +21,6 @@ model User {
   nickname      String    @unique @db.VarChar(100)
   password      String?   @db.VarChar(255) // 소셜 로그인 사용자는 null
   image         String?   @db.VarChar(500) // 프로필 이미지 URL
-  phone         String?   @db.VarChar(20)
   role          String    @default("user") @db.VarChar(20) // user, manager, admin
   status        String    @default("active") @db.VarChar(20) // active, inactive, banned
   emailVerified DateTime?
