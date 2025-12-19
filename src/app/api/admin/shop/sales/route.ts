@@ -48,9 +48,14 @@ export async function GET(request: NextRequest) {
         dateFrom = new Date(now.getFullYear(), now.getMonth(), 1)
         break
       case 'prev_month':
-        // 이전 달 (전월 1일 ~ 말일)
+        // 지난 달 (전월 1일 ~ 말일)
         dateFrom = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0, 0)
         dateTo = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999) // 이번달 0일 = 전월 말일
+        break
+      case 'prev_prev_month':
+        // 지지난 달 (전전월 1일 ~ 말일)
+        dateFrom = new Date(now.getFullYear(), now.getMonth() - 2, 1, 0, 0, 0, 0)
+        dateTo = new Date(now.getFullYear(), now.getMonth() - 1, 0, 23, 59, 59, 999)
         break
       case 'current_quarter':
         // 이번 분기

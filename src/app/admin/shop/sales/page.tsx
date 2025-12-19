@@ -124,6 +124,7 @@ const PERIOD_OPTIONS = [
   { value: 'prev_week', label: '이전 주' },
   { value: 'month', label: '이번 달' },
   { value: 'prev_month', label: '지난 달' },
+  { value: 'prev_prev_month', label: '지지난 달' },
   { value: 'current_quarter', label: '이번 분기' },
   { value: 'prev_quarter', label: '지난 분기' },
   { value: 'q1', label: '1분기' },
