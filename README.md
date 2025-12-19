@@ -45,7 +45,7 @@
 
 | 영역 | 기술 |
 |------|------|
-| Frontend | Next.js 15, React 19, Tailwind CSS 4 |
+| Frontend | Next.js 16, React 19, Tailwind CSS 4 |
 | Backend | Next.js API Routes |
 | Database | MySQL + Prisma ORM |
 | Editor | Tiptap |
