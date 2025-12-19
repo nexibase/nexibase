@@ -23,7 +23,6 @@ export async function GET(request: NextRequest) {
     if (search) {
       where.OR = [
         { email: { contains: search } },
-        { name: { contains: search } },
         { nickname: { contains: search } },
       ]
     }
