@@ -261,8 +261,9 @@ export async function PUT(
       )
     }
 
-    // 본인 주문만 수정 가능
-    if (order.userId !== session.id) {
+    // 본인 주문만 수정 가능 (관리자 제외)
+    if (order.userId !== session.id && session.role !== 'admin') {
+      console.log('권한 에러: order.userId=', order.userId, 'session.id=', session.id, 'session.role=', session.role)
       return NextResponse.json(
         { error: '접근 권한이 없습니다.' },
         { status: 403 }

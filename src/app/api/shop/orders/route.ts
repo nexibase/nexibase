@@ -214,7 +214,12 @@ export async function POST(request: NextRequest) {
     })
 
     // 주문자에게 주문 완료 알림 발송 (비동기 - 응답 지연 방지)
-    createOrderCompletedNotification(session.id, order.orderNo, order.finalPrice)
+    const emailItems = orderItems.map(item => ({
+      name: item.productName + (item.optionText ? ` (${item.optionText})` : ''),
+      quantity: item.quantity,
+      price: item.subtotal
+    }))
+    createOrderCompletedNotification(session.id, order.orderNo, order.finalPrice, emailItems)
       .catch(err => console.error('주문자 알림 발송 실패:', err))
 
     // 관리자/부관리자에게 새 주문 알림 발송 (비동기 - 응답 지연 방지)

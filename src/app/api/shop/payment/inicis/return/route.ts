@@ -331,7 +331,12 @@ export async function POST(request: NextRequest) {
       await prisma.pendingOrder.delete({ where: { orderNo } })
 
       // 주문자에게 주문 완료 알림 발송 (비동기 - 응답 지연 방지)
-      createOrderCompletedNotification(pendingOrder.userId, orderNo, orderData.finalPrice)
+      const emailItems = orderData.items.map((item: { productName: string; optionText?: string; quantity: number; subtotal: number }) => ({
+        name: item.productName + (item.optionText ? ` (${item.optionText})` : ''),
+        quantity: item.quantity,
+        price: item.subtotal
+      }))
+      createOrderCompletedNotification(pendingOrder.userId, orderNo, orderData.finalPrice, emailItems)
         .catch(err => console.error('주문자 알림 발송 실패:', err))
 
       // 관리자/부관리자에게 새 주문 알림 발송 (비동기 - 응답 지연 방지)

@@ -953,21 +953,24 @@ export default function OrderPage() {
                       </div>
                     )}
 
-                    {/* 주문자 정보와 동일 체크박스 (저장된 주소가 없거나 새 배송지 입력 모드일 때) */}
-                    {(savedAddresses.length === 0 || !selectedAddressId) && (
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          id="sameAsOrderer"
-                          checked={sameAsOrderer}
-                          onChange={(e) => setSameAsOrderer(e.target.checked)}
-                          className="rounded"
-                        />
-                        <label htmlFor="sameAsOrderer" className="text-sm cursor-pointer">
-                          주문자 정보와 동일
-                        </label>
-                      </div>
-                    )}
+                    {/* 주문자 정보와 동일 체크박스 */}
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="sameAsOrderer"
+                        checked={sameAsOrderer}
+                        onChange={(e) => {
+                          setSameAsOrderer(e.target.checked)
+                          if (e.target.checked) {
+                            setSelectedAddressId(null) // 주문자 정보와 동일 선택 시 저장된 주소 선택 해제
+                          }
+                        }}
+                        className="rounded"
+                      />
+                      <label htmlFor="sameAsOrderer" className="text-sm cursor-pointer">
+                        주문자 정보와 동일
+                      </label>
+                    </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>

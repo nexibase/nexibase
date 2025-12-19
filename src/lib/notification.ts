@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma'
-import { sendOrderStatusEmail, sendNewOrderEmailToAdmin } from '@/lib/email'
+import { sendOrderStatusEmail, sendNewOrderEmailToAdmin, sendOrderCompletedEmail } from '@/lib/email'
 
 export type NotificationType = 'order_status' | 'review_reply' | 'qna_reply' | 'system'
 
@@ -88,13 +88,33 @@ export async function createOrderStatusNotification(
 }
 
 /**
- * 주문 완료 알림을 주문자에게 전송
+ * 주문 완료 알림을 주문자에게 전송 (+ 이메일 발송)
  */
 export async function createOrderCompletedNotification(
   userId: number,
   orderNo: string,
-  totalAmount: number
+  totalAmount: number,
+  items?: { name: string; quantity: number; price: number }[]
 ) {
+  // 이메일 발송 (비동기로 처리)
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true, nickname: true, name: true }
+    })
+    if (user?.email && items) {
+      sendOrderCompletedEmail(
+        user.email,
+        user.name || user.nickname || '고객',
+        orderNo,
+        totalAmount,
+        items
+      )
+    }
+  } catch (error) {
+    console.error('주문 완료 이메일 발송 에러:', error)
+  }
+
   return createNotification({
     userId,
     type: 'order_status',
