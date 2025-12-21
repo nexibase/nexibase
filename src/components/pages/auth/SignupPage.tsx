@@ -293,9 +293,9 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
-        <Card className="shadow-lg">
+        <Card className="shadow-lg border-border">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl font-bold text-center">회원가입</CardTitle>
             <CardDescription className="text-center">
@@ -311,11 +311,11 @@ export default function SignupPage() {
           <CardContent className="space-y-4">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <label htmlFor="email" className="text-sm font-medium text-gray-700">
+                <label htmlFor="email" className="text-sm font-medium text-foreground">
                   이메일
                 </label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="email"
                     type="email"
@@ -331,7 +331,7 @@ export default function SignupPage() {
                   />
                   {emailStatus.checking && (
                     <div className="absolute right-3 top-3">
-                      <div className="animate-spin h-4 w-4 border-2 border-gray-300 border-t-blue-600 rounded-full"></div>
+                      <div className="animate-spin h-4 w-4 border-2 border-muted border-t-primary rounded-full"></div>
                     </div>
                   )}
                 </div>
@@ -345,11 +345,11 @@ export default function SignupPage() {
               </div>
             
               <div className="space-y-2">
-                <label htmlFor="password" className="text-sm font-medium text-gray-700">
+                <label htmlFor="password" className="text-sm font-medium text-foreground">
                   비밀번호
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
@@ -363,7 +363,7 @@ export default function SignupPage() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 hover:text-gray-600"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground hover:text-foreground"
                     tabIndex={-1}
                   >
                     {showPassword ? <EyeOff /> : <Eye />}
@@ -372,11 +372,11 @@ export default function SignupPage() {
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="nickname" className="text-sm font-medium text-gray-700">
+                <label htmlFor="nickname" className="text-sm font-medium text-foreground">
                   닉네임
                 </label>
                 <div className="relative">
-                  <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="nickname"
                     type="text"
@@ -386,14 +386,14 @@ export default function SignupPage() {
                     className={`pl-10 ${
                       nicknameStatus.available === false ? 'border-red-500' :
                       nicknameStatus.available === true ? 'border-green-500' : ''
-                    } ${isFirstUser ? 'bg-gray-100' : ''}`}
+                    } ${isFirstUser ? 'bg-muted' : ''}`}
                     autoComplete="off"
                     required
                     readOnly={isFirstUser}
                   />
                   {nicknameStatus.checking && (
                     <div className="absolute right-3 top-3">
-                      <div className="animate-spin h-4 w-4 border-2 border-gray-300 border-t-blue-600 rounded-full"></div>
+                      <div className="animate-spin h-4 w-4 border-2 border-muted border-t-primary rounded-full"></div>
                     </div>
                   )}
                 </div>
@@ -416,11 +416,11 @@ export default function SignupPage() {
               
               {isLoading && (
                 <div className="text-center">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     회원가입 처리 중입니다. 메일 발송으로 인해 잠시 시간이 걸릴 수 있습니다.
                   </p>
                   <div className="mt-2">
-                    <div className="inline-block animate-spin h-4 w-4 border-2 border-gray-300 border-t-blue-600 rounded-full"></div>
+                    <div className="inline-block animate-spin h-4 w-4 border-2 border-muted border-t-primary rounded-full"></div>
                   </div>
                 </div>
               )}
@@ -429,9 +429,9 @@ export default function SignupPage() {
             <Separator />
 
             <div className="text-center">
-              <span className="text-sm text-gray-600">
+              <span className="text-sm text-muted-foreground">
                 이미 계정이 있으신가요?{" "}
-                <Link href="/login" className="text-blue-600 hover:underline font-medium">
+                <Link href="/login" className="text-primary hover:underline font-medium">
                   로그인
                 </Link>
               </span>
