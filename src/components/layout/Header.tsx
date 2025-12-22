@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { useTheme } from "next-themes"
+import { signOut } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -197,11 +198,10 @@ export default function Header() {
 
   const handleLogout = async () => {
     try {
-      const response = await fetch('/api/logout', { method: 'POST' })
-      if (response.ok) {
-        setUser(null)
-        router.push('/')
-      }
+      await signOut({ redirect: false })
+      setUser(null)
+      router.push('/')
+      router.refresh()
     } catch (error) {
       console.error('로그아웃 에러:', error)
     }

@@ -1,91 +1,63 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/app/api/auth/[...nextauth]/route'
+import { existsSync, unlinkSync } from 'fs'
+import path from 'path'
 
-// 세션에서 사용자 조회 헬퍼
-async function getUserFromSession(request: NextRequest) {
-  const sessionToken = request.cookies.get('session-token')?.value
-  if (!sessionToken) return null
-
-  const session = await prisma.userSession.findUnique({
-    where: { sessionToken },
-    include: { user: true }
-  })
-
-  if (!session || new Date() > session.expires) {
-    if (session) {
-      await prisma.userSession.delete({ where: { id: session.id } })
-    }
-    return null
+// NextAuth 세션에서 사용자 조회 헬퍼
+async function getUserFromSession() {
+  const nextAuthSession = await getServerSession(authOptions)
+  if (nextAuthSession?.user?.email) {
+    const user = await prisma.user.findUnique({
+      where: { email: nextAuthSession.user.email }
+    })
+    if (user) return user
   }
-
-  return session.user
+  return null
 }
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    // 쿠키에서 세션 토큰 가져오기
-    const sessionToken = request.cookies.get('session-token')?.value
+    const nextAuthSession = await getServerSession(authOptions)
 
-    if (!sessionToken) {
+    if (!nextAuthSession?.user?.email) {
       return NextResponse.json(
         { error: '로그인이 필요합니다.' },
         { status: 401 }
       )
     }
 
-    // 세션 조회 및 사용자 정보 가져오기
-    const session = await prisma.userSession.findUnique({
-      where: { sessionToken },
-      include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            nickname: true,
-            image: true,
-            name: true,
-            phone: true,
-            role: true,
-            status: true,
-            lastLoginAt: true,
-            createdAt: true
-          }
-        }
+    const user = await prisma.user.findUnique({
+      where: { email: nextAuthSession.user.email },
+      select: {
+        id: true,
+        email: true,
+        nickname: true,
+        image: true,
+        name: true,
+        phone: true,
+        role: true,
+        status: true,
+        lastLoginAt: true,
+        createdAt: true,
+        password: true,
+        provider: true,
       }
     })
 
-    // 세션이 없거나 만료됨
-    if (!session) {
+    if (!user) {
       return NextResponse.json(
-        { error: '세션이 유효하지 않습니다.' },
-        { status: 401 }
+        { error: '사용자를 찾을 수 없습니다.' },
+        { status: 404 }
       )
     }
 
-    // 세션 만료 확인
-    if (new Date() > session.expires) {
-      // 만료된 세션 삭제
-      await prisma.userSession.delete({
-        where: { id: session.id }
-      })
-
-      return NextResponse.json(
-        { error: '세션이 만료되었습니다. 다시 로그인해주세요.' },
-        { status: 401 }
-      )
-    }
-
-    // 사용자 정보 반환 (비밀번호 유무도 함께)
-    // 비밀번호 필드를 별도로 조회
-    const userWithPassword = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { password: true }
-    })
-
+    const { password, ...userWithoutPassword } = user
     return NextResponse.json({
-      user: session.user,
-      hasPassword: !!userWithPassword?.password
+      user: userWithoutPassword,
+      hasPassword: !!password
     })
 
   } catch (error) {
@@ -100,7 +72,7 @@ export async function GET(request: NextRequest) {
 // 프로필 수정
 export async function PUT(request: NextRequest) {
   try {
-    const user = await getUserFromSession(request)
+    const user = await getUserFromSession()
     if (!user) {
       return NextResponse.json(
         { error: '로그인이 필요합니다.' },
@@ -233,7 +205,7 @@ export async function PUT(request: NextRequest) {
 // 회원 탈퇴
 export async function DELETE(request: NextRequest) {
   try {
-    const user = await getUserFromSession(request)
+    const user = await getUserFromSession()
     if (!user) {
       return NextResponse.json(
         { error: '로그인이 필요합니다.' },
@@ -278,19 +250,27 @@ export async function DELETE(request: NextRequest) {
       }
     }
 
+    // 프로필 이미지 파일 삭제 (로컬 파일인 경우)
+    if (user.image && user.image.startsWith('/uploads/profiles/')) {
+      const imagePath = path.join(process.cwd(), 'public', user.image)
+      try {
+        if (existsSync(imagePath)) {
+          unlinkSync(imagePath)
+          console.log(`프로필 이미지 삭제: ${user.image}`)
+        }
+      } catch (e) {
+        console.error('프로필 이미지 삭제 에러:', e)
+      }
+    }
+
     // 트랜잭션으로 처리
     await prisma.$transaction(async (tx) => {
-      // 1. 모든 세션 삭제
-      await tx.userSession.deleteMany({
-        where: { userId: user.id }
-      })
-
-      // 2. 연결된 소셜 계정 삭제
+      // 1. 연결된 소셜 계정 삭제
       await tx.account.deleteMany({
         where: { userId: user.id }
       })
 
-      // 3. 사용자 정보 익명화 + 소프트 삭제
+      // 2. 사용자 정보 익명화 + 소프트 삭제
       await tx.user.update({
         where: { id: user.id },
         data: {
@@ -304,22 +284,10 @@ export async function DELETE(request: NextRequest) {
       })
     })
 
-    // 응답 생성 및 쿠키 삭제
-    const response = NextResponse.json({
+    return NextResponse.json({
       success: true,
       message: '회원 탈퇴가 완료되었습니다.'
     })
-
-    // 세션 쿠키 삭제
-    response.cookies.set('session-token', '', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 0,
-      path: '/',
-    })
-
-    return response
 
   } catch (error) {
     console.error('회원 탈퇴 에러:', error)

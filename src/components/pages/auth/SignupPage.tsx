@@ -26,12 +26,6 @@ const NaverIcon = () => (
   </svg>
 );
 
-const KakaoIcon = () => (
-  <svg className="w-5 h-5" viewBox="0 0 24 24">
-    <path fill="#000000" d="M12 3c5.799 0 10.5 3.664 10.5 8.185 0 4.52-4.701 8.184-10.5 8.184a13.5 13.5 0 0 1-1.727-.11l-4.408 2.883c-.501.265-.678.236-.472-.413l.892-3.678c-2.88-1.46-4.785-3.99-4.785-6.866C1.5 6.665 6.201 3 12 3z"/>
-  </svg>
-);
-
 export default function SignupPage() {
   // Theme: default/SignupPage
   const [email, setEmail] = useState("");
@@ -474,7 +468,7 @@ export default function SignupPage() {
             </div>
 
             {/* 소셜 로그인 버튼 */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               <Button
                 type="button"
                 variant="outline"
@@ -485,7 +479,10 @@ export default function SignupPage() {
                 {socialLoading === "google" ? (
                   <div className="animate-spin h-5 w-5 border-2 border-muted border-t-primary rounded-full" />
                 ) : (
-                  <GoogleIcon />
+                  <>
+                    <GoogleIcon />
+                    <span className="ml-2">Google</span>
+                  </>
                 )}
               </Button>
               <Button
@@ -498,20 +495,10 @@ export default function SignupPage() {
                 {socialLoading === "naver" ? (
                   <div className="animate-spin h-5 w-5 border-2 border-muted border-t-primary rounded-full" />
                 ) : (
-                  <NaverIcon />
-                )}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => handleSocialLogin("kakao")}
-                disabled={socialLoading !== null}
-                className="w-full bg-[#FEE500] hover:bg-[#FDD835] border-[#FEE500]"
-              >
-                {socialLoading === "kakao" ? (
-                  <div className="animate-spin h-5 w-5 border-2 border-muted border-t-primary rounded-full" />
-                ) : (
-                  <KakaoIcon />
+                  <>
+                    <NaverIcon />
+                    <span className="ml-2">Naver</span>
+                  </>
                 )}
               </Button>
             </div>

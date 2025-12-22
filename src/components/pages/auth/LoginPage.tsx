@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +9,13 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
+
+// PasswordCredential 타입 선언
+declare global {
+  interface Window {
+    PasswordCredential?: new (data: { id: string; password: string }) => Credential;
+  }
+}
 
 // 소셜 로그인 아이콘 컴포넌트
 const GoogleIcon = () => (
@@ -26,53 +33,64 @@ const NaverIcon = () => (
   </svg>
 );
 
-const KakaoIcon = () => (
-  <svg className="w-5 h-5" viewBox="0 0 24 24">
-    <path fill="#000000" d="M12 3c5.799 0 10.5 3.664 10.5 8.185 0 4.52-4.701 8.184-10.5 8.184a13.5 13.5 0 0 1-1.727-.11l-4.408 2.883c-.501.265-.678.236-.472-.413l.892-3.678c-2.88-1.46-4.785-3.99-4.785-6.866C1.5 6.665 6.201 3 12 3z"/>
-  </svg>
-);
-
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [socialLoading, setSocialLoading] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // URL 에러 파라미터 처리
+  useEffect(() => {
+    const error = searchParams.get("error");
+    if (error === "WithdrawnAccount") {
+      setErrorMessage("탈퇴한 계정입니다. 동일한 소셜 계정으로는 재가입이 불가능합니다.");
+    } else if (error === "AccessDenied") {
+      setErrorMessage("로그인이 거부되었습니다.");
+    } else if (error) {
+      setErrorMessage("로그인 중 오류가 발생했습니다.");
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setErrorMessage(null);
 
     try {
-      const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
       });
 
-      const data = await response.json();
+      if (result?.ok) {
+        // 브라우저 비밀번호 관리자에 자격 증명 저장 요청
+        if (window.PasswordCredential && navigator.credentials) {
+          try {
+            const cred = new window.PasswordCredential({
+              id: email,
+              password: password,
+            });
+            await navigator.credentials.store(cred);
+          } catch {
+            // 자격 증명 저장 실패해도 로그인은 계속 진행
+          }
+        }
 
-      if (response.ok) {
         // 로그인 성공
-        console.log('로그인 성공:', data);
         router.push("/");
         router.refresh();
       } else {
         // 로그인 실패
-        console.error('로그인 실패:', data.error);
-
-        if (data.requireEmailVerification) {
-          alert('이메일 인증이 필요합니다. 이메일을 확인해주세요.');
-        } else {
-          alert(data.error || '로그인에 실패했습니다.');
-        }
+        setErrorMessage(result?.error || '로그인에 실패했습니다.');
       }
     } catch (error) {
       console.error("로그인 에러:", error);
-      alert('네트워크 오류가 발생했습니다.');
+      setErrorMessage('네트워크 오류가 발생했습니다.');
     } finally {
       setIsLoading(false);
     }
@@ -101,6 +119,11 @@ export default function LoginPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {errorMessage && (
+              <div className="p-3 rounded-md bg-destructive/10 text-destructive text-sm">
+                {errorMessage}
+              </div>
+            )}
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <label htmlFor="email" className="text-sm font-medium text-foreground">
@@ -110,13 +133,14 @@ export default function LoginPage() {
                   <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="email"
+                    name="email"
                     type="email"
                     placeholder="이메일을 입력하세요"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="pl-10"
                     required
-                    autoComplete="off"
+                    autoComplete="username email"
                   />
                 </div>
               </div>
@@ -129,13 +153,14 @@ export default function LoginPage() {
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="password"
+                    name="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="비밀번호를 입력하세요"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="pl-10 pr-10"
                     required
-                    autoComplete="off"
+                    autoComplete="current-password"
                   />
                   <button
                     type="button"
@@ -174,7 +199,7 @@ export default function LoginPage() {
             </div>
 
             {/* 소셜 로그인 버튼 */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               <Button
                 type="button"
                 variant="outline"
@@ -185,7 +210,10 @@ export default function LoginPage() {
                 {socialLoading === "google" ? (
                   <div className="animate-spin h-5 w-5 border-2 border-muted border-t-primary rounded-full" />
                 ) : (
-                  <GoogleIcon />
+                  <>
+                    <GoogleIcon />
+                    <span className="ml-2">Google</span>
+                  </>
                 )}
               </Button>
               <Button
@@ -196,22 +224,12 @@ export default function LoginPage() {
                 className="w-full"
               >
                 {socialLoading === "naver" ? (
-                  <div className="animate-spin h-5 h-5 border-2 border-muted border-t-primary rounded-full" />
-                ) : (
-                  <NaverIcon />
-                )}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => handleSocialLogin("kakao")}
-                disabled={socialLoading !== null}
-                className="w-full bg-[#FEE500] hover:bg-[#FDD835] border-[#FEE500]"
-              >
-                {socialLoading === "kakao" ? (
                   <div className="animate-spin h-5 w-5 border-2 border-muted border-t-primary rounded-full" />
                 ) : (
-                  <KakaoIcon />
+                  <>
+                    <NaverIcon />
+                    <span className="ml-2">Naver</span>
+                  </>
                 )}
               </Button>
             </div>

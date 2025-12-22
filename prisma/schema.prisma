@@ -21,7 +21,6 @@ model User {
   nickname      String    @unique @db.VarChar(100)
   password      String?   @db.VarChar(255) // 소셜 로그인 사용자는 null
   image         String?   @db.VarChar(500) // 프로필 이미지 URL
-  profileImage  String?   @db.VarChar(500) // 프로필 이미지 URL (소셜 로그인용)
   name          String?   @db.VarChar(50)  // 실명 (주문자명)
   phone         String?   @db.VarChar(20)  // 연락처 (주문자 연락처)
   role          String    @default("user") @db.VarChar(20) // user, manager, admin

@@ -1,38 +1,58 @@
 import crypto from 'crypto';
-import { cookies } from 'next/headers';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { prisma } from '@/lib/prisma';
 
 /**
- * 세션에서 현재 로그인한 사용자 정보 가져오기
+ * NextAuth 세션에서 현재 로그인한 사용자 정보 가져오기
  */
 export const getSession = async () => {
   try {
-    const cookieStore = await cookies();
-    const sessionToken = cookieStore.get('session-token')?.value;
-    if (!sessionToken) return null;
-
-    const session = await prisma.userSession.findUnique({
-      where: { sessionToken },
-      include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            nickname: true,
-            role: true,
-          }
+    const nextAuthSession = await getServerSession(authOptions);
+    if (nextAuthSession?.user?.email) {
+      const user = await prisma.user.findUnique({
+        where: { email: nextAuthSession.user.email },
+        select: {
+          id: true,
+          email: true,
+          nickname: true,
+          role: true,
         }
-      }
-    });
-
-    if (!session || new Date() > session.expires) {
-      return null;
+      });
+      if (user) return user;
     }
-
-    return session.user;
+    return null;
   } catch {
     return null;
   }
+};
+
+/**
+ * NextAuth 세션에서 사용자 정보 가져오기 (API 라우트용)
+ */
+export const getAuthUser = async () => {
+  try {
+    const nextAuthSession = await getServerSession(authOptions);
+    if (nextAuthSession?.user?.email) {
+      const user = await prisma.user.findUnique({
+        where: { email: nextAuthSession.user.email }
+      });
+      if (user) return user;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * 관리자 권한 확인
+ */
+export const getAdminUser = async () => {
+  const user = await getAuthUser();
+  if (!user) return null;
+  if (user.role !== 'admin' && user.role !== 'manager') return null;
+  return user;
 };
 
 /**

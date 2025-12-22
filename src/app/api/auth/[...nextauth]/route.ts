@@ -1,7 +1,6 @@
 import NextAuth, { NextAuthOptions } from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
 import NaverProvider from "next-auth/providers/naver"
-import KakaoProvider from "next-auth/providers/kakao"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
@@ -38,7 +37,7 @@ export const authOptions: NextAuthOptions = {
           id: String(user.id),
           email: user.email,
           name: user.nickname,
-          image: user.profileImage,
+          image: user.image,
         }
       }
     }),
@@ -54,16 +53,10 @@ export const authOptions: NextAuthOptions = {
       clientId: process.env.NAVER_CLIENT_ID!,
       clientSecret: process.env.NAVER_CLIENT_SECRET!,
     }),
-
-    // Kakao 로그인
-    KakaoProvider({
-      clientId: process.env.KAKAO_CLIENT_ID!,
-      clientSecret: process.env.KAKAO_CLIENT_SECRET!,
-    }),
   ],
 
   callbacks: {
-    async signIn({ user, account, profile }) {
+    async signIn({ user, account }) {
       // 소셜 로그인인 경우
       if (account?.provider !== "credentials") {
         try {
@@ -74,19 +67,39 @@ export const authOptions: NextAuthOptions = {
             return false
           }
 
-          // 기존 사용자 확인
+          // 1. 먼저 providerAccountId로 탈퇴한 계정인지 확인
+          const withdrawnUser = await prisma.user.findFirst({
+            where: {
+              provider: account?.provider,
+              providerId: account?.providerAccountId,
+              status: 'withdrawn'
+            }
+          })
+
+          if (withdrawnUser) {
+            // 탈퇴한 계정으로 다시 로그인 시도
+            console.log("탈퇴한 계정으로 로그인 시도:", account?.providerAccountId)
+            return "/login?error=WithdrawnAccount"
+          }
+
+          // 2. 기존 사용자 확인 (이메일로)
           let existingUser = await prisma.user.findUnique({
             where: { email }
           })
 
           if (existingUser) {
+            // 기존 사용자가 탈퇴 상태인지 확인
+            if (existingUser.status === 'withdrawn') {
+              return "/login?error=WithdrawnAccount"
+            }
+
             // 기존 사용자가 있으면 소셜 연동 정보 업데이트
             await prisma.user.update({
               where: { email },
               data: {
                 provider: account?.provider,
                 providerId: account?.providerAccountId,
-                profileImage: user.image || existingUser.profileImage,
+                image: user.image || existingUser.image,
               }
             })
           } else {
@@ -107,7 +120,7 @@ export const authOptions: NextAuthOptions = {
                 nickname: finalNickname,
                 provider: account?.provider,
                 providerId: account?.providerAccountId,
-                profileImage: user.image,
+                image: user.image,
                 emailVerified: new Date(), // 소셜 로그인은 이메일 인증 완료로 처리
                 level: 1,
               }
