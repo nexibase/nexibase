@@ -21,6 +21,7 @@ model User {
   nickname      String    @unique @db.VarChar(100)
   password      String?   @db.VarChar(255) // 소셜 로그인 사용자는 null
   image         String?   @db.VarChar(500) // 프로필 이미지 URL
+  profileImage  String?   @db.VarChar(500) // 프로필 이미지 URL (소셜 로그인용)
   name          String?   @db.VarChar(50)  // 실명 (주문자명)
   phone         String?   @db.VarChar(20)  // 연락처 (주문자 연락처)
   role          String    @default("user") @db.VarChar(20) // user, manager, admin
@@ -28,6 +29,9 @@ model User {
   emailVerified DateTime?
   lastLoginAt   DateTime?
   lastLoginIp   String?   @db.VarChar(50)
+  level         Int       @default(1)                        // 회원 레벨
+  provider      String?   @db.VarChar(50)                    // 소셜 로그인 제공자 (google, naver, kakao)
+  providerId    String?   @db.VarChar(255)                   // 소셜 로그인 제공자 ID
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   deletedAt     DateTime?                                    // 소프트 삭제 (null이면 삭제되지 않음)
