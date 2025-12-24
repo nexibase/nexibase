@@ -42,7 +42,7 @@ interface Stats {
   commentCount: number
 }
 
-interface RecentPost {
+interface LatestPost {
   id: number
   title: string
   createdAt: string
@@ -67,7 +67,7 @@ export default function HomePage() {
   })
   const [boards, setBoards] = useState<Board[]>([])
   const [stats, setStats] = useState<Stats | null>(null)
-  const [recentPosts, setRecentPosts] = useState<RecentPost[]>([])
+  const [latestPosts, setLatestPosts] = useState<LatestPost[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
@@ -106,7 +106,7 @@ export default function HomePage() {
 
         if (postsRes.ok) {
           const postsData = await postsRes.json()
-          setRecentPosts(postsData.posts || [])
+          setLatestPosts(postsData.posts || [])
         }
       } catch (error) {
         console.error('데이터 조회 에러:', error)
@@ -241,9 +241,9 @@ export default function HomePage() {
                 </Link>
               </div>
               <CardContent className="p-0">
-                {recentPosts.length > 0 ? (
+                {latestPosts.length > 0 ? (
                   <div className="divide-y">
-                    {recentPosts.slice(0, 6).map((post) => (
+                    {latestPosts.slice(0, 6).map((post) => (
                       <Link
                         key={post.id}
                         href={`/boards/${post.board.slug}/${post.id}`}

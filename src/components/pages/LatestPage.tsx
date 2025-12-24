@@ -55,7 +55,7 @@ export default function LatestPage() {
           setPagination(data.pagination)
         }
       } catch (error) {
-        console.error('최근글 조회 에러:', error)
+        console.error('최신글 조회 에러:', error)
       } finally {
         setIsLoading(false)
       }
