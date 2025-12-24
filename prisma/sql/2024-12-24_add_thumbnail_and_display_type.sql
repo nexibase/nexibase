@@ -1,5 +1,8 @@
 -- 2024-12-24 마이그레이션
 -- 첨부파일, 썸네일 및 갤러리 표시 기능 추가
+--
+-- 실행 방법:
+-- mysql -u [사용자] -p [DB명] < prisma/sql/2024-12-24_add_thumbnail_and_display_type.sql
 
 -- =============================================
 -- 1. post_attachments 테이블 생성 (없는 경우)
@@ -23,15 +26,18 @@ CREATE TABLE IF NOT EXISTS `post_attachments` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =============================================
--- 2. 기존 post_attachments 테이블에 thumbnailPath 컬럼 추가 (있는 경우)
+-- 2. boards 테이블에 displayType 컬럼 추가
 -- =============================================
--- 테이블이 이미 존재하고 thumbnailPath 컬럼이 없으면 추가
--- 에러 무시하려면 아래 명령을 별도로 실행
--- ALTER TABLE `post_attachments` ADD COLUMN `thumbnailPath` VARCHAR(500) NULL AFTER `sortOrder`;
-
--- =============================================
--- 3. boards 테이블에 displayType 컬럼 추가
--- =============================================
--- displayType 컬럼이 없으면 추가 (list 또는 gallery)
-ALTER TABLE `boards`
-ADD COLUMN IF NOT EXISTS `displayType` VARCHAR(20) NOT NULL DEFAULT 'list' AFTER `sortOrder`;
+-- 이미 존재하면 에러가 나므로, 에러 무시하고 실행
+-- MySQL 8.0.19+에서는 아래처럼 실행 가능
+SET @sql = (
+  SELECT IF(
+    (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'boards' AND COLUMN_NAME = 'displayType') = 0,
+    'ALTER TABLE `boards` ADD COLUMN `displayType` VARCHAR(20) NOT NULL DEFAULT ''list'' AFTER `sortOrder`',
+    'SELECT 1'
+  )
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
