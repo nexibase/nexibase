@@ -610,12 +610,14 @@ export default function BoardsPage() {
               label="전체 게시판"
               value={stats.totalBoards}
               color="bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400"
+              href="/boards"
             />
             <StatCard
               icon={Check}
               label="활성 게시판"
               value={stats.activeBoards}
               color="bg-green-500/10 text-green-600 dark:bg-green-500/20 dark:text-green-400"
+              href="/boards"
             />
             <StatCard
               icon={FileText}
