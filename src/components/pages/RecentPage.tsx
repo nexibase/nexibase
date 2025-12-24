@@ -72,7 +72,7 @@ export default function RecentPage() {
     } else {
       params.delete('page')
     }
-    router.replace(`/recent${params.toString() ? `?${params}` : ''}`)
+    router.replace(`/latest${params.toString() ? `?${params}` : ''}`)
   }
 
   const formatTimeAgo = (dateString: string) => {

@@ -384,14 +384,15 @@ function BoardModal({
 }
 
 // 통계 카드
-function StatCard({ icon: Icon, label, value, color }: {
+function StatCard({ icon: Icon, label, value, color, href }: {
   icon: React.ElementType
   label: string
   value: number
   color: string
+  href?: string
 }) {
-  return (
-    <Card>
+  const content = (
+    <Card className={href ? "cursor-pointer hover:bg-muted/50 transition-colors" : ""}>
       <CardContent className="p-4">
         <div className="flex items-center space-x-3">
           <div className={`p-2 rounded-lg ${color}`}>
@@ -405,6 +406,11 @@ function StatCard({ icon: Icon, label, value, color }: {
       </CardContent>
     </Card>
   )
+
+  if (href) {
+    return <a href={href} target="_blank" rel="noopener noreferrer">{content}</a>
+  }
+  return content
 }
 
 export default function BoardsPage() {
@@ -616,6 +622,7 @@ export default function BoardsPage() {
               label="전체 게시글"
               value={stats.totalPosts}
               color="bg-purple-500/10 text-purple-600 dark:bg-purple-500/20 dark:text-purple-400"
+              href="/latest"
             />
           </div>
 
