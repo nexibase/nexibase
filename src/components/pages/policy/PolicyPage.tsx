@@ -150,7 +150,7 @@ export default function PolicyPage() {
                   {versions.map((v) => (
                     <Link
                       key={v.version}
-                      href={`/policy/${slug}?v=${v.version}`}
+                      href={`/policies/${slug}?v=${v.version}`}
                       className={`block p-2 rounded hover:bg-background transition-colors ${
                         v.version === policy.version ? 'bg-background ring-1 ring-primary' : ''
                       }`}

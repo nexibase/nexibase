@@ -22,6 +22,7 @@ import {
   ChevronRight,
   ExternalLink,
   Sparkles,
+  FileEdit,
 } from "lucide-react"
 
 interface Content {
@@ -338,7 +339,10 @@ export default function ContentsPage() {
         <main className="flex-1 lg:ml-0 p-6">
           {/* 헤더 */}
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-foreground">콘텐츠 관리</h1>
+            <h1 className="text-2xl font-bold flex items-center gap-2">
+              <FileEdit className="h-6 w-6" />
+              콘텐츠 관리
+            </h1>
             <p className="text-muted-foreground mt-1">회사소개, About 등 일반 콘텐츠를 관리합니다</p>
           </div>
 
@@ -444,7 +448,7 @@ export default function ContentsPage() {
                             </td>
                             <td className="p-3">
                               <a
-                                href={`/content/${content.slug}`}
+                                href={`/contents/${content.slug}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="inline-flex items-center gap-1 px-2 py-1 bg-muted hover:bg-primary/20 rounded text-sm transition-colors group"

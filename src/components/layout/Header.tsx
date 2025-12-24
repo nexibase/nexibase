@@ -221,7 +221,7 @@ export default function Header() {
   }
 
   // 현재 경로가 해당 게시판인지 확인
-  const isActiveBoard = (slug: string) => pathname?.startsWith(`/board/${slug}`)
+  const isActiveBoard = (slug: string) => pathname?.startsWith(`/boards/${slug}`)
 
   // 로그인 시 알림 개수 조회
   useEffect(() => {
@@ -531,7 +531,7 @@ export default function Header() {
             {boards.slice(0, 5).map((board) => (
               <Link
                 key={board.id}
-                href={`/board/${board.slug}`}
+                href={`/boards/${board.slug}`}
                 className={`px-4 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${
                   isActiveBoard(board.slug)
                     ? 'bg-primary text-primary-foreground'
@@ -560,7 +560,7 @@ export default function Header() {
                   {boards.slice(5).map((board) => (
                     <Link
                       key={board.id}
-                      href={`/board/${board.slug}`}
+                      href={`/boards/${board.slug}`}
                       className="block px-4 py-2 text-sm hover:bg-muted transition-colors"
                       onClick={() => setMoreMenuOpen(false)}
                     >
@@ -569,21 +569,21 @@ export default function Header() {
                   ))}
                   <div className="border-t my-1" />
                   <Link
-                    href="/content/about"
+                    href="/contents/about"
                     className="block px-4 py-2 text-sm hover:bg-muted transition-colors"
                     onClick={() => setMoreMenuOpen(false)}
                   >
                     회사소개
                   </Link>
                   <Link
-                    href="/content/faq"
+                    href="/contents/faq"
                     className="block px-4 py-2 text-sm hover:bg-muted transition-colors"
                     onClick={() => setMoreMenuOpen(false)}
                   >
                     자주 묻는 질문
                   </Link>
                   <Link
-                    href="/content/contact"
+                    href="/contents/contact"
                     className="block px-4 py-2 text-sm hover:bg-muted transition-colors"
                     onClick={() => setMoreMenuOpen(false)}
                   >
@@ -660,7 +660,7 @@ export default function Header() {
               {boards.map((board) => (
                 <Link
                   key={board.id}
-                  href={`/board/${board.slug}`}
+                  href={`/boards/${board.slug}`}
                   className={`block px-3 py-2 text-sm rounded-md ${
                     isActiveBoard(board.slug) ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
                   }`}
@@ -708,21 +708,21 @@ export default function Header() {
               <div className="border-t my-2" />
               <div className="px-3 py-1 text-xs font-semibold text-muted-foreground uppercase">정보</div>
               <Link
-                href="/content/about"
+                href="/contents/about"
                 className="block px-3 py-2 text-sm rounded-md hover:bg-muted"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 회사소개
               </Link>
               <Link
-                href="/content/faq"
+                href="/contents/faq"
                 className="block px-3 py-2 text-sm rounded-md hover:bg-muted"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 자주 묻는 질문
               </Link>
               <Link
-                href="/content/contact"
+                href="/contents/contact"
                 className="block px-3 py-2 text-sm rounded-md hover:bg-muted"
                 onClick={() => setMobileMenuOpen(false)}
               >

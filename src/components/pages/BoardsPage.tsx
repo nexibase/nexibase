@@ -62,7 +62,7 @@ export default function BoardsPage() {
           ) : boards.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {boards.map((board) => (
-                <Link key={board.id} href={`/board/${board.slug}`}>
+                <Link key={board.id} href={`/boards/${board.slug}`}>
                   <Card className="h-full hover:border-primary/50 hover:shadow-md transition-all duration-200 cursor-pointer group">
                     <CardContent className="p-5">
                       <div className="flex items-start justify-between gap-3">

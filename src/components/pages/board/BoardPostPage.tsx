@@ -209,7 +209,7 @@ export default function BoardPostPage() {
       })
 
       if (response.ok) {
-        router.push(`/board/${slug}`)
+        router.push(`/boards/${slug}`)
       } else {
         const data = await response.json()
         alert(data.error || '삭제에 실패했습니다.')
@@ -301,7 +301,7 @@ export default function BoardPostPage() {
           <Card className="w-full max-w-md">
             <CardContent className="p-6 text-center">
               <p className="text-muted-foreground mb-4">{error}</p>
-              <Button variant="outline" onClick={() => router.push(`/board/${slug}`)}>
+              <Button variant="outline" onClick={() => router.push(`/boards/${slug}`)}>
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 목록으로
               </Button>
@@ -327,7 +327,7 @@ export default function BoardPostPage() {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <Link
-              href={`/board/${slug}`}
+              href={`/boards/${slug}`}
               className="text-muted-foreground hover:text-foreground transition-colors"
             >
               <ArrowLeft className="h-5 w-5" />
@@ -339,7 +339,7 @@ export default function BoardPostPage() {
               variant="outline"
               size="sm"
               disabled={!nextPost}
-              onClick={() => nextPost && router.push(`/board/${slug}/${nextPost.id}`)}
+              onClick={() => nextPost && router.push(`/boards/${slug}/${nextPost.id}`)}
               title={nextPost ? nextPost.title : '이전 글이 없습니다'}
             >
               <ChevronLeft className="h-4 w-4 mr-1" />
@@ -349,13 +349,13 @@ export default function BoardPostPage() {
               variant="outline"
               size="sm"
               disabled={!prevPost}
-              onClick={() => prevPost && router.push(`/board/${slug}/${prevPost.id}`)}
+              onClick={() => prevPost && router.push(`/boards/${slug}/${prevPost.id}`)}
               title={prevPost ? prevPost.title : '다음 글이 없습니다'}
             >
               다음글
               <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
-            <Link href={`/board/${slug}`}>
+            <Link href={`/boards/${slug}`}>
               <Button variant="outline" size="sm">
                 <List className="h-4 w-4 mr-1" />
                 목록
@@ -478,7 +478,7 @@ export default function BoardPostPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => router.push(`/board/${slug}/${postId}/edit`)}
+                  onClick={() => router.push(`/boards/${slug}/${postId}/edit`)}
                 >
                   <Pencil className="h-4 w-4 mr-1" />
                   수정

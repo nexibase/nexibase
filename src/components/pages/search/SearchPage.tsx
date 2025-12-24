@@ -402,7 +402,7 @@ function SearchContent() {
                       </div>
                       <CardContent className="p-0 divide-y">
                         {data.results.posts.items.slice(0, 5).map((post) => (
-                          <Link key={post.id} href={`/board/${post.board.slug}/${post.id}`} className="block px-4 py-3 hover:bg-muted/50 transition-colors">
+                          <Link key={post.id} href={`/boards/${post.board.slug}/${post.id}`} className="block px-4 py-3 hover:bg-muted/50 transition-colors">
                             <div className="flex items-center gap-2 mb-1">
                               <Badge variant="outline" className="text-xs shrink-0">{post.board.name}</Badge>
                               <h3 className="font-medium truncate text-sm" dangerouslySetInnerHTML={{ __html: highlightText(post.title, data.query) }} />
@@ -436,7 +436,7 @@ function SearchContent() {
                       </div>
                       <CardContent className="p-0 divide-y">
                         {data.results.contents.items.slice(0, 5).map((content) => (
-                          <Link key={content.id} href={`/content/${content.slug}`} className="block px-4 py-3 hover:bg-muted/50 transition-colors">
+                          <Link key={content.id} href={`/contents/${content.slug}`} className="block px-4 py-3 hover:bg-muted/50 transition-colors">
                             <h3 className="font-medium text-sm mb-1" dangerouslySetInnerHTML={{ __html: highlightText(content.title, data.query) }} />
                             <p className="text-xs text-muted-foreground line-clamp-1" dangerouslySetInnerHTML={{ __html: highlightText(content.excerpt, data.query) }} />
                           </Link>
@@ -462,7 +462,7 @@ function SearchContent() {
                       </div>
                       <CardContent className="p-0 divide-y">
                         {data.results.policies.items.slice(0, 5).map((policy) => (
-                          <Link key={policy.id} href={`/policy/${policy.slug}`} className="block px-4 py-3 hover:bg-muted/50 transition-colors">
+                          <Link key={policy.id} href={`/policies/${policy.slug}`} className="block px-4 py-3 hover:bg-muted/50 transition-colors">
                             <div className="flex items-center gap-2 mb-1">
                               <h3 className="font-medium text-sm" dangerouslySetInnerHTML={{ __html: highlightText(policy.title, data.query) }} />
                               <Badge variant="outline" className="text-xs">v{policy.version}</Badge>
@@ -494,7 +494,7 @@ function SearchContent() {
                       <Card>
                         <CardContent className="p-0 divide-y">
                           {data.results.posts.items.map((post) => (
-                            <Link key={post.id} href={`/board/${post.board.slug}/${post.id}`} className="block px-4 py-4 hover:bg-muted/50 transition-colors">
+                            <Link key={post.id} href={`/boards/${post.board.slug}/${post.id}`} className="block px-4 py-4 hover:bg-muted/50 transition-colors">
                               <div className="flex items-start gap-3">
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-2 mb-1">
@@ -534,7 +534,7 @@ function SearchContent() {
                       <Card>
                         <CardContent className="p-0 divide-y">
                           {data.results.contents.items.map((content) => (
-                            <Link key={content.id} href={`/content/${content.slug}`} className="block px-4 py-4 hover:bg-muted/50 transition-colors">
+                            <Link key={content.id} href={`/contents/${content.slug}`} className="block px-4 py-4 hover:bg-muted/50 transition-colors">
                               <h3 className="font-medium mb-1" dangerouslySetInnerHTML={{ __html: highlightText(content.title, data.query) }} />
                               <p className="text-sm text-muted-foreground line-clamp-2 mb-2" dangerouslySetInnerHTML={{ __html: highlightText(content.excerpt, data.query) }} />
                               <div className="text-xs text-muted-foreground">마지막 수정: {formatTimeAgo(content.updatedAt)}</div>
@@ -561,7 +561,7 @@ function SearchContent() {
                       <Card>
                         <CardContent className="p-0 divide-y">
                           {data.results.policies.items.map((policy) => (
-                            <Link key={policy.id} href={`/policy/${policy.slug}`} className="block px-4 py-4 hover:bg-muted/50 transition-colors">
+                            <Link key={policy.id} href={`/policies/${policy.slug}`} className="block px-4 py-4 hover:bg-muted/50 transition-colors">
                               <div className="flex items-center gap-2 mb-1">
                                 <h3 className="font-medium" dangerouslySetInnerHTML={{ __html: highlightText(policy.title, data.query) }} />
                                 <Badge variant="outline" className="text-xs">v{policy.version}</Badge>

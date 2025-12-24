@@ -29,7 +29,7 @@ const DEFAULT_CONTENTS = [
 <li><strong>운영시간</strong>: 평일 09:00 - 18:00</li>
 </ul>
 <h3>자주 묻는 질문</h3>
-<p>문의 전에 <a href="/content/faq">자주 묻는 질문</a>을 확인해 주세요.</p>`,
+<p>문의 전에 <a href="/contents/faq">자주 묻는 질문</a>을 확인해 주세요.</p>`,
     isPublic: true,
   },
   {

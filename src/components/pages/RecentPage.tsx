@@ -115,7 +115,7 @@ export default function RecentPage() {
           ) : posts.length > 0 ? (
             <div className="space-y-3">
               {posts.map((post) => (
-                <Link key={post.id} href={`/board/${post.board.slug}/${post.id}`}>
+                <Link key={post.id} href={`/boards/${post.board.slug}/${post.id}`}>
                   <Card className="hover:border-primary/50 hover:shadow-md transition-all duration-200 cursor-pointer">
                     <CardContent className="p-4">
                       <div className="flex items-start gap-4">

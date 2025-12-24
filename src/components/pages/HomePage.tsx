@@ -161,14 +161,14 @@ export default function HomePage() {
                 </div>
                 <div className="flex gap-2 mt-4">
                   {boards.length > 0 && (
-                    <Link href={`/board/${boards[0].slug}`}>
+                    <Link href={`/boards/${boards[0].slug}`}>
                       <Button>
                         시작하기
                         <ArrowRight className="h-4 w-4 ml-2" />
                       </Button>
                     </Link>
                   )}
-                  <Link href="/content/about">
+                  <Link href="/contents/about">
                     <Button variant="outline">더 알아보기</Button>
                   </Link>
                 </div>
@@ -246,7 +246,7 @@ export default function HomePage() {
                     {recentPosts.slice(0, 6).map((post) => (
                       <Link
                         key={post.id}
-                        href={`/board/${post.board.slug}/${post.id}`}
+                        href={`/boards/${post.board.slug}/${post.id}`}
                         className="block px-4 py-3 hover:bg-muted/50 transition-colors"
                       >
                         <div className="flex items-start gap-3">
@@ -302,7 +302,7 @@ export default function HomePage() {
                     {boards.slice(0, 5).map((board, index) => (
                       <Link
                         key={board.id}
-                        href={`/board/${board.slug}`}
+                        href={`/boards/${board.slug}`}
                         className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors"
                       >
                         <span className={`w-6 h-6 rounded-lg text-xs font-bold flex items-center justify-center ${
@@ -360,7 +360,7 @@ export default function HomePage() {
 
             {/* 게시판 카드들 */}
             {boards.slice(0, 4).map((board, index) => (
-              <Link key={board.id} href={`/board/${board.slug}`} className={index === 0 ? 'md:col-span-2' : ''}>
+              <Link key={board.id} href={`/boards/${board.slug}`} className={index === 0 ? 'md:col-span-2' : ''}>
                 <Card className="h-full hover:border-primary/50 hover:shadow-md transition-all duration-300 cursor-pointer group">
                   <CardContent className="p-4 h-full flex flex-col justify-between">
                     <div>

@@ -115,7 +115,7 @@ export default function BoardEditPage() {
       }
 
       // 수정 완료 후 게시글로 이동
-      router.push(`/board/${slug}/${postId}`)
+      router.push(`/boards/${slug}/${postId}`)
     } catch (error) {
       console.error('글 수정 에러:', error)
       alert('수정 중 오류가 발생했습니다.')
@@ -158,7 +158,7 @@ export default function BoardEditPage() {
         {/* 페이지 헤더 */}
         <div className="flex items-center gap-3 mb-6">
           <Link
-            href={`/board/${slug}/${postId}`}
+            href={`/boards/${slug}/${postId}`}
             className="text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="h-5 w-5" />

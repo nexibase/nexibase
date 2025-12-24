@@ -33,6 +33,7 @@ import {
   RotateCcw,
   ChevronLeft,
   ChevronRight,
+  UsersRound,
 } from "lucide-react"
 
 interface User {
@@ -305,6 +306,7 @@ function UsersPageContent() {
   const initialStatus = searchParams.get('status') || ''
   const initialRole = searchParams.get('role') || ''
   const initialPage = parseInt(searchParams.get('page') || '1')
+  const editUserId = searchParams.get('edit')
 
   const [users, setUsers] = useState<User[]>([])
   const [stats, setStats] = useState<UserStats>({
@@ -323,6 +325,35 @@ function UsersPageContent() {
   const [roleFilter, setRoleFilter] = useState(initialRole)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
+
+  // edit 파라미터가 있으면 해당 사용자 모달 열기
+  useEffect(() => {
+    if (editUserId && !loading) {
+      const userToEdit = users.find(u => String(u.id) === String(editUserId))
+      if (userToEdit) {
+        setEditingUser(userToEdit)
+        setIsModalOpen(true)
+        router.replace('/admin/users')
+      } else {
+        // 목록에 없으면 API로 직접 조회
+        fetch(`/api/admin/users/${editUserId}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.success && data.user) {
+              // providers 필드 추가
+              const userWithProviders = {
+                ...data.user,
+                providers: data.user.accounts?.map((acc: { provider: string }) => acc.provider) || []
+              }
+              setEditingUser(userWithProviders)
+              setIsModalOpen(true)
+            }
+            router.replace('/admin/users')
+          })
+          .catch(console.error)
+      }
+    }
+  }, [editUserId, users, loading, router])
 
   // URL 업데이트 함수
   const updateURL = useCallback((status: string, role: string, page: number) => {
@@ -506,11 +537,14 @@ function UsersPageContent() {
       <div className="flex">
         <Sidebar activeMenu="users" />
 
-        <main className="flex-1 p-6 lg:p-8">
+        <main className="flex-1 p-6">
           {/* Header */}
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-8">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">사용자 관리</h1>
+              <h1 className="text-2xl font-bold flex items-center gap-2">
+                <UsersRound className="h-6 w-6" />
+                사용자 관리
+              </h1>
               <p className="text-muted-foreground mt-1">
                 사용자 계정을 관리하고 권한을 설정합니다.
               </p>
@@ -522,7 +556,7 @@ function UsersPageContent() {
           </div>
 
           {/* Stats */}
-          <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6 mb-8">
+          <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6 mb-6">
             <StatCard
               title="전체 사용자"
               value={stats.totalUsers}
@@ -692,7 +726,7 @@ function UsersPageContent() {
                           <td className="p-4 align-middle">
                             <div className="flex flex-wrap gap-1">
                               {user.providers && user.providers.length > 0 ? (
-                                user.providers.map((provider) => (
+                                [...new Set(user.providers)].map((provider) => (
                                   <ProviderBadge key={provider} provider={provider} />
                                 ))
                               ) : (

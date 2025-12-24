@@ -25,6 +25,7 @@ import {
   ExternalLink,
   Heart,
   Sparkles,
+  Clipboard,
 } from "lucide-react"
 
 interface Board {
@@ -589,7 +590,10 @@ export default function BoardsPage() {
         <main className="flex-1 lg:ml-0 p-6">
           {/* 헤더 */}
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-foreground">게시판 관리</h1>
+            <h1 className="text-2xl font-bold flex items-center gap-2">
+              <Clipboard className="h-6 w-6" />
+              게시판 관리
+            </h1>
             <p className="text-muted-foreground mt-1">게시판을 생성하고 관리합니다</p>
           </div>
 
@@ -719,7 +723,7 @@ export default function BoardsPage() {
                             </td>
                             <td className="p-3">
                               <a
-                                href={`/board/${board.slug}`}
+                                href={`/boards/${board.slug}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="inline-flex items-center gap-1 px-2 py-1 bg-muted hover:bg-primary/20 rounded text-sm transition-colors group"

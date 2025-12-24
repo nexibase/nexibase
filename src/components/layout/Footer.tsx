@@ -117,17 +117,17 @@ export default function Footer() {
             <h4 className="font-semibold text-foreground mb-3 text-sm">정보</h4>
             <ul className="space-y-2">
               <li>
-                <Link href="/content/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <Link href="/contents/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   회사소개
                 </Link>
               </li>
               <li>
-                <Link href="/content/faq" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <Link href="/contents/faq" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   자주 묻는 질문
                 </Link>
               </li>
               <li>
-                <Link href="/content/contact" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <Link href="/contents/contact" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   문의하기
                 </Link>
               </li>
@@ -152,12 +152,12 @@ export default function Footer() {
               ) : (
                 <>
                   <li>
-                    <Link href="/policy/terms" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                    <Link href="/policies/terms" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                       이용약관
                     </Link>
                   </li>
                   <li>
-                    <Link href="/policy/privacy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                    <Link href="/policies/privacy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                       개인정보처리방침
                     </Link>
                   </li>

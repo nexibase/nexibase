@@ -154,7 +154,7 @@ export default function BoardListPage() {
       alert('비밀글입니다.')
       return
     }
-    router.push(`/board/${slug}/${post.id}`)
+    router.push(`/boards/${slug}/${post.id}`)
   }
 
   if (loading) {
@@ -212,7 +212,7 @@ export default function BoardListPage() {
               )}
             </div>
             {canWrite && (
-              <Button onClick={() => router.push(`/board/${slug}/write`)}>
+              <Button onClick={() => router.push(`/boards/${slug}/write`)}>
                 <PenSquare className="h-4 w-4 mr-2" />
                 글쓰기
               </Button>
@@ -323,7 +323,7 @@ export default function BoardListPage() {
         {/* 글쓰기 버튼 (하단) */}
         {canWrite && posts.length > 0 && (
           <div className="flex justify-end mt-4">
-            <Button onClick={() => router.push(`/board/${slug}/write`)}>
+            <Button onClick={() => router.push(`/boards/${slug}/write`)}>
               <PenSquare className="h-4 w-4 mr-2" />
               글쓰기
             </Button>

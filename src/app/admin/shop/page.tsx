@@ -98,15 +98,15 @@ export default function ShopDashboardPage() {
     <div className="flex min-h-screen bg-muted/30">
       <Sidebar />
 
-      <div className="flex-1 p-6 lg:p-8">
+      <div className="flex-1 p-6">
         <div className="max-w-7xl mx-auto">
           {/* 헤더 */}
-          <div className="mb-8">
-            <h1 className="text-2xl font-bold flex items-center gap-2">
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold flex items-center gap-2">
               <BarChart3 className="h-6 w-6" />
               쇼핑몰 대시보드
-            </h1>
-            <p className="text-muted-foreground mt-1">
+            </h2>
+            <p className="text-muted-foreground">
               쇼핑몰 현황을 한눈에 확인하세요
             </p>
           </div>
