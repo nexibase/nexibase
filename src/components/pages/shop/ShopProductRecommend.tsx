@@ -208,6 +208,61 @@ export function RecentlyViewedProducts({
   )
 }
 
+// 상품 카드 컴포넌트 (재사용)
+function ProductCard({ product, formatPrice }: { product: Product; formatPrice: (price: number) => string }) {
+  return (
+    <Card className="h-full overflow-hidden hover:shadow-lg transition-shadow group">
+      <div className="relative aspect-square bg-muted">
+        {product.image ? (
+          <img
+            src={product.image}
+            alt={product.name}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <Package className="h-10 w-10 text-muted-foreground" />
+          </div>
+        )}
+        {product.isSoldOut && (
+          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+            <span className="text-white font-bold">품절</span>
+          </div>
+        )}
+        {product.originPrice && product.originPrice > product.price && (
+          <Badge className="absolute top-2 left-2 bg-red-500 text-xs">
+            {Math.round((1 - product.price / product.originPrice) * 100)}%
+          </Badge>
+        )}
+      </div>
+
+      <CardContent className="p-3">
+        {product.category && (
+          <p className="text-xs text-muted-foreground mb-1">
+            {product.category.name}
+          </p>
+        )}
+        <h3 className="font-medium text-sm line-clamp-2 mb-2 group-hover:text-primary transition-colors">
+          {product.name}
+        </h3>
+        <div className="flex items-end gap-2">
+          <span className="font-bold">
+            {product.hasOptions && product.minPrice !== product.maxPrice
+              ? `${formatPrice(product.minPrice)} ~`
+              : formatPrice(product.price)
+            }
+          </span>
+          {product.originPrice && product.originPrice > product.price && (
+            <span className="text-xs text-muted-foreground line-through">
+              {formatPrice(product.originPrice)}
+            </span>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
 // 무한 롤링 상품 슬라이더
 function InfiniteProductSlider({
   title,
@@ -219,60 +274,80 @@ function InfiniteProductSlider({
   products: Product[]
 }) {
   const scrollRef = useRef<HTMLDivElement>(null)
+  const isScrolling = useRef(false)
 
   const formatPrice = (price: number) => price.toLocaleString() + '원'
 
+  // 상품을 3배로 복제 (앞뒤로 무한 스크롤을 위해)
+  const extendedProducts = [...products, ...products, ...products]
+
   // 상품 카드 너비 계산 (gap 포함)
-  const getItemWidth = () => {
+  const getItemWidth = useCallback(() => {
     if (!scrollRef.current) return 200
     const containerWidth = scrollRef.current.clientWidth
     const itemsPerView = containerWidth >= 1024 ? 4 : containerWidth >= 768 ? 3 : 2
     const gap = 16
     return (containerWidth - gap * (itemsPerView - 1)) / itemsPerView + gap
-  }
+  }, [])
+
+  // 중간 위치로 초기화 (products 길이만큼 offset)
+  useEffect(() => {
+    if (!scrollRef.current || products.length === 0) return
+    const itemWidth = getItemWidth()
+    const middleOffset = products.length * itemWidth
+    scrollRef.current.scrollLeft = middleOffset
+  }, [products.length, getItemWidth])
+
+  // 스크롤 위치 감시 및 무한 루프 처리
+  useEffect(() => {
+    const container = scrollRef.current
+    if (!container || products.length === 0) return
+
+    const handleScroll = () => {
+      if (isScrolling.current) return
+
+      const itemWidth = getItemWidth()
+      const singleSetWidth = products.length * itemWidth
+      const currentScroll = container.scrollLeft
+
+      // 첫 번째 세트 시작 부분에 도달하면 중간으로 점프
+      if (currentScroll < singleSetWidth * 0.3) {
+        isScrolling.current = true
+        container.scrollLeft = currentScroll + singleSetWidth
+        setTimeout(() => { isScrolling.current = false }, 50)
+      }
+      // 세 번째 세트 끝 부분에 도달하면 중간으로 점프
+      else if (currentScroll > singleSetWidth * 2.3) {
+        isScrolling.current = true
+        container.scrollLeft = currentScroll - singleSetWidth
+        setTimeout(() => { isScrolling.current = false }, 50)
+      }
+    }
+
+    container.addEventListener('scroll', handleScroll)
+    return () => container.removeEventListener('scroll', handleScroll)
+  }, [products.length, getItemWidth])
 
   const handlePrev = () => {
     if (!scrollRef.current) return
     const itemWidth = getItemWidth()
     const currentScroll = scrollRef.current.scrollLeft
-    const maxScroll = scrollRef.current.scrollWidth - scrollRef.current.clientWidth
-
-    if (currentScroll <= 0) {
-      // 처음이면 끝으로 이동 (무한 롤링)
-      scrollRef.current.scrollTo({
-        left: maxScroll,
-        behavior: 'smooth'
-      })
-    } else {
-      // 정확한 상품 위치로 스냅
-      const targetIndex = Math.floor(currentScroll / itemWidth) - 1
-      scrollRef.current.scrollTo({
-        left: Math.max(0, targetIndex * itemWidth),
-        behavior: 'smooth'
-      })
-    }
+    const targetIndex = Math.floor(currentScroll / itemWidth) - 1
+    scrollRef.current.scrollTo({
+      left: targetIndex * itemWidth,
+      behavior: 'smooth'
+    })
   }
 
   const handleNext = () => {
     if (!scrollRef.current) return
     const itemWidth = getItemWidth()
     const currentScroll = scrollRef.current.scrollLeft
-    const maxScroll = scrollRef.current.scrollWidth - scrollRef.current.clientWidth
-
-    if (currentScroll >= maxScroll - 10) {
-      // 끝이면 처음으로 이동 (무한 롤링)
-      scrollRef.current.scrollTo({
-        left: 0,
-        behavior: 'smooth'
-      })
-    } else {
-      // 정확한 상품 위치로 스냅
-      const targetIndex = Math.ceil(currentScroll / itemWidth) + 1
-      scrollRef.current.scrollTo({
-        left: Math.min(maxScroll, targetIndex * itemWidth),
-        behavior: 'smooth'
-      })
-    }
+    const targetIndex = Math.ceil(currentScroll / itemWidth) + 1
+    scrollRef.current.scrollTo({
+      left: targetIndex * itemWidth,
+      behavior: 'smooth'
+    })
   }
 
   return (
@@ -307,61 +382,13 @@ function InfiniteProductSlider({
         className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth snap-x snap-mandatory"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
-        {products.map((product) => (
+        {extendedProducts.map((product, index) => (
           <Link
-            key={product.id}
+            key={`${product.id}-${index}`}
             href={`/shop/products/${product.slug}`}
             className="flex-shrink-0 w-[calc(50%-8px)] md:w-[calc(33.333%-11px)] lg:w-[calc(25%-12px)] snap-start"
           >
-            <Card className="h-full overflow-hidden hover:shadow-lg transition-shadow group">
-              <div className="relative aspect-square bg-muted">
-                {product.image ? (
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <Package className="h-10 w-10 text-muted-foreground" />
-                  </div>
-                )}
-                {product.isSoldOut && (
-                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                    <span className="text-white font-bold">품절</span>
-                  </div>
-                )}
-                {product.originPrice && product.originPrice > product.price && (
-                  <Badge className="absolute top-2 left-2 bg-red-500 text-xs">
-                    {Math.round((1 - product.price / product.originPrice) * 100)}%
-                  </Badge>
-                )}
-              </div>
-
-              <CardContent className="p-3">
-                {product.category && (
-                  <p className="text-xs text-muted-foreground mb-1">
-                    {product.category.name}
-                  </p>
-                )}
-                <h3 className="font-medium text-sm line-clamp-2 mb-2 group-hover:text-primary transition-colors">
-                  {product.name}
-                </h3>
-                <div className="flex items-end gap-2">
-                  <span className="font-bold">
-                    {product.hasOptions && product.minPrice !== product.maxPrice
-                      ? `${formatPrice(product.minPrice)} ~`
-                      : formatPrice(product.price)
-                    }
-                  </span>
-                  {product.originPrice && product.originPrice > product.price && (
-                    <span className="text-xs text-muted-foreground line-through">
-                      {formatPrice(product.originPrice)}
-                    </span>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            <ProductCard product={product} formatPrice={formatPrice} />
           </Link>
         ))}
       </div>
