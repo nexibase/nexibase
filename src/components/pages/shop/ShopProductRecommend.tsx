@@ -263,7 +263,7 @@ function ProductCard({ product, formatPrice }: { product: Product; formatPrice: 
   )
 }
 
-// 무한 롤링 상품 슬라이더
+// 상품 슬라이더 (끝에서 멈춤)
 function InfiniteProductSlider({
   title,
   icon,
@@ -274,60 +274,36 @@ function InfiniteProductSlider({
   products: Product[]
 }) {
   const scrollRef = useRef<HTMLDivElement>(null)
+  const [canScrollLeft, setCanScrollLeft] = useState(false)
+  const [canScrollRight, setCanScrollRight] = useState(true)
 
   const formatPrice = (price: number) => price.toLocaleString() + '원'
 
-  // 상품을 3배로 복제 (앞뒤로 무한 스크롤을 위해)
-  const extendedProducts = [...products, ...products, ...products]
+  // 스크롤 상태 확인
+  const checkScrollState = useCallback(() => {
+    if (!scrollRef.current) return
+    const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current
+    setCanScrollLeft(scrollLeft > 0)
+    setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10)
+  }, [])
+
+  useEffect(() => {
+    checkScrollState()
+    const ref = scrollRef.current
+    if (ref) {
+      ref.addEventListener('scroll', checkScrollState)
+      return () => ref.removeEventListener('scroll', checkScrollState)
+    }
+  }, [checkScrollState])
 
   // 상품 카드 너비 계산 (gap 포함)
-  const getItemWidth = useCallback(() => {
+  const getItemWidth = () => {
     if (!scrollRef.current) return 200
     const containerWidth = scrollRef.current.clientWidth
     const itemsPerView = containerWidth >= 1024 ? 4 : containerWidth >= 768 ? 3 : 2
     const gap = 16
     return (containerWidth - gap * (itemsPerView - 1)) / itemsPerView + gap
-  }, [])
-
-  // 중간 세트로 위치 재조정 (즉시, 애니메이션 없이)
-  const resetToMiddle = useCallback(() => {
-    if (!scrollRef.current || products.length === 0) return
-
-    const itemWidth = getItemWidth()
-    const singleSetWidth = products.length * itemWidth
-    const currentScroll = scrollRef.current.scrollLeft
-
-    // 첫 번째 세트에 있으면 중간 세트로 점프
-    if (currentScroll < singleSetWidth) {
-      scrollRef.current.scrollLeft = currentScroll + singleSetWidth
-    }
-    // 세 번째 세트에 있으면 중간 세트로 점프
-    else if (currentScroll >= singleSetWidth * 2) {
-      scrollRef.current.scrollLeft = currentScroll - singleSetWidth
-    }
-  }, [products.length, getItemWidth])
-
-  // 중간 위치로 초기화
-  useEffect(() => {
-    if (!scrollRef.current || products.length === 0) return
-    const itemWidth = getItemWidth()
-    const middleOffset = products.length * itemWidth
-    scrollRef.current.scrollLeft = middleOffset
-  }, [products.length, getItemWidth])
-
-  // 스크롤 종료 시 위치 재조정
-  useEffect(() => {
-    const container = scrollRef.current
-    if (!container || products.length === 0) return
-
-    // scrollend 이벤트 사용 (스크롤 애니메이션 완료 후 발생)
-    const handleScrollEnd = () => {
-      resetToMiddle()
-    }
-
-    container.addEventListener('scrollend', handleScrollEnd)
-    return () => container.removeEventListener('scrollend', handleScrollEnd)
-  }, [products.length, resetToMiddle])
+  }
 
   const handlePrev = () => {
     if (!scrollRef.current) return
@@ -335,7 +311,7 @@ function InfiniteProductSlider({
     const currentScroll = scrollRef.current.scrollLeft
     const targetIndex = Math.floor(currentScroll / itemWidth) - 1
     scrollRef.current.scrollTo({
-      left: targetIndex * itemWidth,
+      left: Math.max(0, targetIndex * itemWidth),
       behavior: 'smooth'
     })
   }
@@ -344,9 +320,10 @@ function InfiniteProductSlider({
     if (!scrollRef.current) return
     const itemWidth = getItemWidth()
     const currentScroll = scrollRef.current.scrollLeft
+    const maxScroll = scrollRef.current.scrollWidth - scrollRef.current.clientWidth
     const targetIndex = Math.ceil(currentScroll / itemWidth) + 1
     scrollRef.current.scrollTo({
-      left: targetIndex * itemWidth,
+      left: Math.min(maxScroll, targetIndex * itemWidth),
       behavior: 'smooth'
     })
   }
@@ -364,6 +341,7 @@ function InfiniteProductSlider({
             size="icon"
             className="h-10 w-10 rounded-full"
             onClick={handlePrev}
+            disabled={!canScrollLeft}
           >
             <ChevronLeft className="h-6 w-6" />
           </Button>
@@ -372,6 +350,7 @@ function InfiniteProductSlider({
             size="icon"
             className="h-10 w-10 rounded-full"
             onClick={handleNext}
+            disabled={!canScrollRight}
           >
             <ChevronRight className="h-6 w-6" />
           </Button>
@@ -383,9 +362,9 @@ function InfiniteProductSlider({
         className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth snap-x snap-mandatory"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
-        {extendedProducts.map((product, index) => (
+        {products.map((product) => (
           <Link
-            key={`${product.id}-${index}`}
+            key={product.id}
             href={`/shop/products/${product.slug}`}
             className="flex-shrink-0 w-[calc(50%-8px)] md:w-[calc(33.333%-11px)] lg:w-[calc(25%-12px)] snap-start"
           >
