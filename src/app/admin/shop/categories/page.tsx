@@ -17,7 +17,7 @@ import {
   FolderOpen,
   Package,
   Check,
-  ExternalLink,
+  Eye,
 } from "lucide-react"
 import Link from "next/link"
 
@@ -403,16 +403,7 @@ export default function ShopCategoriesPage() {
                             <div className="text-xs text-muted-foreground">{category.description}</div>
                           )}
                         </td>
-                        <td className="p-3 text-sm text-muted-foreground">
-                          <Link
-                            href={`/shop/categories/${category.slug}`}
-                            target="_blank"
-                            className="inline-flex items-center gap-1 hover:text-primary hover:underline"
-                          >
-                            {category.slug}
-                            <ExternalLink className="h-3 w-3" />
-                          </Link>
-                        </td>
+                        <td className="p-3 text-sm text-muted-foreground">{category.slug}</td>
                         <td className="p-3">{category.productCount}</td>
                         <td className="p-3">{category.sortOrder}</td>
                         <td className="p-3">
@@ -433,6 +424,11 @@ export default function ShopCategoriesPage() {
                             >
                               <Pencil className="h-4 w-4" />
                             </Button>
+                            <Link href={`/shop/categories/${category.slug}`} target="_blank">
+                              <Button variant="ghost" size="icon">
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            </Link>
                             <Button
                               variant="ghost"
                               size="icon"
