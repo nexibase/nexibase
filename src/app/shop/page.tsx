@@ -228,7 +228,7 @@ function ShopContent() {
                 <SelectContent>
                   <SelectItem value="latest">최신순</SelectItem>
                   <SelectItem value="popular">인기순</SelectItem>
-                  <SelectItem value="review">후기많은순</SelectItem>
+                  <SelectItem value="review">후기순</SelectItem>
                   <SelectItem value="price_asc">낮은가격</SelectItem>
                   <SelectItem value="price_desc">높은가격</SelectItem>
                 </SelectContent>
