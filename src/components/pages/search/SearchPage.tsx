@@ -482,7 +482,7 @@ function SearchContent() {
                       </div>
                       <CardContent className="p-0 divide-y">
                         {data.results.products.items.slice(0, 5).map((product) => (
-                          <Link key={product.id} href={`/shop/${product.slug}`} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors">
+                          <Link key={product.id} href={`/shop/products/${product.slug}`} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors">
                             {product.thumbnail ? (
                               <div className="relative w-12 h-12 rounded overflow-hidden bg-muted shrink-0">
                                 <Image
@@ -665,7 +665,7 @@ function SearchContent() {
                     <>
                       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                         {data.results.products.items.map((product) => (
-                          <Link key={product.id} href={`/shop/${product.slug}`} className="group">
+                          <Link key={product.id} href={`/shop/products/${product.slug}`} className="group">
                             <Card className="overflow-hidden hover:shadow-lg transition-shadow">
                               <div className="relative aspect-square bg-muted">
                                 {product.thumbnail ? (

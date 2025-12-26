@@ -274,7 +274,7 @@ function ShopContent() {
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {products.map((product) => (
-                <Link key={product.id} href={`/shop/${product.slug}`}>
+                <Link key={product.id} href={`/shop/products/${product.slug}`}>
                   <Card className="h-full overflow-hidden hover:shadow-lg transition-shadow group">
                     {/* 이미지 */}
                     <div className="relative aspect-square bg-muted">

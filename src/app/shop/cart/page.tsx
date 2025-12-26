@@ -210,7 +210,7 @@ export default function CartPage() {
                           </div>
 
                           {/* 이미지 */}
-                          <Link href={`/shop/${item.productSlug}`} className="flex-shrink-0">
+                          <Link href={`/shop/products/${item.productSlug}`} className="flex-shrink-0">
                             <div className="w-20 h-20 bg-muted rounded-md overflow-hidden">
                               {(item.productImage || item.image) ? (
                                 <img
@@ -228,7 +228,7 @@ export default function CartPage() {
 
                           {/* 상품 정보 */}
                           <div className="flex-1 min-w-0">
-                            <Link href={`/shop/${item.productSlug}`}>
+                            <Link href={`/shop/products/${item.productSlug}`}>
                               <h3 className="font-medium hover:text-primary transition-colors line-clamp-1">
                                 {item.productName}
                               </h3>

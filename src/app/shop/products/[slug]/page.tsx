@@ -140,7 +140,7 @@ export default function ProductDetailPage() {
       newParams.set('tab', tab)
     }
     const queryString = newParams.toString()
-    router.replace(`/shop/${slug}${queryString ? `?${queryString}` : ''}`, { scroll: false })
+    router.replace(`/shop/products/${slug}${queryString ? `?${queryString}` : ''}`, { scroll: false })
   }, [router, slug, searchParams])
 
   const [product, setProduct] = useState<Product | null>(null)
@@ -231,7 +231,7 @@ export default function ProductDetailPage() {
       } else if (res.status === 401) {
         // 로그인 필요
         if (confirm('로그인이 필요합니다. 로그인 페이지로 이동하시겠습니까?')) {
-          router.push(`/login?redirect=/shop/${slug}`)
+          router.push(`/login?redirect=/shop/products/${slug}`)
         }
       } else {
         const data = await res.json()

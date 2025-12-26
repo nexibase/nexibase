@@ -221,7 +221,7 @@ export default function AdminQnaPage() {
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-2 flex-wrap">
                         <Link
-                          href={`/shop/${qna.product.slug}?tab=qna`}
+                          href={`/shop/products/${qna.product.slug}?tab=qna`}
                           target="_blank"
                           className="text-sm font-medium hover:underline flex items-center gap-1"
                         >

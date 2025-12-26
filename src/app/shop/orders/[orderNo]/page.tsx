@@ -382,7 +382,7 @@ export default function OrderDetailPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     {item.productSlug ? (
-                      <Link href={`/shop/${item.productSlug}`} className="hover:text-primary">
+                      <Link href={`/shop/products/${item.productSlug}`} className="hover:text-primary">
                         <h3 className="font-medium line-clamp-1">{item.productName}</h3>
                       </Link>
                     ) : (

@@ -299,7 +299,7 @@ export default function AdminReviewsPage() {
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-2 flex-wrap">
                         <Link
-                          href={`/shop/${review.product.slug}?tab=review`}
+                          href={`/shop/products/${review.product.slug}?tab=review`}
                           target="_blank"
                           className="text-sm font-medium hover:underline flex items-center gap-1"
                         >

@@ -566,7 +566,7 @@ export default function ShopProductsPage() {
                                 <Pencil className="h-4 w-4" />
                               </Button>
                             </Link>
-                            <Link href={`/shop/${product.slug}`} target="_blank">
+                            <Link href={`/shop/products/${product.slug}`} target="_blank">
                               <Button variant="ghost" size="icon">
                                 <Eye className="h-4 w-4" />
                               </Button>

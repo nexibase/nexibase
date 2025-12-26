@@ -634,7 +634,7 @@ export default function ProductEditPage({ params }: { params: Promise<{ id: stri
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Link href={`/shop/${product.slug}`} target="_blank">
+              <Link href={`/shop/products/${product.slug}`} target="_blank">
                 <Button variant="outline">
                   <ExternalLink className="h-4 w-4 mr-2" />
                   바로가기

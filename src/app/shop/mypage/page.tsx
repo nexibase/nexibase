@@ -1065,7 +1065,7 @@ function MyPageContent() {
                           <div key={item.id} className="flex gap-4">
                             {item.productSlug ? (
                               <Link
-                                href={`/shop/${item.productSlug}`}
+                                href={`/shop/products/${item.productSlug}`}
                                 className="w-16 h-16 bg-muted rounded-md overflow-hidden flex-shrink-0 hover:ring-2 ring-primary transition-all"
                               >
                                 {item.productImage ? (
@@ -1097,7 +1097,7 @@ function MyPageContent() {
                             )}
                             <div className="flex-1 min-w-0">
                               {item.productSlug ? (
-                                <Link href={`/shop/${item.productSlug}`} className="font-medium line-clamp-1 hover:underline">
+                                <Link href={`/shop/products/${item.productSlug}`} className="font-medium line-clamp-1 hover:underline">
                                   {item.productName}
                                 </Link>
                               ) : (
@@ -1185,7 +1185,7 @@ function MyPageContent() {
                     {wishlistItems.map((item) => (
                       <div key={item.id} className="group relative border rounded-lg overflow-hidden">
                         {/* 상품 이미지 */}
-                        <Link href={`/shop/${item.productSlug}`}>
+                        <Link href={`/shop/products/${item.productSlug}`}>
                           <div className="aspect-square relative bg-muted">
                             <img
                               src={getThumbnailUrl(item.image)}
@@ -1219,7 +1219,7 @@ function MyPageContent() {
 
                         {/* 상품 정보 */}
                         <div className="p-3">
-                          <Link href={`/shop/${item.productSlug}`}>
+                          <Link href={`/shop/products/${item.productSlug}`}>
                             <h3 className="text-sm font-medium line-clamp-2 mb-2 group-hover:text-primary transition-colors">
                               {item.productName}
                             </h3>
@@ -1237,7 +1237,7 @@ function MyPageContent() {
 
                           {/* 구매하기 버튼 */}
                           {item.isActive && !item.isSoldOut && (
-                            <Link href={`/shop/${item.productSlug}`} className="block">
+                            <Link href={`/shop/products/${item.productSlug}`} className="block">
                               <Button
                                 variant="outline"
                                 size="sm"

@@ -549,7 +549,7 @@ export default function AdminOrderDetailPage() {
                   </div>
                   <div className="flex-1">
                     {item.productSlug ? (
-                      <Link href={`/shop/${item.productSlug}`} target="_blank" className="hover:text-primary">
+                      <Link href={`/shop/products/${item.productSlug}`} target="_blank" className="hover:text-primary">
                         <h3 className="font-medium">{item.productName}</h3>
                       </Link>
                     ) : (
