@@ -17,7 +17,9 @@ import {
   FolderOpen,
   Package,
   Check,
+  ExternalLink,
 } from "lucide-react"
+import Link from "next/link"
 
 interface Category {
   id: number
@@ -401,7 +403,16 @@ export default function ShopCategoriesPage() {
                             <div className="text-xs text-muted-foreground">{category.description}</div>
                           )}
                         </td>
-                        <td className="p-3 text-sm text-muted-foreground">{category.slug}</td>
+                        <td className="p-3 text-sm text-muted-foreground">
+                          <Link
+                            href={`/shop/categories/${category.slug}`}
+                            target="_blank"
+                            className="inline-flex items-center gap-1 hover:text-primary hover:underline"
+                          >
+                            {category.slug}
+                            <ExternalLink className="h-3 w-3" />
+                          </Link>
+                        </td>
                         <td className="p-3">{category.productCount}</td>
                         <td className="p-3">{category.sortOrder}</td>
                         <td className="p-3">
