@@ -28,10 +28,13 @@ export async function GET(request: NextRequest) {
       contents: { items: any[]; total: number }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       policies: { items: any[]; total: number }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      products: { items: any[]; total: number }
     } = {
       posts: { items: [], total: 0 },
       contents: { items: [], total: 0 },
-      policies: { items: [], total: 0 }
+      policies: { items: [], total: 0 },
+      products: { items: [], total: 0 }
     }
 
     // 게시글 검색
@@ -52,8 +55,14 @@ export async function GET(request: NextRequest) {
       results.policies = policiesResult
     }
 
+    // 상품 검색
+    if (type === 'all' || type === 'products') {
+      const productsResult = await searchProducts(query, type === 'products' ? page : 1, type === 'products' ? limit : 5)
+      results.products = productsResult
+    }
+
     // 전체 결과 수
-    const totalAll = results.posts.total + results.contents.total + results.policies.total
+    const totalAll = results.posts.total + results.contents.total + results.policies.total + results.products.total
 
     // 게시판 목록 (필터용)
     const boards = await prisma.board.findMany({
@@ -74,6 +83,9 @@ export async function GET(request: NextRequest) {
     } else if (type === 'policies') {
       currentTotal = results.policies.total
       currentTotalPages = Math.ceil(currentTotal / limit)
+    } else if (type === 'products') {
+      currentTotal = results.products.total
+      currentTotalPages = Math.ceil(currentTotal / limit)
     }
 
     return NextResponse.json({
@@ -85,7 +97,8 @@ export async function GET(request: NextRequest) {
         all: totalAll,
         posts: results.posts.total,
         contents: results.contents.total,
-        policies: results.policies.total
+        policies: results.policies.total,
+        products: results.products.total
       },
       pagination: {
         page,
@@ -432,6 +445,90 @@ async function searchPolicies(
   return { items, total }
 }
 
+// 상품 검색
+async function searchProducts(
+  query: string,
+  page: number,
+  limit: number
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+): Promise<{ items: any[]; total: number }> {
+  const skip = (page - 1) * limit
+
+  const [products, total] = await Promise.all([
+    prisma.product.findMany({
+      where: {
+        AND: [
+          {
+            OR: [
+              { name: { contains: query } },
+              { description: { contains: query } },
+              { content: { contains: query } }
+            ]
+          },
+          { isActive: true }
+        ]
+      },
+      select: {
+        id: true,
+        slug: true,
+        name: true,
+        description: true,
+        price: true,
+        originPrice: true,
+        images: true,
+        isSoldOut: true,
+        category: {
+          select: { id: true, name: true, slug: true }
+        }
+      },
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take: limit
+    }),
+    prisma.product.count({
+      where: {
+        AND: [
+          {
+            OR: [
+              { name: { contains: query } },
+              { description: { contains: query } },
+              { content: { contains: query } }
+            ]
+          },
+          { isActive: true }
+        ]
+      }
+    })
+  ])
+
+  const items = products.map(product => {
+    // 이미지 목록에서 첫번째 이미지 추출
+    let thumbnail = null
+    if (product.images) {
+      try {
+        const images = JSON.parse(product.images)
+        thumbnail = Array.isArray(images) && images.length > 0 ? images[0] : null
+      } catch {
+        thumbnail = null
+      }
+    }
+
+    return {
+      id: product.id,
+      slug: product.slug,
+      name: product.name,
+      description: product.description,
+      price: product.price,
+      originPrice: product.originPrice,
+      thumbnail,
+      isSoldOut: product.isSoldOut,
+      category: product.category
+    }
+  })
+
+  return { items, total }
+}
+
 // 폴백 검색 (전체)
 async function fallbackSearch(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -457,10 +554,13 @@ async function fallbackSearch(request: NextRequest) {
     contents: { items: any[]; total: number }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     policies: { items: any[]; total: number }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    products: { items: any[]; total: number }
   } = {
     posts: { items: [], total: 0 },
     contents: { items: [], total: 0 },
-    policies: { items: [], total: 0 }
+    policies: { items: [], total: 0 },
+    products: { items: [], total: 0 }
   }
 
   if (type === 'all' || type === 'posts') {
@@ -475,7 +575,11 @@ async function fallbackSearch(request: NextRequest) {
     results.policies = await searchPolicies(query, type === 'policies' ? page : 1, type === 'policies' ? limit : 5)
   }
 
-  const totalAll = results.posts.total + results.contents.total + results.policies.total
+  if (type === 'all' || type === 'products') {
+    results.products = await searchProducts(query, type === 'products' ? page : 1, type === 'products' ? limit : 5)
+  }
+
+  const totalAll = results.posts.total + results.contents.total + results.policies.total + results.products.total
 
   const boards = await prisma.board.findMany({
     where: { isActive: true },
@@ -494,6 +598,9 @@ async function fallbackSearch(request: NextRequest) {
   } else if (type === 'policies') {
     currentTotal = results.policies.total
     currentTotalPages = Math.ceil(currentTotal / limit)
+  } else if (type === 'products') {
+    currentTotal = results.products.total
+    currentTotalPages = Math.ceil(currentTotal / limit)
   }
 
   return NextResponse.json({
@@ -505,7 +612,8 @@ async function fallbackSearch(request: NextRequest) {
       all: totalAll,
       posts: results.posts.total,
       contents: results.contents.total,
-      policies: results.policies.total
+      policies: results.policies.total,
+      products: results.products.total
     },
     pagination: {
       page,

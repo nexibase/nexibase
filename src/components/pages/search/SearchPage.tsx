@@ -17,8 +17,9 @@ import { Header, Footer } from "@/components/layout"
 import {
   Search, Loader2, FileText, Eye, MessageSquare, ThumbsUp,
   ChevronLeft, ChevronRight, Clock, TrendingUp, Sparkles,
-  BookOpen, ScrollText, LayoutGrid
+  BookOpen, ScrollText, LayoutGrid, ShoppingBag
 } from "lucide-react"
+import Image from "next/image"
 import Link from "next/link"
 
 interface PostResult {
@@ -58,6 +59,22 @@ interface PolicyResult {
   updatedAt: string
 }
 
+interface ProductResult {
+  id: number
+  slug: string
+  name: string
+  description: string | null
+  price: number
+  originPrice: number | null
+  thumbnail: string | null
+  isSoldOut: boolean
+  category: {
+    id: number
+    name: string
+    slug: string
+  } | null
+}
+
 interface BoardOption {
   slug: string
   name: string
@@ -71,12 +88,14 @@ interface SearchResponse {
     posts: { items: PostResult[]; total: number }
     contents: { items: ContentResult[]; total: number }
     policies: { items: PolicyResult[]; total: number }
+    products: { items: ProductResult[]; total: number }
   }
   counts: {
     all: number
     posts: number
     contents: number
     policies: number
+    products: number
   }
   pagination: {
     page: number
@@ -87,7 +106,7 @@ interface SearchResponse {
   boards: BoardOption[]
 }
 
-type SearchType = 'all' | 'posts' | 'contents' | 'policies'
+type SearchType = 'all' | 'posts' | 'contents' | 'policies' | 'products'
 
 export default function SearchPage() {
   return (
@@ -250,6 +269,7 @@ function SearchContent() {
   const tabs = [
     { key: 'all' as SearchType, label: '전체', icon: LayoutGrid, count: data?.counts.all || 0 },
     { key: 'posts' as SearchType, label: '게시글', icon: FileText, count: data?.counts.posts || 0 },
+    { key: 'products' as SearchType, label: '상품', icon: ShoppingBag, count: data?.counts.products || 0 },
     { key: 'contents' as SearchType, label: '콘텐츠', icon: BookOpen, count: data?.counts.contents || 0 },
     { key: 'policies' as SearchType, label: '정책/약관', icon: ScrollText, count: data?.counts.policies || 0 },
   ]
@@ -445,6 +465,61 @@ function SearchContent() {
                     </Card>
                   )}
 
+                  {/* 상품 섹션 */}
+                  {data.results.products.total > 0 && (
+                    <Card>
+                      <div className="border-b px-4 py-3 flex items-center justify-between">
+                        <h2 className="font-semibold flex items-center gap-2">
+                          <ShoppingBag className="h-4 w-4 text-orange-600" />
+                          상품
+                          <Badge variant="secondary">{data.results.products.total}</Badge>
+                        </h2>
+                        {data.results.products.total > 5 && (
+                          <button onClick={() => handleTypeChange('products')} className="text-sm text-primary hover:underline">
+                            더보기 →
+                          </button>
+                        )}
+                      </div>
+                      <CardContent className="p-0 divide-y">
+                        {data.results.products.items.slice(0, 5).map((product) => (
+                          <Link key={product.id} href={`/shop/products/${product.slug}`} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors">
+                            {product.thumbnail ? (
+                              <div className="relative w-12 h-12 rounded overflow-hidden bg-muted shrink-0">
+                                <Image
+                                  src={product.thumbnail}
+                                  alt={product.name}
+                                  fill
+                                  className="object-cover"
+                                />
+                              </div>
+                            ) : (
+                              <div className="w-12 h-12 rounded bg-muted flex items-center justify-center shrink-0">
+                                <ShoppingBag className="h-5 w-5 text-muted-foreground" />
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-0.5">
+                                {product.category && (
+                                  <Badge variant="outline" className="text-xs shrink-0">{product.category.name}</Badge>
+                                )}
+                                <h3 className="font-medium text-sm truncate" dangerouslySetInnerHTML={{ __html: highlightText(product.name, data.query) }} />
+                                {product.isSoldOut && (
+                                  <Badge variant="destructive" className="text-xs shrink-0">품절</Badge>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 text-sm">
+                                <span className="font-semibold text-primary">{product.price.toLocaleString()}원</span>
+                                {product.originPrice && product.originPrice > product.price && (
+                                  <span className="text-muted-foreground line-through text-xs">{product.originPrice.toLocaleString()}원</span>
+                                )}
+                              </div>
+                            </div>
+                          </Link>
+                        ))}
+                      </CardContent>
+                    </Card>
+                  )}
+
                   {/* 정책 섹션 */}
                   {data.results.policies.total > 0 && (
                     <Card>
@@ -582,13 +657,71 @@ function SearchContent() {
                   )}
                 </>
               )}
+
+              {/* 상품 탭 */}
+              {selectedType === 'products' && (
+                <>
+                  {data.results.products.items.length > 0 ? (
+                    <>
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {data.results.products.items.map((product) => (
+                          <Link key={product.id} href={`/shop/products/${product.slug}`} className="group">
+                            <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+                              <div className="relative aspect-square bg-muted">
+                                {product.thumbnail ? (
+                                  <Image
+                                    src={product.thumbnail}
+                                    alt={product.name}
+                                    fill
+                                    className="object-cover group-hover:scale-105 transition-transform"
+                                  />
+                                ) : (
+                                  <div className="absolute inset-0 flex items-center justify-center">
+                                    <ShoppingBag className="h-12 w-12 text-muted-foreground" />
+                                  </div>
+                                )}
+                                {product.isSoldOut && (
+                                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                                    <Badge variant="destructive">품절</Badge>
+                                  </div>
+                                )}
+                              </div>
+                              <CardContent className="p-3">
+                                {product.category && (
+                                  <Badge variant="outline" className="text-xs mb-1">{product.category.name}</Badge>
+                                )}
+                                <h3 className="font-medium text-sm line-clamp-2 mb-1" dangerouslySetInnerHTML={{ __html: highlightText(product.name, data.query) }} />
+                                {product.description && (
+                                  <p className="text-xs text-muted-foreground line-clamp-1 mb-2" dangerouslySetInnerHTML={{ __html: highlightText(product.description, data.query) }} />
+                                )}
+                                <div className="flex items-center gap-2">
+                                  <span className="font-bold text-primary">{product.price.toLocaleString()}원</span>
+                                  {product.originPrice && product.originPrice > product.price && (
+                                    <span className="text-muted-foreground line-through text-xs">{product.originPrice.toLocaleString()}원</span>
+                                  )}
+                                </div>
+                              </CardContent>
+                            </Card>
+                          </Link>
+                        ))}
+                      </div>
+
+                      {data.pagination.totalPages > 1 && (
+                        <Pagination pagination={data.pagination} onPageChange={handlePageChange} />
+                      )}
+                    </>
+                  ) : (
+                    <EmptyResult icon={ShoppingBag} message="상품 검색 결과가 없습니다" />
+                  )}
+                </>
+              )}
             </>
           ) : (
             <Card className="bg-muted/30">
               <CardContent className="py-16 text-center">
                 <Search className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <h3 className="text-lg font-semibold mb-2">검색어를 입력하세요</h3>
-                <p className="text-muted-foreground">게시글, 콘텐츠, 정책/약관에서 통합 검색합니다.</p>
+                <p className="text-muted-foreground">게시글, 상품, 콘텐츠, 정책/약관에서 통합 검색합니다.</p>
               </CardContent>
             </Card>
           )}
