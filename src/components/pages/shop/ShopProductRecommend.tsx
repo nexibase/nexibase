@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -62,7 +62,7 @@ export function getViewedProductIds(): number[] {
 // 인기 상품 섹션
 export function PopularProducts({
   title = "인기 상품",
-  limit = 8,
+  limit = 12,
   excludeId
 }: {
   title?: string
@@ -98,7 +98,7 @@ export function PopularProducts({
   if (loading || products.length === 0) return null
 
   return (
-    <ProductSection
+    <InfiniteProductSlider
       title={title}
       icon={<TrendingUp className="h-5 w-5 text-orange-500" />}
       products={products}
@@ -109,7 +109,7 @@ export function PopularProducts({
 // 신상품 섹션
 export function NewProducts({
   title = "신상품",
-  limit = 8,
+  limit = 12,
   excludeId
 }: {
   title?: string
@@ -145,7 +145,7 @@ export function NewProducts({
   if (loading || products.length === 0) return null
 
   return (
-    <ProductSection
+    <InfiniteProductSlider
       title={title}
       icon={<Sparkles className="h-5 w-5 text-purple-500" />}
       products={products}
@@ -153,7 +153,7 @@ export function NewProducts({
   )
 }
 
-// 최근 본 상품 섹션
+// 최근 본 상품 섹션 (무한 롤링 아님)
 export function RecentlyViewedProducts({
   title = "최근 본 상품",
   excludeId
@@ -208,7 +208,170 @@ export function RecentlyViewedProducts({
   )
 }
 
-// 공통 상품 섹션 컴포넌트
+// 무한 롤링 상품 슬라이더
+function InfiniteProductSlider({
+  title,
+  icon,
+  products
+}: {
+  title: string
+  icon: React.ReactNode
+  products: Product[]
+}) {
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const [canScrollLeft, setCanScrollLeft] = useState(false)
+  const [canScrollRight, setCanScrollRight] = useState(true)
+
+  const formatPrice = (price: number) => price.toLocaleString() + '원'
+
+  // 스크롤 상태 확인
+  const checkScrollState = useCallback(() => {
+    if (!scrollRef.current) return
+    const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current
+    setCanScrollLeft(scrollLeft > 0)
+    setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10)
+  }, [])
+
+  useEffect(() => {
+    checkScrollState()
+    const ref = scrollRef.current
+    if (ref) {
+      ref.addEventListener('scroll', checkScrollState)
+      return () => ref.removeEventListener('scroll', checkScrollState)
+    }
+  }, [checkScrollState])
+
+  // 상품 카드 너비 계산 (gap 포함)
+  const getItemWidth = () => {
+    if (!scrollRef.current) return 200
+    const containerWidth = scrollRef.current.clientWidth
+    const itemsPerView = containerWidth >= 1024 ? 4 : containerWidth >= 768 ? 3 : 2
+    const gap = 16
+    return (containerWidth - gap * (itemsPerView - 1)) / itemsPerView + gap
+  }
+
+  const handlePrev = () => {
+    if (!scrollRef.current) return
+    const itemWidth = getItemWidth()
+    const currentScroll = scrollRef.current.scrollLeft
+    // 정확한 상품 위치로 스냅
+    const targetIndex = Math.floor(currentScroll / itemWidth) - 1
+    scrollRef.current.scrollTo({
+      left: Math.max(0, targetIndex * itemWidth),
+      behavior: 'smooth'
+    })
+  }
+
+  const handleNext = () => {
+    if (!scrollRef.current) return
+    const itemWidth = getItemWidth()
+    const currentScroll = scrollRef.current.scrollLeft
+    const maxScroll = scrollRef.current.scrollWidth - scrollRef.current.clientWidth
+    // 정확한 상품 위치로 스냅
+    const targetIndex = Math.ceil(currentScroll / itemWidth) + 1
+    scrollRef.current.scrollTo({
+      left: Math.min(maxScroll, targetIndex * itemWidth),
+      behavior: 'smooth'
+    })
+  }
+
+  return (
+    <div className="py-6">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-bold flex items-center gap-2">
+          {icon}
+          {title}
+        </h2>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-10 w-10 rounded-full"
+            onClick={handlePrev}
+            disabled={!canScrollLeft}
+          >
+            <ChevronLeft className="h-6 w-6" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-10 w-10 rounded-full"
+            onClick={handleNext}
+            disabled={!canScrollRight}
+          >
+            <ChevronRight className="h-6 w-6" />
+          </Button>
+        </div>
+      </div>
+
+      <div
+        ref={scrollRef}
+        className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth snap-x snap-mandatory"
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+      >
+        {products.map((product) => (
+          <Link
+            key={product.id}
+            href={`/shop/products/${product.slug}`}
+            className="flex-shrink-0 w-[calc(50%-8px)] md:w-[calc(33.333%-11px)] lg:w-[calc(25%-12px)] snap-start"
+          >
+            <Card className="h-full overflow-hidden hover:shadow-lg transition-shadow group">
+              <div className="relative aspect-square bg-muted">
+                {product.image ? (
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <Package className="h-10 w-10 text-muted-foreground" />
+                  </div>
+                )}
+                {product.isSoldOut && (
+                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                    <span className="text-white font-bold">품절</span>
+                  </div>
+                )}
+                {product.originPrice && product.originPrice > product.price && (
+                  <Badge className="absolute top-2 left-2 bg-red-500 text-xs">
+                    {Math.round((1 - product.price / product.originPrice) * 100)}%
+                  </Badge>
+                )}
+              </div>
+
+              <CardContent className="p-3">
+                {product.category && (
+                  <p className="text-xs text-muted-foreground mb-1">
+                    {product.category.name}
+                  </p>
+                )}
+                <h3 className="font-medium text-sm line-clamp-2 mb-2 group-hover:text-primary transition-colors">
+                  {product.name}
+                </h3>
+                <div className="flex items-end gap-2">
+                  <span className="font-bold">
+                    {product.hasOptions && product.minPrice !== product.maxPrice
+                      ? `${formatPrice(product.minPrice)} ~`
+                      : formatPrice(product.price)
+                    }
+                  </span>
+                  {product.originPrice && product.originPrice > product.price && (
+                    <span className="text-xs text-muted-foreground line-through">
+                      {formatPrice(product.originPrice)}
+                    </span>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// 일반 상품 섹션 (최근 본 상품용)
 function ProductSection({
   title,
   icon,
@@ -218,14 +381,58 @@ function ProductSection({
   icon: React.ReactNode
   products: Product[]
 }) {
-  const [scrollIndex, setScrollIndex] = useState(0)
-  const itemsPerView = 4
-  const maxIndex = Math.max(0, products.length - itemsPerView)
-
-  const handlePrev = () => setScrollIndex(prev => Math.max(0, prev - 1))
-  const handleNext = () => setScrollIndex(prev => Math.min(maxIndex, prev + 1))
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const [canScrollLeft, setCanScrollLeft] = useState(false)
+  const [canScrollRight, setCanScrollRight] = useState(true)
 
   const formatPrice = (price: number) => price.toLocaleString() + '원'
+
+  const checkScrollState = useCallback(() => {
+    if (!scrollRef.current) return
+    const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current
+    setCanScrollLeft(scrollLeft > 0)
+    setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10)
+  }, [])
+
+  useEffect(() => {
+    checkScrollState()
+    const ref = scrollRef.current
+    if (ref) {
+      ref.addEventListener('scroll', checkScrollState)
+      return () => ref.removeEventListener('scroll', checkScrollState)
+    }
+  }, [checkScrollState])
+
+  const getItemWidth = () => {
+    if (!scrollRef.current) return 200
+    const containerWidth = scrollRef.current.clientWidth
+    const itemsPerView = containerWidth >= 1024 ? 4 : containerWidth >= 768 ? 3 : 2
+    const gap = 16
+    return (containerWidth - gap * (itemsPerView - 1)) / itemsPerView + gap
+  }
+
+  const handlePrev = () => {
+    if (!scrollRef.current) return
+    const itemWidth = getItemWidth()
+    const currentScroll = scrollRef.current.scrollLeft
+    const targetIndex = Math.floor(currentScroll / itemWidth) - 1
+    scrollRef.current.scrollTo({
+      left: Math.max(0, targetIndex * itemWidth),
+      behavior: 'smooth'
+    })
+  }
+
+  const handleNext = () => {
+    if (!scrollRef.current) return
+    const itemWidth = getItemWidth()
+    const currentScroll = scrollRef.current.scrollLeft
+    const maxScroll = scrollRef.current.scrollWidth - scrollRef.current.clientWidth
+    const targetIndex = Math.ceil(currentScroll / itemWidth) + 1
+    scrollRef.current.scrollTo({
+      left: Math.min(maxScroll, targetIndex * itemWidth),
+      behavior: 'smooth'
+    })
+  }
 
   return (
     <div className="py-6">
@@ -234,95 +441,90 @@ function ProductSection({
           {icon}
           {title}
         </h2>
-        {products.length > itemsPerView && (
-          <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={handlePrev}
-              disabled={scrollIndex === 0}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={handleNext}
-              disabled={scrollIndex >= maxIndex}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-10 w-10 rounded-full"
+            onClick={handlePrev}
+            disabled={!canScrollLeft}
+          >
+            <ChevronLeft className="h-6 w-6" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-10 w-10 rounded-full"
+            onClick={handleNext}
+            disabled={!canScrollRight}
+          >
+            <ChevronRight className="h-6 w-6" />
+          </Button>
+        </div>
       </div>
 
-      <div className="overflow-hidden">
-        <div
-          className="flex transition-transform duration-300 gap-4"
-          style={{
-            transform: `translateX(-${scrollIndex * (100 / itemsPerView + 4)}%)`,
-          }}
-        >
-          {products.map((product) => (
-            <Link
-              key={product.id}
-              href={`/shop/products/${product.slug}`}
-              className="flex-shrink-0 w-[calc(25%-12px)] min-w-[180px]"
-            >
-              <Card className="h-full overflow-hidden hover:shadow-lg transition-shadow group">
-                <div className="relative aspect-square bg-muted">
-                  {product.image ? (
-                    <img
-                      src={product.image}
-                      alt={product.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <Package className="h-10 w-10 text-muted-foreground" />
-                    </div>
-                  )}
-                  {product.isSoldOut && (
-                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                      <span className="text-white font-bold">품절</span>
-                    </div>
-                  )}
+      <div
+        ref={scrollRef}
+        className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth snap-x snap-mandatory"
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+      >
+        {products.map((product) => (
+          <Link
+            key={product.id}
+            href={`/shop/products/${product.slug}`}
+            className="flex-shrink-0 w-[calc(50%-8px)] md:w-[calc(33.333%-11px)] lg:w-[calc(25%-12px)] snap-start"
+          >
+            <Card className="h-full overflow-hidden hover:shadow-lg transition-shadow group">
+              <div className="relative aspect-square bg-muted">
+                {product.image ? (
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <Package className="h-10 w-10 text-muted-foreground" />
+                  </div>
+                )}
+                {product.isSoldOut && (
+                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                    <span className="text-white font-bold">품절</span>
+                  </div>
+                )}
+                {product.originPrice && product.originPrice > product.price && (
+                  <Badge className="absolute top-2 left-2 bg-red-500 text-xs">
+                    {Math.round((1 - product.price / product.originPrice) * 100)}%
+                  </Badge>
+                )}
+              </div>
+
+              <CardContent className="p-3">
+                {product.category && (
+                  <p className="text-xs text-muted-foreground mb-1">
+                    {product.category.name}
+                  </p>
+                )}
+                <h3 className="font-medium text-sm line-clamp-2 mb-2 group-hover:text-primary transition-colors">
+                  {product.name}
+                </h3>
+                <div className="flex items-end gap-2">
+                  <span className="font-bold">
+                    {product.hasOptions && product.minPrice !== product.maxPrice
+                      ? `${formatPrice(product.minPrice)} ~`
+                      : formatPrice(product.price)
+                    }
+                  </span>
                   {product.originPrice && product.originPrice > product.price && (
-                    <Badge className="absolute top-2 left-2 bg-red-500 text-xs">
-                      {Math.round((1 - product.price / product.originPrice) * 100)}%
-                    </Badge>
+                    <span className="text-xs text-muted-foreground line-through">
+                      {formatPrice(product.originPrice)}
+                    </span>
                   )}
                 </div>
-
-                <CardContent className="p-3">
-                  {product.category && (
-                    <p className="text-xs text-muted-foreground mb-1">
-                      {product.category.name}
-                    </p>
-                  )}
-                  <h3 className="font-medium text-sm line-clamp-2 mb-2 group-hover:text-primary transition-colors">
-                    {product.name}
-                  </h3>
-                  <div className="flex items-end gap-2">
-                    <span className="font-bold">
-                      {product.hasOptions && product.minPrice !== product.maxPrice
-                        ? `${formatPrice(product.minPrice)} ~`
-                        : formatPrice(product.price)
-                      }
-                    </span>
-                    {product.originPrice && product.originPrice > product.price && (
-                      <span className="text-xs text-muted-foreground line-through">
-                        {formatPrice(product.originPrice)}
-                      </span>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
+              </CardContent>
+            </Card>
+          </Link>
+        ))}
       </div>
     </div>
   )
