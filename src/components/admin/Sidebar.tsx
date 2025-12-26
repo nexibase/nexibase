@@ -36,6 +36,7 @@ interface SidebarProps {
 interface UserInfo {
   id: number
   name: string
+  nickname: string
   email: string
   role: string
 }
@@ -291,7 +292,7 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
                         <User className="h-4 w-4 text-primary" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{user?.name || '로딩중...'}</p>
+                        <p className="text-sm font-medium truncate">{user?.name || user?.nickname || '관리자'}</p>
                         <p className="text-xs text-muted-foreground truncate">
                           {user?.role === 'admin' ? '관리자' : user?.role === 'manager' ? '부관리자' : user?.role || ''}
                         </p>
