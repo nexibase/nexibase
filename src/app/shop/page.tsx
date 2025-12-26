@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { Header, Footer } from "@/components/layout"
+import { PopularProducts, NewProducts, RecentlyViewedProducts } from "@/components/pages"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
@@ -358,6 +359,13 @@ function ShopContent() {
               </Button>
             </div>
           )}
+
+          {/* 추천 섹션 */}
+          <div className="border-t mt-8">
+            <RecentlyViewedProducts />
+            <PopularProducts title="인기 상품" />
+            <NewProducts title="신상품" />
+          </div>
         </div>
       </main>
 

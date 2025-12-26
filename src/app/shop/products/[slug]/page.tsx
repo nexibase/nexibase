@@ -28,7 +28,14 @@ import {
   ChevronLeft,
   Heart,
 } from "lucide-react"
-import { ShopProductImages, ShopReviewSection, ShopQnaSection } from "@/components/pages"
+import {
+  ShopProductImages,
+  ShopReviewSection,
+  ShopQnaSection,
+  PopularProducts,
+  RecentlyViewedProducts,
+  saveViewedProduct
+} from "@/components/pages"
 
 interface ProductOption {
   id: number
@@ -326,6 +333,8 @@ export default function ProductDetailPage() {
       setQnaTotal(data.product.qnaCount || 0)
       // 찜 여부 확인
       checkWishlist(data.product.id)
+      // 최근 본 상품에 저장
+      saveViewedProduct(data.product.id)
     } catch {
       setError("상품을 불러오는데 실패했습니다.")
     } finally {
@@ -1231,6 +1240,12 @@ export default function ProductDetailPage() {
               )}
             </div>
           </div>
+        </div>
+
+        {/* 추천 상품 섹션 */}
+        <div className="max-w-6xl mx-auto px-4 border-t">
+          <RecentlyViewedProducts excludeId={product.id} />
+          <PopularProducts excludeId={product.id} />
         </div>
       </main>
 
