@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, Suspense } from "react"
-import { useSearchParams, useRouter } from "next/navigation"
+import { useParams, useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { Header, Footer } from "@/components/layout"
 import { Button } from "@/components/ui/button"
@@ -21,6 +21,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Package,
+  ArrowLeft,
 } from "lucide-react"
 
 interface Product {
@@ -46,7 +47,7 @@ interface Category {
   productCount: number
 }
 
-export default function ShopPage() {
+export default function CategoryPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-background flex flex-col">
@@ -57,34 +58,29 @@ export default function ShopPage() {
         <Footer />
       </div>
     }>
-      <ShopContent />
+      <CategoryContent />
     </Suspense>
   )
 }
 
-function ShopContent() {
+function CategoryContent() {
   const router = useRouter()
+  const params = useParams()
   const searchParams = useSearchParams()
+  const categorySlug = params.slug as string
 
   const [products, setProducts] = useState<Product[]>([])
-  const [categories, setCategories] = useState<Category[]>([])
+  const [category, setCategory] = useState<Category | null>(null)
+  const [allCategories, setAllCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [total, setTotal] = useState(0)
 
-  const categorySlug = searchParams.get('category')
   const sortBy = searchParams.get('sort') || 'latest'
   const searchQuery = searchParams.get('search') || ''
 
   const [search, setSearch] = useState(searchQuery)
-
-  // 기존 ?category= 쿼리파라미터로 접근 시 /shop/categories/[slug]로 리다이렉트
-  useEffect(() => {
-    if (categorySlug && categorySlug !== 'all') {
-      router.replace(`/shop/categories/${categorySlug}`)
-    }
-  }, [categorySlug, router])
 
   const fetchProducts = useCallback(async () => {
     setLoading(true)
@@ -93,6 +89,7 @@ function ShopContent() {
         page: String(page),
         limit: '12',
         sort: sortBy,
+        category: categorySlug,
         ...(searchQuery && { search: searchQuery })
       })
 
@@ -108,19 +105,22 @@ function ShopContent() {
     } finally {
       setLoading(false)
     }
-  }, [page, sortBy, searchQuery])
+  }, [page, categorySlug, sortBy, searchQuery])
 
   const fetchCategories = useCallback(async () => {
     try {
       const res = await fetch('/api/shop/categories')
       if (res.ok) {
         const data = await res.json()
-        setCategories(data.categories)
+        setAllCategories(data.categories)
+        // 현재 카테고리 찾기
+        const current = data.categories.find((c: Category) => c.slug === categorySlug)
+        setCategory(current || null)
       }
     } catch (error) {
       console.error('카테고리 조회 에러:', error)
     }
-  }, [])
+  }, [categorySlug])
 
   useEffect(() => {
     fetchCategories()
@@ -132,13 +132,13 @@ function ShopContent() {
 
   useEffect(() => {
     setPage(1)
-  }, [sortBy, searchQuery])
+  }, [categorySlug, sortBy, searchQuery])
 
   const handleCategoryChange = (slug: string) => {
-    if (slug && slug !== 'all') {
-      router.push(`/shop/categories/${slug}`)
-    } else {
+    if (slug === 'all') {
       router.push('/shop')
+    } else {
+      router.push(`/shop/categories/${slug}`)
     }
   }
 
@@ -146,7 +146,7 @@ function ShopContent() {
     const params = new URLSearchParams(searchParams.toString())
     params.set('sort', sort)
     params.delete('page')
-    router.push(`/shop?${params}`)
+    router.push(`/shop/categories/${categorySlug}?${params}`)
   }
 
   const handleSearch = (e: React.FormEvent) => {
@@ -158,7 +158,7 @@ function ShopContent() {
       params.delete('search')
     }
     params.delete('page')
-    router.push(`/shop?${params}`)
+    router.push(`/shop/categories/${categorySlug}?${params}`)
   }
 
   const formatPrice = (price: number) => price.toLocaleString() + '원'
@@ -171,12 +171,17 @@ function ShopContent() {
         <div className="max-w-6xl mx-auto px-4 py-6">
           {/* 헤더 */}
           <div className="mb-6">
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              <Package className="h-6 w-6" />
-              쇼핑몰
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              신선한 상품을 만나보세요
+            <div className="flex items-center gap-2 mb-2">
+              <Link href="/shop" className="text-muted-foreground hover:text-foreground">
+                <ArrowLeft className="h-5 w-5" />
+              </Link>
+              <h1 className="text-2xl font-bold flex items-center gap-2">
+                <Package className="h-6 w-6" />
+                {category?.name || '카테고리'}
+              </h1>
+            </div>
+            <p className="text-muted-foreground">
+              {category?.name} 카테고리의 상품을 확인하세요
             </p>
           </div>
 
@@ -204,13 +209,13 @@ function ShopContent() {
 
             <div className="flex gap-2">
               {/* 카테고리 필터 */}
-              <Select value="all" onValueChange={handleCategoryChange}>
+              <Select value={categorySlug} onValueChange={handleCategoryChange}>
                 <SelectTrigger className="w-[140px]">
                   <SelectValue placeholder="카테고리" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">전체</SelectItem>
-                  {categories.map(cat => (
+                  {allCategories.map(cat => (
                     <SelectItem key={cat.id} value={cat.slug}>
                       {cat.name} ({cat.productCount})
                     </SelectItem>
@@ -234,19 +239,19 @@ function ShopContent() {
           </div>
 
           {/* 카테고리 태그 */}
-          {categories.length > 0 && (
+          {allCategories.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-6">
               <Badge
-                variant="default"
+                variant="outline"
                 className="cursor-pointer"
                 onClick={() => handleCategoryChange('all')}
               >
                 전체
               </Badge>
-              {categories.map(cat => (
+              {allCategories.map(cat => (
                 <Badge
                   key={cat.id}
-                  variant="outline"
+                  variant={categorySlug === cat.slug ? 'default' : 'outline'}
                   className="cursor-pointer"
                   onClick={() => handleCategoryChange(cat.slug)}
                 >
