@@ -28,11 +28,12 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // 검색
+    // 검색 (이름, 간단 설명, 상세 설명에서 검색)
     if (search) {
       where.OR = [
         { name: { contains: search } },
-        { description: { contains: search } }
+        { description: { contains: search } },
+        { content: { contains: search } }
       ]
     }
 
