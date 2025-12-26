@@ -70,8 +70,12 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
     if (cached) {
       try {
         const parsedUser = JSON.parse(cached)
-        setUser(parsedUser)
-        return // 캐시가 있으면 API 호출 생략
+        // nickname이 있는 캐시만 유효하게 처리
+        if (parsedUser.nickname) {
+          setUser(parsedUser)
+          return // 캐시가 있으면 API 호출 생략
+        }
+        sessionStorage.removeItem('admin_user')
       } catch {
         sessionStorage.removeItem('admin_user')
       }
