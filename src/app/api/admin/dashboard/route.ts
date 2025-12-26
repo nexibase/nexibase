@@ -9,6 +9,7 @@ export async function GET() {
     const yesterdayStart = new Date(todayStart.getTime() - 24 * 60 * 60 * 1000)
     const lastWeekStart = new Date(todayStart.getTime() - 7 * 24 * 60 * 60 * 1000)
     const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate())
+    const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
 
     // 통계 데이터 조회
     const [
@@ -19,7 +20,22 @@ export async function GET() {
       todayActiveUsers,
       yesterdayActiveUsers,
       recentUsers,
-      recentPosts
+      recentPosts,
+      // 쇼핑몰 통계
+      totalOrders,
+      thisMonthOrders,
+      lastMonthOrders,
+      totalRevenue,
+      thisMonthRevenue,
+      lastMonthRevenue,
+      totalProducts,
+      pendingOrders,
+      recentOrders,
+      popularProducts,
+      popularPosts,
+      // 기간별 추이 데이터 (최근 7일)
+      dailyOrders,
+      dailyUsers
     ] = await Promise.all([
       // 총 회원수
       prisma.user.count({
@@ -93,7 +109,114 @@ export async function GET() {
             }
           }
         }
-      })
+      }),
+      // 총 주문수
+      prisma.order.count(),
+      // 이번달 주문수
+      prisma.order.count({
+        where: { createdAt: { gte: thisMonthStart } }
+      }),
+      // 지난달 주문수
+      prisma.order.count({
+        where: {
+          createdAt: {
+            gte: lastMonthStart,
+            lt: thisMonthStart
+          }
+        }
+      }),
+      // 총 매출 (완료된 주문)
+      prisma.order.aggregate({
+        where: { status: { in: ['paid', 'preparing', 'shipped', 'delivered'] } },
+        _sum: { finalPrice: true }
+      }),
+      // 이번달 매출
+      prisma.order.aggregate({
+        where: {
+          status: { in: ['paid', 'preparing', 'shipped', 'delivered'] },
+          createdAt: { gte: thisMonthStart }
+        },
+        _sum: { finalPrice: true }
+      }),
+      // 지난달 매출
+      prisma.order.aggregate({
+        where: {
+          status: { in: ['paid', 'preparing', 'shipped', 'delivered'] },
+          createdAt: {
+            gte: lastMonthStart,
+            lt: thisMonthStart
+          }
+        },
+        _sum: { finalPrice: true }
+      }),
+      // 총 상품수
+      prisma.product.count({
+        where: { isActive: true }
+      }),
+      // 처리 대기 주문
+      prisma.order.count({
+        where: { status: 'paid' }
+      }),
+      // 최근 주문 5개
+      prisma.order.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+        select: {
+          id: true,
+          orderNo: true,
+          finalPrice: true,
+          status: true,
+          createdAt: true,
+          user: {
+            select: { nickname: true }
+          }
+        }
+      }),
+      // 인기 상품 5개
+      prisma.product.findMany({
+        where: { isActive: true },
+        orderBy: [{ soldCount: 'desc' }, { viewCount: 'desc' }],
+        take: 5,
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          price: true,
+          soldCount: true,
+          viewCount: true,
+          images: true
+        }
+      }),
+      // 인기 게시글 5개
+      prisma.post.findMany({
+        where: { status: { not: "deleted" } },
+        orderBy: [{ viewCount: 'desc' }, { likeCount: 'desc' }],
+        take: 5,
+        select: {
+          id: true,
+          title: true,
+          viewCount: true,
+          likeCount: true,
+          commentCount: true,
+          board: { select: { slug: true, name: true } }
+        }
+      }),
+      // 최근 7일 주문 추이
+      prisma.$queryRaw`
+        SELECT DATE(createdAt) as date, COUNT(*) as count, SUM(finalPrice) as revenue
+        FROM orders
+        WHERE createdAt >= ${lastWeekStart}
+        GROUP BY DATE(createdAt)
+        ORDER BY date ASC
+      `,
+      // 최근 7일 신규 가입자 추이
+      prisma.$queryRaw`
+        SELECT DATE(createdAt) as date, COUNT(*) as count
+        FROM users
+        WHERE createdAt >= ${lastWeekStart} AND deletedAt IS NULL
+        GROUP BY DATE(createdAt)
+        ORDER BY date ASC
+      `
     ])
 
     // 증감률 계산
@@ -109,6 +232,47 @@ export async function GET() {
       ? ((todayActiveUsers - yesterdayActiveUsers) / yesterdayActiveUsers * 100).toFixed(1)
       : "0"
 
+    // 주문 증감률
+    const orderGrowth = lastMonthOrders > 0
+      ? ((thisMonthOrders - lastMonthOrders) / lastMonthOrders * 100).toFixed(1)
+      : "0"
+
+    // 매출 증감률
+    const thisMonthRevenueValue = thisMonthRevenue._sum.finalPrice || 0
+    const lastMonthRevenueValue = lastMonthRevenue._sum.finalPrice || 0
+    const revenueGrowth = lastMonthRevenueValue > 0
+      ? ((thisMonthRevenueValue - lastMonthRevenueValue) / lastMonthRevenueValue * 100).toFixed(1)
+      : "0"
+
+    // 최근 7일 추이 데이터 정리 (빈 날짜 채우기)
+    const last7Days = []
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(todayStart.getTime() - i * 24 * 60 * 60 * 1000)
+      last7Days.push(date.toISOString().split('T')[0])
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const orderTrendMap = new Map((dailyOrders as any[]).map(d => [
+      new Date(d.date).toISOString().split('T')[0],
+      { count: Number(d.count), revenue: Number(d.revenue) }
+    ]))
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const userTrendMap = new Map((dailyUsers as any[]).map(d => [
+      new Date(d.date).toISOString().split('T')[0],
+      Number(d.count)
+    ]))
+
+    const orderTrend = last7Days.map(date => ({
+      date,
+      orders: orderTrendMap.get(date)?.count || 0,
+      revenue: orderTrendMap.get(date)?.revenue || 0
+    }))
+
+    const userTrend = last7Days.map(date => ({
+      date,
+      count: userTrendMap.get(date) || 0
+    }))
+
     return NextResponse.json({
       stats: {
         totalUsers,
@@ -118,8 +282,28 @@ export async function GET() {
         activeUsers: todayActiveUsers,
         activeUserGrowth: parseFloat(activeUserGrowth)
       },
+      shopStats: {
+        totalOrders,
+        thisMonthOrders,
+        orderGrowth: parseFloat(orderGrowth),
+        totalRevenue: totalRevenue._sum.finalPrice || 0,
+        thisMonthRevenue: thisMonthRevenueValue,
+        revenueGrowth: parseFloat(revenueGrowth),
+        totalProducts,
+        pendingOrders
+      },
       recentUsers,
-      recentPosts
+      recentPosts,
+      recentOrders,
+      popularProducts: popularProducts.map(p => ({
+        ...p,
+        image: p.images ? JSON.parse(p.images)[0] : null
+      })),
+      popularPosts,
+      trends: {
+        orders: orderTrend,
+        users: userTrend
+      }
     })
   } catch (error) {
     console.error("Dashboard API error:", error)
