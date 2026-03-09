@@ -5,6 +5,9 @@ import path from 'path'
 import sharp from 'sharp'
 import { getAuthUser } from '@/lib/auth'
 
+// Path Traversal 방지: 안전한 경로 문자만 허용 (영숫자, 하이픈, 언더스코어)
+const SAFE_PATH_SEGMENT = /^[a-zA-Z0-9_-]+$/
+
 // 허용 이미지 타입
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
 const MAX_SIZE = 2 * 1024 * 1024 // 2MB (리사이징 전)
@@ -60,6 +63,22 @@ export async function POST(request: NextRequest) {
     const random = Math.random().toString(36).substring(2, 8)
     const filename = `${timestamp}-${random}.webp`
 
+    // Path Traversal 방지: productId 검증
+    if (productId && !SAFE_PATH_SEGMENT.test(productId)) {
+      return NextResponse.json(
+        { error: '잘못된 상품 ID 형식입니다.' },
+        { status: 400 }
+      )
+    }
+
+    // Path Traversal 방지: folder 검증
+    if (folder && !SAFE_PATH_SEGMENT.test(folder)) {
+      return NextResponse.json(
+        { error: '잘못된 폴더 이름입니다.' },
+        { status: 400 }
+      )
+    }
+
     // 폴더 구조 결정
     let uploadDir: string
     let urlPath: string
@@ -79,6 +98,16 @@ export async function POST(request: NextRequest) {
       const month = String(now.getMonth() + 1).padStart(2, '0')
       uploadDir = path.join(process.cwd(), 'public', 'uploads', String(year), month)
       urlPath = `/uploads/${year}/${month}`
+    }
+
+    // Path Traversal 이중 검증: 최종 경로가 uploads/ 내부인지 확인
+    const allowedBase = path.resolve(process.cwd(), 'public', 'uploads')
+    const resolvedDir = path.resolve(uploadDir)
+    if (!resolvedDir.startsWith(allowedBase + path.sep) && resolvedDir !== allowedBase) {
+      return NextResponse.json(
+        { error: '잘못된 업로드 경로입니다.' },
+        { status: 400 }
+      )
     }
 
     // 디렉토리 생성
