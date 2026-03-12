@@ -21,6 +21,7 @@ import {
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import { escapeHtml } from "@/lib/sanitize"
 
 interface PostResult {
   id: number
@@ -261,9 +262,13 @@ function SearchContent() {
   }
 
   const highlightText = (text: string, searchQuery: string) => {
-    if (!searchQuery.trim()) return text
-    const regex = new RegExp(`(${searchQuery.split(/\s+/).join('|')})`, 'gi')
-    return text.replace(regex, '<mark class="bg-yellow-200 dark:bg-yellow-800 px-0.5 rounded">$1</mark>')
+    if (!searchQuery.trim()) return escapeHtml(text)
+    const escapedText = escapeHtml(text)
+    const escapedTerms = searchQuery.split(/\s+/).map(term =>
+      escapeHtml(term).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    )
+    const regex = new RegExp(`(${escapedTerms.join('|')})`, 'gi')
+    return escapedText.replace(regex, '<mark class="bg-yellow-200 dark:bg-yellow-800 px-0.5 rounded">$1</mark>')
   }
 
   const tabs = [

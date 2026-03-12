@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from "react"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Header, Footer } from "@/components/layout"
+import { sanitizeHtml } from "@/lib/sanitize"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -1201,7 +1202,7 @@ export default function ProductDetailPage() {
                   {product.content ? (
                     <div
                       className="prose prose-sm max-w-none dark:prose-invert"
-                      dangerouslySetInnerHTML={{ __html: product.content }}
+                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(product.content) }}
                     />
                   ) : (
                     <p className="text-muted-foreground text-center py-12">

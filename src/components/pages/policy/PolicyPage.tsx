@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Header, Footer } from "@/components/layout"
 import Link from "next/link"
+import { sanitizeHtml } from "@/lib/sanitize"
 
 interface Policy {
   id: number
@@ -177,7 +178,7 @@ export default function PolicyPage() {
           <CardContent>
             <div
               className="prose dark:prose-invert prose-sm sm:prose-base max-w-none"
-              dangerouslySetInnerHTML={{ __html: policy.content }}
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(policy.content) }}
             />
           </CardContent>
         </Card>

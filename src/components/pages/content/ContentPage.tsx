@@ -7,6 +7,7 @@ import { Loader2, FileText, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Header, Footer } from "@/components/layout"
 import Link from "next/link"
+import { sanitizeHtml } from "@/lib/sanitize"
 
 interface Content {
   id: number
@@ -101,7 +102,7 @@ export default function ContentPage() {
           <CardContent>
             <div
               className="prose dark:prose-invert prose-sm sm:prose-base max-w-none"
-              dangerouslySetInnerHTML={{ __html: content.content }}
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(content.content) }}
             />
           </CardContent>
         </Card>

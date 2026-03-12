@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAuthUser } from '@/lib/auth'
+import { sanitizeHtml } from '@/lib/sanitize'
 
 // 게시글 목록 조회
 export async function GET(
@@ -246,7 +247,7 @@ export async function POST(
           boardId: board.id,
           authorId: user.id,
           title: title.trim(),
-          content: content.trim(),
+          content: sanitizeHtml(content.trim()),
           isNotice: isNotice && user.role === 'admin', // 관리자만 공지 가능
           isSecret: isSecret && board.useSecret,
           ip

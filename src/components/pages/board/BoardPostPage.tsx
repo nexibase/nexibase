@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { UserLayout } from "@/components/layout/UserLayout"
+import { sanitizeHtml } from "@/lib/sanitize"
 import {
   Loader2,
   ArrowLeft,
@@ -657,7 +658,7 @@ export default function BoardPostPage() {
             {/* 본문 */}
             <div
               className="tiptap prose dark:prose-invert max-w-none mb-6"
-              dangerouslySetInnerHTML={{ __html: post.content }}
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.content) }}
             />
 
             {/* 갤러리 형식: 이미지 갤러리 */}

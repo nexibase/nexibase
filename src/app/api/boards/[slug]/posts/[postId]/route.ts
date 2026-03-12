@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAuthUser } from '@/lib/auth'
+import { sanitizeHtml } from '@/lib/sanitize'
 
 // 게시글 상세 조회
 export async function GET(
@@ -261,7 +262,7 @@ export async function PUT(
         where: { id: postId },
         data: {
           title: title?.trim() || post.title,
-          content: content?.trim() || post.content,
+          content: content ? sanitizeHtml(content.trim()) : post.content,
           isNotice: isNotice !== undefined ? (isNotice && user.role === 'admin') : post.isNotice,
           isSecret: isSecret !== undefined ? (isSecret && board.useSecret) : post.isSecret
         }
