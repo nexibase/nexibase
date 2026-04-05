@@ -218,6 +218,7 @@ async function main() {
       let price = startingPrice
       let actualBids = 0
       let lastBidderId = -1
+      let elapsed = 0
 
       for (let b = 0; b < maxBids; b++) {
         const nextPrice = price + increment * rand(1, 3)
@@ -230,13 +231,14 @@ async function main() {
           bidderUser = pick(bidders)
         }
         lastBidderId = bidderUser.id
+        elapsed += rand(300_000, 3_600_000)
         await prisma.bid.create({
           data: {
             auctionId: auction.id,
             userId: bidderUser.id,
             amount: price,
             isAutoBid: false,
-            createdAt: new Date(startsAt.getTime() + (b + 1) * rand(300_000, 3_600_000)),
+            createdAt: new Date(startsAt.getTime() + elapsed),
           },
         })
       }
@@ -253,6 +255,7 @@ async function main() {
       let actualBids = 0
       let lastBidderId = -1
       let winnerId: number | null = null
+      let elapsed = 0
 
       for (let b = 0; b < maxBids; b++) {
         const nextPrice = price + increment * rand(1, 3)
@@ -265,13 +268,14 @@ async function main() {
         }
         lastBidderId = bidderUser.id
         winnerId = bidderUser.id
+        elapsed += rand(300_000, 7_200_000)
         await prisma.bid.create({
           data: {
             auctionId: auction.id,
             userId: bidderUser.id,
             amount: price,
             isAutoBid: false,
-            createdAt: new Date(startsAt.getTime() + (b + 1) * rand(300_000, 7_200_000)),
+            createdAt: new Date(startsAt.getTime() + elapsed),
           },
         })
       }

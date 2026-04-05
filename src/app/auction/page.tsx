@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { AuctionCard } from "@/components/auction/AuctionCard"
 import { Gavel, ChevronLeft, ChevronRight } from "lucide-react"
@@ -26,6 +26,14 @@ const STATUS_TABS = [
 ]
 
 export default function AuctionListPage() {
+  return (
+    <Suspense>
+      <AuctionListContent />
+    </Suspense>
+  )
+}
+
+function AuctionListContent() {
   const searchParams = useSearchParams()
   const initialPage = parseInt(searchParams.get("page") || "1")
   const initialStatus = searchParams.get("status") || ""
