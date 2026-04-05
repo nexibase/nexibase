@@ -343,7 +343,7 @@ export default function AuctionDetailPage() {
                     <div className="mb-6 p-4 border border-border rounded-md text-center">
                       <p className="text-sm text-muted-foreground">
                         문의를 작성하려면{" "}
-                        <a href="/login" className="text-primary hover:underline">
+                        <a href={`/login?callbackUrl=${encodeURIComponent(`/auction/${auctionId}`)}`} className="text-primary hover:underline">
                           로그인
                         </a>
                         이 필요합니다.
@@ -483,7 +483,7 @@ export default function AuctionDetailPage() {
                 입찰하려면 로그인이 필요합니다.
               </p>
               <a
-                href="/login"
+                href={`/login?callbackUrl=${encodeURIComponent(`/auction/${auctionId}`)}`}
                 className="text-sm text-primary hover:underline"
               >
                 로그인하기

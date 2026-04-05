@@ -437,7 +437,7 @@ export default function Header() {
                       </>
                     ) : (
                       <>
-                        <Link href="/login">
+                        <Link href={`/login?callbackUrl=${encodeURIComponent(pathname)}`}>
                           <Button variant="ghost" size="sm">로그인</Button>
                         </Link>
                         <Link href="/signup">
@@ -463,7 +463,7 @@ export default function Header() {
                         </Avatar>
                       </Link>
                     ) : (
-                      <Link href="/login">
+                      <Link href={`/login?callbackUrl=${encodeURIComponent(pathname)}`}>
                         <Button variant="ghost" size="sm" className="text-xs px-2">로그인</Button>
                       </Link>
                     )}
