@@ -105,54 +105,47 @@ async function main() {
   console.log('👤 유저 확인 중...')
   const userCount = await prisma.user.count()
 
-  let seller: { id: number; nickname: string }
-  let bidder: { id: number; nickname: string }
+  const hashedPw = await bcrypt.hash('password123!', 10)
 
-  if (userCount < 1) {
-    console.log('   유저 없음 → 테스트 유저 2명 생성')
-    const hashedPw = await bcrypt.hash('password123!', 10)
+  // 입찰자 목록
+  const bidderData = [
+    { email: 'seller@test.com', nickname: '경매판매자', name: '테스트판매자' },
+    { email: 'bidder1@test.com', nickname: '김민수', name: '김민수' },
+    { email: 'bidder2@test.com', nickname: '이서연', name: '이서연' },
+    { email: 'bidder3@test.com', nickname: '박지훈', name: '박지훈' },
+    { email: 'bidder4@test.com', nickname: '최동현', name: '최동현' },
+    { email: 'bidder5@test.com', nickname: '한예린', name: '한예린' },
+    { email: 'bidder6@test.com', nickname: '손준서', name: '손준서' },
+    { email: 'bidder7@test.com', nickname: '임재현', name: '임재현' },
+    { email: 'bidder8@test.com', nickname: '정수아', name: '정수아' },
+    { email: 'bidder9@test.com', nickname: '강태우', name: '강태우' },
+    { email: 'bidder10@test.com', nickname: '윤하늘', name: '윤하늘' },
+  ]
 
-    seller = await prisma.user.upsert({
-      where: { email: 'seller@test.com' },
+  const users: { id: number; nickname: string }[] = []
+
+  for (const data of bidderData) {
+    const user = await prisma.user.upsert({
+      where: { email: data.email },
       update: {},
       create: {
-        email: 'seller@test.com',
-        nickname: '경매판매자',
+        email: data.email,
+        nickname: data.nickname,
         password: hashedPw,
         role: 'user',
         status: 'active',
-        name: '테스트판매자',
+        name: data.name,
       },
       select: { id: true, nickname: true },
     })
-
-    bidder = await prisma.user.upsert({
-      where: { email: 'bidder@test.com' },
-      update: {},
-      create: {
-        email: 'bidder@test.com',
-        nickname: '경매입찰자',
-        password: hashedPw,
-        role: 'user',
-        status: 'active',
-        name: '테스트입찰자',
-      },
-      select: { id: true, nickname: true },
-    })
-
-    console.log(`   판매자 생성: ${seller.nickname} (id: ${seller.id})`)
-    console.log(`   입찰자 생성: ${bidder.nickname} (id: ${bidder.id})`)
-  } else {
-    // 기존 유저 재활용 (첫 번째 = 판매자, 두 번째 이후 = 입찰자)
-    const users = await prisma.user.findMany({
-      take: 2,
-      orderBy: { id: 'asc' },
-      select: { id: true, nickname: true },
-    })
-    seller = users[0]
-    bidder = users.length > 1 ? users[1] : users[0]
-    console.log(`   기존 유저 사용 — 판매자: ${seller.nickname}, 입찰자: ${bidder.nickname}`)
+    users.push(user)
   }
+
+  const seller = users[0]
+  const bidders = users.slice(1) // 10명의 입찰자
+
+  console.log(`   판매자: ${seller.nickname} (id: ${seller.id})`)
+  console.log(`   입찰자: ${bidders.map(b => b.nickname).join(', ')} (${bidders.length}명)`)
   console.log()
 
   // 3. 경매 생성
@@ -215,21 +208,28 @@ async function main() {
       },
     })
 
-    // 4. 입찰 생성
+    // 4. 입찰 생성 (여러 입찰자가 번갈아 입찰)
     if (status === 'active') {
       const maxBids = rand(3, 10)
       let price = startingPrice
       let actualBids = 0
+      let lastBidderId = -1
 
       for (let b = 0; b < maxBids; b++) {
         const nextPrice = price + increment * rand(1, 3)
-        if (nextPrice >= 1000) break  // 1000원 미만까지만
+        if (nextPrice >= 1000) break
         price = nextPrice
         actualBids++
+        // 이전 입찰자와 다른 입찰자 선택
+        let bidderUser = pick(bidders)
+        while (bidderUser.id === lastBidderId && bidders.length > 1) {
+          bidderUser = pick(bidders)
+        }
+        lastBidderId = bidderUser.id
         await prisma.bid.create({
           data: {
             auctionId: auction.id,
-            userId: bidder.id,
+            userId: bidderUser.id,
             amount: price,
             isAutoBid: false,
             createdAt: new Date(startsAt.getTime() + (b + 1) * rand(300_000, 3_600_000)),
@@ -247,16 +247,24 @@ async function main() {
       const maxBids = rand(5, 15)
       let price = startingPrice
       let actualBids = 0
+      let lastBidderId = -1
+      let winnerId: number | null = null
 
       for (let b = 0; b < maxBids; b++) {
         const nextPrice = price + increment * rand(1, 3)
-        if (nextPrice >= 1000) break  // 1000원 미만까지만
+        if (nextPrice >= 1000) break
         price = nextPrice
         actualBids++
+        let bidderUser = pick(bidders)
+        while (bidderUser.id === lastBidderId && bidders.length > 1) {
+          bidderUser = pick(bidders)
+        }
+        lastBidderId = bidderUser.id
+        winnerId = bidderUser.id
         await prisma.bid.create({
           data: {
             auctionId: auction.id,
-            userId: bidder.id,
+            userId: bidderUser.id,
             amount: price,
             isAutoBid: false,
             createdAt: new Date(startsAt.getTime() + (b + 1) * rand(300_000, 7_200_000)),
@@ -269,7 +277,7 @@ async function main() {
         data: {
           currentPrice: price,
           bidCount: actualBids,
-          winnerId: actualBids > 0 ? bidder.id : null,
+          winnerId,
         },
       })
 
