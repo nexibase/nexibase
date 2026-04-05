@@ -357,7 +357,7 @@ model Order {
 model OrderItem {
   id          Int     @id @default(autoincrement())
   orderId     Int
-  productId   Int
+  productId   Int?
   optionId    Int?
   productName String  @db.VarChar(200)
   optionText  String? @db.VarChar(200)
@@ -365,7 +365,7 @@ model OrderItem {
   quantity    Int
   subtotal    Int
   order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product     Product @relation(fields: [productId], references: [id])
+  product     Product? @relation(fields: [productId], references: [id])
 
   @@index([orderId])
   @@index([productId])

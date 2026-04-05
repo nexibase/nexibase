@@ -113,7 +113,7 @@ export async function POST(
           deliveryFee,
           finalPrice,
           items: [{
-            productId: 0,
+            productId: null,
             productName: `[경매] ${auction.title}`,
             optionId: null,
             optionText: null,
@@ -140,7 +140,7 @@ export async function POST(
           deliveryFee,
           finalPrice,
           items: [{
-            productId: 0,
+            productId: null,
             productName: `[경매] ${auction.title}`,
             optionId: null,
             optionText: null,
