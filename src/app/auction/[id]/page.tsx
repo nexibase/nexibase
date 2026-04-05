@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useParams, useSearchParams } from "next/navigation"
-import { AuctionStatusBadge } from "@/components/auction/AuctionStatusBadge"
 import { AuctionTimer } from "@/components/auction/AuctionTimer"
 import { BidForm } from "@/components/auction/BidForm"
 import { BidHistory } from "@/components/auction/BidHistory"
@@ -232,54 +231,52 @@ export default function AuctionDetailPage() {
           </div>
 
           {/* 오른쪽: 경매 정보 */}
-          <div className="space-y-4">
-            {/* 상태 배지 + 제목 */}
-            <div>
-              <AuctionStatusBadge status={auction.status} />
-              <h2 className="text-lg font-bold mt-2">{auction.title}</h2>
-              <div className="flex items-center justify-between mt-1">
-                <span className="text-sm text-muted-foreground">
-                  판매자: {auction.seller.nickname}
-                </span>
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                  <Users className="w-3.5 h-3.5" />
-                  {viewerCount}명 시청중
-                </div>
+          <div>
+            {/* 판매자 + 시청자 */}
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-sm text-muted-foreground">
+                판매자: {auction.seller.nickname}
+              </span>
+              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                <Users className="w-3.5 h-3.5" />
+                {viewerCount}명 시청중
               </div>
             </div>
 
-            {/* 가격 정보 */}
-            <div className="border-t border-border pt-4 space-y-3">
-              <div className="flex justify-between items-baseline">
-                <span className="text-sm font-medium">현재가</span>
-                <span className="text-2xl font-bold text-red-500">
-                  {auction.currentPrice.toLocaleString()}
-                  <span className="text-base">원</span>
-                </span>
-              </div>
-              <div className="flex justify-between text-sm">
+            {/* 현재가 */}
+            <div className="flex justify-between items-baseline py-3 border-t border-border">
+              <span className="font-medium">현재가</span>
+              <span className="text-3xl font-bold text-red-500">
+                {auction.currentPrice.toLocaleString()}
+                <span className="text-lg font-medium">원</span>
+              </span>
+            </div>
+
+            {/* 가격 상세 */}
+            <div className="space-y-2 py-3 border-t border-border text-sm">
+              <div className="flex justify-between">
                 <span className="text-muted-foreground">시작가</span>
                 <span>{auction.startingPrice.toLocaleString()}원</span>
               </div>
               {auction.buyNowPrice && (
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between">
                   <span className="text-muted-foreground">즉시구매가</span>
                   <span className="font-medium">{auction.buyNowPrice.toLocaleString()}원</span>
                 </div>
               )}
-              <div className="flex justify-between text-sm">
+              <div className="flex justify-between">
                 <span className="text-muted-foreground">입찰 단위</span>
                 <span>{auction.bidIncrement.toLocaleString()}원</span>
               </div>
-              <div className="flex justify-between text-sm">
+              <div className="flex justify-between">
                 <span className="text-muted-foreground">입찰 횟수</span>
                 <span>{auction.bidCount}회</span>
               </div>
             </div>
 
             {/* 남은 시간 */}
-            <div className="border-t border-border pt-4">
-              <p className="text-sm text-muted-foreground mb-1">남은 시간</p>
+            <div className="py-3 border-t border-border">
+              <p className="text-sm text-muted-foreground mb-1.5">남은 시간</p>
               <span className="inline-block px-3 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded text-sm font-mono font-medium">
                 <AuctionTimer
                   endsAt={auction.endsAt}
@@ -291,24 +288,23 @@ export default function AuctionDetailPage() {
 
             {/* 종료된 경매 */}
             {auction.status === "ended" && (
-              <div className="border-t border-border pt-4 text-center">
+              <div className="py-4 border-t border-border text-center">
                 {auction.winner ? (
-                  <>
-                    <p className="text-sm text-muted-foreground">낙찰자</p>
-                    <p className="text-lg font-bold">{auction.winner.nickname}</p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {auction.currentPrice.toLocaleString()}원에 낙찰
-                    </p>
-                  </>
+                  <p className="text-sm">
+                    <span className="font-bold">{auction.winner.nickname}</span>
+                    <span className="text-muted-foreground">님이 </span>
+                    <span className="font-bold text-red-500">{auction.currentPrice.toLocaleString()}원</span>
+                    <span className="text-muted-foreground">에 낙찰</span>
+                  </p>
                 ) : (
-                  <p className="text-muted-foreground">유찰되었습니다.</p>
+                  <p className="text-sm text-muted-foreground">유찰되었습니다.</p>
                 )}
               </div>
             )}
 
-            {/* 입찰 폼 */}
+            {/* 입찰 영역 */}
             {auction.status === "active" && currentUserId && (
-              <div className="border-t border-border pt-4 space-y-3">
+              <div className="pt-3 border-t border-border space-y-3">
                 <BidForm
                   auctionId={auction.id}
                   currentPrice={auction.currentPrice}
@@ -323,7 +319,7 @@ export default function AuctionDetailPage() {
                     type="button"
                     onClick={handleBuyNow}
                     disabled={buyNowLoading}
-                    className="w-full py-2.5 border-2 border-orange-500 text-orange-600 rounded-md font-medium hover:bg-orange-50 dark:hover:bg-orange-950 disabled:opacity-50"
+                    className="w-full py-2.5 border border-orange-400 text-orange-500 rounded-md text-sm font-medium hover:bg-orange-50 dark:hover:bg-orange-950 disabled:opacity-50"
                   >
                     {buyNowLoading
                       ? "처리 중..."
@@ -345,7 +341,7 @@ export default function AuctionDetailPage() {
 
             {/* 로그인 안내 */}
             {auction.status === "active" && !currentUserId && (
-              <div className="border-t border-border pt-4 text-center">
+              <div className="pt-4 border-t border-border text-center">
                 <p className="text-sm text-muted-foreground">
                   입찰하려면{" "}
                   <a
