@@ -7,7 +7,7 @@ import { AuctionTimer } from "@/components/auction/AuctionTimer"
 import { BidForm } from "@/components/auction/BidForm"
 import { BidHistory } from "@/components/auction/BidHistory"
 import { AutoBidForm } from "@/components/auction/AutoBidForm"
-import { Gavel, Users, ArrowLeft, MessageCircle } from "lucide-react"
+import { Gavel, Users, MessageCircle } from "lucide-react"
 import Link from "next/link"
 import { UserLayout } from "@/components/layout/UserLayout"
 
@@ -207,287 +207,281 @@ export default function AuctionDetailPage() {
 
   return (
     <UserLayout>
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <Link
-        href="/auction"
-        className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6"
-      >
-        <ArrowLeft className="w-4 h-4" /> 경매 목록
-      </Link>
+    <div className="max-w-5xl mx-auto px-4 py-8">
+      {/* 상단 제목 */}
+      <h1 className="text-xl font-bold mb-6">{auction.title}</h1>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-        {/* 왼쪽: 상품 정보 */}
-        <div className="lg:col-span-3 space-y-6">
-          {/* 이미지 */}
-          <div className="aspect-[4/3] bg-muted rounded-lg overflow-hidden">
-            {auction.image ? (
-              <img
-                src={auction.image}
-                alt={auction.title}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <Gavel className="w-16 h-16 text-muted-foreground/30" />
-              </div>
-            )}
-          </div>
-
-          {/* 탭 메뉴 */}
+      {/* 상단: 이미지 + 경매 정보 */}
+      <div className="border border-border rounded-lg bg-card p-6 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* 왼쪽: 이미지 */}
           <div>
-            <div className="flex border-b border-border">
-              {[
-                { key: "bids" as const, label: "입찰 히스토리" },
-                { key: "description" as const, label: "상품 설명" },
-                { key: "qna" as const, label: "Q&A" },
-              ].map((tab) => (
-                <button
-                  key={tab.key}
-                  onClick={() => handleTabChange(tab.key)}
-                  className={`px-6 py-3 text-sm font-medium border-b-2 -mb-px transition-colors ${
-                    activeTab === tab.key
-                      ? "border-primary text-primary"
-                      : "border-transparent text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-
-            <div className="py-4">
-              {/* 입찰 히스토리 탭 */}
-              {activeTab === "bids" && (
-                <div className="divide-y divide-border">
-                  {auction.bids.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-8">
-                      아직 입찰이 없습니다.
-                    </p>
-                  ) : (
-                    auction.bids.map((bid) => (
-                      <div
-                        key={bid.id}
-                        className="flex items-center justify-between py-4 px-2"
-                      >
-                        <div className="flex items-center gap-3">
-                          <span className="font-bold text-sm">{bid.user.nickname}</span>
-                          <span className="text-xs text-muted-foreground">
-                            {new Date(bid.createdAt).toLocaleString("ko-KR", {
-                              year: "numeric",
-                              month: "2-digit",
-                              day: "2-digit",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                              second: "2-digit",
-                              hour12: false,
-                            })}
-                          </span>
-                          {bid.isAutoBid && (
-                            <span className="text-xs px-1.5 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 rounded">
-                              자동
-                            </span>
-                          )}
-                        </div>
-                        <span className="font-bold text-red-500 text-sm">
-                          {bid.amount.toLocaleString()}원
-                        </span>
-                      </div>
-                    ))
-                  )}
-                </div>
-              )}
-
-              {/* 상품 설명 탭 */}
-              {activeTab === "description" && (
-                <div className="px-2">
-                  <p className="text-sm whitespace-pre-wrap leading-relaxed">
-                    {auction.description}
-                  </p>
-                </div>
-              )}
-
-              {/* Q&A 탭 */}
-              {activeTab === "qna" && (
-                <div>
-                  {/* 문의 작성 폼 */}
-                  {currentUserId ? (
-                    <form
-                      onSubmit={async (e) => {
-                        e.preventDefault()
-                        const form = e.target as HTMLFormElement
-                        const textarea = form.querySelector("textarea") as HTMLTextAreaElement
-                        const content = textarea.value.trim()
-                        if (!content) return
-
-                        // TODO: Q&A API 연동
-                        alert("문의가 등록되었습니다. (Q&A API 연동 예정)")
-                        textarea.value = ""
-                      }}
-                      className="mb-6"
-                    >
-                      <textarea
-                        placeholder="판매자에게 문의할 내용을 입력하세요."
-                        rows={3}
-                        className="w-full px-3 py-2 border border-border rounded-md bg-background text-sm resize-y"
-                      />
-                      <div className="flex justify-end mt-2">
-                        <button
-                          type="submit"
-                          className="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90"
-                        >
-                          문의하기
-                        </button>
-                      </div>
-                    </form>
-                  ) : (
-                    <div className="mb-6 p-4 border border-border rounded-md text-center">
-                      <p className="text-sm text-muted-foreground">
-                        문의를 작성하려면{" "}
-                        <a href={`/login?callbackUrl=${encodeURIComponent(`/auction/${auctionId}`)}`} className="text-primary hover:underline">
-                          로그인
-                        </a>
-                        이 필요합니다.
-                      </p>
-                    </div>
-                  )}
-
-                  {/* 문의 목록 (비어있음) */}
-                  <div className="text-center py-8">
-                    <MessageCircle className="w-10 h-10 mx-auto text-muted-foreground/30 mb-2" />
-                    <p className="text-sm text-muted-foreground">
-                      등록된 문의가 없습니다.
-                    </p>
-                  </div>
+            <div className="aspect-[4/3] bg-muted rounded-lg overflow-hidden">
+              {auction.image ? (
+                <img
+                  src={auction.image}
+                  alt={auction.title}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <Gavel className="w-16 h-16 text-muted-foreground/30" />
                 </div>
               )}
             </div>
           </div>
-        </div>
 
-        {/* 오른쪽: 입찰 패널 */}
-        <div className="lg:col-span-2 space-y-4">
-          {/* 헤더 */}
-          <div>
-            <div className="flex items-center gap-2 mb-2">
+          {/* 오른쪽: 경매 정보 */}
+          <div className="space-y-4">
+            {/* 상태 배지 + 제목 */}
+            <div>
               <AuctionStatusBadge status={auction.status} />
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <Users className="w-3 h-3" />
-                {viewerCount}명 참여중
+              <h2 className="text-lg font-bold mt-2">{auction.title}</h2>
+              <div className="flex items-center justify-between mt-1">
+                <span className="text-sm text-muted-foreground">
+                  판매자: {auction.seller.nickname}
+                </span>
+                <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                  <Users className="w-3.5 h-3.5" />
+                  {viewerCount}명 시청중
+                </div>
               </div>
             </div>
-            <h1 className="text-xl font-bold">{auction.title}</h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              판매자: {auction.seller.nickname}
-            </p>
-          </div>
 
-          {/* 가격 정보 */}
-          <div className="p-4 border border-border rounded-lg space-y-3">
-            <div className="flex justify-between items-baseline">
-              <span className="text-sm text-muted-foreground">현재가</span>
-              <span className="text-2xl font-bold">
-                {auction.currentPrice.toLocaleString()}
-                <span className="text-sm font-normal">원</span>
-              </span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">시작가</span>
-              <span>{auction.startingPrice.toLocaleString()}원</span>
-            </div>
-            {auction.buyNowPrice && (
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">즉시구매가</span>
-                <span className="text-orange-600 font-medium">
-                  {auction.buyNowPrice.toLocaleString()}원
+            {/* 가격 정보 */}
+            <div className="border-t border-border pt-4 space-y-3">
+              <div className="flex justify-between items-baseline">
+                <span className="text-sm font-medium">현재가</span>
+                <span className="text-2xl font-bold text-red-500">
+                  {auction.currentPrice.toLocaleString()}
+                  <span className="text-base">원</span>
                 </span>
               </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">시작가</span>
+                <span>{auction.startingPrice.toLocaleString()}원</span>
+              </div>
+              {auction.buyNowPrice && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">즉시구매가</span>
+                  <span className="font-medium">{auction.buyNowPrice.toLocaleString()}원</span>
+                </div>
+              )}
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">입찰 단위</span>
+                <span>{auction.bidIncrement.toLocaleString()}원</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">입찰 횟수</span>
+                <span>{auction.bidCount}회</span>
+              </div>
+            </div>
+
+            {/* 남은 시간 */}
+            <div className="border-t border-border pt-4">
+              <p className="text-sm text-muted-foreground mb-1">남은 시간</p>
+              <span className="inline-block px-3 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 rounded text-sm font-mono font-medium">
+                <AuctionTimer
+                  endsAt={auction.endsAt}
+                  status={auction.status}
+                  onExpired={fetchAuction}
+                />
+              </span>
+            </div>
+
+            {/* 종료된 경매 */}
+            {auction.status === "ended" && (
+              <div className="border-t border-border pt-4 text-center">
+                {auction.winner ? (
+                  <>
+                    <p className="text-sm text-muted-foreground">낙찰자</p>
+                    <p className="text-lg font-bold">{auction.winner.nickname}</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {auction.currentPrice.toLocaleString()}원에 낙찰
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-muted-foreground">유찰되었습니다.</p>
+                )}
+              </div>
             )}
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">최소 입찰 단위</span>
-              <span>{auction.bidIncrement.toLocaleString()}원</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">입찰 횟수</span>
-              <span>{auction.bidCount}회</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">남은 시간</span>
-              <AuctionTimer
-                endsAt={auction.endsAt}
-                status={auction.status}
-                onExpired={fetchAuction}
-              />
-            </div>
-          </div>
 
-          {/* 종료된 경매 */}
-          {auction.status === "ended" && (
-            <div className="p-4 border border-border rounded-lg bg-muted/30 text-center">
-              {auction.winner ? (
-                <>
-                  <p className="text-sm text-muted-foreground">낙찰자</p>
-                  <p className="text-lg font-bold">{auction.winner.nickname}</p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {auction.currentPrice.toLocaleString()}원에 낙찰
-                  </p>
-                </>
-              ) : (
-                <p className="text-muted-foreground">유찰되었습니다.</p>
-              )}
-            </div>
-          )}
-
-          {/* 입찰 폼 */}
-          {auction.status === "active" && currentUserId && (
-            <>
-              <BidForm
-                auctionId={auction.id}
-                currentPrice={auction.currentPrice}
-                bidIncrement={auction.bidIncrement}
-                status={auction.status}
-                isOwner={isOwner}
-                isHighestBidder={isHighestBidder}
-              />
-
-              {/* 즉시구매 버튼 */}
-              {auction.buyNowPrice && !isOwner && (
-                <button
-                  type="button"
-                  onClick={handleBuyNow}
-                  disabled={buyNowLoading}
-                  className="w-full py-2.5 border-2 border-orange-500 text-orange-600 rounded-md font-medium hover:bg-orange-50 dark:hover:bg-orange-950 disabled:opacity-50"
-                >
-                  {buyNowLoading
-                    ? "처리 중..."
-                    : `${auction.buyNowPrice.toLocaleString()}원 즉시구매`}
-                </button>
-              )}
-
-              {/* 자동 입찰 */}
-              {!isOwner && (
-                <AutoBidForm
+            {/* 입찰 폼 */}
+            {auction.status === "active" && currentUserId && (
+              <div className="border-t border-border pt-4 space-y-3">
+                <BidForm
                   auctionId={auction.id}
                   currentPrice={auction.currentPrice}
                   bidIncrement={auction.bidIncrement}
                   status={auction.status}
                   isOwner={isOwner}
+                  isHighestBidder={isHighestBidder}
                 />
+
+                {auction.buyNowPrice && !isOwner && (
+                  <button
+                    type="button"
+                    onClick={handleBuyNow}
+                    disabled={buyNowLoading}
+                    className="w-full py-2.5 border-2 border-orange-500 text-orange-600 rounded-md font-medium hover:bg-orange-50 dark:hover:bg-orange-950 disabled:opacity-50"
+                  >
+                    {buyNowLoading
+                      ? "처리 중..."
+                      : `${auction.buyNowPrice.toLocaleString()}원 즉시구매`}
+                  </button>
+                )}
+
+                {!isOwner && (
+                  <AutoBidForm
+                    auctionId={auction.id}
+                    currentPrice={auction.currentPrice}
+                    bidIncrement={auction.bidIncrement}
+                    status={auction.status}
+                    isOwner={isOwner}
+                  />
+                )}
+              </div>
+            )}
+
+            {/* 로그인 안내 */}
+            {auction.status === "active" && !currentUserId && (
+              <div className="border-t border-border pt-4 text-center">
+                <p className="text-sm text-muted-foreground">
+                  입찰하려면{" "}
+                  <a
+                    href={`/login?callbackUrl=${encodeURIComponent(`/auction/${auctionId}`)}`}
+                    className="text-primary hover:underline font-medium"
+                  >
+                    로그인
+                  </a>
+                  이 필요합니다.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* 하단: 탭 (입찰 히스토리 / 상품 설명 / Q&A) */}
+      <div>
+        <div className="flex border-b border-border">
+          {[
+            { key: "bids" as const, label: "입찰 히스토리" },
+            { key: "description" as const, label: "상품 설명" },
+            { key: "qna" as const, label: "Q&A" },
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => handleTabChange(tab.key)}
+              className={`px-6 py-3 text-sm font-medium border-b-2 -mb-px transition-colors ${
+                activeTab === tab.key
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="py-4">
+          {/* 입찰 히스토리 */}
+          {activeTab === "bids" && (
+            <div className="divide-y divide-border">
+              {auction.bids.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-8">
+                  아직 입찰이 없습니다.
+                </p>
+              ) : (
+                auction.bids.map((bid) => (
+                  <div
+                    key={bid.id}
+                    className="flex items-center justify-between py-4 px-2"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="font-bold text-sm">{bid.user.nickname}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(bid.createdAt).toLocaleString("ko-KR", {
+                          year: "numeric",
+                          month: "2-digit",
+                          day: "2-digit",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          second: "2-digit",
+                          hour12: false,
+                        })}
+                      </span>
+                      {bid.isAutoBid && (
+                        <span className="text-xs px-1.5 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 rounded">
+                          자동
+                        </span>
+                      )}
+                    </div>
+                    <span className="font-bold text-red-500 text-sm">
+                      {bid.amount.toLocaleString()}원
+                    </span>
+                  </div>
+                ))
               )}
-            </>
+            </div>
           )}
 
-          {/* 로그인 안내 */}
-          {auction.status === "active" && !currentUserId && (
-            <div className="p-4 border border-border rounded-lg text-center">
-              <p className="text-sm text-muted-foreground mb-2">
-                입찰하려면 로그인이 필요합니다.
+          {/* 상품 설명 */}
+          {activeTab === "description" && (
+            <div className="px-2">
+              <p className="text-sm whitespace-pre-wrap leading-relaxed">
+                {auction.description}
               </p>
-              <a
-                href={`/login?callbackUrl=${encodeURIComponent(`/auction/${auctionId}`)}`}
-                className="text-sm text-primary hover:underline"
-              >
-                로그인하기
-              </a>
+            </div>
+          )}
+
+          {/* Q&A */}
+          {activeTab === "qna" && (
+            <div>
+              {currentUserId ? (
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault()
+                    const form = e.target as HTMLFormElement
+                    const textarea = form.querySelector("textarea") as HTMLTextAreaElement
+                    const content = textarea.value.trim()
+                    if (!content) return
+                    alert("문의가 등록되었습니다. (Q&A API 연동 예정)")
+                    textarea.value = ""
+                  }}
+                  className="mb-6"
+                >
+                  <textarea
+                    placeholder="판매자에게 문의할 내용을 입력하세요."
+                    rows={3}
+                    className="w-full px-3 py-2 border border-border rounded-md bg-background text-sm resize-y"
+                  />
+                  <div className="flex justify-end mt-2">
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90"
+                    >
+                      문의하기
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <div className="mb-6 p-4 border border-border rounded-md text-center">
+                  <p className="text-sm text-muted-foreground">
+                    문의를 작성하려면{" "}
+                    <a href={`/login?callbackUrl=${encodeURIComponent(`/auction/${auctionId}`)}`} className="text-primary hover:underline">
+                      로그인
+                    </a>
+                    이 필요합니다.
+                  </p>
+                </div>
+              )}
+              <div className="text-center py-8">
+                <MessageCircle className="w-10 h-10 mx-auto text-muted-foreground/30 mb-2" />
+                <p className="text-sm text-muted-foreground">
+                  등록된 문의가 없습니다.
+                </p>
+              </div>
             </div>
           )}
         </div>
