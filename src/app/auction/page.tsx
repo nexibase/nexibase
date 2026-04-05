@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useSearchParams } from "next/navigation"
 import { AuctionCard } from "@/components/auction/AuctionCard"
 import { Gavel, ChevronLeft, ChevronRight } from "lucide-react"
 import { UserLayout } from "@/components/layout/UserLayout"
@@ -26,23 +26,25 @@ const STATUS_TABS = [
 ]
 
 export default function AuctionListPage() {
-  const router = useRouter()
   const searchParams = useSearchParams()
+  const initialPage = parseInt(searchParams.get("page") || "1")
+  const initialStatus = searchParams.get("status") || ""
 
   const [auctions, setAuctions] = useState<Auction[]>([])
   const [loading, setLoading] = useState(true)
   const [totalPages, setTotalPages] = useState(1)
-
-  const page = parseInt(searchParams.get("page") || "1")
-  const status = searchParams.get("status") || ""
+  const [page, setPage] = useState(initialPage)
+  const [status, setStatus] = useState(initialStatus)
 
   const updateURL = useCallback((newPage: number, newStatus: string) => {
     const params = new URLSearchParams()
     if (newPage > 1) params.set("page", String(newPage))
     if (newStatus) params.set("status", newStatus)
     const qs = params.toString()
-    router.push(`/auction${qs ? `?${qs}` : ""}`)
-  }, [router])
+    window.history.replaceState(null, "", `/auction${qs ? `?${qs}` : ""}`)
+    setPage(newPage)
+    setStatus(newStatus)
+  }, [])
 
   const fetchAuctions = useCallback(async () => {
     setLoading(true)
