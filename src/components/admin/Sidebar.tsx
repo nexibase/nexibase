@@ -26,6 +26,8 @@ import {
   Home,
   User,
   TrendingUp,
+  MenuIcon,
+  LayoutGrid,
 } from "lucide-react"
 
 interface SidebarProps {
@@ -108,6 +110,8 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
     { id: "contents", label: "콘텐츠관리", icon: FileText, path: "/admin/contents" },
     { id: "policies", label: "약관관리", icon: ScrollText, path: "/admin/policies" },
     { id: "settings", label: "환경설정", icon: Settings, path: "/admin/settings" },
+    { id: "menus", label: "메뉴관리", icon: MenuIcon, path: "/admin/menus" },
+    { id: "home-widgets", label: "홈화면관리", icon: LayoutGrid, path: "/admin/home-widgets" },
   ]
 
   const shopMenuItems = [

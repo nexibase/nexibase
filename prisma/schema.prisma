@@ -554,3 +554,43 @@ model AutoBid {
   @@unique([auctionId, userId])
   @@map("auto_bids")
 }
+
+model Menu {
+  id         Int      @id @default(autoincrement())
+  parentId   Int?
+  position   String   @db.VarChar(20)
+  groupName  String?  @db.VarChar(50)
+  label      String   @db.VarChar(100)
+  url        String   @db.VarChar(500)
+  icon       String?  @db.VarChar(50)
+  target     String   @default("_self") @db.VarChar(10)
+  visibility String   @default("all") @db.VarChar(10)
+  isActive   Boolean  @default(true)
+  sortOrder  Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  parent     Menu?    @relation("MenuTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children   Menu[]   @relation("MenuTree")
+
+  @@index([position, sortOrder])
+  @@index([parentId])
+  @@map("menus")
+}
+
+model HomeWidget {
+  id         Int      @id @default(autoincrement())
+  widgetKey  String   @unique @db.VarChar(50)
+  zone       String   @db.VarChar(20)
+  title      String   @db.VarChar(100)
+  settings   String?  @db.Text
+  colSpan    Int      @default(1)
+  rowSpan    Int      @default(1)
+  isActive   Boolean  @default(true)
+  sortOrder  Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([zone, sortOrder])
+  @@map("home_widgets")
+}

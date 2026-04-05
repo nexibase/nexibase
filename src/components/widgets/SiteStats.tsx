@@ -1,0 +1,82 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { Card, CardContent } from "@/components/ui/card"
+import { Users, FileText, MessageSquare, TrendingUp } from "lucide-react"
+
+interface Stats {
+  memberCount: number
+  boardCount: number
+  postCount: number
+  commentCount: number
+}
+
+export default function SiteStats() {
+  const [stats, setStats] = useState<Stats | null>(null)
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await fetch('/api/stats')
+        if (res.ok) {
+          const data = await res.json()
+          setStats(data.stats)
+        }
+      } catch (error) {
+        console.error('SiteStats 데이터 조회 에러:', error)
+      }
+    }
+    fetchStats()
+  }, [])
+
+  if (!stats) return null
+
+  return (
+    <>
+      <Card className="group hover:border-blue-500/50 transition-colors">
+        <CardContent className="p-4 h-full flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <Users className="h-5 w-5 text-blue-500" />
+          </div>
+          <div>
+            <div className="text-2xl font-bold">{stats.memberCount.toLocaleString()}</div>
+            <div className="text-sm text-muted-foreground">회원</div>
+          </div>
+        </CardContent>
+      </Card>
+      <Card className="group hover:border-green-500/50 transition-colors">
+        <CardContent className="p-4 h-full flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <FileText className="h-5 w-5 text-green-500" />
+          </div>
+          <div>
+            <div className="text-2xl font-bold">{stats.postCount.toLocaleString()}</div>
+            <div className="text-sm text-muted-foreground">게시글</div>
+          </div>
+        </CardContent>
+      </Card>
+      <Card className="group hover:border-purple-500/50 transition-colors">
+        <CardContent className="p-4 h-full flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <MessageSquare className="h-5 w-5 text-purple-500" />
+          </div>
+          <div>
+            <div className="text-2xl font-bold">{stats.commentCount.toLocaleString()}</div>
+            <div className="text-sm text-muted-foreground">댓글</div>
+          </div>
+        </CardContent>
+      </Card>
+      <Card className="group hover:border-orange-500/50 transition-colors">
+        <CardContent className="p-4 h-full flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <TrendingUp className="h-5 w-5 text-orange-500" />
+          </div>
+          <div>
+            <div className="text-2xl font-bold">{stats.boardCount.toLocaleString()}</div>
+            <div className="text-sm text-muted-foreground">게시판</div>
+          </div>
+        </CardContent>
+      </Card>
+    </>
+  )
+}

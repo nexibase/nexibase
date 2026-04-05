@@ -30,6 +30,18 @@ interface Board {
   name: string
 }
 
+interface MenuItem {
+  id: number
+  label: string
+  url: string
+  icon: string | null
+  target: string
+  visibility: string
+  isActive: boolean
+  sortOrder: number
+  children: MenuItem[]
+}
+
 interface Notification {
   id: number
   type: string
@@ -49,6 +61,7 @@ export default function Header() {
     site_logo: ''
   })
   const [boards, setBoards] = useState<Board[]>([])
+  const [headerMenus, setHeaderMenus] = useState<MenuItem[]>([])
   const [moreMenuOpen, setMoreMenuOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
@@ -160,10 +173,11 @@ export default function Header() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [userResponse, settingsResponse, boardsResponse] = await Promise.all([
+        const [userResponse, settingsResponse, boardsResponse, menusResponse] = await Promise.all([
           fetch('/api/me'),
           fetch('/api/settings'),
-          fetch('/api/boards?limit=10')
+          fetch('/api/boards?limit=10'),
+          fetch('/api/menus?position=header')
         ])
 
         if (userResponse.ok) {
@@ -184,6 +198,11 @@ export default function Header() {
         if (boardsResponse.ok) {
           const boardsData = await boardsResponse.json()
           setBoards(boardsData.boards || [])
+        }
+
+        if (menusResponse.ok) {
+          const menusData = await menusResponse.json()
+          setHeaderMenus(menusData.menus || [])
         }
       } catch (error) {
         console.error('데이터 조회 에러:', error)
@@ -488,122 +507,124 @@ export default function Header() {
       <div className="bg-background">
         <div className="max-w-6xl mx-auto px-4">
           <nav className="hidden md:flex items-center gap-1 h-11 overflow-x-auto">
-            {/* 홈 */}
-            <Link
-              href="/"
-              className={`px-4 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${
-                pathname === '/'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-              }`}
-            >
-              홈
-            </Link>
+            {/* DB 기반 메뉴 렌더링 */}
+            {headerMenus.length > 0 ? (
+              <>
+                {/* 상위 메뉴 (처음 7개를 탭으로 표시) */}
+                {headerMenus.filter(m => {
+                  if (m.visibility === 'member' && !user) return false
+                  if (m.visibility === 'admin' && user?.role !== 'admin') return false
+                  return true
+                }).slice(0, 7).map((menu, idx) => {
+                  const isActive = menu.url === '/'
+                    ? pathname === '/'
+                    : pathname?.startsWith(menu.url)
+                  const hasChildren = menu.children && menu.children.length > 0
 
-            {/* 인기 */}
-            <Link
-              href="/popular"
-              className={`px-4 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${
-                pathname === '/popular'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-              }`}
-            >
-              🔥 인기
-            </Link>
+                  // 구분선: 첫 4개 메뉴(홈, 인기, 쇼핑, 경매) 이후
+                  const showSeparator = idx === 3 && headerMenus.length > 4
 
-            {/* 쇼핑 */}
-            <Link
-              href="/shop"
-              className={`px-4 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${
-                pathname?.startsWith('/shop')
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-              }`}
-            >
-              🛒 쇼핑
-            </Link>
+                  return (
+                    <div key={menu.id} className="flex items-center">
+                      {showSeparator && <div className="w-px h-5 bg-border mx-1" />}
+                      {hasChildren ? (
+                        <div className="relative" ref={moreMenuRef}>
+                          <button
+                            onClick={() => setMoreMenuOpen(!moreMenuOpen)}
+                            className={`px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-1 whitespace-nowrap ${
+                              moreMenuOpen ? 'bg-muted text-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                            }`}
+                          >
+                            {menu.icon ? `${menu.icon} ` : ''}{menu.label}
+                            <ChevronDown className={`h-4 w-4 transition-transform ${moreMenuOpen ? 'rotate-180' : ''}`} />
+                          </button>
+                          {moreMenuOpen && (
+                            <div className="absolute top-full left-0 mt-1 w-48 bg-background border rounded-lg shadow-lg py-1 z-50">
+                              {menu.children.filter(c => {
+                                if (c.visibility === 'member' && !user) return false
+                                if (c.visibility === 'admin' && user?.role !== 'admin') return false
+                                return true
+                              }).map((child) => (
+                                <Link
+                                  key={child.id}
+                                  href={child.url}
+                                  target={child.target}
+                                  className="block px-4 py-2 text-sm hover:bg-muted transition-colors"
+                                  onClick={() => setMoreMenuOpen(false)}
+                                >
+                                  {child.icon ? `${child.icon} ` : ''}{child.label}
+                                </Link>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <Link
+                          href={menu.url}
+                          target={menu.target}
+                          className={`px-4 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${
+                            isActive
+                              ? 'bg-primary text-primary-foreground'
+                              : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                          }`}
+                        >
+                          {menu.icon ? `${menu.icon} ` : ''}{menu.label}
+                        </Link>
+                      )}
+                    </div>
+                  )
+                })}
 
-            {/* 구분선 */}
-            <div className="w-px h-5 bg-border mx-1" />
-
-            {/* 게시판 탭들 */}
-            {boards.slice(0, 5).map((board) => (
-              <Link
-                key={board.id}
-                href={`/boards/${board.slug}`}
-                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${
-                  isActiveBoard(board.slug)
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                }`}
-              >
-                {board.name}
-              </Link>
-            ))}
-
-            {/* 더보기 메뉴 */}
-            <div className="relative" ref={moreMenuRef}>
-              <button
-                onClick={() => setMoreMenuOpen(!moreMenuOpen)}
-                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-1 ${
-                  moreMenuOpen
-                    ? 'bg-muted text-foreground'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                }`}
-              >
-                더보기
-                <ChevronDown className={`h-4 w-4 transition-transform ${moreMenuOpen ? 'rotate-180' : ''}`} />
-              </button>
-              {moreMenuOpen && (
-                <div className="absolute top-full left-0 mt-1 w-48 bg-background border rounded-lg shadow-lg py-1 z-50">
-                  {boards.slice(5).map((board) => (
-                    <Link
-                      key={board.id}
-                      href={`/boards/${board.slug}`}
-                      className="block px-4 py-2 text-sm hover:bg-muted transition-colors"
-                      onClick={() => setMoreMenuOpen(false)}
+                {/* 나머지 메뉴를 더보기로 */}
+                {headerMenus.filter(m => {
+                  if (m.visibility === 'member' && !user) return false
+                  if (m.visibility === 'admin' && user?.role !== 'admin') return false
+                  return true
+                }).length > 7 && (
+                  <div className="relative" ref={moreMenuRef}>
+                    <button
+                      onClick={() => setMoreMenuOpen(!moreMenuOpen)}
+                      className={`px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-1 ${
+                        moreMenuOpen ? 'bg-muted text-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                      }`}
                     >
-                      {board.name}
-                    </Link>
-                  ))}
-                  <div className="border-t my-1" />
-                  <Link
-                    href="/contents/about"
-                    className="block px-4 py-2 text-sm hover:bg-muted transition-colors"
-                    onClick={() => setMoreMenuOpen(false)}
-                  >
-                    회사소개
-                  </Link>
-                  <Link
-                    href="/contents/faq"
-                    className="block px-4 py-2 text-sm hover:bg-muted transition-colors"
-                    onClick={() => setMoreMenuOpen(false)}
-                  >
-                    자주 묻는 질문
-                  </Link>
-                  <Link
-                    href="/contents/contact"
-                    className="block px-4 py-2 text-sm hover:bg-muted transition-colors"
-                    onClick={() => setMoreMenuOpen(false)}
-                  >
-                    문의하기
-                  </Link>
-                  {user?.role === 'admin' && (
-                    <>
-                      <div className="border-t my-1" />
-                      <Link
-                        href="/admin"
-                        className="block px-4 py-2 text-sm text-primary hover:bg-muted transition-colors"
-                        onClick={() => setMoreMenuOpen(false)}
-                      >
-                        관리자
-                      </Link>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
+                      더보기
+                      <ChevronDown className={`h-4 w-4 transition-transform ${moreMenuOpen ? 'rotate-180' : ''}`} />
+                    </button>
+                    {moreMenuOpen && (
+                      <div className="absolute top-full left-0 mt-1 w-48 bg-background border rounded-lg shadow-lg py-1 z-50">
+                        {headerMenus.filter(m => {
+                          if (m.visibility === 'member' && !user) return false
+                          if (m.visibility === 'admin' && user?.role !== 'admin') return false
+                          return true
+                        }).slice(7).map((menu) => (
+                          <Link
+                            key={menu.id}
+                            href={menu.url}
+                            target={menu.target}
+                            className="block px-4 py-2 text-sm hover:bg-muted transition-colors"
+                            onClick={() => setMoreMenuOpen(false)}
+                          >
+                            {menu.icon ? `${menu.icon} ` : ''}{menu.label}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                {/* 폴백: DB 메뉴가 없을 때 기존 하드코딩 유지 */}
+                <Link href="/" className={`px-4 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${pathname === '/' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>홈</Link>
+                <Link href="/popular" className={`px-4 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${pathname === '/popular' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>인기</Link>
+                <Link href="/shop" className={`px-4 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${pathname?.startsWith('/shop') ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>쇼핑</Link>
+                <div className="w-px h-5 bg-border mx-1" />
+                {boards.slice(0, 5).map((board) => (
+                  <Link key={board.id} href={`/boards/${board.slug}`} className={`px-4 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${isActiveBoard(board.slug) ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>{board.name}</Link>
+                ))}
+              </>
+            )}
           </nav>
 
           {/* 모바일 네비게이션 */}
@@ -641,103 +662,80 @@ export default function Header() {
                 </>
               )}
 
-              <Link
-                href="/"
-                className="block px-3 py-2 text-sm font-medium rounded-md hover:bg-muted"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                홈
-              </Link>
-              <Link
-                href="/popular"
-                className="block px-3 py-2 text-sm font-medium rounded-md hover:bg-muted"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                🔥 인기
-              </Link>
+              {/* DB 기반 모바일 메뉴 */}
+              {headerMenus.length > 0 ? (
+                <>
+                  {headerMenus.filter(m => {
+                    if (m.visibility === 'member' && !user) return false
+                    if (m.visibility === 'admin' && user?.role !== 'admin') return false
+                    return true
+                  }).map((menu) => (
+                    <div key={menu.id}>
+                      <Link
+                        href={menu.url}
+                        target={menu.target}
+                        className={`block px-3 py-2 text-sm font-medium rounded-md ${
+                          (menu.url === '/' ? pathname === '/' : pathname?.startsWith(menu.url))
+                            ? 'bg-primary/10 text-primary'
+                            : 'hover:bg-muted'
+                        }`}
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        {menu.icon ? `${menu.icon} ` : ''}{menu.label}
+                      </Link>
+                      {/* 하위 메뉴 */}
+                      {menu.children && menu.children.length > 0 && (
+                        <div className="ml-4">
+                          {menu.children.filter(c => {
+                            if (c.visibility === 'member' && !user) return false
+                            if (c.visibility === 'admin' && user?.role !== 'admin') return false
+                            return true
+                          }).map((child) => (
+                            <Link
+                              key={child.id}
+                              href={child.url}
+                              target={child.target}
+                              className="block px-3 py-2 text-sm rounded-md hover:bg-muted"
+                              onClick={() => setMobileMenuOpen(false)}
+                            >
+                              {child.icon ? `${child.icon} ` : ''}{child.label}
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </>
+              ) : (
+                <>
+                  {/* 폴백: 하드코딩 메뉴 */}
+                  <Link href="/" className="block px-3 py-2 text-sm font-medium rounded-md hover:bg-muted" onClick={() => setMobileMenuOpen(false)}>홈</Link>
+                  <Link href="/popular" className="block px-3 py-2 text-sm font-medium rounded-md hover:bg-muted" onClick={() => setMobileMenuOpen(false)}>인기</Link>
+                  <div className="border-t my-2" />
+                  {boards.map((board) => (
+                    <Link key={board.id} href={`/boards/${board.slug}`} className={`block px-3 py-2 text-sm rounded-md ${isActiveBoard(board.slug) ? 'bg-primary/10 text-primary' : 'hover:bg-muted'}`} onClick={() => setMobileMenuOpen(false)}>{board.name}</Link>
+                  ))}
+                </>
+              )}
               <div className="border-t my-2" />
-              <div className="px-3 py-1 text-xs font-semibold text-muted-foreground uppercase">게시판</div>
-              {boards.map((board) => (
-                <Link
-                  key={board.id}
-                  href={`/boards/${board.slug}`}
-                  className={`block px-3 py-2 text-sm rounded-md ${
-                    isActiveBoard(board.slug) ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
-                  }`}
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  {board.name}
-                </Link>
-              ))}
-              <div className="border-t my-2" />
-              <div className="px-3 py-1 text-xs font-semibold text-muted-foreground uppercase">쇼핑</div>
-              <Link
-                href="/shop"
-                className={`block px-3 py-2 text-sm rounded-md ${
-                  pathname === '/shop' ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
-                }`}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                상품목록
-              </Link>
+              {/* 장바구니 (항상 표시) */}
               <Link
                 href="/shop/cart"
-                className={`flex items-center gap-2 px-3 py-2 text-sm rounded-md ${
-                  pathname === '/shop/cart' ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
-                }`}
+                className={`flex items-center gap-2 px-3 py-2 text-sm rounded-md ${pathname === '/shop/cart' ? 'bg-primary/10 text-primary' : 'hover:bg-muted'}`}
                 onClick={() => setMobileMenuOpen(false)}
               >
                 장바구니
                 {cartCount > 0 && (
-                  <span className="bg-primary text-primary-foreground text-xs font-bold rounded-full px-2 py-0.5">
-                    {cartCount}
-                  </span>
+                  <span className="bg-primary text-primary-foreground text-xs font-bold rounded-full px-2 py-0.5">{cartCount}</span>
                 )}
               </Link>
               {user && (
-                <Link
-                  href="/shop/mypage"
-                  className={`block px-3 py-2 text-sm rounded-md ${
-                    pathname?.startsWith('/shop/mypage') ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
-                  }`}
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  마이페이지
-                </Link>
+                <Link href="/shop/mypage" className={`block px-3 py-2 text-sm rounded-md ${pathname?.startsWith('/shop/mypage') ? 'bg-primary/10 text-primary' : 'hover:bg-muted'}`} onClick={() => setMobileMenuOpen(false)}>마이페이지</Link>
               )}
-              <div className="border-t my-2" />
-              <div className="px-3 py-1 text-xs font-semibold text-muted-foreground uppercase">정보</div>
-              <Link
-                href="/contents/about"
-                className="block px-3 py-2 text-sm rounded-md hover:bg-muted"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                회사소개
-              </Link>
-              <Link
-                href="/contents/faq"
-                className="block px-3 py-2 text-sm rounded-md hover:bg-muted"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                자주 묻는 질문
-              </Link>
-              <Link
-                href="/contents/contact"
-                className="block px-3 py-2 text-sm rounded-md hover:bg-muted"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                문의하기
-              </Link>
               {user?.role === 'admin' && (
                 <>
                   <div className="border-t my-2" />
-                  <Link
-                    href="/admin"
-                    className="block px-3 py-2 text-sm font-medium text-primary rounded-md hover:bg-muted"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    관리자
-                  </Link>
+                  <Link href="/admin" className="block px-3 py-2 text-sm font-medium text-primary rounded-md hover:bg-muted" onClick={() => setMobileMenuOpen(false)}>관리자</Link>
                 </>
               )}
               {user && (
