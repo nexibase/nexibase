@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
-import { useParams } from "next/navigation"
+import { useParams, useSearchParams } from "next/navigation"
 import { AuctionStatusBadge } from "@/components/auction/AuctionStatusBadge"
 import { AuctionTimer } from "@/components/auction/AuctionTimer"
 import { BidForm } from "@/components/auction/BidForm"
@@ -39,14 +39,26 @@ interface Auction {
 
 export default function AuctionDetailPage() {
   const params = useParams()
+  const searchParams = useSearchParams()
   const auctionId = parseInt(params.id as string)
+
+  const validTabs = ["bids", "description", "qna"] as const
+  type TabType = typeof validTabs[number]
+  const tabParam = searchParams.get("tab") as TabType | null
+  const initialTab = tabParam && validTabs.includes(tabParam) ? tabParam : "bids"
 
   const [auction, setAuction] = useState<Auction | null>(null)
   const [viewerCount, setViewerCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [currentUserId, setCurrentUserId] = useState<number | null>(null)
   const [buyNowLoading, setBuyNowLoading] = useState(false)
-  const [activeTab, setActiveTab] = useState<"bids" | "description" | "qna">("bids")
+  const [activeTab, setActiveTab] = useState<TabType>(initialTab)
+
+  const handleTabChange = (tab: TabType) => {
+    setActiveTab(tab)
+    const qs = tab === "bids" ? "" : `?tab=${tab}`
+    window.history.replaceState(null, "", `/auction/${auctionId}${qs}`)
+  }
   const eventSourceRef = useRef<EventSource | null>(null)
 
   const fetchAuction = useCallback(async () => {
@@ -231,7 +243,7 @@ export default function AuctionDetailPage() {
               ].map((tab) => (
                 <button
                   key={tab.key}
-                  onClick={() => setActiveTab(tab.key)}
+                  onClick={() => handleTabChange(tab.key)}
                   className={`px-6 py-3 text-sm font-medium border-b-2 -mb-px transition-colors ${
                     activeTab === tab.key
                       ? "border-primary text-primary"
