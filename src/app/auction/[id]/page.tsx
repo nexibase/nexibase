@@ -308,11 +308,56 @@ export default function AuctionDetailPage() {
 
               {/* Q&A 탭 */}
               {activeTab === "qna" && (
-                <div className="text-center py-8">
-                  <MessageCircle className="w-10 h-10 mx-auto text-muted-foreground/30 mb-2" />
-                  <p className="text-sm text-muted-foreground">
-                    등록된 문의가 없습니다.
-                  </p>
+                <div>
+                  {/* 문의 작성 폼 */}
+                  {currentUserId ? (
+                    <form
+                      onSubmit={async (e) => {
+                        e.preventDefault()
+                        const form = e.target as HTMLFormElement
+                        const textarea = form.querySelector("textarea") as HTMLTextAreaElement
+                        const content = textarea.value.trim()
+                        if (!content) return
+
+                        // TODO: Q&A API 연동
+                        alert("문의가 등록되었습니다. (Q&A API 연동 예정)")
+                        textarea.value = ""
+                      }}
+                      className="mb-6"
+                    >
+                      <textarea
+                        placeholder="판매자에게 문의할 내용을 입력하세요."
+                        rows={3}
+                        className="w-full px-3 py-2 border border-border rounded-md bg-background text-sm resize-y"
+                      />
+                      <div className="flex justify-end mt-2">
+                        <button
+                          type="submit"
+                          className="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90"
+                        >
+                          문의하기
+                        </button>
+                      </div>
+                    </form>
+                  ) : (
+                    <div className="mb-6 p-4 border border-border rounded-md text-center">
+                      <p className="text-sm text-muted-foreground">
+                        문의를 작성하려면{" "}
+                        <a href="/login" className="text-primary hover:underline">
+                          로그인
+                        </a>
+                        이 필요합니다.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* 문의 목록 (비어있음) */}
+                  <div className="text-center py-8">
+                    <MessageCircle className="w-10 h-10 mx-auto text-muted-foreground/30 mb-2" />
+                    <p className="text-sm text-muted-foreground">
+                      등록된 문의가 없습니다.
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
