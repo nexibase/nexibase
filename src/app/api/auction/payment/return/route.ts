@@ -156,20 +156,40 @@ export async function POST(request: NextRequest) {
     const resultCode = body.resultCode
     const resultMsg = body.resultMsg
 
+    // auctionId 추출 헬퍼
+    const getAuctionIdFromOrder = async (orderNo: string | undefined) => {
+      if (!orderNo) return null
+      try {
+        const pending = await prisma.pendingOrder.findUnique({ where: { orderNo } })
+        if (pending) {
+          const data = JSON.parse(pending.orderData)
+          return data.auctionId || null
+        }
+      } catch {}
+      return null
+    }
+
+    // 에러 리다이렉트 헬퍼 (auctionId가 있으면 상세 페이지로)
+    const errorRedirect = (auctionId: number | null, error: string, message: string) => {
+      const path = auctionId
+        ? `/auction/${auctionId}?error=${error}&message=${encodeURIComponent(message)}`
+        : `/auction?error=${error}&message=${encodeURIComponent(message)}`
+      return redirectTo(path)
+    }
+
     // 인증 실패인 경우
     if (resultCode !== '0000') {
       console.error('이니시스 인증 실패:', resultCode, resultMsg)
 
-      // PendingOrder 삭제
       const oid = body.orderNumber || body.MOID
+      const auctionId = await getAuctionIdFromOrder(oid)
+
+      // PendingOrder 삭제
       if (oid) {
-        await prisma.pendingOrder.deleteMany({
-          where: { orderNo: oid }
-        })
+        await prisma.pendingOrder.deleteMany({ where: { orderNo: oid } })
       }
 
-      // 에러 페이지로 리다이렉트
-      return redirectTo(`/auction?error=payment_failed&message=${encodeURIComponent(resultMsg || '결제 인증에 실패했습니다.')}`)
+      return errorRedirect(auctionId, 'payment_failed', resultMsg || '결제 인증에 실패했습니다.')
     }
 
     // 인증 성공 - 승인 요청
@@ -229,7 +249,7 @@ export async function POST(request: NextRequest) {
 
       if (!pendingOrder) {
         console.error('PendingOrder를 찾을 수 없습니다:', orderNo)
-        return redirectTo(`/auction?error=order_not_found&message=${encodeURIComponent('주문 정보를 찾을 수 없습니다.')}`)
+        return errorRedirect(null, 'order_not_found', '주문 정보를 찾을 수 없습니다.')
       }
 
       const orderData = JSON.parse(pendingOrder.orderData)
@@ -261,7 +281,7 @@ export async function POST(request: NextRequest) {
         // PendingOrder 삭제
         await prisma.pendingOrder.delete({ where: { orderNo } })
 
-        return redirectTo(`/auction?error=amount_mismatch&message=${encodeURIComponent('결제 금액이 일치하지 않습니다.')}`)
+        return errorRedirect(orderData.auctionId, 'amount_mismatch', '결제 금액이 일치하지 않습니다.')
       }
 
       // 실제 주문 생성 (결제 완료 상태로)
@@ -336,18 +356,16 @@ export async function POST(request: NextRequest) {
       // 승인 실패
       console.error('이니시스 승인 실패:', authResult)
 
-      const orderNo = body.orderNumber || body.MOID
-      if (orderNo) {
-        // PendingOrder 삭제
-        await prisma.pendingOrder.deleteMany({
-          where: { orderNo }
-        })
+      const failOrderNo = body.orderNumber || body.MOID
+      const failAuctionId = await getAuctionIdFromOrder(failOrderNo)
+      if (failOrderNo) {
+        await prisma.pendingOrder.deleteMany({ where: { orderNo: failOrderNo } })
       }
 
-      return redirectTo(`/auction?error=approval_failed&message=${encodeURIComponent(authResult.resultMsg || '결제 승인에 실패했습니다.')}`)
+      return errorRedirect(failAuctionId, 'approval_failed', authResult.resultMsg || '결제 승인에 실패했습니다.')
     }
   } catch (error) {
     console.error('결제 처리 에러:', error)
-    return redirectTo(`/auction?error=server_error&message=${encodeURIComponent('결제 처리 중 오류가 발생했습니다.')}`)
+    return errorRedirect(null, 'server_error', '결제 처리 중 오류가 발생했습니다.')
   }
 }

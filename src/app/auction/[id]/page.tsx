@@ -57,6 +57,9 @@ export default function AuctionDetailPage() {
   const [currentUserId, setCurrentUserId] = useState<number | null>(null)
   const [buyNowLoading, setBuyNowLoading] = useState(false)
   const [activeTab, setActiveTab] = useState<TabType>(initialTab)
+  const [paymentError, setPaymentError] = useState<string | null>(
+    searchParams.get("error") ? decodeURIComponent(searchParams.get("message") || "결제에 실패했습니다.") : null
+  )
 
   const handleTabChange = (tab: TabType) => {
     setActiveTab(tab)
@@ -338,11 +341,16 @@ export default function AuctionDetailPage() {
                         <AuctionTimer endsAt={auction.paymentDeadline} status="active" />
                       </p>
                     )}
+                    {paymentError && (
+                      <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950 p-2 rounded">
+                        {paymentError}
+                      </p>
+                    )}
                     <a
                       href={`/auction/${auction.id}/pay`}
                       className="inline-block mt-2 px-6 py-2.5 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90"
                     >
-                      결제하기
+                      {paymentError ? "다시 결제하기" : "결제하기"}
                     </a>
                   </>
                 )}
