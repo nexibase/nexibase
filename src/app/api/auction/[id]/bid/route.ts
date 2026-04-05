@@ -35,6 +35,19 @@ export async function POST(
       )
     }
 
+    // 이용 제한 체크
+    const userWithPenalty = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: { auctionBannedUntil: true },
+    })
+    if (userWithPenalty?.auctionBannedUntil && userWithPenalty.auctionBannedUntil > new Date()) {
+      const bannedUntil = userWithPenalty.auctionBannedUntil.toLocaleDateString("ko-KR")
+      return NextResponse.json(
+        { error: `경매 이용이 제한되어 있습니다. (해제일: ${bannedUntil})` },
+        { status: 403 }
+      )
+    }
+
     const body = await request.json()
     const amount = parseInt(body.amount)
 
