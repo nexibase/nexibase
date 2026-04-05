@@ -15,18 +15,32 @@ export async function GET(request: NextRequest) {
       where.status = status
     }
 
-    const [auctions, total] = await Promise.all([
+    // 상태 우선순위: active → pending → ended, 같은 상태 내에서는 마감 임박순
+    const statusOrder = { active: 0, pending: 1, ended: 2 } as Record<string, number>
+
+    const [rawAuctions, total] = await Promise.all([
       prisma.auction.findMany({
         where,
         include: {
           seller: { select: { id: true, nickname: true, image: true } },
         },
-        orderBy: { createdAt: "desc" },
+        orderBy: [{ endsAt: "asc" }],
         skip,
         take: limit,
       }),
       prisma.auction.count({ where }),
     ])
+
+    // 특정 상태 필터가 없을 때만 상태 우선순위 정렬 적용
+    const auctions = status
+      ? rawAuctions
+      : [...rawAuctions].sort((a: typeof rawAuctions[number], b: typeof rawAuctions[number]) => {
+          const orderDiff = (statusOrder[a.status] ?? 9) - (statusOrder[b.status] ?? 9)
+          if (orderDiff !== 0) return orderDiff
+          // 같은 상태면: active는 마감 임박순, pending은 시작 빠른순, ended는 최근 종료순
+          if (a.status === "ended") return new Date(b.endsAt).getTime() - new Date(a.endsAt).getTime()
+          return new Date(a.endsAt).getTime() - new Date(b.endsAt).getTime()
+        })
 
     return NextResponse.json({
       success: true,
