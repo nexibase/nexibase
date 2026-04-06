@@ -179,6 +179,7 @@ export default function HomeWidgetsAdminPage() {
         }),
       })
       showMessage('설정이 저장되었습니다.')
+      setSelectedWidget(null)
       await fetchWidgets()
     } catch {
       showMessage('저장 실패')
