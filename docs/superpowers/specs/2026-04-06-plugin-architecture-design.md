@@ -32,9 +32,9 @@ export default {
   name: '경매',
   description: '실시간 경매 시스템',
   version: '1.0.0',
-  author: 'kagla',
-  authorDomain: 'https://kagla.com',
-  repository: 'https://github.com/kagla/nexi-auction-plugin',
+  author: 'nexibase',
+  authorDomain: 'https://nexibase.com',
+  repository: 'https://github.com/nexibase/plugin-auction',
   slug: 'auction',           // 기본 URL 경로 (관리자가 DB에서 변경 가능)
   defaultEnabled: false,     // 초기 설치 시 비활성
 }
