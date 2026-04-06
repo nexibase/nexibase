@@ -8,9 +8,6 @@ export { default as BoardPostPage } from './board/BoardPostPage'
 export { default as BoardWritePage } from './board/BoardWritePage'
 export { default as BoardEditPage } from './board/BoardEditPage'
 
-// Policy
-export { default as PolicyPage } from './policy/PolicyPage'
-
 // Search
 export { default as SearchPage } from './search/SearchPage'
 
