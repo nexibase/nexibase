@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { TiptapEditor } from "@/components/editor/TiptapEditor"
+import { TiptapEditor } from "@/components/editors/TiptapEditor"
 import {
   Search,
   Plus,

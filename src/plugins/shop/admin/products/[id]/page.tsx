@@ -53,7 +53,7 @@ import {
 import { CSS } from "@dnd-kit/utilities"
 
 const TiptapEditor = dynamic(
-  () => import("@/components/editor/TiptapEditor").then(mod => mod.TiptapEditor),
+  () => import("@/components/editors/TiptapEditor").then(mod => mod.TiptapEditor),
   {
     ssr: false,
     loading: () => <div className="h-[400px] border rounded-md flex items-center justify-center text-muted-foreground">에디터 로딩 중...</div>

@@ -11,14 +11,14 @@ export interface WidgetDefinition {
   settingsSchema: Record<string, unknown> | null
 }
 
-const WelcomeBanner = dynamic(() => import('@/components/widgets/WelcomeBanner'), { ssr: false })
-const SiteStats = dynamic(() => import('@/components/widgets/SiteStats'), { ssr: false })
-const LatestPosts = dynamic(() => import('@/components/widgets/LatestPosts'), { ssr: false })
-const PopularBoards = dynamic(() => import('@/components/widgets/PopularBoards'), { ssr: false })
-const ShopShortcut = dynamic(() => import('@/components/widgets/ShopShortcut'), { ssr: false })
+const WelcomeBanner = dynamic(() => import('@/widgets/WelcomeBanner'), { ssr: false })
+const SiteStats = dynamic(() => import('@/widgets/SiteStats'), { ssr: false })
+const LatestPosts = dynamic(() => import('@/plugins/boards/widgets/LatestPosts'), { ssr: false })
+const PopularBoards = dynamic(() => import('@/plugins/boards/widgets/PopularBoards'), { ssr: false })
+const ShopShortcut = dynamic(() => import('@/plugins/shop/widgets/ShopShortcut'), { ssr: false })
 const AuctionLive = dynamic(() => import('@/plugins/auction/widgets/AuctionLive'), { ssr: false })
-const CommunityGuide = dynamic(() => import('@/components/widgets/CommunityGuide'), { ssr: false })
-const BoardCards = dynamic(() => import('@/components/widgets/BoardCards'), { ssr: false })
+const CommunityGuide = dynamic(() => import('@/widgets/CommunityGuide'), { ssr: false })
+const BoardCards = dynamic(() => import('@/plugins/boards/widgets/BoardCards'), { ssr: false })
 
 export const widgetRegistry: Record<string, WidgetDefinition> = {
   'welcome-banner': {

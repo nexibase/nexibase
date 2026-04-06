@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { UserLayout } from "@/components/layout/UserLayout"
-import { TiptapEditor } from "@/components/editor/TiptapEditor"
+import { TiptapEditor } from "@/components/editors/TiptapEditor"
 import {
   Loader2,
   ArrowLeft,
