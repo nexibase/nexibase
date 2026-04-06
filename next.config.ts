@@ -1,10 +1,14 @@
 import type { NextConfig } from "next";
+import { pluginRewrites } from "./src/plugins/_rewrites";
 
 const nextConfig: NextConfig = {
   experimental: {
     serverActions: {
       bodySizeLimit: '10mb',
     },
+  },
+  async rewrites() {
+    return pluginRewrites
   },
   images: {
     remotePatterns: [
