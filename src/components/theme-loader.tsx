@@ -1,20 +1,23 @@
-import { prisma } from '@/lib/prisma'
+"use client"
 
-export default async function ThemeLoader() {
-  let themeFolder = 'default'
+import { useState, useEffect } from 'react'
 
-  try {
-    const setting = await prisma.setting.findUnique({
-      where: { key: 'theme_folder' }
-    })
-    if (setting?.value && setting.value !== 'default') {
-      themeFolder = setting.value
-    }
-  } catch {
-    // fallback to default
-  }
+export default function ThemeLoader() {
+  const [themeFolder, setThemeFolder] = useState<string | null>(null)
 
-  if (themeFolder === 'default') return null
+  useEffect(() => {
+    fetch('/api/settings')
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        const folder = data?.settings?.theme_folder
+        if (folder && folder !== 'default') {
+          setThemeFolder(folder)
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  if (!themeFolder) return null
 
   return (
     <link
