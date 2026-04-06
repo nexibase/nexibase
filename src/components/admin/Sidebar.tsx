@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
@@ -29,6 +29,8 @@ import {
   MenuIcon,
   LayoutGrid,
   Puzzle,
+  Gavel,
+  type LucideIcon,
 } from "lucide-react"
 
 interface SidebarProps {
@@ -44,6 +46,60 @@ interface UserInfo {
   role: string
 }
 
+interface AdminMenuItem {
+  label: string
+  icon: string
+  path?: string
+  isGroup?: boolean
+  children?: AdminMenuItem[]
+}
+
+interface PluginInfo {
+  folder: string
+  name: string
+  slug: string
+  enabled: boolean
+  adminMenus: AdminMenuItem[]
+  hasAdmin: boolean
+}
+
+// Icon name to component mapping
+const iconMap: Record<string, LucideIcon> = {
+  LayoutDashboard,
+  Users,
+  MessageSquare,
+  Settings,
+  FileText,
+  ScrollText,
+  ShoppingBag,
+  Package,
+  Truck,
+  ClipboardList,
+  BarChart3,
+  Star,
+  TrendingUp,
+  MenuIcon,
+  LayoutGrid,
+  Puzzle,
+  Gavel,
+  ChevronDown,
+  ChevronRight,
+}
+
+function getIcon(iconName: string): LucideIcon {
+  return iconMap[iconName] || FileText
+}
+
+// Core menu items that are always shown
+const coreMenuItems = [
+  { id: "dashboard", label: "대시보드", icon: LayoutDashboard, path: "/admin" },
+  { id: "users", label: "사용자관리", icon: Users, path: "/admin/users" },
+  { id: "settings", label: "환경설정", icon: Settings, path: "/admin/settings" },
+  { id: "plugins", label: "플러그인관리", icon: Puzzle, path: "/admin/plugins" },
+  { id: "menus", label: "메뉴관리", icon: MenuIcon, path: "/admin/menus" },
+  { id: "home-widgets", label: "홈화면관리", icon: LayoutGrid, path: "/admin/home-widgets" },
+]
+
 // 캐시된 사용자 정보를 가져오는 함수
 const getCachedUser = (): UserInfo | null => {
   if (typeof window === 'undefined') return null
@@ -55,14 +111,40 @@ const getCachedUser = (): UserInfo | null => {
   }
 }
 
+// 캐시된 플러그인 정보를 가져오는 함수
+const getCachedPlugins = (): PluginInfo[] => {
+  if (typeof window === 'undefined') return []
+  try {
+    const cached = sessionStorage.getItem('admin_plugins')
+    return cached ? JSON.parse(cached) : []
+  } catch {
+    return []
+  }
+}
+
 export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
-  const [shopMenuOpen, setShopMenuOpen] = useState(true)
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({})
   const [user, setUser] = useState<UserInfo | null>(getCachedUser)
+  const [plugins, setPlugins] = useState<PluginInfo[]>(getCachedPlugins)
   const router = useRouter()
   const pathname = usePathname()
   const { theme, setTheme } = useTheme()
+
+  const fetchPlugins = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/plugins')
+      if (res.ok) {
+        const data = await res.json()
+        const pluginList = (data.plugins || []) as PluginInfo[]
+        setPlugins(pluginList)
+        sessionStorage.setItem('admin_plugins', JSON.stringify(pluginList))
+      }
+    } catch {
+      // Use cached data
+    }
+  }, [])
 
   // 마운트 시 사용자 정보 가져오기
   useEffect(() => {
@@ -73,79 +155,101 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
     if (cached) {
       try {
         const parsedUser = JSON.parse(cached)
-        // nickname이 있는 캐시만 유효하게 처리
         if (parsedUser.nickname) {
           setUser(parsedUser)
-          return // 캐시가 있으면 API 호출 생략
+        } else {
+          sessionStorage.removeItem('admin_user')
         }
-        sessionStorage.removeItem('admin_user')
       } catch {
         sessionStorage.removeItem('admin_user')
       }
     }
 
     // 캐시가 없거나 파싱 실패 시 API 호출
-    fetch('/api/me')
-      .then(res => res.ok ? res.json() : null)
-      .then(data => {
-        if (data?.user) {
-          setUser(data.user)
-          sessionStorage.setItem('admin_user', JSON.stringify(data.user))
-        }
-      })
-      .catch(() => {})
-  }, [])
-
-  // 쇼핑몰 관련 경로면 쇼핑몰 메뉴 열기
-  useEffect(() => {
-    if (pathname.startsWith('/admin/shop')) {
-      setShopMenuOpen(true)
+    if (!cached) {
+      fetch('/api/me')
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+          if (data?.user) {
+            setUser(data.user)
+            sessionStorage.setItem('admin_user', JSON.stringify(data.user))
+          }
+        })
+        .catch(() => {})
     }
-  }, [pathname])
 
-  const menuItems = [
-    { id: "dashboard", label: "대시보드", icon: LayoutDashboard, path: "/admin" },
-    { id: "users", label: "사용자관리", icon: Users, path: "/admin/users" },
-    // { id: "members", label: "회원관리(G5)", icon: Users, path: "/admin/members" }, // API 구현 필요
-    { id: "boards", label: "게시판관리", icon: MessageSquare, path: "/admin/boards" },
-    { id: "contents", label: "콘텐츠관리", icon: FileText, path: "/admin/contents" },
-    { id: "policies", label: "약관관리", icon: ScrollText, path: "/admin/policies" },
-    { id: "settings", label: "환경설정", icon: Settings, path: "/admin/settings" },
-    { id: "plugins", label: "플러그인관리", icon: Puzzle, path: "/admin/plugins" },
-    { id: "menus", label: "메뉴관리", icon: MenuIcon, path: "/admin/menus" },
-    { id: "home-widgets", label: "홈화면관리", icon: LayoutGrid, path: "/admin/home-widgets" },
-  ]
+    fetchPlugins()
+  }, [fetchPlugins])
 
-  const shopMenuItems = [
-    { id: "shop-dashboard", label: "대시보드", icon: BarChart3, path: "/admin/shop" },
-    { id: "shop-products", label: "상품관리", icon: Package, path: "/admin/shop/products" },
-    { id: "shop-categories", label: "카테고리", icon: ShoppingBag, path: "/admin/shop/categories" },
-    { id: "shop-orders", label: "주문관리", icon: ClipboardList, path: "/admin/shop/orders" },
-    { id: "shop-sales", label: "매출관리", icon: TrendingUp, path: "/admin/shop/sales" },
-    { id: "shop-reviews", label: "리뷰관리", icon: Star, path: "/admin/shop/reviews" },
-    { id: "shop-qna", label: "Q&A관리", icon: MessageSquare, path: "/admin/shop/qna" },
-    { id: "shop-delivery", label: "배송비정책", icon: Truck, path: "/admin/shop/delivery" },
-    { id: "shop-settings", label: "쇼핑몰설정", icon: Settings, path: "/admin/shop/settings" },
-  ]
+  // Auto-open group menus based on current path
+  useEffect(() => {
+    for (const plugin of plugins) {
+      if (!plugin.enabled || !plugin.adminMenus) continue
+      for (const menu of plugin.adminMenus) {
+        if (menu.isGroup && menu.children) {
+          const hasActiveChild = menu.children.some(child =>
+            child.path && pathname.startsWith(child.path)
+          )
+          if (hasActiveChild) {
+            setOpenGroups(prev => ({ ...prev, [plugin.folder]: true }))
+          }
+        }
+      }
+    }
+  }, [pathname, plugins])
 
-  // 현재 경로에 따라 활성 메뉴 결정
+  // Build dynamic menu items from enabled plugins
+  const enabledPlugins = plugins.filter(p => p.enabled && p.hasAdmin && p.adminMenus?.length > 0)
+
+  // Flat menu items from plugins (non-group)
+  const pluginFlatMenuItems = enabledPlugins.flatMap(p =>
+    (p.adminMenus || [])
+      .filter(m => !m.isGroup && m.path)
+      .map(m => ({
+        id: `plugin-${p.folder}-${m.path}`,
+        label: m.label,
+        icon: getIcon(m.icon),
+        path: m.path!,
+      }))
+  )
+
+  // Group menu items from plugins
+  const pluginGroupMenus = enabledPlugins.flatMap(p =>
+    (p.adminMenus || [])
+      .filter(m => m.isGroup && m.children)
+      .map(m => ({
+        folder: p.folder,
+        label: m.label,
+        icon: getIcon(m.icon),
+        children: (m.children || []).map(c => ({
+          id: `plugin-${p.folder}-${c.path}`,
+          label: c.label,
+          icon: getIcon(c.icon),
+          path: c.path!,
+        })),
+      }))
+  )
+
+  // All flat menu items (core + plugin flat)
+  const allFlatItems = [...coreMenuItems, ...pluginFlatMenuItems]
+
+  // Determine active menu
   const getActiveMenu = () => {
-    // 쇼핑몰 메뉴 체크 (하위 경로도 포함)
-    // 정확히 일치하는 것을 먼저 찾고, 없으면 startsWith로 찾기
-    const exactShopItem = shopMenuItems.find(item => item.path === pathname)
-    if (exactShopItem) return exactShopItem.id
+    // Check group menus first
+    for (const group of pluginGroupMenus) {
+      const exactChild = group.children.find(item => item.path === pathname)
+      if (exactChild) return exactChild.id
+      const subChild = group.children.find(item =>
+        item.path !== '/admin' && pathname.startsWith(item.path + '/')
+      )
+      if (subChild) return subChild.id
+    }
 
-    // 하위 경로 매칭 (예: /admin/shop/orders/123 -> shop-orders)
-    const shopItem = shopMenuItems.find(item =>
-      item.path !== '/admin/shop' && pathname.startsWith(item.path + '/')
-    )
-    if (shopItem) return shopItem.id
-
-    // 일반 메뉴 체크
-    const exactItem = menuItems.find(item => item.path === pathname)
+    // Check flat menus
+    const exactItem = allFlatItems.find(item => item.path === pathname)
     if (exactItem) return exactItem.id
 
-    const menuItem = menuItems.find(item =>
+    const menuItem = allFlatItems.find(item =>
       item.path !== '/admin' && pathname.startsWith(item.path + '/')
     )
     if (menuItem) return menuItem.id
@@ -153,7 +257,7 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
     return "dashboard"
   }
 
-  const handleMenuClick = (item: typeof menuItems[0]) => {
+  const handleMenuClick = (item: { id: string; path: string }) => {
     router.push(item.path)
     setIsOpen(false)
     if (onMenuChange) {
@@ -245,7 +349,8 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
               </Button>
             </div>
 
-            {menuItems.map((item) => {
+            {/* Core menu items */}
+            {coreMenuItems.map((item) => {
               const Icon = item.icon
               return (
                 <Button
@@ -260,57 +365,83 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
               )
             })}
 
-            {/* 쇼핑몰 메뉴 그룹 */}
-            <div className="pt-2 border-t border-border mt-2">
-              <Button
-                variant="ghost"
-                className="w-full justify-between"
-                onClick={() => setShopMenuOpen(!shopMenuOpen)}
-              >
-                <span className="flex items-center">
-                  <ShoppingBag className="mr-2 h-4 w-4" />
-                  쇼핑몰
-                </span>
-                {shopMenuOpen ? (
-                  <ChevronDown className="h-4 w-4" />
-                ) : (
-                  <ChevronRight className="h-4 w-4" />
-                )}
-              </Button>
-              {shopMenuOpen && (
-                <div className="ml-4 mt-1 space-y-1">
-                  {shopMenuItems.map((item) => {
-                    const Icon = item.icon
-                    return (
-                      <Button
-                        key={item.id}
-                        variant={currentActiveMenu === item.id ? "default" : "ghost"}
-                        size="sm"
-                        className="w-full justify-start"
-                        onClick={() => handleMenuClick(item)}
-                      >
-                        <Icon className="mr-2 h-4 w-4" />
-                        {item.label}
-                      </Button>
-                    )
-                  })}
+            {/* Plugin flat menu items */}
+            {pluginFlatMenuItems.length > 0 && (
+              <div className="pt-2 border-t border-border mt-2 space-y-2">
+                {pluginFlatMenuItems.map((item) => {
+                  const Icon = item.icon
+                  return (
+                    <Button
+                      key={item.id}
+                      variant={currentActiveMenu === item.id ? "default" : "ghost"}
+                      className="w-full justify-start"
+                      onClick={() => handleMenuClick(item)}
+                    >
+                      <Icon className="mr-2 h-4 w-4" />
+                      {item.label}
+                    </Button>
+                  )
+                })}
+              </div>
+            )}
 
-                  {/* 사용자 정보 - 쇼핑몰설정 바로 아래 */}
-                  <div className="pt-3 mt-2 border-t border-border">
-                    <div className="flex items-center gap-2 px-2">
-                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                        <User className="h-4 w-4 text-primary" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{user?.name || user?.nickname || '관리자'}</p>
-                        <p className="text-xs text-muted-foreground truncate">
-                          {user?.role === 'admin' ? '관리자' : user?.role === 'manager' ? '부관리자' : user?.role || ''}
-                        </p>
-                      </div>
+            {/* Plugin group menus */}
+            {pluginGroupMenus.map((group) => {
+              const GroupIcon = group.icon
+              const isGroupOpen = openGroups[group.folder] ?? false
+              return (
+                <div key={group.folder} className="pt-2 border-t border-border mt-2">
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-between"
+                    onClick={() => setOpenGroups(prev => ({ ...prev, [group.folder]: !prev[group.folder] }))}
+                  >
+                    <span className="flex items-center">
+                      <GroupIcon className="mr-2 h-4 w-4" />
+                      {group.label}
+                    </span>
+                    {isGroupOpen ? (
+                      <ChevronDown className="h-4 w-4" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4" />
+                    )}
+                  </Button>
+                  {isGroupOpen && (
+                    <div className="ml-4 mt-1 space-y-1">
+                      {group.children.map((item) => {
+                        const Icon = item.icon
+                        return (
+                          <Button
+                            key={item.id}
+                            variant={currentActiveMenu === item.id ? "default" : "ghost"}
+                            size="sm"
+                            className="w-full justify-start"
+                            onClick={() => handleMenuClick(item)}
+                          >
+                            <Icon className="mr-2 h-4 w-4" />
+                            {item.label}
+                          </Button>
+                        )
+                      })}
                     </div>
-                  </div>
+                  )}
                 </div>
-              )}
+              )
+            })}
+
+            {/* 사용자 정보 */}
+            <div className="pt-3 mt-2 border-t border-border">
+              <div className="flex items-center gap-2 px-2">
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  <User className="h-4 w-4 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{user?.name || user?.nickname || '관리자'}</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {user?.role === 'admin' ? '관리자' : user?.role === 'manager' ? '부관리자' : user?.role || ''}
+                  </p>
+                </div>
+              </div>
             </div>
           </nav>
         </div>
