@@ -37,7 +37,7 @@ export default function BoardCards({ settings }: { settings?: Record<string, any
   if (boards.length === 0) return null
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col gap-2">
       {boards.slice(0, limit).map((board) => (
         <Link key={board.id} href={`/boards/${board.slug}`}>
           <Card className="h-full hover:border-primary/50 hover:shadow-md transition-all duration-300 cursor-pointer group">
@@ -52,10 +52,6 @@ export default function BoardCards({ settings }: { settings?: Record<string, any
                     {board.description}
                   </p>
                 )}
-              </div>
-              <div className="flex items-center text-xs text-primary mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <span>바로가기</span>
-                <ArrowRight className="h-3 w-3 ml-1" />
               </div>
             </CardContent>
           </Card>
