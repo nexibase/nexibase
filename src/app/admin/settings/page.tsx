@@ -46,6 +46,7 @@ interface SettingsData {
 
   // 테마 설정
   theme_folder: string
+
 }
 
 interface ThemeInfo {

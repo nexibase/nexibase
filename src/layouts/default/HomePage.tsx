@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Header, Footer } from "@/components/layout"
 import WidgetRenderer from "@/lib/widgets/renderer"
 
 interface WidgetData {
@@ -26,7 +25,6 @@ export default function HomePage() {
         const res = await fetch('/api/home-widgets')
         if (res.ok) {
           const data = await res.json()
-          // Flatten grouped widgets into a single array
           const widgets: WidgetData[] = []
           for (const zone of Object.keys(data.widgets || {})) {
             for (const w of data.widgets[zone]) {
@@ -44,51 +42,36 @@ export default function HomePage() {
     fetchWidgets()
   }, [])
 
-  const heroWidgets = allWidgets.filter(w => w.zone === 'hero')
-  const mainWidgets = allWidgets.filter(w => w.zone === 'main')
-  const sidebarWidgets = allWidgets.filter(w => w.zone === 'sidebar')
+  const topWidgets = allWidgets.filter(w => w.zone === 'top')
+  const centerWidgets = allWidgets.filter(w => w.zone === 'center')
   const bottomWidgets = allWidgets.filter(w => w.zone === 'bottom')
 
+  if (isLoading) {
+    return <div className="py-12 text-center text-muted-foreground">로딩 중...</div>
+  }
+
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <Header />
-
-      <main className="flex-1">
-        <div className="max-w-6xl mx-auto px-4 py-6">
-          {isLoading ? (
-            <div className="py-12 text-center text-muted-foreground">로딩 중...</div>
-          ) : (
-            <>
-              {/* Hero Zone - 4 column grid */}
-              {heroWidgets.length > 0 && (
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                  <WidgetRenderer zone="hero" widgets={allWidgets} />
-                </div>
-              )}
-
-              {/* Main + Sidebar Zone */}
-              {(mainWidgets.length > 0 || sidebarWidgets.length > 0) && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 auto-rows-[minmax(100px,auto)]">
-                  {/* Main Zone - takes 3 columns on lg */}
-                  <WidgetRenderer zone="main" widgets={allWidgets} />
-
-                  {/* Sidebar Zone - takes 1 column on lg */}
-                  <WidgetRenderer zone="sidebar" widgets={allWidgets} />
-                </div>
-              )}
-
-              {/* Bottom Zone - full width grid */}
-              {bottomWidgets.length > 0 && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4 auto-rows-[minmax(100px,auto)]">
-                  <WidgetRenderer zone="bottom" widgets={allWidgets} />
-                </div>
-              )}
-            </>
-          )}
+    <div className="space-y-6">
+      {/* 상단 영역 */}
+      {topWidgets.length > 0 && (
+        <div className="grid grid-cols-12 gap-4">
+          <WidgetRenderer zone="top" widgets={allWidgets} />
         </div>
-      </main>
+      )}
 
-      <Footer />
+      {/* 중앙 영역 */}
+      {centerWidgets.length > 0 && (
+        <div className="grid grid-cols-12 gap-4 auto-rows-[minmax(100px,auto)]">
+          <WidgetRenderer zone="center" widgets={allWidgets} />
+        </div>
+      )}
+
+      {/* 하단 */}
+      {bottomWidgets.length > 0 && (
+        <div className="grid grid-cols-12 gap-4 auto-rows-[minmax(100px,auto)]">
+          <WidgetRenderer zone="bottom" widgets={allWidgets} />
+        </div>
+      )}
     </div>
   )
 }

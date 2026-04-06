@@ -20,7 +20,8 @@ const REGISTRY_KEYS = [
 function getWidgetPlugin(widgetKey: string): string | null {
   for (const [folder, meta] of Object.entries(pluginManifest)) {
     if (meta.hasWidgets) {
-      const widgetMetas = (meta as Record<string, unknown>).widgetMetas as Array<{ widgetKey: string }> | undefined
+      const widgetMetas = // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (meta as any).widgetMetas as Array<{ widgetKey: string }> | undefined
       if (widgetMetas?.some(w => w.widgetKey === widgetKey)) {
         return folder
       }

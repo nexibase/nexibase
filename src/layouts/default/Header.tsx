@@ -63,6 +63,7 @@ export default function Header() {
   const [boards, setBoards] = useState<Board[]>([])
   const [headerMenus, setHeaderMenus] = useState<MenuItem[]>([])
   const [moreMenuOpen, setMoreMenuOpen] = useState(false)
+  const [openDropdownId, setOpenDropdownId] = useState<number | null>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [cartCount, setCartCount] = useState(0)
@@ -256,6 +257,13 @@ export default function Header() {
     const handleClickOutside = (event: MouseEvent) => {
       if (moreMenuRef.current && !moreMenuRef.current.contains(event.target as Node)) {
         setMoreMenuOpen(false)
+      }
+      // 드롭다운 메뉴 닫기
+      if (openDropdownId !== null) {
+        const target = event.target as HTMLElement
+        if (!target.closest('[data-dropdown]')) {
+          setOpenDropdownId(null)
+        }
       }
       if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
         setNotificationOpen(false)
@@ -506,7 +514,7 @@ export default function Header() {
       {/* 네비게이션 탭 */}
       <div className="bg-background">
         <div className="max-w-6xl mx-auto px-4">
-          <nav className="hidden md:flex items-center gap-1 h-11 overflow-x-auto">
+          <nav className="hidden md:flex items-center gap-1 h-11 overflow-visible">
             {/* DB 기반 메뉴 렌더링 */}
             {headerMenus.length > 0 ? (
               <>
@@ -528,17 +536,17 @@ export default function Header() {
                     <div key={menu.id} className="flex items-center">
                       {showSeparator && <div className="w-px h-5 bg-border mx-1" />}
                       {hasChildren ? (
-                        <div className="relative" ref={moreMenuRef}>
+                        <div className="relative" data-dropdown>
                           <button
-                            onClick={() => setMoreMenuOpen(!moreMenuOpen)}
+                            onClick={() => setOpenDropdownId(openDropdownId === menu.id ? null : menu.id)}
                             className={`px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-1 whitespace-nowrap ${
-                              moreMenuOpen ? 'bg-muted text-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                              openDropdownId === menu.id ? 'bg-muted text-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                             }`}
                           >
                             {menu.icon ? `${menu.icon} ` : ''}{menu.label}
-                            <ChevronDown className={`h-4 w-4 transition-transform ${moreMenuOpen ? 'rotate-180' : ''}`} />
+                            <ChevronDown className={`h-4 w-4 transition-transform ${openDropdownId === menu.id ? 'rotate-180' : ''}`} />
                           </button>
-                          {moreMenuOpen && (
+                          {openDropdownId === menu.id && (
                             <div className="absolute top-full left-0 mt-1 w-48 bg-background border rounded-lg shadow-lg py-1 z-50">
                               {menu.children.filter(c => {
                                 if (c.visibility === 'member' && !user) return false
@@ -550,7 +558,7 @@ export default function Header() {
                                   href={child.url}
                                   target={child.target}
                                   className="block px-4 py-2 text-sm hover:bg-muted transition-colors"
-                                  onClick={() => setMoreMenuOpen(false)}
+                                  onClick={() => setOpenDropdownId(null)}
                                 >
                                   {child.icon ? `${child.icon} ` : ''}{child.label}
                                 </Link>

@@ -36,3 +36,28 @@ export async function PUT(
     return NextResponse.json({ error: '서버 오류' }, { status: 500 })
   }
 }
+
+// DELETE /api/admin/home-widgets/[id] — 위젯 배치 해제 (DB에서 삭제)
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const admin = await getAdminUser()
+    if (!admin) {
+      return NextResponse.json({ error: '권한이 없습니다.' }, { status: 401 })
+    }
+
+    const { id } = await params
+    const widgetId = parseInt(id)
+
+    await prisma.homeWidget.delete({
+      where: { id: widgetId },
+    })
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('위젯 삭제 에러:', error)
+    return NextResponse.json({ error: '서버 오류' }, { status: 500 })
+  }
+}

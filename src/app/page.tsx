@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { UserLayout } from "@/components/layout/UserLayout"
 import { getLayoutComponent } from "@/lib/layout-loader"
 
 export default function Page() {
@@ -19,5 +20,9 @@ export default function Page() {
 
   const HomePageComponent = getLayoutComponent(layoutFolder, 'HomePage')
 
-  return <HomePageComponent />
+  return (
+    <UserLayout>
+      <HomePageComponent />
+    </UserLayout>
+  )
 }

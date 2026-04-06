@@ -11,7 +11,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { items } = body as {
+    const { items, create } = body as {
       items: Array<{
         id: number
         zone: string
@@ -20,6 +20,32 @@ export async function PUT(request: NextRequest) {
         rowSpan?: number
         isActive?: boolean
       }>
+      create?: {
+        widgetKey: string
+        zone: string
+        title: string
+      }
+    }
+
+    // 새 위젯 생성
+    if (create) {
+      const existing = await prisma.homeWidget.findFirst({
+        where: { widgetKey: create.widgetKey }
+      })
+      if (!existing) {
+        await prisma.homeWidget.create({
+          data: {
+            widgetKey: create.widgetKey,
+            zone: create.zone,
+            title: create.title,
+            colSpan: 1,
+            rowSpan: 1,
+            isActive: true,
+            sortOrder: 99,
+          }
+        })
+      }
+      return NextResponse.json({ success: true })
     }
 
     if (!items || !Array.isArray(items)) {

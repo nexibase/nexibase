@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import {
-  Save, Eye, EyeOff, Settings, X, ChevronUp, ChevronDown, Plus
+  Save, Eye, EyeOff, X, ChevronUp, ChevronDown, Plus, Trash2
 } from "lucide-react"
 
 interface WidgetData {
@@ -43,12 +43,18 @@ const WIDGET_META: Record<string, { label: string; description: string; settings
   'board-cards': { label: '게시판 카드', description: '게시판 카드 그리드', settingsSchema: { limit: { type: 'number', label: '표시 개수', default: 4 } } },
 }
 
-const ZONES = ['hero', 'main', 'sidebar', 'bottom'] as const
+const ZONES = ['top', 'center', 'bottom'] as const
 const ZONE_LABELS: Record<string, string> = {
-  hero: 'Hero (상단 배너)',
-  main: 'Main (좌측 메인)',
-  sidebar: 'Sidebar (우측)',
-  bottom: 'Bottom (하단)',
+  top: '상단 영역',
+  center: '중앙 영역',
+  bottom: '하단 영역',
+}
+
+// 레이아웃 사이드바 영역 (레이아웃 설정에서 관리)
+const LAYOUT_ZONES = ['left', 'right'] as const
+const LAYOUT_ZONE_LABELS: Record<string, string> = {
+  left: '좌측 사이드바',
+  right: '우측 사이드바',
 }
 
 export default function HomeWidgetsAdminPage() {
@@ -84,6 +90,17 @@ export default function HomeWidgetsAdminPage() {
   const getWidgetsByZone = (zone: string) =>
     widgets.filter(w => w.zone === zone).sort((a, b) => a.sortOrder - b.sortOrder)
 
+  const handleRemoveWidget = async (widget: WidgetData) => {
+    try {
+      await fetch(`/api/admin/home-widgets/${widget.id}`, { method: 'DELETE' })
+      showMessage('위젯이 배치 해제되었습니다.')
+      setSelectedWidget(null)
+      await fetchWidgets()
+    } catch {
+      showMessage('배치 해제 실패')
+    }
+  }
+
   const handleToggleActive = async (widget: WidgetData) => {
     try {
       await fetch(`/api/admin/home-widgets/${widget.id}`, {
@@ -100,11 +117,9 @@ export default function HomeWidgetsAdminPage() {
   const handleMoveUp = async (widget: WidgetData, zoneWidgets: WidgetData[]) => {
     const idx = zoneWidgets.findIndex(w => w.id === widget.id)
     if (idx <= 0) return
-    const items = zoneWidgets.map((w, i) => ({
-      id: w.id,
-      zone: w.zone,
-      sortOrder: i === idx ? zoneWidgets[idx - 1].sortOrder : i === idx - 1 ? zoneWidgets[idx].sortOrder : w.sortOrder,
-    }))
+    const reordered = [...zoneWidgets]
+    ;[reordered[idx - 1], reordered[idx]] = [reordered[idx], reordered[idx - 1]]
+    const items = reordered.map((w, i) => ({ id: w.id, zone: w.zone, sortOrder: i }))
     await fetch('/api/admin/home-widgets/layout', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -116,11 +131,9 @@ export default function HomeWidgetsAdminPage() {
   const handleMoveDown = async (widget: WidgetData, zoneWidgets: WidgetData[]) => {
     const idx = zoneWidgets.findIndex(w => w.id === widget.id)
     if (idx >= zoneWidgets.length - 1) return
-    const items = zoneWidgets.map((w, i) => ({
-      id: w.id,
-      zone: w.zone,
-      sortOrder: i === idx ? zoneWidgets[idx + 1].sortOrder : i === idx + 1 ? zoneWidgets[idx].sortOrder : w.sortOrder,
-    }))
+    const reordered = [...zoneWidgets]
+    ;[reordered[idx], reordered[idx + 1]] = [reordered[idx + 1], reordered[idx]]
+    const items = reordered.map((w, i) => ({ id: w.id, zone: w.zone, sortOrder: i }))
     await fetch('/api/admin/home-widgets/layout', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -173,28 +186,34 @@ export default function HomeWidgetsAdminPage() {
     }
   }
 
-  const handleCreateWidget = async (widgetKey: string) => {
+  const handleReset = async () => {
+    if (!confirm('모든 위젯을 삭제하고 기본 배치로 초기화하시겠습니까?')) return
+    try {
+      await fetch('/api/admin/home-widgets/reset', { method: 'POST' })
+      showMessage('초기화 완료')
+      setSelectedWidget(null)
+      await fetchWidgets()
+    } catch {
+      showMessage('초기화 실패')
+    }
+  }
+
+  const handleCreateWidget = async (widgetKey: string, zone: string = 'main') => {
     const meta = WIDGET_META[widgetKey]
     if (!meta) return
     try {
-      // We need to create the widget in DB via a special approach
-      // Since we don't have a dedicated create endpoint for widgets,
-      // let's add it through the seed mechanism or directly
-      const res = await fetch('/api/admin/home-widgets/layout', {
+      await fetch('/api/admin/home-widgets/layout', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          items: [], // Empty - just trigger
-          create: { widgetKey, zone: 'bottom', title: meta.label },
+          items: [],
+          create: { widgetKey, zone, title: meta.label },
         }),
       })
-      if (!res.ok) {
-        // Fallback: create via the individual endpoint won't work since no ID
-        showMessage('위젯을 생성하려면 시드를 실행해주세요.')
-      }
+      showMessage(`${meta.label} 위젯이 ${zone} 영역에 배치되었습니다.`)
       await fetchWidgets()
     } catch {
-      showMessage('위젯 생성 실패')
+      showMessage('위젯 배치 실패')
     }
   }
 
@@ -204,49 +223,46 @@ export default function HomeWidgetsAdminPage() {
     return (
       <div
         key={widget.id}
-        className={`flex items-center gap-2 px-3 py-2 border rounded-md mb-2 transition-colors ${
+        className={`px-3 py-2 border rounded-md mb-2 transition-colors ${
           isPluginDisabled
             ? 'opacity-50 bg-muted/30 cursor-not-allowed'
             : `cursor-pointer hover:bg-muted/50 ${selectedWidget?.id === widget.id ? 'border-primary bg-primary/5' : ''}`
         } ${!widget.isActive && !isPluginDisabled ? 'opacity-50' : ''}`}
         onClick={() => !isPluginDisabled && handleSelectWidget(widget)}
       >
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">{widget.title}</span>
-            {isPluginDisabled ? (
-              <Badge variant="destructive" className="text-xs">
-                {widget.pluginName} 플러그인 비활성
-              </Badge>
-            ) : (
-              meta && <span className="text-xs text-muted-foreground">{meta.description}</span>
-            )}
-          </div>
-          <div className="flex items-center gap-2 mt-1">
-            <Badge variant="outline" className="text-xs">{widget.colSpan}x{widget.rowSpan}</Badge>
-            {!isPluginDisabled && (
-              <select
-                className="text-xs border rounded px-1 py-0.5 bg-background"
-                value={widget.zone}
-                onChange={(e) => { e.stopPropagation(); handleChangeZone(widget, e.target.value) }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                {ZONES.map(z => <option key={z} value={z}>{ZONE_LABELS[z]}</option>)}
-              </select>
-            )}
-          </div>
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium truncate">{widget.title}</span>
+          {isPluginDisabled ? (
+            <Badge variant="destructive" className="text-xs shrink-0">비활성</Badge>
+          ) : (
+            <div className="flex items-center gap-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleMoveUp(widget, zoneWidgets)}>
+                <ChevronUp className="h-3 w-3" />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleMoveDown(widget, zoneWidgets)}>
+                <ChevronDown className="h-3 w-3" />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleToggleActive(widget)}>
+                {widget.isActive ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+              </Button>
+              <Button variant="ghost" size="icon" className="h-6 w-6 text-red-500" onClick={() => handleRemoveWidget(widget)}>
+                <Trash2 className="h-3 w-3" />
+              </Button>
+            </div>
+          )}
         </div>
         {!isPluginDisabled && (
-          <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleMoveUp(widget, zoneWidgets)}>
-              <ChevronUp className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleMoveDown(widget, zoneWidgets)}>
-              <ChevronDown className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleToggleActive(widget)}>
-              {widget.isActive ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-            </Button>
+          <div className="flex items-center gap-2 mt-1" onClick={(e) => e.stopPropagation()}>
+            <Badge variant="outline" className="text-xs">{widget.colSpan}x{widget.rowSpan}</Badge>
+            <select
+              className="text-xs border rounded px-1 py-0.5 bg-background"
+              value={widget.zone}
+              onChange={(e) => { e.stopPropagation(); handleChangeZone(widget, e.target.value) }}
+            >
+              {ZONES.map(z => <option key={z} value={z}>{ZONE_LABELS[z]}</option>)}
+              <option disabled>──────</option>
+              {LAYOUT_ZONES.map(z => <option key={z} value={z}>{LAYOUT_ZONE_LABELS[z]}</option>)}
+            </select>
           </div>
         )}
       </div>
@@ -260,6 +276,9 @@ export default function HomeWidgetsAdminPage() {
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-2xl font-bold">홈화면관리</h1>
+            <Button variant="outline" size="sm" onClick={handleReset}>
+              초기화
+            </Button>
           </div>
 
           {message && (
@@ -268,148 +287,160 @@ export default function HomeWidgetsAdminPage() {
             </div>
           )}
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left: Zone layout */}
-            <div className="lg:col-span-2 space-y-4">
-              {ZONES.map(zone => {
-                const zoneWidgets = getWidgetsByZone(zone)
-                return (
-                  <Card key={zone}>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium flex items-center justify-between">
-                        {ZONE_LABELS[zone]}
-                        <Badge variant="secondary">{zoneWidgets.length}개</Badge>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      {zoneWidgets.length > 0 ? (
-                        zoneWidgets.map(w => renderWidgetCard(w, zoneWidgets))
-                      ) : (
-                        <div className="py-4 text-center text-muted-foreground text-sm">
-                          이 영역에 위젯이 없습니다.
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                )
-              })}
+          {/* 위젯 설정 패널 (선택 시 표시) */}
+          {selectedWidget && (
+            <Card className="mb-4">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm flex items-center justify-between">
+                  <span>{selectedWidget.title} 설정</span>
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setSelectedWidget(null)}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-end gap-3 flex-wrap">
+                  <div>
+                    <label className="text-xs text-muted-foreground">열 너비</label>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={12}
+                      className="w-20 h-8"
+                      value={selectedWidget.colSpan}
+                      onChange={(e) => setSelectedWidget({ ...selectedWidget, colSpan: parseInt(e.target.value) || 1 })}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground">행 높이</label>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={12}
+                      className="w-20 h-8"
+                      value={selectedWidget.rowSpan}
+                      onChange={(e) => setSelectedWidget({ ...selectedWidget, rowSpan: parseInt(e.target.value) || 1 })}
+                    />
+                  </div>
+                  {(() => {
+                    const meta = WIDGET_META[selectedWidget.widgetKey]
+                    if (!meta?.settingsSchema) return null
+                    return Object.entries(meta.settingsSchema).map(([key, schema]) => (
+                      <div key={key}>
+                        <label className="text-xs text-muted-foreground">{schema.label}</label>
+                        {schema.type === 'number' ? (
+                          <Input
+                            type="number"
+                            className="w-20 h-8"
+                            value={(editSettings[key] as number) ?? schema.default}
+                            onChange={(e) => setEditSettings({ ...editSettings, [key]: parseInt(e.target.value) || schema.default })}
+                          />
+                        ) : (
+                          <Input
+                            className="w-32 h-8"
+                            value={(editSettings[key] as string) ?? ''}
+                            onChange={(e) => setEditSettings({ ...editSettings, [key]: e.target.value })}
+                          />
+                        )}
+                      </div>
+                    ))
+                  })()}
+                  <Button size="sm" onClick={handleSaveSettings} disabled={saving}>
+                    <Save className="h-4 w-4 mr-1" />
+                    {saving ? '저장 중...' : '저장'}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
-              {/* Unregistered widgets */}
-              {unregistered.length > 0 && (
-                <Card>
+          {/* 홈 위젯 영역 */}
+          <div className="space-y-4">
+            {ZONES.map(zone => {
+              const zoneWidgets = getWidgetsByZone(zone)
+              return (
+                <Card key={zone}>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium">미배치 위젯</CardTitle>
+                    <CardTitle className="text-sm font-medium flex items-center justify-between">
+                      {ZONE_LABELS[zone]}
+                      <Badge variant="secondary">{zoneWidgets.length}개</Badge>
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-2">
-                      {unregistered.map(key => {
-                        const meta = WIDGET_META[key]
-                        return (
-                          <div key={key} className="flex items-center justify-between px-3 py-2 border rounded-md">
-                            <div>
-                              <span className="text-sm font-medium">{meta?.label || key}</span>
-                              <span className="text-xs text-muted-foreground ml-2">{meta?.description}</span>
-                            </div>
-                            <Button size="sm" variant="outline" onClick={() => handleCreateWidget(key)}>
+                    {zoneWidgets.length > 0 ? zoneWidgets.map(w => renderWidgetCard(w, zoneWidgets)) : (
+                      <div className="py-3 text-center text-muted-foreground text-sm">위젯 없음</div>
+                    )}
+                  </CardContent>
+                </Card>
+              )
+            })}
+
+            {/* 레이아웃 사이드바 (모든 페이지에 적용) */}
+            <div className="border-t pt-4 mt-4">
+              <h2 className="text-lg font-bold mb-3">레이아웃 사이드바 <span className="text-sm font-normal text-muted-foreground">— 모든 페이지에 적용</span></h2>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {LAYOUT_ZONES.map(zone => {
+                  const zoneWidgets = getWidgetsByZone(zone)
+                  return (
+                    <Card key={zone}>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium flex items-center justify-between">
+                          {LAYOUT_ZONE_LABELS[zone]}
+                          <Badge variant="secondary">{zoneWidgets.length}개</Badge>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        {zoneWidgets.length > 0 ? zoneWidgets.map(w => renderWidgetCard(w, zoneWidgets)) : (
+                          <div className="py-3 text-center text-muted-foreground text-sm">위젯 없음</div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* 미배치 위젯 */}
+            {unregistered.length > 0 && (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium">미배치 위젯</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {unregistered.map(key => {
+                      const meta = WIDGET_META[key]
+                      return (
+                        <div key={key} className="flex items-center justify-between px-3 py-2 border rounded-md">
+                          <div>
+                            <span className="text-sm font-medium">{meta?.label || key}</span>
+                            <span className="text-xs text-muted-foreground ml-2">{meta?.description}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <select
+                              id={`zone-${key}`}
+                              className="text-xs border rounded px-1 py-1 bg-background"
+                              defaultValue="main"
+                            >
+                              {ZONES.map(z => <option key={z} value={z}>{ZONE_LABELS[z]}</option>)}
+                              <option disabled>──────</option>
+                              {LAYOUT_ZONES.map(z => <option key={z} value={z}>{LAYOUT_ZONE_LABELS[z]}</option>)}
+                            </select>
+                            <Button size="sm" variant="outline" onClick={() => {
+                              const select = document.getElementById(`zone-${key}`) as HTMLSelectElement
+                              handleCreateWidget(key, select?.value || 'main')
+                            }}>
                               <Plus className="h-4 w-4 mr-1" />
                               배치
                             </Button>
                           </div>
-                        )
-                      })}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-
-            {/* Right: Widget settings panel */}
-            <div>
-              {selectedWidget ? (
-                <Card className="sticky top-6">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-lg flex items-center justify-between">
-                      <span className="flex items-center gap-2">
-                        <Settings className="h-4 w-4" />
-                        위젯 설정
-                      </span>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setSelectedWidget(null)}>
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <label className="text-sm font-medium">위젯</label>
-                      <p className="text-sm text-muted-foreground">{selectedWidget.title} ({selectedWidget.widgetKey})</p>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="text-sm font-medium">열 너비 (colSpan)</label>
-                        <Input
-                          type="number"
-                          min={1}
-                          max={4}
-                          value={selectedWidget.colSpan}
-                          onChange={(e) => setSelectedWidget({ ...selectedWidget, colSpan: parseInt(e.target.value) || 1 })}
-                        />
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium">행 높이 (rowSpan)</label>
-                        <Input
-                          type="number"
-                          min={1}
-                          max={4}
-                          value={selectedWidget.rowSpan}
-                          onChange={(e) => setSelectedWidget({ ...selectedWidget, rowSpan: parseInt(e.target.value) || 1 })}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Settings schema-based form */}
-                    {(() => {
-                      const meta = WIDGET_META[selectedWidget.widgetKey]
-                      if (!meta?.settingsSchema) return null
-                      return (
-                        <div className="space-y-3">
-                          <label className="text-sm font-medium">위젯 옵션</label>
-                          {Object.entries(meta.settingsSchema).map(([key, schema]) => (
-                            <div key={key}>
-                              <label className="text-xs text-muted-foreground">{schema.label}</label>
-                              {schema.type === 'number' ? (
-                                <Input
-                                  type="number"
-                                  value={(editSettings[key] as number) ?? schema.default}
-                                  onChange={(e) => setEditSettings({ ...editSettings, [key]: parseInt(e.target.value) || schema.default })}
-                                />
-                              ) : (
-                                <Input
-                                  value={(editSettings[key] as string) ?? ''}
-                                  onChange={(e) => setEditSettings({ ...editSettings, [key]: e.target.value })}
-                                />
-                              )}
-                            </div>
-                          ))}
                         </div>
                       )
-                    })()}
-
-                    <Button onClick={handleSaveSettings} disabled={saving} className="w-full">
-                      <Save className="h-4 w-4 mr-1" />
-                      {saving ? '저장 중...' : '설정 저장'}
-                    </Button>
-                  </CardContent>
-                </Card>
-              ) : (
-                <Card>
-                  <CardContent className="py-12 text-center text-muted-foreground">
-                    <Settings className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">위젯을 선택하면 설정을 변경할 수 있습니다.</p>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </div>
