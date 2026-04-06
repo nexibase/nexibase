@@ -1,8 +1,0 @@
-{
-  "files.watcherExclude": {
-    "**/.next/**": true,
-    "**/node_modules/**": true,
-    "**/public/themes/**": true,
-    "**/.superpowers/**": true
-  }
-}

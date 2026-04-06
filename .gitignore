@@ -63,6 +63,10 @@ next-env.d.ts
 .claude/
 CLAUDE.md
 
+# IDE / 도구
+.vscode/
+.superpowers/
+
 # logs
 /logs
 
