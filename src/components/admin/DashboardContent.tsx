@@ -13,6 +13,10 @@ import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 
 interface DashboardData {
+  pluginStatus?: {
+    shop?: boolean
+    auction?: boolean
+  }
   stats: {
     totalUsers: number
     userGrowth: number
@@ -21,7 +25,7 @@ interface DashboardData {
     activeUsers: number
     activeUserGrowth: number
   }
-  shopStats: {
+  shopStats?: {
     totalOrders: number
     thisMonthOrders: number
     orderGrowth: number
@@ -45,7 +49,7 @@ interface DashboardData {
     author: { nickname: string }
     board: { slug: string }
   }[]
-  recentOrders: {
+  recentOrders?: {
     id: number
     orderNo: string
     finalPrice: number
@@ -53,7 +57,7 @@ interface DashboardData {
     createdAt: string
     user: { nickname: string }
   }[]
-  popularProducts: {
+  popularProducts?: {
     id: number
     name: string
     slug: string
@@ -71,7 +75,7 @@ interface DashboardData {
     board: { slug: string; name: string }
   }[]
   trends: {
-    orders: { date: string; orders: number; revenue: number }[]
+    orders?: { date: string; orders: number; revenue: number }[]
     users: { date: string; count: number }[]
   }
 }
@@ -218,7 +222,7 @@ export function DashboardContent() {
       </div>
 
       {/* 쇼핑몰 통계 카드들 */}
-      {data.shopStats && (
+      {data.pluginStatus?.shop && data.shopStats && (
         <div>
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <ShoppingCart className="h-5 w-5" />
@@ -296,44 +300,46 @@ export function DashboardContent() {
       {data.trends && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* 주문/매출 추이 */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">최근 7일 주문 추이</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {data.trends.orders?.map((item, idx) => (
-                  <div key={idx} className="space-y-1">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground w-20">
-                        {new Date(item.date).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}
-                      </span>
-                      <span className="font-medium">{item.orders}건</span>
-                      <span className="text-muted-foreground">{formatPrice(item.revenue)}</span>
+          {data.pluginStatus?.shop && data.trends.orders && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">최근 7일 주문 추이</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {data.trends.orders.map((item, idx) => (
+                    <div key={idx} className="space-y-1">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground w-20">
+                          {new Date(item.date).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}
+                        </span>
+                        <span className="font-medium">{item.orders}건</span>
+                        <span className="text-muted-foreground">{formatPrice(item.revenue)}</span>
+                      </div>
+                      <div className="flex gap-1 h-2">
+                        <div
+                          className="bg-blue-500 rounded-full transition-all"
+                          style={{ width: `${(item.orders / maxOrders) * 50}%` }}
+                        />
+                        <div
+                          className="bg-green-500 rounded-full transition-all"
+                          style={{ width: `${(item.revenue / maxRevenue) * 50}%` }}
+                        />
+                      </div>
                     </div>
-                    <div className="flex gap-1 h-2">
-                      <div
-                        className="bg-blue-500 rounded-full transition-all"
-                        style={{ width: `${(item.orders / maxOrders) * 50}%` }}
-                      />
-                      <div
-                        className="bg-green-500 rounded-full transition-all"
-                        style={{ width: `${(item.revenue / maxRevenue) * 50}%` }}
-                      />
-                    </div>
+                  ))}
+                  <div className="flex items-center gap-4 text-xs text-muted-foreground pt-2">
+                    <span className="flex items-center gap-1">
+                      <div className="w-3 h-3 bg-blue-500 rounded-full" /> 주문수
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <div className="w-3 h-3 bg-green-500 rounded-full" /> 매출
+                    </span>
                   </div>
-                ))}
-                <div className="flex items-center gap-4 text-xs text-muted-foreground pt-2">
-                  <span className="flex items-center gap-1">
-                    <div className="w-3 h-3 bg-blue-500 rounded-full" /> 주문수
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <div className="w-3 h-3 bg-green-500 rounded-full" /> 매출
-                  </span>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
 
           {/* 신규 가입자 추이 */}
           <Card>
@@ -367,7 +373,7 @@ export function DashboardContent() {
       {/* 최근 활동 & 인기 콘텐츠 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* 최근 주문 */}
-        {data.recentOrders && (
+        {data.pluginStatus?.shop && data.recentOrders && (
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>최근 주문</CardTitle>
@@ -452,7 +458,7 @@ export function DashboardContent() {
       {/* 인기 콘텐츠 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* 인기 상품 */}
-        {data.popularProducts && (
+        {data.pluginStatus?.shop && data.popularProducts && (
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="flex items-center gap-2">

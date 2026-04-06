@@ -1,8 +1,13 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { isPluginEnabled } from "@/lib/plugins"
 
 export async function GET() {
   try {
+    // 플러그인 활성화 상태 확인
+    const shopEnabled = await isPluginEnabled('shop')
+    const auctionEnabled = await isPluginEnabled('auction')
+
     // 날짜 계산
     const now = new Date()
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
@@ -11,7 +16,7 @@ export async function GET() {
     const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate())
     const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
 
-    // 통계 데이터 조회
+    // 커뮤니티 기본 통계 조회
     const [
       totalUsers,
       lastMonthUsers,
@@ -21,20 +26,7 @@ export async function GET() {
       yesterdayActiveUsers,
       recentUsers,
       recentPosts,
-      // 쇼핑몰 통계
-      totalOrders,
-      thisMonthOrders,
-      lastMonthOrders,
-      totalRevenue,
-      thisMonthRevenue,
-      lastMonthRevenue,
-      totalProducts,
-      pendingOrders,
-      recentOrders,
-      popularProducts,
       popularPosts,
-      // 기간별 추이 데이터 (최근 7일)
-      dailyOrders,
       dailyUsers
     ] = await Promise.all([
       // 총 회원수
@@ -110,83 +102,6 @@ export async function GET() {
           }
         }
       }),
-      // 총 주문수
-      prisma.order.count(),
-      // 이번달 주문수
-      prisma.order.count({
-        where: { createdAt: { gte: thisMonthStart } }
-      }),
-      // 지난달 주문수
-      prisma.order.count({
-        where: {
-          createdAt: {
-            gte: lastMonthStart,
-            lt: thisMonthStart
-          }
-        }
-      }),
-      // 총 매출 (완료된 주문)
-      prisma.order.aggregate({
-        where: { status: { in: ['paid', 'preparing', 'shipped', 'delivered'] } },
-        _sum: { finalPrice: true }
-      }),
-      // 이번달 매출
-      prisma.order.aggregate({
-        where: {
-          status: { in: ['paid', 'preparing', 'shipped', 'delivered'] },
-          createdAt: { gte: thisMonthStart }
-        },
-        _sum: { finalPrice: true }
-      }),
-      // 지난달 매출
-      prisma.order.aggregate({
-        where: {
-          status: { in: ['paid', 'preparing', 'shipped', 'delivered'] },
-          createdAt: {
-            gte: lastMonthStart,
-            lt: thisMonthStart
-          }
-        },
-        _sum: { finalPrice: true }
-      }),
-      // 총 상품수
-      prisma.product.count({
-        where: { isActive: true }
-      }),
-      // 처리 대기 주문
-      prisma.order.count({
-        where: { status: 'paid' }
-      }),
-      // 최근 주문 5개
-      prisma.order.findMany({
-        orderBy: { createdAt: 'desc' },
-        take: 5,
-        select: {
-          id: true,
-          orderNo: true,
-          finalPrice: true,
-          status: true,
-          createdAt: true,
-          user: {
-            select: { nickname: true }
-          }
-        }
-      }),
-      // 인기 상품 5개
-      prisma.product.findMany({
-        where: { isActive: true },
-        orderBy: [{ soldCount: 'desc' }, { viewCount: 'desc' }],
-        take: 5,
-        select: {
-          id: true,
-          name: true,
-          slug: true,
-          price: true,
-          soldCount: true,
-          viewCount: true,
-          images: true
-        }
-      }),
       // 인기 게시글 5개
       prisma.post.findMany({
         where: { status: { not: "deleted" } },
@@ -201,14 +116,6 @@ export async function GET() {
           board: { select: { slug: true, name: true } }
         }
       }),
-      // 최근 7일 주문 추이
-      prisma.$queryRaw`
-        SELECT DATE(createdAt) as date, COUNT(*) as count, SUM(finalPrice) as revenue
-        FROM orders
-        WHERE createdAt >= ${lastWeekStart}
-        GROUP BY DATE(createdAt)
-        ORDER BY date ASC
-      `,
       // 최근 7일 신규 가입자 추이
       prisma.$queryRaw`
         SELECT DATE(createdAt) as date, COUNT(*) as count
@@ -218,6 +125,124 @@ export async function GET() {
         ORDER BY date ASC
       `
     ])
+
+    // 쇼핑몰 통계 (플러그인 활성화 시에만 조회)
+    let totalOrders = 0
+    let thisMonthOrders = 0
+    let lastMonthOrders = 0
+    let totalRevenue = { _sum: { finalPrice: 0 } }
+    let thisMonthRevenue = { _sum: { finalPrice: 0 } }
+    let lastMonthRevenue = { _sum: { finalPrice: 0 } }
+    let totalProducts = 0
+    let pendingOrders = 0
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let recentOrders: any[] = []
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let popularProducts: any[] = []
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let dailyOrders: any[] = []
+
+    if (shopEnabled) {
+      const shopResults = await Promise.all([
+        // 총 주문수
+        prisma.order.count(),
+        // 이번달 주문수
+        prisma.order.count({
+          where: { createdAt: { gte: thisMonthStart } }
+        }),
+        // 지난달 주문수
+        prisma.order.count({
+          where: {
+            createdAt: {
+              gte: lastMonthStart,
+              lt: thisMonthStart
+            }
+          }
+        }),
+        // 총 매출 (완료된 주문)
+        prisma.order.aggregate({
+          where: { status: { in: ['paid', 'preparing', 'shipped', 'delivered'] } },
+          _sum: { finalPrice: true }
+        }),
+        // 이번달 매출
+        prisma.order.aggregate({
+          where: {
+            status: { in: ['paid', 'preparing', 'shipped', 'delivered'] },
+            createdAt: { gte: thisMonthStart }
+          },
+          _sum: { finalPrice: true }
+        }),
+        // 지난달 매출
+        prisma.order.aggregate({
+          where: {
+            status: { in: ['paid', 'preparing', 'shipped', 'delivered'] },
+            createdAt: {
+              gte: lastMonthStart,
+              lt: thisMonthStart
+            }
+          },
+          _sum: { finalPrice: true }
+        }),
+        // 총 상품수
+        prisma.product.count({
+          where: { isActive: true }
+        }),
+        // 처리 대기 주문
+        prisma.order.count({
+          where: { status: 'paid' }
+        }),
+        // 최근 주문 5개
+        prisma.order.findMany({
+          orderBy: { createdAt: 'desc' },
+          take: 5,
+          select: {
+            id: true,
+            orderNo: true,
+            finalPrice: true,
+            status: true,
+            createdAt: true,
+            user: {
+              select: { nickname: true }
+            }
+          }
+        }),
+        // 인기 상품 5개
+        prisma.product.findMany({
+          where: { isActive: true },
+          orderBy: [{ soldCount: 'desc' }, { viewCount: 'desc' }],
+          take: 5,
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            price: true,
+            soldCount: true,
+            viewCount: true,
+            images: true
+          }
+        }),
+        // 최근 7일 주문 추이
+        prisma.$queryRaw`
+          SELECT DATE(createdAt) as date, COUNT(*) as count, SUM(finalPrice) as revenue
+          FROM orders
+          WHERE createdAt >= ${lastWeekStart}
+          GROUP BY DATE(createdAt)
+          ORDER BY date ASC
+        `
+      ])
+
+      totalOrders = shopResults[0]
+      thisMonthOrders = shopResults[1]
+      lastMonthOrders = shopResults[2]
+      totalRevenue = shopResults[3]
+      thisMonthRevenue = shopResults[4]
+      lastMonthRevenue = shopResults[5]
+      totalProducts = shopResults[6]
+      pendingOrders = shopResults[7]
+      recentOrders = shopResults[8]
+      popularProducts = shopResults[9]
+      dailyOrders = shopResults[10] as any[]
+    }
 
     // 증감률 계산
     const userGrowth = lastMonthUsers > 0
@@ -232,18 +257,6 @@ export async function GET() {
       ? ((todayActiveUsers - yesterdayActiveUsers) / yesterdayActiveUsers * 100).toFixed(1)
       : "0"
 
-    // 주문 증감률
-    const orderGrowth = lastMonthOrders > 0
-      ? ((thisMonthOrders - lastMonthOrders) / lastMonthOrders * 100).toFixed(1)
-      : "0"
-
-    // 매출 증감률
-    const thisMonthRevenueValue = thisMonthRevenue._sum.finalPrice || 0
-    const lastMonthRevenueValue = lastMonthRevenue._sum.finalPrice || 0
-    const revenueGrowth = lastMonthRevenueValue > 0
-      ? ((thisMonthRevenueValue - lastMonthRevenueValue) / lastMonthRevenueValue * 100).toFixed(1)
-      : "0"
-
     // 최근 7일 추이 데이터 정리 (빈 날짜 채우기)
     const last7Days = []
     for (let i = 6; i >= 0; i--) {
@@ -252,28 +265,87 @@ export async function GET() {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const orderTrendMap = new Map((dailyOrders as any[]).map(d => [
-      new Date(d.date).toISOString().split('T')[0],
-      { count: Number(d.count), revenue: Number(d.revenue) }
-    ]))
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const userTrendMap = new Map((dailyUsers as any[]).map(d => [
       new Date(d.date).toISOString().split('T')[0],
       Number(d.count)
     ]))
-
-    const orderTrend = last7Days.map(date => ({
-      date,
-      orders: orderTrendMap.get(date)?.count || 0,
-      revenue: orderTrendMap.get(date)?.revenue || 0
-    }))
 
     const userTrend = last7Days.map(date => ({
       date,
       count: userTrendMap.get(date) || 0
     }))
 
+    // 쇼핑몰 추이 데이터 (플러그인 활성화 시에만)
+    let orderTrend: { date: string; orders: number; revenue: number }[] = []
+    if (shopEnabled) {
+      // 주문 증감률
+      const orderGrowth = lastMonthOrders > 0
+        ? ((thisMonthOrders - lastMonthOrders) / lastMonthOrders * 100).toFixed(1)
+        : "0"
+
+      // 매출 증감률
+      const thisMonthRevenueValue = thisMonthRevenue._sum.finalPrice || 0
+      const lastMonthRevenueValue = lastMonthRevenue._sum.finalPrice || 0
+      const revenueGrowth = lastMonthRevenueValue > 0
+        ? ((thisMonthRevenueValue - lastMonthRevenueValue) / lastMonthRevenueValue * 100).toFixed(1)
+        : "0"
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const orderTrendMap = new Map((dailyOrders as any[]).map(d => [
+        new Date(d.date).toISOString().split('T')[0],
+        { count: Number(d.count), revenue: Number(d.revenue) }
+      ]))
+
+      orderTrend = last7Days.map(date => ({
+        date,
+        orders: orderTrendMap.get(date)?.count || 0,
+        revenue: orderTrendMap.get(date)?.revenue || 0
+      }))
+
+      return NextResponse.json({
+        pluginStatus: {
+          shop: shopEnabled,
+          auction: auctionEnabled
+        },
+        stats: {
+          totalUsers,
+          userGrowth: parseFloat(userGrowth),
+          totalPosts,
+          postGrowth: parseFloat(postGrowth),
+          activeUsers: todayActiveUsers,
+          activeUserGrowth: parseFloat(activeUserGrowth)
+        },
+        shopStats: {
+          totalOrders,
+          thisMonthOrders,
+          orderGrowth: parseFloat(orderGrowth),
+          totalRevenue: totalRevenue._sum.finalPrice || 0,
+          thisMonthRevenue: thisMonthRevenueValue,
+          revenueGrowth: parseFloat(revenueGrowth),
+          totalProducts,
+          pendingOrders
+        },
+        recentUsers,
+        recentPosts,
+        recentOrders,
+        popularProducts: popularProducts.map(p => ({
+          ...p,
+          image: p.images ? JSON.parse(p.images)[0] : null
+        })),
+        popularPosts,
+        trends: {
+          orders: orderTrend,
+          users: userTrend
+        }
+      })
+    }
+
+    // 쇼핑몰 비활성화 시 응답
     return NextResponse.json({
+      pluginStatus: {
+        shop: shopEnabled,
+        auction: auctionEnabled
+      },
       stats: {
         totalUsers,
         userGrowth: parseFloat(userGrowth),
@@ -282,26 +354,10 @@ export async function GET() {
         activeUsers: todayActiveUsers,
         activeUserGrowth: parseFloat(activeUserGrowth)
       },
-      shopStats: {
-        totalOrders,
-        thisMonthOrders,
-        orderGrowth: parseFloat(orderGrowth),
-        totalRevenue: totalRevenue._sum.finalPrice || 0,
-        thisMonthRevenue: thisMonthRevenueValue,
-        revenueGrowth: parseFloat(revenueGrowth),
-        totalProducts,
-        pendingOrders
-      },
       recentUsers,
       recentPosts,
-      recentOrders,
-      popularProducts: popularProducts.map(p => ({
-        ...p,
-        image: p.images ? JSON.parse(p.images)[0] : null
-      })),
       popularPosts,
       trends: {
-        orders: orderTrend,
         users: userTrend
       }
     })
