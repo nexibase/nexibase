@@ -61,14 +61,14 @@ export default function HomePage() {
 
       {/* 중앙 영역 */}
       {centerWidgets.length > 0 && (
-        <div className="grid grid-cols-12 gap-4 auto-rows-[minmax(100px,auto)]">
+        <div className="grid grid-cols-12 gap-4 auto-rows-auto">
           <WidgetRenderer zone="center" widgets={allWidgets} />
         </div>
       )}
 
       {/* 하단 */}
       {bottomWidgets.length > 0 && (
-        <div className="grid grid-cols-12 gap-4 auto-rows-[minmax(100px,auto)]">
+        <div className="grid grid-cols-12 gap-4 auto-rows-auto">
           <WidgetRenderer zone="bottom" widgets={allWidgets} />
         </div>
       )}
