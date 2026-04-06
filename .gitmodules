@@ -1,0 +1,6 @@
+[submodule "src/plugins/auction"]
+	path = src/plugins/auction
+	url = https://github.com/nexibase/plugin-auction.git
+[submodule "src/plugins/shop"]
+	path = src/plugins/shop
+	url = https://github.com/nexibase/plugin-shop.git
