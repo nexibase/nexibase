@@ -5,9 +5,10 @@ import { Sidebar } from "@/components/admin/Sidebar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import {
-  Save, Eye, EyeOff, X, ChevronUp, ChevronDown, Plus, Trash2
+  Save, Eye, EyeOff, ChevronUp, ChevronDown, Plus, Trash2
 } from "lucide-react"
 
 interface WidgetData {
@@ -287,72 +288,69 @@ export default function HomeWidgetsAdminPage() {
             </div>
           )}
 
-          {/* 위젯 설정 패널 (선택 시 표시) */}
-          {selectedWidget && (
-            <Card className="mb-4">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm flex items-center justify-between">
-                  <span>{selectedWidget.title} 설정</span>
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setSelectedWidget(null)}>
-                    <X className="h-4 w-4" />
-                  </Button>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-end gap-3 flex-wrap">
-                  <div>
-                    <label className="text-xs text-muted-foreground">열 너비</label>
-                    <Input
-                      type="number"
-                      min={1}
-                      max={12}
-                      className="w-20 h-8"
-                      value={selectedWidget.colSpan}
-                      onChange={(e) => setSelectedWidget({ ...selectedWidget, colSpan: parseInt(e.target.value) || 1 })}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs text-muted-foreground">행 높이</label>
-                    <Input
-                      type="number"
-                      min={1}
-                      max={12}
-                      className="w-20 h-8"
-                      value={selectedWidget.rowSpan}
-                      onChange={(e) => setSelectedWidget({ ...selectedWidget, rowSpan: parseInt(e.target.value) || 1 })}
-                    />
+          {/* 위젯 설정 모달 */}
+          <Dialog open={!!selectedWidget} onOpenChange={(open) => !open && setSelectedWidget(null)}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>{selectedWidget?.title} 설정</DialogTitle>
+              </DialogHeader>
+              {selectedWidget && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-sm font-medium">열 너비 (1~12)</label>
+                      <Input
+                        type="number"
+                        min={1}
+                        max={12}
+                        value={selectedWidget.colSpan}
+                        onChange={(e) => setSelectedWidget({ ...selectedWidget, colSpan: parseInt(e.target.value) || 1 })}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">행 높이</label>
+                      <Input
+                        type="number"
+                        min={1}
+                        max={12}
+                        value={selectedWidget.rowSpan}
+                        onChange={(e) => setSelectedWidget({ ...selectedWidget, rowSpan: parseInt(e.target.value) || 1 })}
+                      />
+                    </div>
                   </div>
                   {(() => {
                     const meta = WIDGET_META[selectedWidget.widgetKey]
                     if (!meta?.settingsSchema) return null
-                    return Object.entries(meta.settingsSchema).map(([key, schema]) => (
-                      <div key={key}>
-                        <label className="text-xs text-muted-foreground">{schema.label}</label>
-                        {schema.type === 'number' ? (
-                          <Input
-                            type="number"
-                            className="w-20 h-8"
-                            value={(editSettings[key] as number) ?? schema.default}
-                            onChange={(e) => setEditSettings({ ...editSettings, [key]: parseInt(e.target.value) || schema.default })}
-                          />
-                        ) : (
-                          <Input
-                            className="w-32 h-8"
-                            value={(editSettings[key] as string) ?? ''}
-                            onChange={(e) => setEditSettings({ ...editSettings, [key]: e.target.value })}
-                          />
-                        )}
+                    return (
+                      <div className="space-y-3">
+                        {Object.entries(meta.settingsSchema).map(([key, schema]) => (
+                          <div key={key}>
+                            <label className="text-sm font-medium">{schema.label}</label>
+                            {schema.type === 'number' ? (
+                              <Input
+                                type="number"
+                                value={(editSettings[key] as number) ?? schema.default}
+                                onChange={(e) => setEditSettings({ ...editSettings, [key]: parseInt(e.target.value) || schema.default })}
+                              />
+                            ) : (
+                              <Input
+                                value={(editSettings[key] as string) ?? ''}
+                                onChange={(e) => setEditSettings({ ...editSettings, [key]: e.target.value })}
+                              />
+                            )}
+                          </div>
+                        ))}
                       </div>
-                    ))
+                    )
                   })()}
-                  <Button size="sm" onClick={handleSaveSettings} disabled={saving}>
+                  <Button onClick={handleSaveSettings} disabled={saving} className="w-full">
                     <Save className="h-4 w-4 mr-1" />
                     {saving ? '저장 중...' : '저장'}
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
-          )}
+              )}
+            </DialogContent>
+          </Dialog>
 
           {/* 홈 위젯 영역 */}
           <div className="space-y-4">
