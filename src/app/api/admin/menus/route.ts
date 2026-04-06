@@ -1,6 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminUser } from '@/lib/auth'
+import { pluginManifest } from '@/plugins/_generated'
+import { isPluginEnabled } from '@/lib/plugins'
+
+// Menu URL → plugin folder 매핑
+function getMenuPlugin(url: string): string | null {
+  for (const [folder, meta] of Object.entries(pluginManifest)) {
+    const slug = meta.slug
+    // Check if URL starts with plugin slug
+    if (url === `/${slug}` || url.startsWith(`/${slug}/`)) {
+      return folder
+    }
+  }
+  return null
+}
 
 // GET /api/admin/menus — full menu tree for admin
 export async function GET() {
@@ -20,8 +34,39 @@ export async function GET() {
       orderBy: [{ position: 'asc' }, { sortOrder: 'asc' }],
     })
 
-    const header = menus.filter(m => m.position === 'header')
-    const footer = menus.filter(m => m.position === 'footer')
+    // 각 메뉴에 플러그인 활성 상태 추가
+    const menusWithPluginStatus = await Promise.all(
+      menus.map(async (m) => {
+        const pluginFolder = getMenuPlugin(m.url)
+        let pluginEnabled = true
+        let pluginName: string | null = null
+
+        if (pluginFolder) {
+          pluginEnabled = await isPluginEnabled(pluginFolder)
+          pluginName = pluginManifest[pluginFolder]?.name || pluginFolder
+        }
+
+        const children = await Promise.all(
+          (m.children || []).map(async (child) => {
+            const childPluginFolder = getMenuPlugin(child.url)
+            let childPluginEnabled = true
+            let childPluginName: string | null = null
+
+            if (childPluginFolder) {
+              childPluginEnabled = await isPluginEnabled(childPluginFolder)
+              childPluginName = pluginManifest[childPluginFolder]?.name || childPluginFolder
+            }
+
+            return { ...child, pluginFolder: childPluginFolder, pluginEnabled: childPluginEnabled, pluginName: childPluginName }
+          })
+        )
+
+        return { ...m, children, pluginFolder, pluginEnabled, pluginName }
+      })
+    )
+
+    const header = menusWithPluginStatus.filter(m => m.position === 'header')
+    const footer = menusWithPluginStatus.filter(m => m.position === 'footer')
 
     return NextResponse.json({ header, footer })
   } catch (error) {

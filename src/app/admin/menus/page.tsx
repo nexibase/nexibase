@@ -23,6 +23,9 @@ interface MenuItem {
   isActive: boolean
   sortOrder: number
   children: MenuItem[]
+  pluginFolder: string | null
+  pluginEnabled: boolean
+  pluginName: string | null
 }
 
 interface MenuForm {
@@ -211,77 +214,91 @@ export default function MenusAdminPage() {
     }
   }
 
-  const renderMenuItem = (menu: MenuItem, list: MenuItem[], depth: number = 0) => (
-    <div key={menu.id}>
-      <div className={`flex items-center gap-2 px-3 py-2 border-b hover:bg-muted/50 ${depth > 0 ? 'ml-8 border-l' : ''}`}>
-        <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            {menu.icon && <span className="text-sm">{menu.icon}</span>}
-            <span className="text-sm font-medium truncate">{menu.label}</span>
-            <span className="text-xs text-muted-foreground truncate">{menu.url}</span>
-            {menu.groupName && <Badge variant="outline" className="text-xs">{menu.groupName}</Badge>}
-            {!menu.isActive && <Badge variant="secondary" className="text-xs">비활성</Badge>}
-            {menu.visibility !== 'all' && (
-              <Badge variant="secondary" className="text-xs">
-                {menu.visibility === 'member' ? '회원' : '관리자'}
-              </Badge>
-            )}
-            {menu.target === '_blank' && <ExternalLink className="h-3 w-3 text-muted-foreground" />}
+  const renderMenuItem = (menu: MenuItem, list: MenuItem[], depth: number = 0) => {
+    const isPluginDisabled = menu.pluginFolder && !menu.pluginEnabled
+    return (
+      <div key={menu.id}>
+        <div className={`flex items-center gap-2 px-3 py-2 border-b ${
+          isPluginDisabled
+            ? 'opacity-50 bg-muted/30'
+            : 'hover:bg-muted/50'
+        } ${depth > 0 ? 'ml-8 border-l' : ''}`}>
+          <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              {menu.icon && <span className="text-sm">{menu.icon}</span>}
+              <span className="text-sm font-medium truncate">{menu.label}</span>
+              <span className="text-xs text-muted-foreground truncate">{menu.url}</span>
+              {menu.groupName && <Badge variant="outline" className="text-xs">{menu.groupName}</Badge>}
+              {isPluginDisabled && (
+                <Badge variant="destructive" className="text-xs">
+                  {menu.pluginName} 플러그인 비활성
+                </Badge>
+              )}
+              {!menu.isActive && !isPluginDisabled && <Badge variant="secondary" className="text-xs">비활성</Badge>}
+              {menu.visibility !== 'all' && (
+                <Badge variant="secondary" className="text-xs">
+                  {menu.visibility === 'member' ? '회원' : '관리자'}
+                </Badge>
+              )}
+              {menu.target === '_blank' && <ExternalLink className="h-3 w-3 text-muted-foreground" />}
+            </div>
           </div>
-        </div>
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleMoveUp(menu, list)} title="위로">
-            <ChevronUp className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleMoveDown(menu, list)} title="아래로">
-            <ChevronDown className="h-4 w-4" />
-          </Button>
-          {depth === 0 && (
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleIndent(menu, list)} title="하위 메뉴로">
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+          {!isPluginDisabled && (
+            <div className="flex items-center gap-1">
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleMoveUp(menu, list)} title="위로">
+                <ChevronUp className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleMoveDown(menu, list)} title="아래로">
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+              {depth === 0 && (
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleIndent(menu, list)} title="하위 메뉴로">
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              )}
+              {depth > 0 && (
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleOutdent(menu)} title="상위로">
+                  <ChevronRight className="h-4 w-4 rotate-180" />
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={() => {
+                  setIsCreating(false)
+                  setEditingForm({
+                    id: menu.id,
+                    parentId: menu.parentId,
+                    position: menu.position,
+                    groupName: menu.groupName || '',
+                    label: menu.label,
+                    url: menu.url,
+                    icon: menu.icon || '',
+                    target: menu.target,
+                    visibility: menu.visibility,
+                    isActive: menu.isActive,
+                  })
+                }}
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500" onClick={() => handleDelete(menu.id)}>
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
           )}
-          {depth > 0 && (
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleOutdent(menu)} title="상위로">
-              <ChevronRight className="h-4 w-4 rotate-180" />
-            </Button>
-          )}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
-            onClick={() => {
-              setIsCreating(false)
-              setEditingForm({
-                id: menu.id,
-                parentId: menu.parentId,
-                position: menu.position,
-                groupName: menu.groupName || '',
-                label: menu.label,
-                url: menu.url,
-                icon: menu.icon || '',
-                target: menu.target,
-                visibility: menu.visibility,
-                isActive: menu.isActive,
-              })
-            }}
-          >
-            <Pencil className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500" onClick={() => handleDelete(menu.id)}>
-            <Trash2 className="h-4 w-4" />
-          </Button>
         </div>
+        {/* Render children */}
+        {menu.children && menu.children.length > 0 && (
+          <div>
+            {menu.children.map(child => renderMenuItem(child, menu.children, depth + 1))}
+          </div>
+        )}
       </div>
-      {/* Render children */}
-      {menu.children && menu.children.length > 0 && (
-        <div>
-          {menu.children.map(child => renderMenuItem(child, menu.children, depth + 1))}
-        </div>
-      )}
-    </div>
-  )
+    )
+  }
 
   return (
     <div className="flex h-screen bg-background">

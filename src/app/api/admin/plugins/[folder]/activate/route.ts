@@ -22,8 +22,17 @@ export async function POST(
     }
 
     const menus = plugin.headerMenus || []
+    const footerMenus = plugin.footerMenus || []
     const widgets = plugin.widgetMetas || []
     const slug = plugin.slug
+
+    // Footer menu URL mapping per plugin
+    const footerUrlMap: Record<string, Record<string, string>> = {
+      contents: { '회사소개': '/contents/about', '자주 묻는 질문': '/contents/faq', '문의하기': '/contents/contact' },
+      policies: { '이용약관': '/policies/terms', '개인정보처리방침': '/policies/privacy' },
+      boards: { '전체게시판': '/boards' },
+      shop: { '취소/반품 정책': '/shop/policy' },
+    }
 
     let menuCount = 0
     let widgetCount = 0
@@ -41,6 +50,27 @@ export async function POST(
             url: `/${slug}`,
             icon: menu.icon || null,
             sortOrder: menu.sortOrder || 0,
+          }
+        })
+        menuCount++
+      }
+    }
+
+    // Seed footer menus
+    for (const fMenu of footerMenus) {
+      const urlMap = footerUrlMap[folder] || {}
+      const url = urlMap[fMenu.label] || `/${slug}`
+      const existing = await prisma.menu.findFirst({
+        where: { url, position: 'footer', label: fMenu.label }
+      })
+      if (!existing) {
+        await prisma.menu.create({
+          data: {
+            position: 'footer',
+            groupName: fMenu.groupName || null,
+            label: fMenu.label,
+            url,
+            sortOrder: fMenu.sortOrder || 0,
           }
         })
         menuCount++
