@@ -37,7 +37,7 @@ export default function BoardCards({ settings }: { settings?: Record<string, any
   if (boards.length === 0) return null
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="space-y-3">
       {boards.slice(0, limit).map((board) => (
         <Link key={board.id} href={`/boards/${board.slug}`}>
           <Card className="h-full hover:border-primary/50 hover:shadow-md transition-all duration-300 cursor-pointer group">
