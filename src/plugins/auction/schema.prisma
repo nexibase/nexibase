@@ -1,0 +1,64 @@
+model Auction {
+  id            Int       @id @default(autoincrement())
+  sellerId      Int
+  title         String    @db.VarChar(255)
+  description   String    @db.Text
+  images        String?   @db.Text
+  startingPrice Int
+  currentPrice  Int
+  buyNowPrice   Int?
+  bidIncrement  Int       @default(1000)
+  bidCount      Int       @default(0)
+  startsAt      DateTime
+  endsAt        DateTime
+  status        String    @default("pending") @db.VarChar(20)
+  winnerId          Int?
+  requiresShipping  Boolean   @default(true)
+  paymentDeadline   DateTime?
+  paymentStatus     String?   @db.VarChar(20)
+  orderId           Int?      @unique
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  seller   User      @relation("AuctionSeller", fields: [sellerId], references: [id])
+  winner   User?     @relation("AuctionWinner", fields: [winnerId], references: [id])
+  order    Order?    @relation(fields: [orderId], references: [id])
+  bids     Bid[]
+  autoBids AutoBid[]
+
+  @@index([status, endsAt])
+  @@index([sellerId])
+  @@map("auctions")
+}
+
+model Bid {
+  id        Int      @id @default(autoincrement())
+  auctionId Int
+  userId    Int
+  amount    Int
+  isAutoBid Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  auction Auction @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@index([auctionId, createdAt])
+  @@index([userId])
+  @@map("bids")
+}
+
+model AutoBid {
+  id        Int      @id @default(autoincrement())
+  auctionId Int
+  userId    Int
+  maxAmount Int
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  auction Auction @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@unique([auctionId, userId])
+  @@map("auto_bids")
+}

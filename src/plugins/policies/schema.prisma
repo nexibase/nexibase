@@ -1,0 +1,14 @@
+model Policy {
+  id        Int      @id @default(autoincrement())
+  slug      String   @db.VarChar(100)
+  version   String   @db.VarChar(20)
+  title     String   @db.VarChar(200)
+  content   String   @db.LongText
+  isActive  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([slug, version])
+  @@index([slug, isActive])
+  @@map("policies")
+}

@@ -1,0 +1,13 @@
+model Content {
+  id        Int      @id @default(autoincrement())
+  slug      String   @unique @db.VarChar(100)
+  title     String   @db.VarChar(200)
+  content   String   @db.LongText
+  isPublic  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([slug])
+  @@index([isPublic])
+  @@map("contents")
+}

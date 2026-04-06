@@ -1,0 +1,118 @@
+model Board {
+  id                Int      @id @default(autoincrement())
+  slug              String   @unique @db.VarChar(50)
+  name              String   @db.VarChar(100)
+  description       String?  @db.VarChar(500)
+  category          String?  @db.VarChar(50)
+  listMemberOnly    Boolean  @default(false)
+  readMemberOnly    Boolean  @default(false)
+  writeMemberOnly   Boolean  @default(true)
+  commentMemberOnly Boolean  @default(true)
+  useComment        Boolean  @default(true)
+  useReaction       Boolean  @default(true)
+  useFile           Boolean  @default(true)
+  useSecret         Boolean  @default(false)
+  postsPerPage      Int      @default(20)
+  sortOrder         String   @default("latest") @db.VarChar(20)
+  isActive          Boolean  @default(true)
+  postCount         Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  displayType       String   @default("list") @db.VarChar(20)
+  posts             Post[]
+
+  @@index([slug])
+  @@index([category])
+  @@index([isActive])
+  @@map("boards")
+}
+
+model Post {
+  id           Int              @id @default(autoincrement())
+  boardId      Int
+  authorId     Int
+  title        String           @db.VarChar(200)
+  content      String           @db.Text
+  status       String           @default("published") @db.VarChar(20)
+  isNotice     Boolean          @default(false)
+  isSecret     Boolean          @default(false)
+  viewCount    Int              @default(0)
+  likeCount    Int              @default(0)
+  commentCount Int              @default(0)
+  ip           String?          @db.VarChar(50)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  comments     Comment[]
+  attachments  PostAttachment[]
+  author       User             @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  board        Board            @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  reactions    Reaction[]
+
+  @@index([boardId])
+  @@index([authorId])
+  @@index([status])
+  @@index([createdAt])
+  @@fulltext([title, content])
+  @@map("posts")
+}
+
+model PostAttachment {
+  id            Int      @id @default(autoincrement())
+  postId        Int
+  filename      String   @db.VarChar(255)
+  storedName    String   @db.VarChar(255)
+  filePath      String   @db.VarChar(500)
+  fileSize      Int
+  mimeType      String   @db.VarChar(100)
+  downloadCount Int      @default(0)
+  createdAt     DateTime @default(now())
+  sortOrder     Int      @default(0)
+  thumbnailPath String?  @db.VarChar(500)
+  post          Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+  @@map("post_attachments")
+}
+
+model Comment {
+  id        Int        @id @default(autoincrement())
+  postId    Int
+  authorId  Int
+  parentId  Int?
+  content   String     @db.Text
+  status    String     @default("published") @db.VarChar(20)
+  isSecret  Boolean    @default(false)
+  likeCount Int        @default(0)
+  ip        String?    @db.VarChar(50)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  author    User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parent    Comment?   @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   Comment[]  @relation("CommentReplies")
+  post      Post       @relation(fields: [postId], references: [id], onDelete: Cascade)
+  reactions Reaction[]
+
+  @@index([postId])
+  @@index([authorId])
+  @@index([parentId])
+  @@index([createdAt])
+  @@map("comments")
+}
+
+model Reaction {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  postId    Int?
+  commentId Int?
+  type      String   @db.VarChar(20)
+  createdAt DateTime @default(now())
+  comment   Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  post      Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId, type])
+  @@unique([userId, commentId, type])
+  @@index([postId])
+  @@index([commentId])
+  @@map("reactions")
+}
