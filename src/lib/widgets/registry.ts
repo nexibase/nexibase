@@ -16,7 +16,7 @@ const SiteStats = dynamic(() => import('@/components/widgets/SiteStats'), { ssr:
 const LatestPosts = dynamic(() => import('@/components/widgets/LatestPosts'), { ssr: false })
 const PopularBoards = dynamic(() => import('@/components/widgets/PopularBoards'), { ssr: false })
 const ShopShortcut = dynamic(() => import('@/components/widgets/ShopShortcut'), { ssr: false })
-const AuctionLive = dynamic(() => import('@/components/widgets/AuctionLive'), { ssr: false })
+const AuctionLive = dynamic(() => import('@/plugins/auction/widgets/AuctionLive'), { ssr: false })
 const CommunityGuide = dynamic(() => import('@/components/widgets/CommunityGuide'), { ssr: false })
 const BoardCards = dynamic(() => import('@/components/widgets/BoardCards'), { ssr: false })
 

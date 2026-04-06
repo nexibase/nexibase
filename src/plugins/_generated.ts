@@ -18,6 +18,22 @@ export interface PluginMeta {
 }
 
 export const pluginManifest: Record<string, PluginMeta> = {
+  'auction': {
+    name: '경매',
+    slug: 'auction',
+    version: '1.0.0',
+    author: 'kagla',
+    authorDomain: 'https://kagla.com',
+    repository: '',
+    description: '실시간 경매 시스템',
+    defaultEnabled: false,
+    hasRoutes: true,
+    hasApi: true,
+    hasAdmin: true,
+    hasWidgets: true,
+    hasMenus: false,
+    hasSchema: false,
+  },
   'boards': {
     name: '게시판',
     slug: 'boards',
