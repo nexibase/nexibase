@@ -8,8 +8,21 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
-  LogOut, MessageSquare, FileText, Eye, ThumbsUp, Clock,
+  LogOut, MessageSquare, FileText, Eye, ThumbsUp, Clock, User, Calendar, Mail, Phone, Shield,
 } from "lucide-react"
+
+interface UserInfo {
+  id: number
+  email: string
+  nickname: string
+  name: string | null
+  phone: string | null
+  image: string | null
+  role: string
+  level: number
+  lastLoginAt: string | null
+  createdAt: string
+}
 
 interface MyPost {
   id: number
@@ -34,15 +47,18 @@ interface MyComment {
 
 export default function MyPage() {
   const router = useRouter()
+  const [user, setUser] = useState<UserInfo | null>(null)
   const [myPosts, setMyPosts] = useState<MyPost[]>([])
   const [myComments, setMyComments] = useState<MyComment[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     Promise.all([
+      fetch('/api/me').then(r => r.ok ? r.json() : null).catch(() => null),
       fetch('/api/me/posts?limit=5').then(r => r.ok ? r.json() : null).catch(() => null),
       fetch('/api/me/comments?limit=5').then(r => r.ok ? r.json() : null).catch(() => null),
-    ]).then(([postsData, commentsData]) => {
+    ]).then(([userData, postsData, commentsData]) => {
+      if (userData?.user) setUser(userData.user)
       if (postsData?.posts) setMyPosts(postsData.posts)
       if (commentsData?.comments) setMyComments(commentsData.comments)
     }).finally(() => setLoading(false))
@@ -72,6 +88,52 @@ export default function MyPage() {
           <div className="py-12 text-center text-muted-foreground">로딩 중...</div>
         ) : (
           <>
+            {/* 내 정보 */}
+            {user && (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    내 정보
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-muted-foreground" />
+                      <span>{user.email}</span>
+                    </div>
+                    {user.name && (
+                      <div className="flex items-center gap-2">
+                        <User className="h-4 w-4 text-muted-foreground" />
+                        <span>{user.name}</span>
+                      </div>
+                    )}
+                    {user.phone && (
+                      <div className="flex items-center gap-2">
+                        <Phone className="h-4 w-4 text-muted-foreground" />
+                        <span>{user.phone}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2">
+                      <Shield className="h-4 w-4 text-muted-foreground" />
+                      <span>Lv.{user.level} {user.role === 'admin' ? '(관리자)' : ''}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <span>가입 {new Date(user.createdAt).toLocaleDateString('ko-KR')}</span>
+                    </div>
+                    {user.lastLoginAt && (
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                        <span>최근 {formatTimeAgo(user.lastLoginAt)}</span>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* 내가 쓴 글 */}
             <Card>
               <CardHeader className="pb-3">
