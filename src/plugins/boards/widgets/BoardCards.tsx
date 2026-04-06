@@ -37,9 +37,9 @@ export default function BoardCards({ settings }: { settings?: Record<string, any
   if (boards.length === 0) return null
 
   return (
-    <>
-      {boards.slice(0, limit).map((board, index) => (
-        <Link key={board.id} href={`/boards/${board.slug}`} className={index === 0 ? 'md:col-span-2' : ''}>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {boards.slice(0, limit).map((board) => (
+        <Link key={board.id} href={`/boards/${board.slug}`}>
           <Card className="h-full hover:border-primary/50 hover:shadow-md transition-all duration-300 cursor-pointer group">
             <CardContent className="p-4 h-full flex flex-col justify-between">
               <div>
@@ -61,6 +61,6 @@ export default function BoardCards({ settings }: { settings?: Record<string, any
           </Card>
         </Link>
       ))}
-    </>
+    </div>
   )
 }
