@@ -70,6 +70,10 @@ CLAUDE.md
 # 로그 파일
 *.log
 
+# bun
+bun.lock
+bun.lockb
+
 # logs
 /logs
 
