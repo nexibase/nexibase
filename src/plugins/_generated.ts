@@ -18,6 +18,22 @@ export interface PluginMeta {
 }
 
 export const pluginManifest: Record<string, PluginMeta> = {
+  'contents': {
+    name: '콘텐츠',
+    slug: 'contents',
+    version: '1.0.0',
+    author: 'kagla',
+    authorDomain: 'https://kagla.com',
+    repository: '',
+    description: '소개 페이지 관리 (회사소개, FAQ, 문의하기 등)',
+    defaultEnabled: true,
+    hasRoutes: true,
+    hasApi: false,
+    hasAdmin: true,
+    hasWidgets: false,
+    hasMenus: false,
+    hasSchema: false,
+  },
   'sample': {
     name: '샘플 플러그인',
     slug: 'sample',

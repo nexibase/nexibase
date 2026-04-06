@@ -1,0 +1,54 @@
+<h2>DB 모델: Menu 테이블</h2>
+<p class="subtitle">단일 테이블로 사이트 전체 네비게이션을 관리하는 구조</p>
+
+<div class="section">
+  <h3>Prisma Schema</h3>
+  <div class="mockup">
+    <div class="mockup-header">prisma/schema.prisma — Menu model</div>
+    <div class="mockup-body" style="font-family: monospace; font-size: 13px; line-height: 1.6; white-space: pre; background: #1e1e2e; color: #cdd6f4; padding: 20px; border-radius: 8px;">
+<span style="color:#cba6f7">model</span> <span style="color:#f9e2af">Menu</span> {
+  id         <span style="color:#89b4fa">Int</span>      <span style="color:#a6adc8">@id @default(autoincrement())</span>
+  parentId   <span style="color:#89b4fa">Int?</span>     <span style="color:#6c7086">// null = 최상위 메뉴</span>
+  position   <span style="color:#89b4fa">String</span>   <span style="color:#a6adc8">@db.VarChar(20)</span>   <span style="color:#6c7086">// "header" | "footer"</span>
+  groupName  <span style="color:#89b4fa">String?</span>  <span style="color:#a6adc8">@db.VarChar(50)</span>   <span style="color:#6c7086">// Footer 컬럼명, Header 섹션명</span>
+  label      <span style="color:#89b4fa">String</span>   <span style="color:#a6adc8">@db.VarChar(100)</span>  <span style="color:#6c7086">// 표시 텍스트</span>
+  url        <span style="color:#89b4fa">String</span>   <span style="color:#a6adc8">@db.VarChar(500)</span>  <span style="color:#6c7086">// 링크 URL</span>
+  icon       <span style="color:#89b4fa">String?</span>  <span style="color:#a6adc8">@db.VarChar(50)</span>   <span style="color:#6c7086">// 이모지 또는 아이콘명</span>
+  target     <span style="color:#89b4fa">String</span>   <span style="color:#a6adc8">@default("_self") @db.VarChar(10)</span> <span style="color:#6c7086">// "_self" | "_blank"</span>
+  visibility <span style="color:#89b4fa">String</span>   <span style="color:#a6adc8">@default("all") @db.VarChar(10)</span>  <span style="color:#6c7086">// "all" | "member" | "admin"</span>
+  isActive   <span style="color:#89b4fa">Boolean</span>  <span style="color:#a6adc8">@default(true)</span>
+  sortOrder  <span style="color:#89b4fa">Int</span>      <span style="color:#a6adc8">@default(0)</span>
+  createdAt  <span style="color:#89b4fa">DateTime</span> <span style="color:#a6adc8">@default(now())</span>
+  updatedAt  <span style="color:#89b4fa">DateTime</span> <span style="color:#a6adc8">@updatedAt</span>
+
+  parent     <span style="color:#f9e2af">Menu?</span>    <span style="color:#a6adc8">@relation("MenuTree", fields: [parentId], references: [id], onDelete: Cascade)</span>
+  children   <span style="color:#f9e2af">Menu[]</span>   <span style="color:#a6adc8">@relation("MenuTree")</span>
+
+  <span style="color:#a6adc8">@@index([position, sortOrder])</span>
+  <span style="color:#a6adc8">@@index([parentId])</span>
+  <span style="color:#a6adc8">@@map("menus")</span>
+}</div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>핵심 설계 포인트</h3>
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+    <div style="background: rgba(137,180,250,0.1); padding: 16px; border-radius: 8px; border-left: 3px solid #89b4fa;">
+      <strong>🌳 트리 구조</strong>
+      <p style="margin-top: 8px; font-size: 14px; color: #a6adc8;">parentId 자기참조로 무제한 중첩 가능. onDelete: Cascade로 부모 삭제 시 자식도 함께 삭제</p>
+    </div>
+    <div style="background: rgba(166,227,161,0.1); padding: 16px; border-radius: 8px; border-left: 3px solid #a6e3a1;">
+      <strong>📍 위치 분리</strong>
+      <p style="margin-top: 8px; font-size: 14px; color: #a6adc8;">position으로 header/footer 구분, groupName으로 Footer 컬럼이나 Header 섹션을 유연하게 그룹핑</p>
+    </div>
+    <div style="background: rgba(249,226,175,0.1); padding: 16px; border-radius: 8px; border-left: 3px solid #f9e2af;">
+      <strong>🔐 권한 제어</strong>
+      <p style="margin-top: 8px; font-size: 14px; color: #a6adc8;">visibility: "all" (모두), "member" (로그인), "admin" (관리자) — 프론트에서 필터링</p>
+    </div>
+    <div style="background: rgba(203,166,247,0.1); padding: 16px; border-radius: 8px; border-left: 3px solid #cba6f7;">
+      <strong>🎨 표시 옵션</strong>
+      <p style="margin-top: 8px; font-size: 14px; color: #a6adc8;">icon (이모지/아이콘명), target (새창 열기), isActive (표시/숨김) 지원</p>
+    </div>
+  </div>
+</div>
