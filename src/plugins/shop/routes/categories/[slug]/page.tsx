@@ -1,0 +1,383 @@
+"use client"
+
+import { useState, useEffect, useCallback, Suspense } from "react"
+import { useParams, useSearchParams, useRouter } from "next/navigation"
+import Link from "next/link"
+import { Header, Footer } from "@/components/layout"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Card, CardContent } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
+  Search,
+  Loader2,
+  ChevronLeft,
+  ChevronRight,
+  Package,
+  ArrowLeft,
+  MessageSquare,
+} from "lucide-react"
+
+interface Product {
+  id: number
+  name: string
+  slug: string
+  description: string | null
+  price: number
+  originPrice: number | null
+  minPrice: number
+  maxPrice: number
+  image: string | null
+  category: { id: number; name: string; slug: string } | null
+  isSoldOut: boolean
+  soldCount: number
+  reviewCount: number
+  hasOptions: boolean
+}
+
+interface Category {
+  id: number
+  name: string
+  slug: string
+  productCount: number
+}
+
+export default function CategoryPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-background flex flex-col">
+        <Header />
+        <main className="flex-1 flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </main>
+        <Footer />
+      </div>
+    }>
+      <CategoryContent />
+    </Suspense>
+  )
+}
+
+function CategoryContent() {
+  const router = useRouter()
+  const params = useParams()
+  const searchParams = useSearchParams()
+  const categorySlug = params.slug as string
+
+  const [products, setProducts] = useState<Product[]>([])
+  const [category, setCategory] = useState<Category | null>(null)
+  const [allCategories, setAllCategories] = useState<Category[]>([])
+  const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [total, setTotal] = useState(0)
+
+  const sortBy = searchParams.get('sort') || 'latest'
+  const searchQuery = searchParams.get('search') || ''
+
+  const [search, setSearch] = useState(searchQuery)
+
+  const fetchProducts = useCallback(async () => {
+    setLoading(true)
+    try {
+      const params = new URLSearchParams({
+        page: String(page),
+        limit: '12',
+        sort: sortBy,
+        category: categorySlug,
+        ...(searchQuery && { search: searchQuery })
+      })
+
+      const res = await fetch(`/api/shop/products?${params}`)
+      if (res.ok) {
+        const data = await res.json()
+        setProducts(data.products)
+        setTotalPages(data.pagination.totalPages)
+        setTotal(data.pagination.total)
+      }
+    } catch (error) {
+      console.error('상품 조회 에러:', error)
+    } finally {
+      setLoading(false)
+    }
+  }, [page, categorySlug, sortBy, searchQuery])
+
+  const fetchCategories = useCallback(async () => {
+    try {
+      const res = await fetch('/api/shop/categories')
+      if (res.ok) {
+        const data = await res.json()
+        setAllCategories(data.categories)
+        // 현재 카테고리 찾기
+        const current = data.categories.find((c: Category) => c.slug === categorySlug)
+        setCategory(current || null)
+      }
+    } catch (error) {
+      console.error('카테고리 조회 에러:', error)
+    }
+  }, [categorySlug])
+
+  useEffect(() => {
+    fetchCategories()
+  }, [fetchCategories])
+
+  useEffect(() => {
+    fetchProducts()
+  }, [fetchProducts])
+
+  useEffect(() => {
+    setPage(1)
+  }, [categorySlug, sortBy, searchQuery])
+
+  const handleCategoryChange = (slug: string) => {
+    if (slug === 'all') {
+      router.push('/shop')
+    } else {
+      router.push(`/shop/categories/${slug}`)
+    }
+  }
+
+  const handleSortChange = (sort: string) => {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('sort', sort)
+    params.delete('page')
+    router.push(`/shop/categories/${categorySlug}?${params}`)
+  }
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    const params = new URLSearchParams(searchParams.toString())
+    if (search.trim()) {
+      params.set('search', search.trim())
+    } else {
+      params.delete('search')
+    }
+    params.delete('page')
+    router.push(`/shop/categories/${categorySlug}?${params}`)
+  }
+
+  const formatPrice = (price: number) => price.toLocaleString() + '원'
+
+  return (
+    <div className="min-h-screen bg-background flex flex-col">
+      <Header />
+
+      <main className="flex-1">
+        <div className="max-w-6xl mx-auto px-4 py-6">
+          {/* 헤더 */}
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-2">
+              <Link href="/shop" className="text-muted-foreground hover:text-foreground">
+                <ArrowLeft className="h-5 w-5" />
+              </Link>
+              <h1 className="text-2xl font-bold flex items-center gap-2">
+                <Package className="h-6 w-6" />
+                {category?.name || '카테고리'}
+              </h1>
+            </div>
+            <p className="text-muted-foreground">
+              {category?.name} 카테고리의 상품을 확인하세요
+            </p>
+          </div>
+
+          {/* 필터 영역 */}
+          <div className="flex flex-col md:flex-row gap-4 mb-6">
+            {/* 검색 */}
+            <form onSubmit={handleSearch} className="flex-1 max-w-md">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="상품 검색..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-10 pr-20"
+                />
+                <Button
+                  type="submit"
+                  size="sm"
+                  className="absolute right-1 top-1/2 transform -translate-y-1/2"
+                >
+                  검색
+                </Button>
+              </div>
+            </form>
+
+            <div className="flex gap-2">
+              {/* 카테고리 필터 */}
+              <Select value={categorySlug} onValueChange={handleCategoryChange}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="카테고리" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">전체</SelectItem>
+                  {allCategories.map(cat => (
+                    <SelectItem key={cat.id} value={cat.slug}>
+                      {cat.name} ({cat.productCount})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* 정렬 */}
+              <Select value={sortBy} onValueChange={handleSortChange}>
+                <SelectTrigger className="w-[120px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="latest">최신순</SelectItem>
+                  <SelectItem value="popular">판매순</SelectItem>
+                  <SelectItem value="review">후기순</SelectItem>
+                  <SelectItem value="price_asc">낮은가격</SelectItem>
+                  <SelectItem value="price_desc">높은가격</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* 카테고리 태그 */}
+          {allCategories.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-6">
+              <Badge
+                variant="outline"
+                className="cursor-pointer"
+                onClick={() => handleCategoryChange('all')}
+              >
+                전체
+              </Badge>
+              {allCategories.map(cat => (
+                <Badge
+                  key={cat.id}
+                  variant={categorySlug === cat.slug ? 'default' : 'outline'}
+                  className="cursor-pointer"
+                  onClick={() => handleCategoryChange(cat.slug)}
+                >
+                  {cat.name}
+                </Badge>
+              ))}
+            </div>
+          )}
+
+          {/* 결과 정보 */}
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm text-muted-foreground">
+              총 {total}개의 상품
+              {searchQuery && ` (검색: "${searchQuery}")`}
+            </p>
+          </div>
+
+          {/* 상품 그리드 */}
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : products.length === 0 ? (
+            <div className="text-center py-20">
+              <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">상품이 없습니다.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {products.map((product) => (
+                <Link key={product.id} href={`/shop/products/${product.slug}`}>
+                  <Card className="h-full overflow-hidden hover:shadow-lg transition-shadow group">
+                    {/* 이미지 */}
+                    <div className="relative aspect-square bg-muted">
+                      {product.image ? (
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Package className="h-12 w-12 text-muted-foreground" />
+                        </div>
+                      )}
+                      {product.isSoldOut && (
+                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                          <span className="text-white font-bold text-lg">품절</span>
+                        </div>
+                      )}
+                      {product.originPrice && product.originPrice > product.price && (
+                        <Badge className="absolute top-2 left-2 bg-red-500">
+                          {Math.round((1 - product.price / product.originPrice) * 100)}%
+                        </Badge>
+                      )}
+                    </div>
+
+                    {/* 정보 */}
+                    <CardContent className="p-3">
+                      {product.category && (
+                        <p className="text-xs text-muted-foreground mb-1">
+                          {product.category.name}
+                        </p>
+                      )}
+                      <h3 className="font-medium text-sm line-clamp-2 mb-2 group-hover:text-primary transition-colors">
+                        {product.name}
+                      </h3>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-end gap-2">
+                          <span className="font-bold text-lg">
+                            {product.hasOptions && product.minPrice !== product.maxPrice
+                              ? `${formatPrice(product.minPrice)} ~`
+                              : formatPrice(product.price)
+                            }
+                          </span>
+                          {product.originPrice && product.originPrice > product.price && (
+                            <span className="text-sm text-muted-foreground line-through">
+                              {formatPrice(product.originPrice)}
+                            </span>
+                          )}
+                        </div>
+                        {product.reviewCount > 0 && (
+                          <span className="flex items-center gap-0.5 text-xs text-muted-foreground">
+                            <MessageSquare className="h-3 w-3" />
+                            {product.reviewCount}
+                          </span>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          )}
+
+          {/* 페이지네이션 */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-8">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="text-sm text-muted-foreground px-4">
+                {page} / {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+        </div>
+      </main>
+
+      <Footer />
+    </div>
+  )
+}

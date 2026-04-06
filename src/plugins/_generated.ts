@@ -97,6 +97,22 @@ export const pluginManifest: Record<string, PluginMeta> = {
     hasWidgets: false,
     hasMenus: false,
     hasSchema: false,
+  },
+  'shop': {
+    name: '쇼핑몰',
+    slug: 'shop',
+    version: '1.0.0',
+    author: 'kagla',
+    authorDomain: 'https://kagla.com',
+    repository: '',
+    description: '상품 판매, 주문, 결제 시스템',
+    defaultEnabled: false,
+    hasRoutes: true,
+    hasApi: true,
+    hasAdmin: true,
+    hasWidgets: false,
+    hasMenus: false,
+    hasSchema: false,
   }
 }
 
