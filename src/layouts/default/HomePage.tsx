@@ -52,25 +52,16 @@ export default function HomePage() {
 
   return (
     <div className="space-y-6">
-      {/* 상단 영역 */}
       {topWidgets.length > 0 && (
-        <div className="grid grid-cols-12 gap-4">
-          <WidgetRenderer zone="top" widgets={allWidgets} />
-        </div>
+        <WidgetRenderer zone="top" widgets={allWidgets} />
       )}
 
-      {/* 중앙 영역 */}
       {centerWidgets.length > 0 && (
-        <div className="grid grid-cols-12 gap-4 auto-rows-auto">
-          <WidgetRenderer zone="center" widgets={allWidgets} />
-        </div>
+        <WidgetRenderer zone="center" widgets={allWidgets} />
       )}
 
-      {/* 하단 */}
       {bottomWidgets.length > 0 && (
-        <div className="grid grid-cols-12 gap-4 auto-rows-auto">
-          <WidgetRenderer zone="bottom" widgets={allWidgets} />
-        </div>
+        <WidgetRenderer zone="bottom" widgets={allWidgets} />
       )}
     </div>
   )
