@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 import { getAdminUser } from '@/lib/auth'
-import { layoutManifest } from '@/layouts/_generated'
+import { themeManifest } from '@/themes/_generated'
 
-// GET /api/admin/layouts — list available layout folders
+// GET /api/admin/themes — list available themes
 export async function GET() {
   try {
     const admin = await getAdminUser()
@@ -10,15 +10,14 @@ export async function GET() {
       return NextResponse.json({ error: '권한이 없습니다.' }, { status: 401 })
     }
 
-    const layouts = Object.entries(layoutManifest).map(([key, value]) => ({
-      folder: key,
-      name: value.name,
-      files: value.files,
+    const themes = Object.entries(themeManifest).map(([folder, meta]) => ({
+      folder,
+      ...meta,
     }))
 
-    return NextResponse.json({ layouts })
+    return NextResponse.json({ themes })
   } catch (error) {
-    console.error('레이아웃 목록 조회 에러:', error)
+    console.error('테마 목록 조회 에러:', error)
     return NextResponse.json({ error: '서버 오류' }, { status: 500 })
   }
 }

@@ -19,6 +19,7 @@ import {
   Sparkles,
   Plus,
   Trash2,
+  Palette,
 } from "lucide-react"
 
 interface FooterLink {
@@ -42,6 +43,16 @@ interface SettingsData {
 
   // 레이아웃 설정
   layout_folder: string
+
+  // 테마 설정
+  theme_folder: string
+}
+
+interface ThemeInfo {
+  folder: string
+  name: string
+  description: string
+  author: string
 }
 
 interface LayoutInfo {
@@ -58,7 +69,8 @@ const DEFAULT_SETTINGS: SettingsData = {
   email_verification_required: 'false',
   footer_copyright: '',
   footer_links: '[]',
-  layout_folder: 'default'
+  layout_folder: 'default',
+  theme_folder: 'default'
 }
 
 export default function SettingsPage() {
@@ -69,6 +81,7 @@ export default function SettingsPage() {
   const [seeding, setSeeding] = useState(false)
   const [hasSettings, setHasSettings] = useState(false)
   const [layouts, setLayouts] = useState<LayoutInfo[]>([])
+  const [themes, setThemes] = useState<ThemeInfo[]>([])
 
   // JSON 문자열을 FooterLink 배열로 파싱
   const parseFooterLinks = (jsonStr: string): FooterLink[] => {
@@ -113,6 +126,13 @@ export default function SettingsPage() {
       .then(res => res.ok ? res.json() : null)
       .then(data => {
         if (data?.layouts) setLayouts(data.layouts)
+      })
+      .catch(() => {})
+    // Fetch available themes
+    fetch('/api/admin/themes')
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data?.themes) setThemes(data.themes)
       })
       .catch(() => {})
   }, [fetchSettings])
@@ -473,6 +493,64 @@ export default function SettingsPage() {
                                 : Object.entries(layout.files).filter(([, v]) => !v).length > 0
                                 ? `${Object.entries(layout.files).filter(([, v]) => !v).map(([k]) => k === 'HomePage' ? '홈페이지' : k).join(', ')}는 기본 레이아웃 사용`
                                 : '전체 커스텀'}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* 테마 설정 */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Palette className="h-5 w-5" />
+                  테마 설정
+                </CardTitle>
+                <CardDescription>
+                  사이트 색상 테마를 선택합니다
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="theme_folder">테마 선택</Label>
+                  <select
+                    id="theme_folder"
+                    className="w-full h-10 px-3 border rounded-md bg-background text-sm"
+                    value={settings.theme_folder}
+                    onChange={(e) => handleChange('theme_folder', e.target.value)}
+                  >
+                    {themes.map((theme) => (
+                      <option key={theme.folder} value={theme.folder}>
+                        {theme.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {themes.length > 0 && (
+                  <div className="space-y-3">
+                    <Label>사용 가능한 테마</Label>
+                    <div className="border rounded-md divide-y">
+                      {themes.map((theme) => (
+                        <div key={theme.folder} className={`px-4 py-3 ${settings.theme_folder === theme.folder ? 'bg-primary/5' : ''}`}>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium">
+                              {theme.name}
+                              {settings.theme_folder === theme.folder && (
+                                <span className="ml-2 text-xs text-primary">(사용중)</span>
+                              )}
+                            </span>
+                            {theme.author && (
+                              <span className="text-xs text-muted-foreground">by {theme.author}</span>
+                            )}
+                          </div>
+                          {theme.description && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {theme.description}
                             </p>
                           )}
                         </div>

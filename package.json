@@ -3,9 +3,9 @@
   "version": "0.1.3",
   "private": true,
   "scripts": {
-    "dev": "node scripts/scan-plugins.js && node scripts/scan-layouts.js && next dev --turbopack",
+    "dev": "node scripts/scan-plugins.js && node scripts/scan-layouts.js && node scripts/scan-themes.js && next dev --turbopack",
     "dev:clean": "rm -rf .next && next dev --turbopack",
-    "build": "node scripts/scan-plugins.js && node scripts/scan-layouts.js && next build",
+    "build": "node scripts/scan-plugins.js && node scripts/scan-layouts.js && node scripts/scan-themes.js && next build",
     "start": "next start",
     "lint": "next lint",
     "db:setup": "prisma migrate deploy && prisma generate",

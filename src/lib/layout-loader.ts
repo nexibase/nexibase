@@ -1,5 +1,7 @@
+"use client"
 import type { ComponentType } from 'react'
-import { layoutManifest, componentMap } from '@/layouts/_generated'
+import { layoutManifest } from '@/layouts/_generated'
+import { componentMap } from '@/layouts/_component-map'
 import type { LayoutFolder, LayoutComponent } from '@/layouts/_generated'
 
 /**

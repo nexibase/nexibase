@@ -93,5 +93,5 @@ export const widgetRegistry: Record<string, WidgetDefinition> = {
     defaultColSpan: 1,
     defaultRowSpan: 1,
     settingsSchema: null,
-  },
+  }
 }
