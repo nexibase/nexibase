@@ -64,6 +64,10 @@ export default function PluginsAdminPage() {
         body: JSON.stringify({ enabled }),
       })
       if (res.ok) {
+        // If enabling, trigger activation to seed menus/widgets
+        if (enabled) {
+          await fetch(`/api/admin/plugins/${folder}/activate`, { method: 'POST' })
+        }
         showMessage(`${enabled ? '활성화' : '비활성화'} 되었습니다.`)
         await fetchPlugins()
       } else {
