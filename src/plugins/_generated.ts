@@ -77,7 +77,7 @@ export const pluginManifest: Record<string, PluginMeta> = {
     footerMenus: [],
     widgetMetas: [{"widgetKey":"auction-live","title":"진행중 경매","defaultZone":"center","defaultColSpan":2,"defaultRowSpan":1,"settingsSchema":{"limit":4}}],
     adminMenus: [{"label":"경매관리","icon":"Gavel","path":"/admin/auction"}],
-    myPageMenus: [{"label":"내 경매","icon":"Gavel","subPath":"/my"}],
+    myPageMenus: [{"label":"내 경매","icon":"Gavel","subPath":"/mypage"}],
   },
   'boards': {
     name: '게시판',
