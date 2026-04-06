@@ -20,6 +20,9 @@ interface WidgetData {
   rowSpan: number
   isActive: boolean
   sortOrder: number
+  pluginFolder: string | null
+  pluginEnabled: boolean
+  pluginName: string | null
 }
 
 interface WidgetSettingsField {
@@ -197,42 +200,55 @@ export default function HomeWidgetsAdminPage() {
 
   const renderWidgetCard = (widget: WidgetData, zoneWidgets: WidgetData[]) => {
     const meta = WIDGET_META[widget.widgetKey]
+    const isPluginDisabled = widget.pluginFolder && !widget.pluginEnabled
     return (
       <div
         key={widget.id}
-        className={`flex items-center gap-2 px-3 py-2 border rounded-md mb-2 cursor-pointer hover:bg-muted/50 transition-colors ${
-          selectedWidget?.id === widget.id ? 'border-primary bg-primary/5' : ''
-        } ${!widget.isActive ? 'opacity-50' : ''}`}
-        onClick={() => handleSelectWidget(widget)}
+        className={`flex items-center gap-2 px-3 py-2 border rounded-md mb-2 transition-colors ${
+          isPluginDisabled
+            ? 'opacity-50 bg-muted/30 cursor-not-allowed'
+            : `cursor-pointer hover:bg-muted/50 ${selectedWidget?.id === widget.id ? 'border-primary bg-primary/5' : ''}`
+        } ${!widget.isActive && !isPluginDisabled ? 'opacity-50' : ''}`}
+        onClick={() => !isPluginDisabled && handleSelectWidget(widget)}
       >
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium">{widget.title}</span>
-            {meta && <span className="text-xs text-muted-foreground">{meta.description}</span>}
+            {isPluginDisabled ? (
+              <Badge variant="destructive" className="text-xs">
+                {widget.pluginName} 플러그인 비활성
+              </Badge>
+            ) : (
+              meta && <span className="text-xs text-muted-foreground">{meta.description}</span>
+            )}
           </div>
           <div className="flex items-center gap-2 mt-1">
             <Badge variant="outline" className="text-xs">{widget.colSpan}x{widget.rowSpan}</Badge>
-            <select
-              className="text-xs border rounded px-1 py-0.5 bg-background"
-              value={widget.zone}
-              onChange={(e) => { e.stopPropagation(); handleChangeZone(widget, e.target.value) }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              {ZONES.map(z => <option key={z} value={z}>{ZONE_LABELS[z]}</option>)}
-            </select>
+            {!isPluginDisabled && (
+              <select
+                className="text-xs border rounded px-1 py-0.5 bg-background"
+                value={widget.zone}
+                onChange={(e) => { e.stopPropagation(); handleChangeZone(widget, e.target.value) }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {ZONES.map(z => <option key={z} value={z}>{ZONE_LABELS[z]}</option>)}
+              </select>
+            )}
           </div>
         </div>
-        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleMoveUp(widget, zoneWidgets)}>
-            <ChevronUp className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleMoveDown(widget, zoneWidgets)}>
-            <ChevronDown className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleToggleActive(widget)}>
-            {widget.isActive ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-          </Button>
-        </div>
+        {!isPluginDisabled && (
+          <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleMoveUp(widget, zoneWidgets)}>
+              <ChevronUp className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleMoveDown(widget, zoneWidgets)}>
+              <ChevronDown className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleToggleActive(widget)}>
+              {widget.isActive ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+            </Button>
+          </div>
+        )}
       </div>
     )
   }
