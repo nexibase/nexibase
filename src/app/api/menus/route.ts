@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getDisabledSlugs } from '@/lib/plugins'
 
 // GET /api/menus?position=header|footer
 export async function GET(request: NextRequest) {
@@ -7,7 +8,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const position = searchParams.get('position') || 'header'
 
-    const menus = await prisma.menu.findMany({
+    const allMenus = await prisma.menu.findMany({
       where: {
         position,
         isActive: true,
@@ -20,6 +21,13 @@ export async function GET(request: NextRequest) {
         },
       },
       orderBy: { sortOrder: 'asc' },
+    })
+
+    // Filter out menus belonging to disabled plugins
+    const disabledSlugs = await getDisabledSlugs()
+    const menus = allMenus.filter(menu => {
+      // Check if menu URL starts with a disabled plugin's slug
+      return !disabledSlugs.some(slug => menu.url === `/${slug}` || menu.url.startsWith(`/${slug}/`))
     })
 
     if (position === 'footer') {
