@@ -1,6 +1,6 @@
 # NexiBase
 
-> **Next.js 기반 CMS + 커뮤니티 + 쇼핑몰 통합 솔루션**
+> **Next.js 기반의 플러그인 기반 커뮤니티 플랫폼**
 
 **NexiBase**는 **Next.js + I + Base**의 합성어로, Next.js를 기반으로 한 차세대 웹 서비스의 기본 구조(Base)를 의미합니다.
 
@@ -10,7 +10,38 @@
 
 ## 주요 기능
 
-### 커뮤니티
+### 플러그인 시스템
+- 폴더 기반 플러그인 구조 (`src/plugins/`)
+- 플러그인 활성화/비활성화 (관리자 토글)
+- 플러그인별 라우트, API, 위젯, 메뉴 자동 등록
+- 비활성 플러그인 라우트 차단
+- slug 커스터마이징 (URL 경로 변경)
+- 플러그인별 Prisma 스키마 분리
+
+### 위젯 시스템
+- 홈페이지 위젯 배치 관리 (상단/중앙/하단)
+- 레이아웃 사이드바 (좌측/우측, 모든 페이지 적용)
+- 12컬럼 그리드 기반 반응형
+- 플러그인 위젯 자동 등록
+- 독립 위젯 지원 (`src/widgets/`)
+
+### 레이아웃 시스템
+- 기본/커스텀 레이아웃 전환
+- Header, HomePage, Footer 부분 오버라이드
+- 폴더 기반 자동 인식
+
+### 테마 시스템
+- CSS 변수 기반 테마 전환
+- 서버사이드 로드 (깜빡임 없음)
+- 관리자 설정에서 테마 선택
+
+### 메뉴 시스템
+- DB 기반 Header/Footer 메뉴 관리
+- 플러그인 활성화 시 메뉴 자동 등록
+- 트리 구조 (부모-자식 관계)
+- 권한 제어 (공개/회원/관리자)
+
+### 커뮤니티 (기본 플러그인)
 - 게시판 CRUD (무제한 생성)
 - 게시글 작성 (Tiptap 에디터)
 - 이미지 업로드 (자동 리사이징, WebP 변환)
@@ -20,38 +51,20 @@
 - 리액션 (좋아요, 추천 등)
 - 전문 검색 (MySQL FULLTEXT)
 
-### 쇼핑몰
-- 상품 관리 (카테고리, 다중 이미지)
-- 3단계 옵션 (색상/사이즈/소재 등)
-- 장바구니, 위시리스트
-- 주문/결제 (KG이니시스 연동)
-- 배송비 관리 (지역별, 무료배송 조건)
-- 주문 상태 관리 (결제대기 → 배송완료)
-- 주문 상태 변경 시 이메일 알림
-- 상품 리뷰/Q&A
-- 인기상품, 신상품, 최근 본 상품 추천
-- 정렬 옵션 (최신순, 판매순, 후기순, 가격순)
-
 ### 회원
 - 회원가입/로그인
-- 이메일 인증 (준비 중)
+- 이메일 인증
 - 소셜 로그인 (Google, Naver, Kakao)
 - 브라우저 세션 로그인 (브라우저 종료 시 자동 로그아웃)
-- 배송지 관리
 
 ### 관리자
 - 대시보드 (통계/분석)
-  - 회원/게시글/활성사용자 통계
-  - 쇼핑몰 현황 (주문, 매출, 상품, 처리대기)
-  - 7일간 주문/매출 추이 차트
-  - 7일간 신규 가입자 추이 차트
-  - 인기 상품/게시글 순위
-  - 최근 주문/회원 현황
 - 회원 관리
 - 게시판 관리
-- 상품/주문 관리
-- 리뷰/Q&A 관리
-- 쇼핑몰 설정 (PG, 배송비 등)
+- 플러그인 관리
+- 메뉴 관리
+- 홈화면 관리 (위젯)
+- 환경설정 (레이아웃, 테마)
 
 ---
 
@@ -65,7 +78,6 @@
 | Auth | NextAuth.js (JWT + 브라우저 세션) |
 | Editor | Tiptap |
 | Image | Sharp |
-| Payment | KG이니시스 |
 
 ---
 
@@ -73,7 +85,7 @@
 
 - Node.js 18+
 - MySQL 8.0+
-- npm, yarn 또는 bun
+- npm
 
 ---
 
@@ -82,7 +94,7 @@
 ### 1. 저장소 클론
 
 ```bash
-git clone https://github.com/gnuboard/nexibase.git
+git clone --recurse-submodules https://github.com/nexibase/nexibase.git
 cd nexibase
 ```
 
@@ -143,18 +155,8 @@ MySQL에서 데이터베이스 생성:
 CREATE DATABASE nexibase CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-#### 신규 설치 (처음 설치하는 경우)
-
 ```bash
-# 마이그레이션 적용 및 Prisma Client 생성
-npm run db:setup
-```
-
-#### 기존 사용자 (업데이트 시)
-
-```bash
-# 새로운 마이그레이션 적용
-npm run db:migrate
+npx prisma db push
 ```
 
 ### 5. 개발 서버 실행
@@ -180,12 +182,23 @@ http://localhost:3000 에서 확인
 2. http://localhost:3000/admin/boards 접속
 3. "기본 게시판 생성" 버튼 클릭
 
-### 쇼핑몰 설정
+### 플러그인 추가 (선택사항)
 
-1. http://localhost:3000/admin/shop/settings 접속
-2. 쇼핑몰 기본 정보 입력
-3. PG 설정 (이니시스 MID, SignKey 등)
-4. 배송비 설정
+```bash
+# 경매 플러그인
+git submodule add https://github.com/nexibase/plugin-auction.git src/plugins/auction
+
+# 쇼핑몰 플러그인
+git submodule add https://github.com/nexibase/plugin-shop.git src/plugins/shop
+
+# DB 동기화
+npx prisma db push
+
+# 서버 재시작
+npm run dev
+```
+
+관리자 페이지 → 플러그인 관리에서 활성화
 
 ### 소셜 로그인 설정 (선택사항)
 
@@ -216,31 +229,31 @@ http://localhost:3000 에서 확인
 
 ```
 src/
-├── app/
-│   ├── (auth)/          # 인증 (로그인, 회원가입)
-│   ├── admin/           # 관리자 페이지
-│   ├── api/             # API 라우트
-│   ├── board/           # 게시판
-│   └── shop/            # 쇼핑몰
-├── components/          # 공통 컴포넌트
-└── lib/                 # 유틸리티
+├── app/              # 핵심 라우트 + 자동생성 래퍼
+├── plugins/          # 플러그인
+│   ├── boards/       # 게시판 (기본)
+│   ├── contents/     # 콘텐츠 (기본)
+│   ├── policies/     # 약관 (기본)
+│   ├── auction/      # 경매 (선택, submodule)
+│   └── shop/         # 쇼핑몰 (선택, submodule)
+├── layouts/          # 레이아웃 시스템
+├── themes/           # 테마 시스템
+├── widgets/          # 독립 위젯
+├── components/       # 공용 UI
+└── lib/              # 유틸리티
 ```
 
 ---
 
-## 검색 기능
+## 새 플러그인 만들기
 
-MySQL FULLTEXT 인덱스를 활용한 고성능 검색을 지원합니다.
+1. `src/plugins/my-feature/plugin.ts` 작성
+2. 필요한 폴더 추가 (`routes/`, `api/`, `widgets/`, `menus/`)
+3. DB 모델이 필요하면 `schema.prisma` 작성
+4. `npm run dev` → 자동 인식
+5. 관리자 페이지에서 활성화
 
-```
-/search?q=검색어&board=free&sort=relevance
-```
-
-| 파라미터 | 설명 | 기본값 |
-|---------|------|--------|
-| `q` | 검색어 (2자 이상) | 필수 |
-| `board` | 게시판 slug | all |
-| `sort` | 정렬 (relevance, latest, popular) | relevance |
+자세한 내용은 [플러그인 개발 가이드](docs/superpowers/specs/2026-04-06-plugin-architecture-design.md)를 참고하세요.
 
 ---
 
