@@ -65,7 +65,7 @@ export async function GET(
           orderBy: { sortOrder: 'asc' }
         } : false,
         comments: board.useComment ? {
-          where: { status: 'published', parentId: null },
+          where: { status: 'published' },
           orderBy: { createdAt: 'asc' },
           include: {
             author: {
@@ -75,16 +75,10 @@ export async function GET(
                 image: true
               }
             },
-            replies: {
-              where: { status: 'published' },
-              orderBy: { createdAt: 'asc' },
-              include: {
+            parent: {
+              select: {
                 author: {
-                  select: {
-                    id: true,
-                    nickname: true,
-                    image: true
-                  }
+                  select: { nickname: true }
                 }
               }
             }
