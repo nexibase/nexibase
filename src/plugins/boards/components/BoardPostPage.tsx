@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -35,7 +35,6 @@ import { cn } from "@/lib/utils"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { CommentReactions } from "@/plugins/boards/components/CommentReactions"
 import { MiniEditor } from "@/components/editors/MiniEditor"
-import { ImageLightbox } from "@/components/ImageLightbox"
 
 // 이모지 리액션 컴포넌트
 const EmojiIcon = ({ emoji, className }: { emoji: string; className?: string }) => (
@@ -342,6 +341,8 @@ export default function BoardPostPage() {
   const [nextPost, setNextPost] = useState<AdjacentPost | null>(null)
   const [imageViewerOpen, setImageViewerOpen] = useState(false)
   const [imageViewerIndex, setImageViewerIndex] = useState(0)
+  const [contentImageViewer, setContentImageViewer] = useState<{ images: Attachment[]; index: number } | null>(null)
+  const contentRef = useRef<HTMLDivElement>(null)
 
   const isLoggedIn = !!user
   const isAdmin = user?.role === 'admin'
@@ -705,10 +706,27 @@ export default function BoardPostPage() {
 
             {/* 본문 */}
             <div
+              ref={contentRef}
               className="tiptap prose dark:prose-invert max-w-none mb-6 [&_img]:cursor-zoom-in [&_img]:max-w-full [&_img]:h-auto"
               dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.content) }}
+              onClick={(e) => {
+                const target = e.target as HTMLElement
+                if (target.tagName === 'IMG') {
+                  const clickedImg = target as HTMLImageElement
+                  const allImgs = Array.from(contentRef.current?.querySelectorAll('img') || [])
+                  const images: Attachment[] = allImgs.map((img, i) => ({
+                    id: i,
+                    filename: img.alt || `이미지 ${i + 1}`,
+                    filePath: img.src,
+                    fileSize: 0,
+                    mimeType: 'image/webp',
+                    downloadCount: 0,
+                  }))
+                  const index = allImgs.indexOf(clickedImg)
+                  setContentImageViewer({ images, index: Math.max(0, index) })
+                }
+              }}
             />
-            <ImageLightbox />
 
             {/* 갤러리 형식: 이미지 갤러리 */}
             {board.displayType === 'gallery' && board.useFile && post.attachments && (() => {
@@ -1150,7 +1168,7 @@ export default function BoardPostPage() {
           </Card>
         )}
 
-        {/* 이미지 뷰어 모달 */}
+        {/* 첨부 이미지 뷰어 모달 */}
         {imageViewerOpen && board.useFile && post.attachments && (() => {
           const imageAttachments = post.attachments.filter(f => f.mimeType.startsWith('image/'))
           if (imageAttachments.length === 0) return null
@@ -1162,6 +1180,15 @@ export default function BoardPostPage() {
             />
           )
         })()}
+
+        {/* 본문 이미지 뷰어 모달 */}
+        {contentImageViewer && (
+          <ImageViewer
+            images={contentImageViewer.images}
+            initialIndex={contentImageViewer.index}
+            onClose={() => setContentImageViewer(null)}
+          />
+        )}
       </div>
     </UserLayout>
   )
