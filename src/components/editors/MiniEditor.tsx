@@ -29,6 +29,7 @@ export function MiniEditor({
   className,
 }: MiniEditorProps) {
   const editor = useEditor({
+    immediatelyRender: false,
     extensions: [
       StarterKit.configure({
         heading: false,
