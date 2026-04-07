@@ -710,12 +710,6 @@ export default function BoardsPage() {
                 </form>
 
                 <div className="flex gap-2">
-                  {boards.some(b => b.selected) && (
-                    <Button variant="destructive" onClick={handleBulkDelete}>
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      선택 삭제
-                    </Button>
-                  )}
                   <Button onClick={() => { setEditingBoard(null); setModalOpen(true); }}>
                     <Plus className="h-4 w-4 mr-2" />
                     게시판 추가
@@ -867,14 +861,6 @@ export default function BoardsPage() {
                                     <Pencil className="h-4 w-4" />
                                   </Button>
                                 </a>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleDelete(board)}
-                                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
                               </div>
                             </td>
                           </tr>
