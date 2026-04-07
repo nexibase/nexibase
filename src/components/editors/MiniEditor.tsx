@@ -53,7 +53,7 @@ export function MiniEditor({
     },
     editorProps: {
       attributes: {
-        class: 'outline-none min-h-[60px] max-h-[200px] overflow-y-auto px-3 py-2 text-sm',
+        class: 'outline-none min-h-[72px] max-h-[200px] overflow-y-auto px-3 py-2 text-sm',
       },
     },
   })
