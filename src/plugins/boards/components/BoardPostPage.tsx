@@ -35,6 +35,7 @@ import { cn } from "@/lib/utils"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { CommentReactions } from "@/plugins/boards/components/CommentReactions"
 import { MiniEditor } from "@/components/editors/MiniEditor"
+import { ImageLightbox } from "@/components/ImageLightbox"
 
 // 이모지 리액션 컴포넌트
 const EmojiIcon = ({ emoji, className }: { emoji: string; className?: string }) => (
@@ -704,9 +705,10 @@ export default function BoardPostPage() {
 
             {/* 본문 */}
             <div
-              className="tiptap prose dark:prose-invert max-w-none mb-6"
+              className="tiptap prose dark:prose-invert max-w-none mb-6 [&_img]:cursor-zoom-in [&_img]:max-w-full [&_img]:h-auto"
               dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.content) }}
             />
+            <ImageLightbox />
 
             {/* 갤러리 형식: 이미지 갤러리 */}
             {board.displayType === 'gallery' && board.useFile && post.attachments && (() => {
