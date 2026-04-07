@@ -57,11 +57,18 @@ function NewPostsPage() {
 
   return (
     <div className="max-w-4xl mx-auto sm:px-4 py-4 sm:py-6">
-      <div className="flex items-center gap-2 mb-4 px-2 sm:px-0">
-        <FileText className="h-5 w-5 text-primary" />
-        <h1 className="text-lg font-bold">
-          {member ? `${member.nickname}님의 작성글` : '최신 작성글'}
-        </h1>
+      <div className="flex items-center justify-between mb-4 px-2 sm:px-0">
+        <div className="flex items-center gap-2">
+          <FileText className="h-5 w-5 text-primary" />
+          <h1 className="text-lg font-bold">
+            {member ? `${member.nickname}님의 작성글` : '최신 작성글'}
+          </h1>
+        </div>
+        {uuid && (
+          <Link href="/new/posts">
+            <Button variant="outline" size="sm">전체글 보기</Button>
+          </Link>
+        )}
       </div>
 
       {loading ? (

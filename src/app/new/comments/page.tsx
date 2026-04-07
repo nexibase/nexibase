@@ -60,11 +60,18 @@ function NewCommentsPage() {
 
   return (
     <div className="max-w-4xl mx-auto sm:px-4 py-4 sm:py-6">
-      <div className="flex items-center gap-2 mb-4 px-2 sm:px-0">
-        <MessageSquare className="h-5 w-5 text-primary" />
-        <h1 className="text-lg font-bold">
-          {member ? `${member.nickname}님의 작성댓글` : '최신 댓글'}
-        </h1>
+      <div className="flex items-center justify-between mb-4 px-2 sm:px-0">
+        <div className="flex items-center gap-2">
+          <MessageSquare className="h-5 w-5 text-primary" />
+          <h1 className="text-lg font-bold">
+            {member ? `${member.nickname}님의 작성댓글` : '최신 댓글'}
+          </h1>
+        </div>
+        {uuid && (
+          <Link href="/new/comments">
+            <Button variant="outline" size="sm">전체댓글 보기</Button>
+          </Link>
+        )}
       </div>
 
       {loading ? (
@@ -74,19 +81,18 @@ function NewCommentsPage() {
           <CardContent className="p-0">
             {comments.map(comment => (
               <div key={comment.id} className="px-4 py-3 border-b last:border-b-0 hover:bg-muted/30">
-                <div className="flex items-center gap-2 mb-1">
+                <Link
+                  href={`/boards/${comment.post.board.slug}/${comment.post.id}`}
+                  className="text-sm font-medium hover:text-primary inline-flex items-center gap-1.5 mb-1.5"
+                >
+                  <span className="text-xs text-muted-foreground shrink-0">[{comment.post.board.name}]</span>
+                  <span className="truncate">{comment.post.title}</span>
+                </Link>
+                <p className="text-sm text-muted-foreground mb-1.5 pl-1 border-l-2 border-muted ml-1">{stripHtml(comment.content)}</p>
+                <div className="flex items-center gap-2">
                   {!uuid && <UserNickname userId={comment.author.id} uuid={comment.author.uuid} nickname={comment.author.nickname} image={comment.author.image} showAvatar />}
                   <span className="text-xs text-muted-foreground">{formatDate(comment.createdAt)}</span>
                 </div>
-                <p className="text-sm mb-1.5">{stripHtml(comment.content)}</p>
-                <Link
-                  href={`/boards/${comment.post.board.slug}/${comment.post.id}`}
-                  className="text-xs text-muted-foreground hover:text-primary inline-flex items-center gap-1"
-                >
-                  <span className="text-muted-foreground/70">{comment.post.board.name}</span>
-                  <span>·</span>
-                  <span className="truncate max-w-[200px]">{comment.post.title}</span>
-                </Link>
               </div>
             ))}
           </CardContent>
