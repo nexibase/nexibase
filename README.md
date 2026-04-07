@@ -185,9 +185,6 @@ http://localhost:3000 에서 확인
 ### 플러그인 추가 (선택사항)
 
 ```bash
-# 경매 플러그인
-git submodule add https://github.com/nexibase/plugin-auction.git src/plugins/auction
-
 # 쇼핑몰 플러그인
 git submodule add https://github.com/nexibase/plugin-shop.git src/plugins/shop
 
@@ -234,7 +231,6 @@ src/
 │   ├── boards/       # 게시판 (기본)
 │   ├── contents/     # 콘텐츠 (기본)
 │   ├── policies/     # 약관 (기본)
-│   ├── auction/      # 경매 (선택, submodule)
 │   └── shop/         # 쇼핑몰 (선택, submodule)
 ├── layouts/          # 레이아웃 시스템
 ├── themes/           # 테마 시스템
