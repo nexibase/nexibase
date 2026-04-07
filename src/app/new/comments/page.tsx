@@ -81,14 +81,21 @@ function NewCommentsPage() {
           <CardContent className="p-0">
             {comments.map(comment => (
               <div key={comment.id} className="px-4 py-3 border-b last:border-b-0 hover:bg-muted/30">
+                <div className="flex items-center gap-1.5 mb-1.5 text-xs text-muted-foreground">
+                  <span>[{comment.post.board.name}]</span>
+                  <Link
+                    href={`/boards/${comment.post.board.slug}/${comment.post.id}`}
+                    className="hover:text-primary truncate"
+                  >
+                    {comment.post.title}
+                  </Link>
+                </div>
                 <Link
                   href={`/boards/${comment.post.board.slug}/${comment.post.id}#comment-${comment.id}`}
-                  className="text-sm font-medium hover:text-primary inline-flex items-center gap-1.5 mb-1.5"
+                  className="block text-sm mb-1.5 hover:text-primary"
                 >
-                  <span className="text-xs text-muted-foreground shrink-0">[{comment.post.board.name}]</span>
-                  <span className="truncate">{comment.post.title}</span>
+                  {stripHtml(comment.content)}
                 </Link>
-                <p className="text-sm text-muted-foreground mb-1.5 pl-1 border-l-2 border-muted ml-1">{stripHtml(comment.content)}</p>
                 <div className="flex items-center gap-2">
                   {!uuid && <UserNickname userId={comment.author.id} uuid={comment.author.uuid} nickname={comment.author.nickname} image={comment.author.image} showAvatar />}
                   <span className="text-xs text-muted-foreground">{formatDate(comment.createdAt)}</span>
