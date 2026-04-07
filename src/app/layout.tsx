@@ -4,6 +4,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { SessionProvider } from "@/components/providers/SessionProvider";
 import ThemeLoader from "@/components/theme-loader";
 import { SiteProvider } from "@/lib/SiteContext";
+import { SiteShell } from "@/components/layout/SiteShell";
 import "./globals.css";
 import "./custom.css";
 
@@ -43,9 +44,9 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             <SiteProvider>
-              <main>
+              <SiteShell>
                 {children}
-              </main>
+              </SiteShell>
             </SiteProvider>
           </ThemeProvider>
         </SessionProvider>

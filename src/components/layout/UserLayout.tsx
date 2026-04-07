@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { getLayoutComponent } from "@/lib/layout-loader"
 import WidgetRenderer from "@/lib/widgets/renderer"
 
 interface UserLayoutProps {
@@ -31,19 +30,9 @@ const colSpanClass: Record<number, string> = {
 }
 
 export function UserLayout({ children }: UserLayoutProps) {
-  const [layoutFolder, setLayoutFolder] = useState('default')
   const [sidebarWidgets, setSidebarWidgets] = useState<WidgetData[]>([])
 
   useEffect(() => {
-    fetch('/api/settings')
-      .then(res => res.ok ? res.json() : null)
-      .then(data => {
-        if (data?.settings?.layout_folder) {
-          setLayoutFolder(data.settings.layout_folder)
-        }
-      })
-      .catch(() => {})
-
     fetch('/api/home-widgets')
       .then(res => res.ok ? res.json() : null)
       .then(data => {
@@ -60,9 +49,6 @@ export function UserLayout({ children }: UserLayoutProps) {
       .catch(() => {})
   }, [])
 
-  const HeaderComponent = getLayoutComponent(layoutFolder, 'Header')
-  const FooterComponent = getLayoutComponent(layoutFolder, 'Footer')
-
   const leftWidgets = sidebarWidgets.filter(w => w.zone === 'left')
   const rightWidgets = sidebarWidgets.filter(w => w.zone === 'right' || w.zone === 'sidebar')
   const hasLeft = leftWidgets.length > 0
@@ -74,33 +60,27 @@ export function UserLayout({ children }: UserLayoutProps) {
   const centerCols = 12 - leftCols - rightCols
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <HeaderComponent />
-      <div className="flex-1">
-        <div className="max-w-6xl mx-auto px-4 py-6">
-          {hasLeft || hasRight ? (
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-              {hasLeft && (
-                <aside className={colSpanClass[leftCols]}>
-                  <WidgetRenderer zone="left" widgets={sidebarWidgets} />
-                </aside>
-              )}
-              <main className={colSpanClass[centerCols]}>
-                {children}
-              </main>
-              {hasRight && (
-                <aside className={colSpanClass[rightCols]}>
-                  <WidgetRenderer zone="right" widgets={sidebarWidgets} />
-                  <WidgetRenderer zone="sidebar" widgets={sidebarWidgets} />
-                </aside>
-              )}
-            </div>
-          ) : (
-            <main>{children}</main>
+    <div className="max-w-6xl mx-auto px-4 py-6">
+      {hasLeft || hasRight ? (
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+          {hasLeft && (
+            <aside className={colSpanClass[leftCols]}>
+              <WidgetRenderer zone="left" widgets={sidebarWidgets} />
+            </aside>
+          )}
+          <main className={colSpanClass[centerCols]}>
+            {children}
+          </main>
+          {hasRight && (
+            <aside className={colSpanClass[rightCols]}>
+              <WidgetRenderer zone="right" widgets={sidebarWidgets} />
+              <WidgetRenderer zone="sidebar" widgets={sidebarWidgets} />
+            </aside>
           )}
         </div>
-      </div>
-      <FooterComponent />
+      ) : (
+        <main>{children}</main>
+      )}
     </div>
   )
 }
