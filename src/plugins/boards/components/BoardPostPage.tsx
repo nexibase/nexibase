@@ -418,6 +418,21 @@ export default function BoardPostPage() {
     fetchPost()
   }, [fetchPost])
 
+  // 해시 앵커 스크롤 (댓글 로드 후)
+  useEffect(() => {
+    if (post && window.location.hash) {
+      const timer = setTimeout(() => {
+        const el = document.querySelector(window.location.hash)
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          el.classList.add('bg-primary/5')
+          setTimeout(() => el.classList.remove('bg-primary/5'), 2000)
+        }
+      }, 300)
+      return () => clearTimeout(timer)
+    }
+  }, [post])
+
   useEffect(() => {
     if (board?.useReaction) {
       fetchReactions()
