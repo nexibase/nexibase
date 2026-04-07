@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { UserLayout } from "@/components/layout/UserLayout"
+import { UserNickname } from "@/components/UserNickname"
+import { UserProfileModal } from "@/components/UserProfileModal"
 import {
   Loader2,
   ChevronLeft,
@@ -74,6 +76,7 @@ export default function BoardListPage() {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [profileUserId, setProfileUserId] = useState<number | null>(null)
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const isLoggedIn = !!user
@@ -320,7 +323,7 @@ export default function BoardListPage() {
                 {/* 데스크톱 헤더 */}
                 <div className="hidden md:flex items-center px-4 py-2 border-b text-xs text-muted-foreground font-medium">
                   <div className="flex-1">제목</div>
-                  <div className="w-24 text-center">작성자</div>
+                  <div className="w-28 text-left pl-2">작성자</div>
                   <div className="w-24 text-center">날짜</div>
                   <div className="w-16 text-center">조회</div>
                   {board.useReaction && <div className="w-16 text-center">추천</div>}
@@ -345,7 +348,7 @@ export default function BoardListPage() {
                         )}
                       </div>
                       <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                        <span>{post.author.nickname}</span>
+                        <UserNickname userId={post.author.id} nickname={post.author.nickname} image={post.author.image} showAvatar onClick={setProfileUserId} />
                         <span>{formatDate(post.createdAt)}</span>
                         <span className="flex items-center gap-0.5"><Eye className="h-3 w-3" />{post.viewCount}</span>
                       </div>
@@ -363,7 +366,9 @@ export default function BoardListPage() {
                           <Paperclip className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                         )}
                       </div>
-                      <div className="w-24 text-center text-sm text-muted-foreground truncate">{post.author.nickname}</div>
+                      <div className="w-28 text-left pl-2">
+                        <UserNickname userId={post.author.id} nickname={post.author.nickname} image={post.author.image} showAvatar onClick={setProfileUserId} className="text-muted-foreground" />
+                      </div>
                       <div className="w-24 text-center text-xs text-muted-foreground">{formatDate(post.createdAt)}</div>
                       <div className="w-16 text-center text-xs text-muted-foreground">{post.viewCount}</div>
                       {board.useReaction && <div className="w-16 text-center text-xs text-muted-foreground">{post.likeCount}</div>}
@@ -418,6 +423,7 @@ export default function BoardListPage() {
           </div>
         )}
       </div>
+      <UserProfileModal userId={profileUserId} onClose={() => setProfileUserId(null)} />
     </UserLayout>
   )
 }
