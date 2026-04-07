@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 
 interface UserNicknameProps {
   userId: number | string
@@ -20,9 +21,10 @@ export function UserNickname({
   onClick,
   className = '',
 }: UserNicknameProps) {
+  const [imgError, setImgError] = useState(false)
   const sizeClass = avatarSize === 'md' ? 'w-8 h-8' : 'w-5 h-5'
-  const iconSize = avatarSize === 'md' ? 'h-4 w-4' : 'h-3 w-3'
   const textClass = avatarSize === 'md' ? 'text-sm' : 'text-xs sm:text-sm'
+  const initial = (nickname || '?').charAt(0)
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -38,11 +40,11 @@ export function UserNickname({
     >
       {showAvatar && (
         <span className={`${sizeClass} rounded-full bg-primary/10 flex items-center justify-center overflow-hidden shrink-0`}>
-          {image ? (
-            <img src={image} alt="" className="w-full h-full object-cover" />
+          {image && !imgError ? (
+            <img src={image} alt="" className="w-full h-full object-cover" onError={() => setImgError(true)} />
           ) : (
             <span className={`${avatarSize === 'md' ? 'text-xs' : 'text-[10px]'} font-medium text-primary`}>
-              {(nickname || '?').charAt(0)}
+              {initial}
             </span>
           )}
         </span>
