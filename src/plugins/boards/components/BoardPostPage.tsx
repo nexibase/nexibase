@@ -953,7 +953,7 @@ export default function BoardPostPage() {
                     return rootComments.map((comment) => (
                       <div key={comment.id}>
                         {/* 원댓글 */}
-                        <div className="border-b py-3">
+                        <div id={`comment-${comment.id}`} className="border-b py-3 scroll-mt-20">
                           <div className="flex items-start gap-3">
                             <div className="flex-1">
                               <div className="flex items-center justify-between mb-1">
@@ -1032,7 +1032,7 @@ export default function BoardPostPage() {
                         {/* 답글 (1 depth 들여쓰기, @닉네임 표시) */}
                         {replyMap.get(comment.id)?.map((reply) => (
                           <div key={reply.id}>
-                            <div className="border-b py-3 pl-11">
+                            <div id={`comment-${reply.id}`} className="border-b py-3 pl-11 scroll-mt-20">
                               <div className="flex items-start gap-2">
                                 <div className="flex-1">
                                   <div className="flex items-center justify-between mb-1">

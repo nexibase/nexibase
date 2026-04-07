@@ -82,7 +82,7 @@ function NewCommentsPage() {
             {comments.map(comment => (
               <div key={comment.id} className="px-4 py-3 border-b last:border-b-0 hover:bg-muted/30">
                 <Link
-                  href={`/boards/${comment.post.board.slug}/${comment.post.id}`}
+                  href={`/boards/${comment.post.board.slug}/${comment.post.id}#comment-${comment.id}`}
                   className="text-sm font-medium hover:text-primary inline-flex items-center gap-1.5 mb-1.5"
                 >
                   <span className="text-xs text-muted-foreground shrink-0">[{comment.post.board.name}]</span>
