@@ -61,6 +61,7 @@ next-env.d.ts
 /prisma/schema.prisma
 /src/plugins/_generated.ts
 /src/lib/widgets/_generated-registry.ts
+/src/lib/widgets/_generated-header-widgets.ts
 
 # 플러그인 라우트 래퍼 (scan-plugins가 자동 생성)
 /src/app/boards/

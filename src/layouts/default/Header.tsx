@@ -6,10 +6,11 @@ import { signOut } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { LogOut, Sun, Moon, ChevronDown, Search, Menu, X, ShoppingCart, User, Settings, Bell } from "lucide-react"
+import { LogOut, Sun, Moon, ChevronDown, Search, Menu, X, User, Settings, Bell } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter, usePathname } from "next/navigation"
+import { headerWidgets } from "@/lib/widgets/_generated-header-widgets"
 
 interface UserInfo {
   id: string
@@ -68,7 +69,6 @@ export default function Header() {
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
-  const [cartCount, setCartCount] = useState(0)
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [notificationOpen, setNotificationOpen] = useState(false)
@@ -82,26 +82,6 @@ export default function Header() {
     setMounted(true)
   }, [])
 
-  // 장바구니 개수 업데이트 (상품 가짓수)
-  useEffect(() => {
-    const updateCartCount = () => {
-      try {
-        const cart = JSON.parse(localStorage.getItem("cart") || "[]")
-        setCartCount(cart.length) // 상품 가짓수로 표시
-      } catch {
-        setCartCount(0)
-      }
-    }
-
-    updateCartCount()
-    window.addEventListener("cartUpdated", updateCartCount)
-    window.addEventListener("storage", updateCartCount)
-
-    return () => {
-      window.removeEventListener("cartUpdated", updateCartCount)
-      window.removeEventListener("storage", updateCartCount)
-    }
-  }, [])
 
   // 알림 개수 조회
   const fetchUnreadCount = async () => {
@@ -331,17 +311,10 @@ export default function Header() {
                 )}
               </Button>
 
-              {/* 장바구니 (항상 표시) */}
-              <Link href="/shop/cart">
-                <Button variant="ghost" size="icon" className="relative">
-                  <ShoppingCart className="h-5 w-5" />
-                  {cartCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                      {cartCount > 99 ? "99+" : cartCount}
-                    </span>
-                  )}
-                </Button>
-              </Link>
+              {/* 플러그인 헤더 위젯 */}
+              {headerWidgets.map(({ folder, component: Widget }) => (
+                <Widget key={folder} />
+              ))}
 
               {/* 알림 (로그인 시만 표시) */}
               {user && (
@@ -731,17 +704,12 @@ export default function Header() {
                 </>
               )}
               <div className="border-t my-2" />
-              {/* 장바구니 (항상 표시) */}
-              <Link
-                href="/shop/cart"
-                className={`flex items-center gap-2 px-3 py-2 text-sm rounded-md ${pathname === '/shop/cart' ? 'bg-primary/10 text-primary' : 'hover:bg-muted'}`}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                장바구니
-                {cartCount > 0 && (
-                  <span className="bg-primary text-primary-foreground text-xs font-bold rounded-full px-2 py-0.5">{cartCount}</span>
-                )}
-              </Link>
+              {/* 플러그인 헤더 위젯 (모바일) */}
+              {headerWidgets.map(({ folder, component: Widget }) => (
+                <div key={folder} onClick={() => setMobileMenuOpen(false)}>
+                  <Widget />
+                </div>
+              ))}
               {user && (
                 <Link href="/mypage" className={`block px-3 py-2 text-sm rounded-md ${pathname?.startsWith('/mypage') ? 'bg-primary/10 text-primary' : 'hover:bg-muted'}`} onClick={() => setMobileMenuOpen(false)}>마이페이지</Link>
               )}
