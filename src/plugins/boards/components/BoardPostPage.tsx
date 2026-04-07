@@ -35,6 +35,7 @@ import { cn } from "@/lib/utils"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { CommentReactions } from "@/plugins/boards/components/CommentReactions"
 import { MiniEditor } from "@/components/editors/MiniEditor"
+import { UserNickname } from "@/components/UserNickname"
 
 // 이모지 리액션 컴포넌트
 const EmojiIcon = ({ emoji, className }: { emoji: string; className?: string }) => (
@@ -73,6 +74,7 @@ interface Attachment {
 
 interface Author {
   id: string
+  uuid?: string
   nickname: string | null
   name: string
   image: string | null
@@ -664,27 +666,8 @@ export default function BoardPostPage() {
             {/* 작성자 정보 */}
             <div className="flex items-center justify-between py-3 border-y mb-6">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center">
-                  {post.author.image ? (
-                    <img
-                      src={post.author.image}
-                      alt={post.author.nickname || ''}
-                      className="w-10 h-10 rounded-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-muted-foreground font-medium">
-                      {(post.author.nickname || '?').charAt(0)}
-                    </span>
-                  )}
-                </div>
-                <div>
-                  <div className="font-medium">
-                    {post.author.nickname || '익명'}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    {formatDate(post.createdAt)}
-                  </div>
-                </div>
+                <UserNickname userId={post.author.id} uuid={post.author.uuid} nickname={post.author.nickname} image={post.author.image} showAvatar avatarSize="md" />
+                <span className="text-sm text-muted-foreground">{formatDate(post.createdAt)}</span>
               </div>
               <div className="flex items-center gap-4 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1">
@@ -972,15 +955,10 @@ export default function BoardPostPage() {
                         {/* 원댓글 */}
                         <div className="border-b py-3">
                           <div className="flex items-start gap-3">
-                            <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center shrink-0">
-                              <span className="text-muted-foreground text-sm font-medium">
-                                {(comment.author.nickname || '?').charAt(0)}
-                              </span>
-                            </div>
                             <div className="flex-1">
                               <div className="flex items-center justify-between mb-1">
                                 <div className="flex items-center gap-2">
-                                  <span className="font-medium text-sm">{comment.author.nickname || '익명'}</span>
+                                  <UserNickname userId={comment.author.id} uuid={comment.author.uuid} nickname={comment.author.nickname} image={comment.author.image} showAvatar />
                                   <span className="text-xs text-muted-foreground">{formatDate(comment.createdAt)}</span>
                                 </div>
                                 {user && (
@@ -1056,15 +1034,10 @@ export default function BoardPostPage() {
                           <div key={reply.id}>
                             <div className="border-b py-3 pl-11">
                               <div className="flex items-start gap-2">
-                                <div className="w-6 h-6 bg-muted/50 rounded-full flex items-center justify-center shrink-0">
-                                  <span className="text-muted-foreground text-xs font-medium">
-                                    {(reply.author.nickname || '?').charAt(0)}
-                                  </span>
-                                </div>
                                 <div className="flex-1">
                                   <div className="flex items-center justify-between mb-1">
                                     <div className="flex items-center gap-2">
-                                      <span className="font-medium text-xs">{reply.author.nickname || '익명'}</span>
+                                      <UserNickname userId={reply.author.id} uuid={reply.author.uuid} nickname={reply.author.nickname} image={reply.author.image} showAvatar />
                                       <span className="text-xs text-muted-foreground">{formatDate(reply.createdAt)}</span>
                                     </div>
                                     {user && (
