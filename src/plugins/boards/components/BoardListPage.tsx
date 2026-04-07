@@ -20,6 +20,7 @@ import {
   Home,
   ImageIcon,
   Paperclip,
+  Settings,
 } from "lucide-react"
 
 interface Board {
@@ -214,7 +215,14 @@ export default function BoardListPage() {
         <div className="mb-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold">{board.name}</h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-bold">{board.name}</h1>
+                {isAdmin && (
+                  <Link href="/admin/boards" title="게시판 설정">
+                    <Settings className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
+                  </Link>
+                )}
+              </div>
               {board.description && (
                 <p className="text-muted-foreground mt-1">{board.description}</p>
               )}
