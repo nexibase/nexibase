@@ -327,18 +327,19 @@ export default function BoardListPage() {
                   <div className="w-16 text-center">조회</div>
                   {board.useReaction && <div className="w-16 text-center">추천</div>}
                 </div>
-                {posts.map((post) => (
+                {posts.map((post) => {
+                  const postUrl = post.isSecret && post.author.id !== user?.id && !isAdmin ? '#' : `/boards/${slug}/${post.id}`
+                  return (
                   <div
                     key={post.id}
-                    onClick={(e) => handlePostClick(post, e)}
-                    className="flex items-center px-4 py-3 hover:bg-muted/50 cursor-pointer border-b last:border-b-0 transition-colors"
+                    className="flex items-center px-4 py-3 border-b last:border-b-0"
                   >
                     {/* 모바일: 기존 스택 레이아웃 */}
                     <div className="flex-1 min-w-0 md:hidden">
                       <div className="flex items-center gap-2 mb-1">
                         {post.isNotice && <Pin className="h-3.5 w-3.5 text-orange-500 shrink-0" />}
                         {post.isSecret && <Lock className="h-3.5 w-3.5 text-yellow-500 shrink-0" />}
-                        <span className="font-medium text-sm truncate">{post.title}</span>
+                        <Link href={postUrl} className="font-medium text-sm truncate hover:text-primary">{post.title}</Link>
                         {post.commentCount > 0 && board.useComment && (
                           <span className="text-xs text-primary">[{post.commentCount}]</span>
                         )}
@@ -347,7 +348,7 @@ export default function BoardListPage() {
                         )}
                       </div>
                       <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                        <UserNickname userId={post.author.id} nickname={post.author.nickname} image={post.author.image} showAvatar  />
+                        <UserNickname userId={post.author.id} nickname={post.author.nickname} image={post.author.image} showAvatar />
                         <span>{formatDate(post.createdAt)}</span>
                         <span className="flex items-center gap-0.5"><Eye className="h-3 w-3" />{post.viewCount}</span>
                       </div>
@@ -357,7 +358,7 @@ export default function BoardListPage() {
                       <div className="flex-1 min-w-0 flex items-center gap-2">
                         {post.isNotice && <Badge variant="outline" className="shrink-0 text-xs px-1.5 py-0 text-orange-500 border-orange-500">공지</Badge>}
                         {post.isSecret && <Lock className="h-3.5 w-3.5 text-yellow-500 shrink-0" />}
-                        <span className="font-medium text-sm truncate">{post.title}</span>
+                        <Link href={postUrl} className="font-medium text-sm truncate hover:text-primary">{post.title}</Link>
                         {post.commentCount > 0 && board.useComment && (
                           <span className="text-sm text-primary shrink-0">[{post.commentCount}]</span>
                         )}
@@ -366,14 +367,15 @@ export default function BoardListPage() {
                         )}
                       </div>
                       <div className="w-28 text-left pl-2">
-                        <UserNickname userId={post.author.id} nickname={post.author.nickname} image={post.author.image} showAvatar  className="text-muted-foreground" />
+                        <UserNickname userId={post.author.id} nickname={post.author.nickname} image={post.author.image} showAvatar className="text-muted-foreground" />
                       </div>
                       <div className="w-24 text-center text-xs text-muted-foreground">{formatDate(post.createdAt)}</div>
                       <div className="w-16 text-center text-xs text-muted-foreground">{post.viewCount}</div>
                       {board.useReaction && <div className="w-16 text-center text-xs text-muted-foreground">{post.likeCount}</div>}
                     </div>
                   </div>
-                ))}
+                  )
+                })}
               </div>
             )}
 
