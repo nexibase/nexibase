@@ -110,7 +110,13 @@ export default function BoardEditPage({ params }: { params: Promise<{ id: string
 
   const handleDelete = async () => {
     if (!board) return
-    if (!confirm(`"${board.name}" 게시판을 삭제하시겠습니까?\n게시글, 댓글, 반응이 모두 삭제됩니다.`)) return
+    const input = window.prompt(
+      `"${board.name}" 게시판을 삭제하시겠습니까?\n게시글, 댓글, 반응이 모두 삭제됩니다.\n\n삭제하려면 게시판 슬러그 "${board.slug}"를 입력하세요:`
+    )
+    if (input !== board.slug) {
+      if (input !== null) alert('슬러그가 일치하지 않습니다.')
+      return
+    }
     try {
       const res = await fetch(`/api/admin/boards/${id}`, { method: 'DELETE' })
       if (res.ok) {
