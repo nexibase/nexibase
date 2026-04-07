@@ -31,7 +31,7 @@ export function UserLayout({ children }: UserLayoutProps) {
   const centerCols = 12 - leftCols - rightCols
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-6">
+    <div className="max-w-6xl mx-auto px-2 sm:px-4 py-4 sm:py-6">
       {hasLeft || hasRight ? (
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
           {hasLeft && (
