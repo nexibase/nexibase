@@ -51,6 +51,7 @@ interface Post {
   _count?: { attachments: number }
   author: {
     id: string
+    uuid?: string
     nickname: string | null
     name: string
     image: string | null
@@ -348,7 +349,7 @@ export default function BoardListPage() {
                         )}
                       </div>
                       <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                        <UserNickname userId={post.author.id} nickname={post.author.nickname} image={post.author.image} showAvatar />
+                        <UserNickname userId={post.author.id} uuid={post.author.uuid} nickname={post.author.nickname} image={post.author.image} showAvatar />
                         <span>{formatDate(post.createdAt)}</span>
                         <span className="flex items-center gap-0.5"><Eye className="h-3 w-3" />{post.viewCount}</span>
                       </div>
@@ -367,7 +368,7 @@ export default function BoardListPage() {
                         )}
                       </div>
                       <div className="w-28 text-left pl-2">
-                        <UserNickname userId={post.author.id} nickname={post.author.nickname} image={post.author.image} showAvatar className="text-muted-foreground" />
+                        <UserNickname userId={post.author.id} uuid={post.author.uuid} nickname={post.author.nickname} image={post.author.image} showAvatar className="text-muted-foreground" />
                       </div>
                       <div className="w-24 text-center text-xs text-muted-foreground">{formatDate(post.createdAt)}</div>
                       <div className="w-16 text-center text-xs text-muted-foreground">{post.viewCount}</div>

@@ -47,6 +47,7 @@ export async function GET(
         author: {
           select: {
             id: true,
+            uuid: true,
             nickname: true,
             image: true
           }
@@ -71,6 +72,7 @@ export async function GET(
             author: {
               select: {
                 id: true,
+                uuid: true,
                 nickname: true,
                 image: true
               }

@@ -7,16 +7,14 @@ export async function GET(
 ) {
   try {
     const { id } = await params
-    const userId = parseInt(id)
 
-    if (isNaN(userId)) {
-      return NextResponse.json({ error: '유효하지 않은 ID' }, { status: 400 })
-    }
-
+    // uuid 또는 숫자 id 모두 지원
+    const isUuid = id.includes('-')
     const user = await prisma.user.findUnique({
-      where: { id: userId },
+      where: isUuid ? { uuid: id } : { id: parseInt(id) },
       select: {
         id: true,
+        uuid: true,
         nickname: true,
         image: true,
         level: true,
@@ -30,13 +28,14 @@ export async function GET(
       }
     })
 
-    if (!user || user === null) {
+    if (!user) {
       return NextResponse.json({ error: '회원을 찾을 수 없습니다.' }, { status: 404 })
     }
 
     return NextResponse.json({
       user: {
         id: user.id,
+        uuid: user.uuid,
         nickname: user.nickname,
         image: user.image,
         level: user.level,
