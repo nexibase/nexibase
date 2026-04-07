@@ -1,22 +1,10 @@
 "use client"
 
-import { useState, useEffect } from "react"
 import WidgetRenderer from "@/lib/widgets/renderer"
+import { useSite } from "@/lib/SiteContext"
 
 interface UserLayoutProps {
   children: React.ReactNode
-}
-
-interface WidgetData {
-  id: number
-  widgetKey: string
-  zone: string
-  title: string
-  settings: string | null
-  colSpan: number
-  rowSpan: number
-  isActive: boolean
-  sortOrder: number
 }
 
 // Tailwind은 동적 클래스를 지원하지 않으므로 정적 매핑
@@ -30,24 +18,7 @@ const colSpanClass: Record<number, string> = {
 }
 
 export function UserLayout({ children }: UserLayoutProps) {
-  const [sidebarWidgets, setSidebarWidgets] = useState<WidgetData[]>([])
-
-  useEffect(() => {
-    fetch('/api/home-widgets')
-      .then(res => res.ok ? res.json() : null)
-      .then(data => {
-        if (data?.widgets) {
-          const all: WidgetData[] = []
-          for (const zone of Object.keys(data.widgets)) {
-            for (const w of data.widgets[zone]) {
-              all.push(w)
-            }
-          }
-          setSidebarWidgets(all.filter(w => w.zone === 'left' || w.zone === 'right' || w.zone === 'sidebar'))
-        }
-      })
-      .catch(() => {})
-  }, [])
+  const { sidebarWidgets } = useSite()
 
   const leftWidgets = sidebarWidgets.filter(w => w.zone === 'left')
   const rightWidgets = sidebarWidgets.filter(w => w.zone === 'right' || w.zone === 'sidebar')

@@ -34,11 +34,24 @@ interface MenuItem {
   children: MenuItem[]
 }
 
+interface WidgetData {
+  id: number
+  widgetKey: string
+  zone: string
+  title: string
+  settings: string | null
+  colSpan: number
+  rowSpan: number
+  isActive: boolean
+  sortOrder: number
+}
+
 interface SiteContextValue {
   user: UserInfo | null
   settings: SiteSettings
   boards: Board[]
   headerMenus: MenuItem[]
+  sidebarWidgets: WidgetData[]
   isLoading: boolean
   setUser: (user: UserInfo | null) => void
   refreshUser: () => Promise<void>
@@ -55,6 +68,7 @@ const SiteContext = createContext<SiteContextValue>({
   settings: defaultSettings,
   boards: [],
   headerMenus: [],
+  sidebarWidgets: [],
   isLoading: true,
   setUser: () => {},
   refreshUser: async () => {},
@@ -69,6 +83,7 @@ export function SiteProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<SiteSettings>(defaultSettings)
   const [boards, setBoards] = useState<Board[]>([])
   const [headerMenus, setHeaderMenus] = useState<MenuItem[]>([])
+  const [sidebarWidgets, setSidebarWidgets] = useState<WidgetData[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   const refreshUser = useCallback(async () => {
@@ -88,11 +103,12 @@ export function SiteProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const fetchAll = async () => {
       try {
-        const [userRes, settingsRes, boardsRes, menusRes] = await Promise.all([
+        const [userRes, settingsRes, boardsRes, menusRes, widgetsRes] = await Promise.all([
           fetch('/api/me'),
           fetch('/api/settings'),
           fetch('/api/boards?limit=10'),
           fetch('/api/menus?position=header'),
+          fetch('/api/home-widgets'),
         ])
 
         if (userRes.ok) {
@@ -118,6 +134,17 @@ export function SiteProvider({ children }: { children: ReactNode }) {
           const data = await menusRes.json()
           setHeaderMenus(data.menus || [])
         }
+
+        if (widgetsRes.ok) {
+          const data = await widgetsRes.json()
+          const all: WidgetData[] = []
+          for (const zone of Object.keys(data.widgets || {})) {
+            for (const w of data.widgets[zone]) {
+              all.push(w)
+            }
+          }
+          setSidebarWidgets(all.filter(w => w.zone === 'left' || w.zone === 'right' || w.zone === 'sidebar'))
+        }
       } catch (error) {
         console.error('SiteContext 데이터 조회 에러:', error)
       } finally {
@@ -129,7 +156,7 @@ export function SiteProvider({ children }: { children: ReactNode }) {
   }, [])
 
   return (
-    <SiteContext.Provider value={{ user, settings, boards, headerMenus, isLoading, setUser, refreshUser }}>
+    <SiteContext.Provider value={{ user, settings, boards, headerMenus, sidebarWidgets, isLoading, setUser, refreshUser }}>
       {children}
     </SiteContext.Provider>
   )
