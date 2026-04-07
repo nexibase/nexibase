@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { MyPageLayout } from "@/components/layout/MyPageLayout"
@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ArrowLeft, Save, User } from "lucide-react"
+import { ArrowLeft, Save, User, Camera, Trash2, Loader2 } from "lucide-react"
 
 interface UserInfo {
   id: number
@@ -28,6 +28,8 @@ export default function EditProfilePage() {
   const [nickname, setNickname] = useState('')
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
+  const [uploadingImage, setUploadingImage] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     fetch('/api/me')
@@ -69,6 +71,47 @@ export default function EditProfilePage() {
     }
   }
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadingImage(true)
+    try {
+      const formData = new FormData()
+      formData.append('image', file)
+      const res = await fetch('/api/me/profile-image', { method: 'POST', body: formData })
+      const data = await res.json()
+      if (res.ok && data.imageUrl) {
+        setUser(prev => prev ? { ...prev, image: data.imageUrl } : prev)
+        setMessage('프로필 이미지가 변경되었습니다.')
+      } else {
+        setMessage(data.error || '이미지 업로드 실패')
+      }
+    } catch {
+      setMessage('이미지 업로드 실패')
+    } finally {
+      setUploadingImage(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+      setTimeout(() => setMessage(''), 3000)
+    }
+  }
+
+  const handleImageDelete = async () => {
+    if (!user?.image) return
+    setUploadingImage(true)
+    try {
+      const res = await fetch('/api/me/profile-image', { method: 'DELETE' })
+      if (res.ok) {
+        setUser(prev => prev ? { ...prev, image: null } : prev)
+        setMessage('프로필 이미지가 삭제되었습니다.')
+      }
+    } catch {
+      setMessage('이미지 삭제 실패')
+    } finally {
+      setUploadingImage(false)
+      setTimeout(() => setMessage(''), 3000)
+    }
+  }
+
   if (loading) {
     return (
       <MyPageLayout>
@@ -96,12 +139,37 @@ export default function EditProfilePage() {
         )}
 
         {/* 프로필 이미지 */}
-        <div className="flex justify-center">
-          <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
-            {user.image ? (
+        <div className="flex flex-col items-center gap-3">
+          <div
+            className="relative w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden cursor-pointer group"
+            onClick={() => !uploadingImage && fileInputRef.current?.click()}
+          >
+            {uploadingImage ? (
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            ) : user.image ? (
               <img src={user.image} alt={user.nickname} className="w-full h-full object-cover" />
             ) : (
               <User className="h-12 w-12 text-primary" />
+            )}
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-full">
+              <Camera className="h-6 w-6 text-white" />
+            </div>
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/gif,image/webp"
+            onChange={handleImageUpload}
+            className="hidden"
+          />
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={uploadingImage}>
+              <Camera className="h-3.5 w-3.5 mr-1" /> 변경
+            </Button>
+            {user.image && (
+              <Button variant="outline" size="sm" onClick={handleImageDelete} disabled={uploadingImage} className="text-destructive hover:text-destructive">
+                <Trash2 className="h-3.5 w-3.5 mr-1" /> 삭제
+              </Button>
             )}
           </div>
         </div>
