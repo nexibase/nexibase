@@ -218,7 +218,7 @@ export default function BoardListPage() {
               <div className="flex items-center gap-2">
                 <h1 className="text-2xl font-bold">{board.name}</h1>
                 {isAdmin && (
-                  <Link href="/admin/boards" title="게시판 설정">
+                  <Link href={`/admin/boards/${board.id}`} title="게시판 설정">
                     <Settings className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
                   </Link>
                 )}
