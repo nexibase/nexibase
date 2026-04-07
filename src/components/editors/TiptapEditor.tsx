@@ -199,9 +199,9 @@ export function TiptapEditor({
   return (
     <div className={cn('border rounded-lg overflow-hidden bg-background', className)}>
       {/* 툴바 */}
-      <div className="border-b bg-muted/30 p-2 flex flex-wrap gap-1">
+      <div className="border-b bg-muted/30 p-1.5 sm:p-2 flex overflow-x-auto gap-1 scrollbar-none">
         {/* 텍스트 스타일 */}
-        <div className="flex gap-0.5 border-r pr-2 mr-2">
+        <div className="flex gap-0.5 border-r pr-2 mr-2 shrink-0">
           <ToolbarButton
             onClick={() => editor.chain().focus().toggleBold().run()}
             isActive={editor.isActive('bold')}
@@ -240,7 +240,7 @@ export function TiptapEditor({
         </div>
 
         {/* 헤딩 */}
-        <div className="flex gap-0.5 border-r pr-2 mr-2">
+        <div className="flex gap-0.5 border-r pr-2 mr-2 shrink-0">
           <ToolbarButton
             onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
             isActive={editor.isActive('heading', { level: 1 })}
@@ -265,7 +265,7 @@ export function TiptapEditor({
         </div>
 
         {/* 리스트 */}
-        <div className="flex gap-0.5 border-r pr-2 mr-2">
+        <div className="flex gap-0.5 border-r pr-2 mr-2 shrink-0">
           <ToolbarButton
             onClick={() => editor.chain().focus().toggleBulletList().run()}
             isActive={editor.isActive('bulletList')}
@@ -290,7 +290,7 @@ export function TiptapEditor({
         </div>
 
         {/* 삽입 */}
-        <div className="flex gap-0.5 border-r pr-2 mr-2">
+        <div className="flex gap-0.5 border-r pr-2 mr-2 shrink-0">
           <ToolbarButton
             onClick={setLink}
             isActive={editor.isActive('link')}
@@ -333,7 +333,7 @@ export function TiptapEditor({
         />
 
         {/* 실행 취소/다시 실행 */}
-        <div className="flex gap-0.5 border-r pr-2 mr-2">
+        <div className="flex gap-0.5 border-r pr-2 mr-2 shrink-0">
           <ToolbarButton
             onClick={() => editor.chain().focus().undo().run()}
             disabled={!editor.can().undo() || sourceMode}
@@ -351,7 +351,7 @@ export function TiptapEditor({
         </div>
 
         {/* HTML 소스 보기 */}
-        <div className="flex gap-0.5">
+        <div className="flex gap-0.5 shrink-0">
           <ToolbarButton
             onClick={toggleSourceMode}
             isActive={sourceMode}
