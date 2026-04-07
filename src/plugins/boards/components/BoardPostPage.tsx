@@ -28,6 +28,7 @@ import {
   X,
   ZoomIn,
   ZoomOut,
+  Reply,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { CommentReactions } from "@/plugins/boards/components/CommentReactions"
@@ -78,8 +79,9 @@ interface Comment {
   id: string
   content: string
   createdAt: string
+  parentId: string | null
   author: Author
-  replies?: Comment[]
+  parent?: { author: { nickname: string | null } } | null
 }
 
 interface Post {
@@ -329,6 +331,7 @@ export default function BoardPostPage() {
   const [userReactions, setUserReactions] = useState<string[]>([])
   const [commentText, setCommentText] = useState("")
   const [submittingComment, setSubmittingComment] = useState(false)
+  const [replyTo, setReplyTo] = useState<{ id: string; nickname: string } | null>(null)
   const [prevPost, setPrevPost] = useState<AdjacentPost | null>(null)
   const [nextPost, setNextPost] = useState<AdjacentPost | null>(null)
   const [imageViewerOpen, setImageViewerOpen] = useState(false)
@@ -486,13 +489,14 @@ export default function BoardPostPage() {
       const response = await fetch(`/api/boards/${slug}/posts/${postId}/comments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: commentText.trim() })
+        body: JSON.stringify({ content: commentText.trim(), parentId: replyTo?.id || null })
       })
 
       const data = await response.json()
 
       if (response.ok) {
         setCommentText("")
+        setReplyTo(null)
         fetchPost() // 댓글 목록 새로고침
       } else {
         alert(data.error || '댓글 작성에 실패했습니다.')
@@ -850,79 +854,96 @@ export default function BoardPostPage() {
 
               {/* 댓글 목록 */}
               {post.comments && post.comments.length > 0 ? (
-                <div className="space-y-4 mb-6">
-                  {post.comments.map((comment) => (
-                    <div key={comment.id} className="border-b pb-4 last:border-b-0">
-                      <div className="flex items-start gap-3">
-                        <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center shrink-0">
-                          <span className="text-muted-foreground text-sm font-medium">
-                            {(comment.author.nickname || '?').charAt(0)}
-                          </span>
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-medium text-sm">
-                              {comment.author.nickname || '익명'}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              {formatDate(comment.createdAt)}
-                            </span>
-                          </div>
-                          <p className="text-sm whitespace-pre-wrap">
-                            {comment.content}
-                          </p>
+                <div className="space-y-1 mb-6">
+                  {(() => {
+                    const rootComments = post.comments.filter(c => !c.parentId)
+                    const replies = post.comments.filter(c => c.parentId)
+                    const replyMap = new Map<string, Comment[]>()
+                    for (const r of replies) {
+                      // 최상위 부모를 찾아서 그 아래에 배치
+                      let rootId = r.parentId!
+                      const findRoot = (id: string): string => {
+                        const parent = post.comments!.find(c => c.id === id)
+                        return parent?.parentId ? findRoot(parent.parentId) : id
+                      }
+                      rootId = findRoot(rootId)
+                      if (!replyMap.has(rootId)) replyMap.set(rootId, [])
+                      replyMap.get(rootId)!.push(r)
+                    }
 
-                          {/* 댓글 리액션 */}
-                          {board.useReaction && (
-                            <CommentReactions
-                              slug={slug}
-                              postId={postId}
-                              commentId={comment.id}
-                              isLoggedIn={!!user}
-                            />
-                          )}
-
-                          {/* 대댓글 */}
-                          {comment.replies && comment.replies.length > 0 && (
-                            <div className="mt-3 pl-4 border-l-2 space-y-3">
-                              {comment.replies.map((reply) => (
-                                <div key={reply.id} className="flex items-start gap-2">
-                                  <div className="w-6 h-6 bg-muted/50 rounded-full flex items-center justify-center shrink-0">
-                                    <span className="text-muted-foreground text-xs font-medium">
-                                      {(reply.author.nickname || '?').charAt(0)}
-                                    </span>
-                                  </div>
-                                  <div className="flex-1">
-                                    <div className="flex items-center gap-2 mb-1">
-                                      <span className="font-medium text-xs">
-                                        {reply.author.nickname || '익명'}
-                                      </span>
-                                      <span className="text-xs text-muted-foreground">
-                                        {formatDate(reply.createdAt)}
-                                      </span>
-                                    </div>
-                                    <p className="text-sm whitespace-pre-wrap">
-                                      {reply.content}
-                                    </p>
-
-                                    {/* 대댓글 리액션 */}
-                                    {board.useReaction && (
-                                      <CommentReactions
-                                        slug={slug}
-                                        postId={postId}
-                                        commentId={reply.id}
-                                        isLoggedIn={!!user}
-                                      />
-                                    )}
-                                  </div>
-                                </div>
-                              ))}
+                    return rootComments.map((comment) => (
+                      <div key={comment.id}>
+                        {/* 원댓글 */}
+                        <div className="border-b py-3">
+                          <div className="flex items-start gap-3">
+                            <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center shrink-0">
+                              <span className="text-muted-foreground text-sm font-medium">
+                                {(comment.author.nickname || '?').charAt(0)}
+                              </span>
                             </div>
-                          )}
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="font-medium text-sm">{comment.author.nickname || '익명'}</span>
+                                <span className="text-xs text-muted-foreground">{formatDate(comment.createdAt)}</span>
+                              </div>
+                              <p className="text-sm whitespace-pre-wrap">{comment.content}</p>
+                              <div className="flex items-center gap-2 mt-1">
+                                {board.useReaction && (
+                                  <CommentReactions slug={slug} postId={postId} commentId={comment.id} isLoggedIn={!!user} />
+                                )}
+                                {canComment && (
+                                  <button
+                                    onClick={() => setReplyTo({ id: comment.id, nickname: comment.author.nickname || '익명' })}
+                                    className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
+                                  >
+                                    <Reply className="h-3 w-3" /> 답글
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
                         </div>
+
+                        {/* 답글 (1 depth 들여쓰기, @닉네임 표시) */}
+                        {replyMap.get(comment.id)?.map((reply) => (
+                          <div key={reply.id} className="border-b py-3 pl-11">
+                            <div className="flex items-start gap-2">
+                              <div className="w-6 h-6 bg-muted/50 rounded-full flex items-center justify-center shrink-0">
+                                <span className="text-muted-foreground text-xs font-medium">
+                                  {(reply.author.nickname || '?').charAt(0)}
+                                </span>
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="font-medium text-xs">{reply.author.nickname || '익명'}</span>
+                                  <span className="text-xs text-muted-foreground">{formatDate(reply.createdAt)}</span>
+                                </div>
+                                <p className="text-sm whitespace-pre-wrap">
+                                  {reply.parent?.author?.nickname && (
+                                    <span className="text-primary font-medium">@{reply.parent.author.nickname} </span>
+                                  )}
+                                  {reply.content}
+                                </p>
+                                <div className="flex items-center gap-2 mt-1">
+                                  {board.useReaction && (
+                                    <CommentReactions slug={slug} postId={postId} commentId={reply.id} isLoggedIn={!!user} />
+                                  )}
+                                  {canComment && (
+                                    <button
+                                      onClick={() => setReplyTo({ id: reply.id, nickname: reply.author.nickname || '익명' })}
+                                      className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
+                                    >
+                                      <Reply className="h-3 w-3" /> 답글
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    </div>
-                  ))}
+                    ))
+                  })()}
                 </div>
               ) : (
                 <div className="text-center py-8 text-muted-foreground mb-6">
@@ -932,21 +953,32 @@ export default function BoardPostPage() {
 
               {/* 댓글 작성 */}
               {canComment ? (
-                <form onSubmit={handleCommentSubmit} className="flex gap-2">
-                  <Input
-                    placeholder="댓글을 입력하세요"
-                    value={commentText}
-                    onChange={(e) => setCommentText(e.target.value)}
-                    className="flex-1"
-                  />
-                  <Button type="submit" disabled={submittingComment || !commentText.trim()}>
-                    {submittingComment ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Send className="h-4 w-4" />
-                    )}
-                  </Button>
-                </form>
+                <div>
+                  {replyTo && (
+                    <div className="flex items-center gap-2 mb-2 text-sm text-primary">
+                      <Reply className="h-3.5 w-3.5" />
+                      <span>@{replyTo.nickname}에게 답글</span>
+                      <button onClick={() => setReplyTo(null)} className="text-muted-foreground hover:text-foreground">
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  )}
+                  <form onSubmit={handleCommentSubmit} className="flex gap-2">
+                    <Input
+                      placeholder={replyTo ? `@${replyTo.nickname}에게 답글...` : "댓글을 입력하세요"}
+                      value={commentText}
+                      onChange={(e) => setCommentText(e.target.value)}
+                      className="flex-1"
+                    />
+                    <Button type="submit" disabled={submittingComment || !commentText.trim()}>
+                      {submittingComment ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Send className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </form>
+                </div>
               ) : board.commentMemberOnly && !isLoggedIn ? (
                 <div className="text-center">
                   <Link href="/login" className="text-primary hover:underline text-sm">

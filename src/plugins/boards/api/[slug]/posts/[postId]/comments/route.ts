@@ -137,7 +137,6 @@ export async function GET(
       where: {
         postId,
         status: 'published',
-        parentId: null
       },
       orderBy: { createdAt: 'asc' },
       include: {
@@ -148,16 +147,10 @@ export async function GET(
             image: true
           }
         },
-        replies: {
-          where: { status: 'published' },
-          orderBy: { createdAt: 'asc' },
-          include: {
+        parent: {
+          select: {
             author: {
-              select: {
-                id: true,
-                nickname: true,
-                image: true
-              }
+              select: { nickname: true }
             }
           }
         }
