@@ -118,12 +118,19 @@ export async function GET(
       )
     }
 
-    // 조회수 증가 (본인 글 제외)
-    if (post.authorId !== user?.id) {
+    // 조회수 증가 (세션당 1회)
+    const viewedCookie = request.cookies.get('viewed_posts')?.value || ''
+    const viewedPosts = new Set(viewedCookie.split(',').filter(Boolean))
+    const viewedKey = `${slug}:${postId}`
+    let viewIncremented = false
+
+    if (!viewedPosts.has(viewedKey)) {
       await prisma.post.update({
         where: { id: postId },
         data: { viewCount: { increment: 1 } }
       })
+      viewedPosts.add(viewedKey)
+      viewIncremented = true
     }
 
     // 현재 사용자의 반응 조회
@@ -161,7 +168,7 @@ export async function GET(
       select: { id: true, title: true }
     })
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       board: {
         id: board.id,
@@ -175,13 +182,26 @@ export async function GET(
       },
       post: {
         ...post,
-        viewCount: post.viewCount + (post.authorId !== user?.id ? 1 : 0)
+        viewCount: post.viewCount + (viewIncremented ? 1 : 0)
       },
       userReaction,
       isAuthor: post.authorId === user?.id,
       prevPost,
       nextPost
     })
+
+    // 조회한 게시글 목록을 쿠키에 저장 (세션 쿠키, 브라우저 닫으면 초기화)
+    if (viewIncremented) {
+      // 최대 200개까지 유지 (쿠키 크기 제한)
+      const viewedArray = Array.from(viewedPosts).slice(-200)
+      response.cookies.set('viewed_posts', viewedArray.join(','), {
+        path: '/',
+        httpOnly: true,
+        sameSite: 'lax',
+      })
+    }
+
+    return response
   } catch (error) {
     console.error('게시글 조회 에러:', error)
     return NextResponse.json(
