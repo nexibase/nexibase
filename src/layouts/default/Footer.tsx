@@ -68,21 +68,6 @@ export default function Footer() {
               </div>
               <span className="font-bold text-foreground">{settings.site_name}</span>
             </div>
-            <p className="text-sm text-muted-foreground mb-4">
-              함께 성장하는 커뮤니티
-            </p>
-            {/* 소셜 링크 */}
-            <div className="flex items-center gap-3">
-              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors" title="GitHub">
-                <Github className="h-5 w-5" />
-              </a>
-              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors" title="Twitter">
-                <Twitter className="h-5 w-5" />
-              </a>
-              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors" title="Discord">
-                <MessageCircle className="h-5 w-5" />
-              </a>
-            </div>
           </div>
 
           {/* DB 기반 메뉴 그룹 */}
