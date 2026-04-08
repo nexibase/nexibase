@@ -47,6 +47,9 @@ interface SettingsData {
   // 테마 설정
   theme_folder: string
 
+  // 외부 서비스
+  google_analytics_id: string
+
 }
 
 interface ThemeInfo {
@@ -71,7 +74,8 @@ const DEFAULT_SETTINGS: SettingsData = {
   footer_copyright: '',
   footer_links: '[]',
   layout_folder: 'default',
-  theme_folder: 'default'
+  theme_folder: 'default',
+  google_analytics_id: ''
 }
 
 export default function SettingsPage() {
@@ -318,6 +322,19 @@ export default function SettingsPage() {
                     onChange={(e) => handleChange('site_logo', e.target.value)}
                     placeholder="https://example.com/logo.png"
                   />
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="google_analytics_id">Google Analytics ID</Label>
+                  <Input
+                    id="google_analytics_id"
+                    value={settings.google_analytics_id}
+                    onChange={(e) => handleChange('google_analytics_id', e.target.value)}
+                    placeholder="G-XXXXXXXXXX"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Google Analytics 측정 ID를 입력하면 자동으로 추적 코드가 삽입됩니다
+                  </p>
                 </div>
               </CardContent>
             </Card>
