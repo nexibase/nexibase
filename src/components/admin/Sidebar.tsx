@@ -94,6 +94,7 @@ function getIcon(iconName: string): LucideIcon {
 const coreMenuItems = [
   { id: "dashboard", label: "대시보드", icon: LayoutDashboard, path: "/admin" },
   { id: "users", label: "사용자관리", icon: Users, path: "/admin/users" },
+  { id: "login-logs", label: "로그인기록", icon: ClipboardList, path: "/admin/login-logs" },
   { id: "settings", label: "환경설정", icon: Settings, path: "/admin/settings" },
   { id: "plugins", label: "플러그인관리", icon: Puzzle, path: "/admin/plugins" },
   { id: "menus", label: "메뉴관리", icon: MenuIcon, path: "/admin/menus" },

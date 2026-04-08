@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
-  LogOut, MessageSquare, FileText, Eye, ThumbsUp, Clock, User, Calendar, Mail, Phone, Shield,
+  LogOut, MessageSquare, FileText, Eye, ThumbsUp, Clock, User, Calendar, Mail, Phone, Shield, Monitor,
 } from "lucide-react"
 
 interface UserInfo {
@@ -45,11 +45,19 @@ interface MyComment {
   }
 }
 
+interface LoginLog {
+  id: number
+  ip: string
+  success: boolean
+  createdAt: string
+}
+
 export default function MyPage() {
   const router = useRouter()
   const [user, setUser] = useState<UserInfo | null>(null)
   const [myPosts, setMyPosts] = useState<MyPost[]>([])
   const [myComments, setMyComments] = useState<MyComment[]>([])
+  const [loginLogs, setLoginLogs] = useState<LoginLog[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -57,10 +65,12 @@ export default function MyPage() {
       fetch('/api/me').then(r => r.ok ? r.json() : null).catch(() => null),
       fetch('/api/me/posts?limit=5').then(r => r.ok ? r.json() : null).catch(() => null),
       fetch('/api/me/comments?limit=5').then(r => r.ok ? r.json() : null).catch(() => null),
-    ]).then(([userData, postsData, commentsData]) => {
+      fetch('/api/me/login-history').then(r => r.ok ? r.json() : null).catch(() => null),
+    ]).then(([userData, postsData, commentsData, loginData]) => {
       if (userData?.user) setUser(userData.user)
       if (postsData?.posts) setMyPosts(postsData.posts)
       if (commentsData?.comments) setMyComments(commentsData.comments)
+      if (loginData?.logs) setLoginLogs(loginData.logs)
     }).finally(() => setLoading(false))
   }, [])
 
@@ -133,6 +143,40 @@ export default function MyPage() {
                 </CardContent>
               </Card>
             )}
+
+            {/* 로그인 기록 */}
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Monitor className="h-4 w-4" />
+                    로그인 기록
+                  </CardTitle>
+                  <Link href="/mypage/login-history" className="text-xs text-primary hover:underline">
+                    전체보기
+                  </Link>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {loginLogs.length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-4 text-center">로그인 기록이 없습니다.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {loginLogs.slice(0, 5).map(log => (
+                      <div key={log.id} className="flex items-center justify-between text-sm py-1.5 border-b last:border-0">
+                        <div className="flex items-center gap-2">
+                          <span className={`inline-block w-2 h-2 rounded-full ${log.success ? 'bg-green-500' : 'bg-red-500'}`} />
+                          <span className="text-muted-foreground">{log.ip}</span>
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(log.createdAt).toLocaleString('ko-KR')}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
             {/* 내가 쓴 글 */}
             <Card>

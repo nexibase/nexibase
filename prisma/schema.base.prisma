@@ -146,3 +146,16 @@ model HomeWidget {
   @@index([zone, sortOrder])
   @@map("home_widgets")
 }
+
+model LoginAttempt {
+  id        Int      @id @default(autoincrement())
+  email     String   @db.VarChar(255)
+  ip        String   @db.VarChar(50)
+  success   Boolean
+  reason    String?  @db.VarChar(100)
+  createdAt DateTime @default(now())
+
+  @@index([email, createdAt])
+  @@index([ip, createdAt])
+  @@map("login_attempts")
+}

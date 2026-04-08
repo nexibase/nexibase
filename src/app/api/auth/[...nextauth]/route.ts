@@ -28,21 +28,21 @@ export const authOptions: NextAuthOptions = {
         })
 
         if (!user || !user.password) {
-          throw new Error("등록되지 않은 이메일입니다.")
+          throw new Error("이메일 또는 비밀번호가 올바르지 않습니다.")
+        }
+
+        if (user.deletedAt || user.status === 'banned' || user.status === 'inactive') {
+          throw new Error("로그인에 문제가 있습니다. 관리자에게 문의해 주세요.")
         }
 
         if (user.status === 'withdrawn') {
           throw new Error("탈퇴한 계정입니다.")
         }
 
-        if (user.status === 'banned') {
-          throw new Error("정지된 계정입니다.")
-        }
-
         const isPasswordValid = await bcrypt.compare(credentials.password, user.password)
 
         if (!isPasswordValid) {
-          throw new Error("비밀번호가 올바르지 않습니다.")
+          throw new Error("이메일 또는 비밀번호가 올바르지 않습니다.")
         }
 
         // 마지막 로그인 시간 업데이트
@@ -105,6 +105,9 @@ export const authOptions: NextAuthOptions = {
             include: { user: true }
           })
 
+          if (existingAccount?.user.deletedAt) {
+            return "/login?error=DeletedAccount"
+          }
           if (existingAccount?.user.status === 'withdrawn') {
             return "/login?error=WithdrawnAccount"
           }
@@ -115,11 +118,17 @@ export const authOptions: NextAuthOptions = {
           })
 
           if (existingUser) {
+            if (existingUser.deletedAt) {
+              return "/login?error=DeletedAccount"
+            }
             if (existingUser.status === 'withdrawn') {
               return "/login?error=WithdrawnAccount"
             }
             if (existingUser.status === 'banned') {
               return "/login?error=AccessDenied"
+            }
+            if (existingUser.status === 'inactive') {
+              return "/login?error=InactiveAccount"
             }
 
             // provider 정보 업데이트
@@ -170,12 +179,12 @@ export const authOptions: NextAuthOptions = {
         // DB에서 추가 정보 가져오기
         const dbUser = await prisma.user.findUnique({
           where: { id: parseInt(token.id as string) },
-          select: { level: true, role: true, nickname: true, image: true, status: true }
+          select: { level: true, role: true, nickname: true, image: true, status: true, deletedAt: true }
         })
 
         if (dbUser) {
-          // 탈퇴/정지된 사용자는 세션 무효화
-          if (dbUser.status === 'withdrawn' || dbUser.status === 'banned') {
+          // 삭제/탈퇴/정지/비활성 사용자는 세션 무효화
+          if (dbUser.deletedAt || dbUser.status === 'withdrawn' || dbUser.status === 'banned' || dbUser.status === 'inactive') {
             return { ...session, user: undefined }
           }
 

@@ -65,7 +65,7 @@ export async function PUT(
     const { id } = await params
     const userId = parseInt(id)
     const body = await request.json()
-    const { action, email, nickname, password, role, status, adminNote } = body
+    const { action, email, nickname, password, role, level, status, adminNote } = body
 
     // 삭제된 사용자 복원
     if (action === 'restore') {
@@ -143,6 +143,7 @@ export async function PUT(
       email,
       nickname,
       role,
+      level: level !== undefined ? parseInt(level) || 1 : undefined,
       status,
       adminNote: adminNote || null,
     }
@@ -191,6 +192,14 @@ export async function DELETE(
       permanent = body.permanent === true
     } catch {
       // body가 없으면 소프트 삭제
+    }
+
+    // 본인 삭제 방지
+    if (userId === admin.id) {
+      return NextResponse.json(
+        { success: false, message: '본인 계정은 삭제할 수 없습니다.' },
+        { status: 400 }
+      )
     }
 
     // 영구 삭제

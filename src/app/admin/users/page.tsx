@@ -47,9 +47,9 @@ interface User {
   lastLoginAt: string | null
   createdAt: string
   deletedAt: string | null
+  level: number
   adminNote: string | null
   providers: string[]
-  selected?: boolean
 }
 
 interface UserStats {
@@ -95,6 +95,7 @@ function UserModal({
     nickname: '',
     password: '',
     role: 'user',
+    level: 1,
     status: 'active',
     adminNote: '',
   })
@@ -107,6 +108,7 @@ function UserModal({
         nickname: user.nickname || '',
         password: '',
         role: user.role || 'user',
+        level: user.level ?? 1,
         status: user.status || 'active',
         adminNote: user.adminNote || '',
       })
@@ -116,6 +118,7 @@ function UserModal({
         nickname: '',
         password: '',
         role: 'user',
+        level: 1,
         status: 'active',
         adminNote: '',
       })
@@ -196,7 +199,7 @@ function UserModal({
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="role">권한</Label>
                   <Select
@@ -213,6 +216,16 @@ function UserModal({
                       <SelectItem value="admin">관리자</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="level">레벨</Label>
+                  <Input
+                    id="level"
+                    type="number"
+                    min={1}
+                    value={formData.level}
+                    onChange={(e) => setFormData({ ...formData, level: parseInt(e.target.value) || 1 })}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="status">상태</Label>
@@ -380,7 +393,7 @@ function UsersPageContent() {
       const data = await response.json()
 
       if (data.success) {
-        setUsers(data.users.map((user: User) => ({ ...user, selected: false })))
+        setUsers(data.users)
         setStats(data.stats)
         setTotalPages(data.pagination.totalPages)
       }
@@ -394,16 +407,6 @@ function UsersPageContent() {
   useEffect(() => {
     fetchUsers()
   }, [fetchUsers])
-
-  const handleSelectAll = (checked: boolean) => {
-    setUsers(users.map(user => ({ ...user, selected: checked })))
-  }
-
-  const handleSelectUser = (id: string, checked: boolean) => {
-    setUsers(users.map(user =>
-      user.id === id ? { ...user, selected: checked } : user
-    ))
-  }
 
   const handleSaveUser = async (data: Partial<User> & { password?: string }) => {
     try {
@@ -435,21 +438,12 @@ function UsersPageContent() {
 
     try {
       const response = await fetch(`/api/admin/users/${id}`, { method: 'DELETE' })
-      if (response.ok) fetchUsers()
-    } catch (error) {
-      console.error('사용자 삭제 실패:', error)
-    }
-  }
-
-  const handleBulkDelete = async () => {
-    const selectedUsers = users.filter(user => user.selected)
-    if (selectedUsers.length === 0) return
-    if (!confirm(`${selectedUsers.length}명의 사용자를 삭제하시겠습니까?`)) return
-
-    try {
-      const ids = selectedUsers.map(u => u.id).join(',')
-      await fetch(`/api/admin/users?ids=${ids}`, { method: 'DELETE' })
-      fetchUsers()
+      const result = await response.json()
+      if (result.success) {
+        fetchUsers()
+      } else {
+        alert(result.message || '삭제 실패')
+      }
     } catch (error) {
       console.error('사용자 삭제 실패:', error)
     }
@@ -518,19 +512,19 @@ function UsersPageContent() {
   }
 
   const getRoleBadge = (role: string) => {
-    const config: Record<string, string> = {
-      admin: '관리자',
-      manager: '부관리자',
-      user: '사용자',
+    const config: Record<string, { label: string; className: string }> = {
+      admin: { label: '관리자', className: 'bg-red-100 text-red-700 border-red-200' },
+      manager: { label: '부관리자', className: 'bg-blue-100 text-blue-700 border-blue-200' },
+      user: { label: '사용자', className: 'text-xs text-muted-foreground' },
     }
+    const { label, className } = config[role] || { label: role, className: 'text-xs text-muted-foreground' }
+    if (role === 'user') return <span className={className}>{label}</span>
     return (
-      <span className="text-xs text-muted-foreground">
-        {config[role] || role}
+      <span className={`inline-flex items-center px-2 py-0.5 rounded border text-xs font-semibold ${className}`}>
+        {label}
       </span>
     )
   }
-
-  const selectedCount = users.filter(u => u.selected).length
 
   return (
     <div className="min-h-screen bg-background">
@@ -629,18 +623,6 @@ function UsersPageContent() {
                   </select>
                 </div>
 
-                {/* Bulk Actions */}
-                {selectedCount > 0 && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">
-                      {selectedCount}명 선택됨
-                    </span>
-                    <Button variant="destructive" size="sm" onClick={handleBulkDelete}>
-                      <Trash2 className="mr-2 h-3 w-3" />
-                      삭제
-                    </Button>
-                  </div>
-                )}
               </div>
             </CardHeader>
 
@@ -649,19 +631,17 @@ function UsersPageContent() {
                 <table className="w-full">
                   <thead>
                     <tr className="border-y bg-muted/50">
-                      <th className="h-12 px-4 text-left align-middle">
-                        <input
-                          type="checkbox"
-                          className="h-4 w-4 rounded border-gray-300"
-                          onChange={(e) => handleSelectAll(e.target.checked)}
-                          checked={users.length > 0 && users.every(u => u.selected)}
-                        />
-                      </th>
                       <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
                         사용자
                       </th>
                       <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
                         연동
+                      </th>
+                      <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                        권한
+                      </th>
+                      <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                        레벨
                       </th>
                       <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
                         상태
@@ -680,13 +660,13 @@ function UsersPageContent() {
                   <tbody>
                     {loading ? (
                       <tr>
-                        <td colSpan={7} className="h-32 text-center">
+                        <td colSpan={8} className="h-32 text-center">
                           <Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" />
                         </td>
                       </tr>
                     ) : users.length === 0 ? (
                       <tr>
-                        <td colSpan={7} className="h-32 text-center text-muted-foreground">
+                        <td colSpan={8} className="h-32 text-center text-muted-foreground">
                           사용자가 없습니다.
                         </td>
                       </tr>
@@ -696,14 +676,6 @@ function UsersPageContent() {
                           key={user.id}
                           className="border-b transition-colors hover:bg-muted/50"
                         >
-                          <td className="p-4 align-middle">
-                            <input
-                              type="checkbox"
-                              className="h-4 w-4 rounded border-gray-300"
-                              checked={user.selected || false}
-                              onChange={(e) => handleSelectUser(user.id, e.target.checked)}
-                            />
-                          </td>
                           <td className="p-4 align-middle">
                             <div className="flex items-center gap-3">
                               <Avatar className="h-10 w-10">
@@ -733,6 +705,12 @@ function UsersPageContent() {
                                 <span className="text-sm text-muted-foreground">이메일</span>
                               )}
                             </div>
+                          </td>
+                          <td className="p-4 align-middle text-sm">
+                            {getRoleBadge(user.role)}
+                          </td>
+                          <td className="p-4 align-middle text-sm text-muted-foreground">
+                            Lv.{user.level ?? 1}
                           </td>
                           <td className="p-4 align-middle">
                             {getStatusBadge(user.status)}
