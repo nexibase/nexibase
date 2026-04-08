@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Sparkles, ArrowRight } from "lucide-react"
@@ -16,35 +16,43 @@ export default function WelcomeBanner() {
   const [siteDescription, setSiteDescription] = useState('')
   const [firstBoardSlug, setFirstBoardSlug] = useState('')
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [userRes, settingsRes, boardsRes] = await Promise.all([
-          fetch('/api/me'),
-          fetch('/api/settings'),
-          fetch('/api/boards?limit=1'),
-        ])
-        if (userRes.ok) {
-          const userData = await userRes.json()
-          setUser(userData.user)
-        }
-        if (settingsRes.ok) {
-          const settingsData = await settingsRes.json()
-          setSiteName(settingsData.settings.site_name || 'NexiBase')
-          setSiteDescription(settingsData.settings.site_description || '')
-        }
-        if (boardsRes.ok) {
-          const boardsData = await boardsRes.json()
-          if (boardsData.boards?.length > 0) {
-            setFirstBoardSlug(boardsData.boards[0].slug)
-          }
-        }
-      } catch (error) {
-        console.error('WelcomeBanner 데이터 조회 에러:', error)
+  const fetchData = useCallback(async () => {
+    try {
+      const [userRes, settingsRes, boardsRes] = await Promise.all([
+        fetch('/api/me'),
+        fetch('/api/settings'),
+        fetch('/api/boards?limit=1'),
+      ])
+      if (userRes.ok) {
+        const userData = await userRes.json()
+        setUser(userData.user)
+      } else {
+        setUser(null)
       }
+      if (settingsRes.ok) {
+        const settingsData = await settingsRes.json()
+        setSiteName(settingsData.settings.site_name || 'NexiBase')
+        setSiteDescription(settingsData.settings.site_description || '')
+      }
+      if (boardsRes.ok) {
+        const boardsData = await boardsRes.json()
+        if (boardsData.boards?.length > 0) {
+          setFirstBoardSlug(boardsData.boards[0].slug)
+        }
+      }
+    } catch (error) {
+      console.error('WelcomeBanner 데이터 조회 에러:', error)
     }
-    fetchData()
   }, [])
+
+  useEffect(() => {
+    fetchData()
+
+    // 페이지 포커스 시 세션 상태 갱신 (로그인/로그아웃 반영)
+    const handleFocus = () => fetchData()
+    window.addEventListener('focus', handleFocus)
+    return () => window.removeEventListener('focus', handleFocus)
+  }, [fetchData])
 
   return (
     <Card className="h-full bg-gradient-to-br from-primary/10 via-primary/5 to-background border-primary/20">
