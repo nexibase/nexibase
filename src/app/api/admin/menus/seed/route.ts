@@ -19,7 +19,7 @@ export async function POST() {
     // Header menus
     const headerMenus = [
       { position: 'header', label: '홈', url: '/', sortOrder: 0 },
-      { position: 'header', label: '인기', url: '/popular', icon: '🔥', sortOrder: 1 },
+      { position: 'header', label: '인기', url: '/posts/popular', icon: '🔥', sortOrder: 1 },
       { position: 'header', label: '쇼핑', url: '/shop', icon: '🛒', sortOrder: 2 },
       { position: 'header', label: '경매', url: '/auction', icon: '🔨', sortOrder: 3 },
     ]
@@ -43,7 +43,7 @@ export async function POST() {
     // Footer menus
     const footerMenus = [
       { position: 'footer', groupName: '커뮤니티', label: '홈', url: '/', sortOrder: 0 },
-      { position: 'footer', groupName: '커뮤니티', label: '인기글', url: '/popular', sortOrder: 1 },
+      { position: 'footer', groupName: '커뮤니티', label: '인기글', url: '/posts/popular', sortOrder: 1 },
       { position: 'footer', groupName: '커뮤니티', label: '전체게시판', url: '/boards', sortOrder: 2 },
       { position: 'footer', groupName: '정보', label: '회사소개', url: '/contents/about', sortOrder: 0 },
       { position: 'footer', groupName: '정보', label: '자주 묻는 질문', url: '/contents/faq', sortOrder: 1 },

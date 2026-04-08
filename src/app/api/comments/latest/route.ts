@@ -13,29 +13,32 @@ export async function GET(request: NextRequest) {
     if (uuid) {
       const user = await prisma.user.findUnique({ where: { uuid }, select: { id: true } })
       if (!user) {
-        return NextResponse.json({ posts: [], total: 0, page, totalPages: 0, member: null })
+        return NextResponse.json({ comments: [], total: 0, page, totalPages: 0, member: null })
       }
       where.authorId = user.id
     }
 
-    const [posts, total] = await Promise.all([
-      prisma.post.findMany({
+    const [comments, total] = await Promise.all([
+      prisma.comment.findMany({
         where,
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,
         take: limit,
         select: {
           id: true,
-          title: true,
-          viewCount: true,
-          likeCount: true,
-          commentCount: true,
+          content: true,
           createdAt: true,
-          board: { select: { slug: true, name: true } },
+          post: {
+            select: {
+              id: true,
+              title: true,
+              board: { select: { slug: true, name: true } },
+            },
+          },
           author: { select: { id: true, uuid: true, nickname: true, image: true } },
         },
       }),
-      prisma.post.count({ where }),
+      prisma.comment.count({ where }),
     ])
 
     let member = null
@@ -48,14 +51,14 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
-      posts,
+      comments,
       total,
       page,
       totalPages: Math.ceil(total / limit),
       member,
     })
   } catch (error) {
-    console.error('최근 게시글 조회 에러:', error)
+    console.error('최근 댓글 조회 에러:', error)
     return NextResponse.json({ error: '서버 오류' }, { status: 500 })
   }
 }

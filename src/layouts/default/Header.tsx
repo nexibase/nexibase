@@ -519,7 +519,7 @@ export default function Header() {
               <>
                 {/* 폴백: DB 메뉴가 없을 때 기존 하드코딩 유지 */}
                 <Link href="/" className={`px-4 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${pathname === '/' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>홈</Link>
-                <Link href="/popular" className={`px-4 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${pathname === '/popular' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>인기</Link>
+                <Link href="/posts/popular" className={`px-4 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${pathname === '/posts/popular' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>인기</Link>
                 <Link href="/shop" className={`px-4 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${pathname?.startsWith('/shop') ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>쇼핑</Link>
                 <div className="w-px h-5 bg-border mx-1" />
                 {boards.slice(0, 5).map((board) => (
@@ -612,7 +612,7 @@ export default function Header() {
                 <>
                   {/* 폴백: 하드코딩 메뉴 */}
                   <Link href="/" className="block px-3 py-2 text-sm font-medium rounded-md hover:bg-muted" onClick={() => setMobileMenuOpen(false)}>홈</Link>
-                  <Link href="/popular" className="block px-3 py-2 text-sm font-medium rounded-md hover:bg-muted" onClick={() => setMobileMenuOpen(false)}>인기</Link>
+                  <Link href="/posts/popular" className="block px-3 py-2 text-sm font-medium rounded-md hover:bg-muted" onClick={() => setMobileMenuOpen(false)}>인기</Link>
                   <div className="border-t my-2" />
                   {boards.map((board) => (
                     <Link key={board.id} href={`/boards/${board.slug}`} className={`block px-3 py-2 text-sm rounded-md ${isActiveBoard(board.slug) ? 'bg-primary/10 text-primary' : 'hover:bg-muted'}`} onClick={() => setMobileMenuOpen(false)}>{board.name}</Link>

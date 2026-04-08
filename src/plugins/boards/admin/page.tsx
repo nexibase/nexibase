@@ -688,7 +688,7 @@ export default function BoardsPage() {
               label="전체 게시글"
               value={stats.totalPosts}
               color="bg-purple-500/10 text-purple-600 dark:bg-purple-500/20 dark:text-purple-400"
-              href="/latest"
+              href="/posts/latest"
             />
           </div>
 

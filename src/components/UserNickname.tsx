@@ -62,13 +62,13 @@ export function UserNickname({
           </Link>
         )}
         <Link
-          href={uuid ? `/new/posts?uuid=${uuid}` : '#'}
+          href={uuid ? `/posts/latest?uuid=${uuid}` : '#'}
           className="w-full text-left px-3 py-2 text-sm rounded hover:bg-muted flex items-center gap-2"
         >
           <FileText className="h-4 w-4" /> 작성글 보기
         </Link>
         <Link
-          href={uuid ? `/new/comments?uuid=${uuid}` : '#'}
+          href={uuid ? `/comments/latest?uuid=${uuid}` : '#'}
           className="w-full text-left px-3 py-2 text-sm rounded hover:bg-muted flex items-center gap-2"
         >
           <MessageSquare className="h-4 w-4" /> 작성댓글 보기

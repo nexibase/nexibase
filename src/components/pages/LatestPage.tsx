@@ -71,7 +71,7 @@ export default function LatestPage() {
     } else {
       params.delete('page')
     }
-    router.replace(`/latest${params.toString() ? `?${params}` : ''}`)
+    router.replace(`/posts/latest${params.toString() ? `?${params}` : ''}`)
   }
 
   const formatTimeAgo = (dateString: string) => {

@@ -112,7 +112,7 @@ export default function Footer() {
                 <h4 className="font-semibold text-foreground mb-3 text-sm">커뮤니티</h4>
                 <ul className="space-y-2">
                   <li><Link href="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">홈</Link></li>
-                  <li><Link href="/popular" className="text-sm text-muted-foreground hover:text-foreground transition-colors">인기 게시글</Link></li>
+                  <li><Link href="/posts/popular" className="text-sm text-muted-foreground hover:text-foreground transition-colors">인기 게시글</Link></li>
                   <li><Link href="/boards" className="text-sm text-muted-foreground hover:text-foreground transition-colors">전체 게시판</Link></li>
                 </ul>
               </div>

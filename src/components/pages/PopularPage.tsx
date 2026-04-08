@@ -81,7 +81,7 @@ export default function PopularPage() {
     if (newPeriod !== 'week') {
       params.set('period', newPeriod)
     }
-    router.replace(`/popular${params.toString() ? `?${params}` : ''}`)
+    router.replace(`/posts/popular${params.toString() ? `?${params}` : ''}`)
   }
 
   const handlePageChange = (newPage: number) => {
@@ -92,7 +92,7 @@ export default function PopularPage() {
     } else {
       params.delete('page')
     }
-    router.replace(`/popular${params.toString() ? `?${params}` : ''}`)
+    router.replace(`/posts/popular${params.toString() ? `?${params}` : ''}`)
   }
 
   const formatTimeAgo = (dateString: string) => {

@@ -57,7 +57,7 @@ export default function LatestPosts({ settings }: { settings?: Record<string, an
           <Clock className="h-4 w-4 text-primary" />
           최근 게시글
         </h2>
-        <Link href="/latest" className="text-sm text-primary hover:underline flex items-center gap-1">
+        <Link href="/posts/latest" className="text-sm text-primary hover:underline flex items-center gap-1">
           더보기 <ArrowRight className="h-3 w-3" />
         </Link>
       </div>

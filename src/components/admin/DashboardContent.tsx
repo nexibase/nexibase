@@ -315,7 +315,7 @@ export function DashboardContent() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-base">인기 게시글</CardTitle>
-              <Link href="/popular" target="_blank" className="text-sm text-muted-foreground hover:text-primary">
+              <Link href="/posts/popular" target="_blank" className="text-sm text-muted-foreground hover:text-primary">
                 전체보기
               </Link>
             </CardHeader>
@@ -355,7 +355,7 @@ export function DashboardContent() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-base">최근 게시글</CardTitle>
-              <Link href="/latest" target="_blank" className="text-sm text-muted-foreground hover:text-primary">
+              <Link href="/posts/latest" target="_blank" className="text-sm text-muted-foreground hover:text-primary">
                 전체보기
               </Link>
             </CardHeader>
@@ -384,7 +384,7 @@ export function DashboardContent() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-base">최근 댓글</CardTitle>
-              <Link href="/new/comments" target="_blank" className="text-sm text-muted-foreground hover:text-primary">
+              <Link href="/comments/latest" target="_blank" className="text-sm text-muted-foreground hover:text-primary">
                 전체보기
               </Link>
             </CardHeader>
