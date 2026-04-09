@@ -40,6 +40,7 @@ export async function logVisit(userId?: number | null): Promise<void> {
         cookieStore.set(VISIT_SESSION_COOKIE, sessionId, {
           httpOnly: true,
           sameSite: 'lax',
+          secure: process.env.NODE_ENV === 'production',
           maxAge: SESSION_MAX_AGE,
           path: '/',
         })
@@ -58,8 +59,8 @@ export async function logVisit(userId?: number | null): Promise<void> {
         userAgent: userAgent.slice(0, 500),
       },
     })
-  } catch {
-    // 방문 로깅 실패는 조용히 무시
+  } catch (err) {
+    console.error('[visitLogger] logVisit failed:', err)
   }
 }
 
