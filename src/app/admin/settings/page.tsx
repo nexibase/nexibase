@@ -20,6 +20,8 @@ import {
   Plus,
   Trash2,
   Palette,
+  Upload,
+  ImageIcon,
 } from "lucide-react"
 
 interface FooterLink {
@@ -315,13 +317,73 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="grid gap-2">
-                  <Label htmlFor="site_logo">로고 URL</Label>
-                  <Input
-                    id="site_logo"
-                    value={settings.site_logo}
-                    onChange={(e) => handleChange('site_logo', e.target.value)}
-                    placeholder="https://example.com/logo.png"
-                  />
+                  <Label>사이트 로고</Label>
+                  <div className="flex items-center gap-4">
+                    {settings.site_logo ? (
+                      <div className="relative w-20 h-10 border rounded overflow-hidden bg-muted flex items-center justify-center">
+                        <img src={settings.site_logo} alt="로고" className="max-w-full max-h-full object-contain" />
+                      </div>
+                    ) : (
+                      <div className="w-20 h-10 border rounded bg-muted flex items-center justify-center">
+                        <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                    )}
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const input = document.createElement('input')
+                          input.type = 'file'
+                          input.accept = 'image/jpeg,image/png,image/gif,image/webp,image/svg+xml'
+                          input.onchange = async (e) => {
+                            const file = (e.target as HTMLInputElement).files?.[0]
+                            if (!file) return
+                            const formData = new FormData()
+                            formData.append('logo', file)
+                            try {
+                              const res = await fetch('/api/admin/logo', { method: 'POST', body: formData })
+                              const data = await res.json()
+                              if (res.ok && data.imageUrl) {
+                                handleChange('site_logo', data.imageUrl)
+                                alert('로고가 업로드되었습니다.')
+                              } else {
+                                alert(data.error || '로고 업로드 실패')
+                              }
+                            } catch {
+                              alert('로고 업로드 중 오류가 발생했습니다.')
+                            }
+                          }
+                          input.click()
+                        }}
+                      >
+                        <Upload className="h-3.5 w-3.5 mr-1" /> 업로드
+                      </Button>
+                      {settings.site_logo && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-destructive hover:text-destructive"
+                          onClick={async () => {
+                            try {
+                              const res = await fetch('/api/admin/logo', { method: 'DELETE' })
+                              if (res.ok) {
+                                handleChange('site_logo', '')
+                                alert('로고가 삭제되었습니다.')
+                              }
+                            } catch {
+                              alert('로고 삭제 중 오류가 발생했습니다.')
+                            }
+                          }}
+                        >
+                          <Trash2 className="h-3.5 w-3.5 mr-1" /> 삭제
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    JPG, PNG, GIF, WebP, SVG (2MB 이하). 높이 80px 기준으로 자동 리사이징됩니다.
+                  </p>
                 </div>
 
                 <div className="grid gap-2">

@@ -39,6 +39,7 @@ export async function GET() {
         name: true,
         phone: true,
         role: true,
+        level: true,
         status: true,
         lastLoginAt: true,
         createdAt: true,
@@ -182,6 +183,7 @@ export async function PUT(request: NextRequest) {
         phone: true,
         image: true,
         role: true,
+        level: true,
         status: true,
         lastLoginAt: true,
         createdAt: true

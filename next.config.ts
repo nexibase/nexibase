@@ -17,6 +17,7 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'phinf.pstatic.net' },
       { protocol: 'https', hostname: 'images.unsplash.com' },
     ],
+    unoptimized: true,
   },
 };
 

@@ -180,7 +180,9 @@ export default function Header() {
           <div className="flex items-center justify-between h-14">
             {/* 로고 */}
             <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-              {settings.site_logo ? (
+              {isLoading ? (
+                <div className="w-7 h-7" />
+              ) : settings.site_logo ? (
                 <Image
                   src={settings.site_logo}
                   alt={settings.site_name}
@@ -195,7 +197,7 @@ export default function Header() {
                   </span>
                 </div>
               )}
-              <span className="text-xl font-bold text-foreground hidden md:block">{settings.site_name}</span>
+              <span className="text-xl font-bold text-foreground hidden md:block">{isLoading ? '' : settings.site_name}</span>
             </Link>
 
             {/* 검색 (데스크톱) */}
