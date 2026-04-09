@@ -7,6 +7,8 @@ import ThemeLoader from "@/components/theme-loader";
 import { SiteProvider } from "@/lib/SiteContext";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { prisma } from "@/lib/prisma";
+import { after } from 'next/server'
+import { logVisit } from '@/lib/visitLogger'
 import "./globals.css";
 import "./custom.css";
 
@@ -63,6 +65,9 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // 방문 로깅 (봇/정적자원/API/admin 제외, after()로 응답 후 백그라운드 실행)
+  after(() => logVisit())
+
   // Google Analytics ID를 설정에서 읽기
   let gaId: string | null = null
   try {
