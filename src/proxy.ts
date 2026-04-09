@@ -3,12 +3,34 @@ import { pluginManifest } from '@/plugins/_generated';
 
 const allPluginSlugs = Object.values(pluginManifest).map(p => p.slug);
 
+// 방문 로깅용 세션 쿠키 이름
+const VISIT_SESSION_COOKIE = 'nb_visit_sid'
+
+// Web Crypto 기반 세션 ID 생성 (Edge/Node 양쪽에서 동작)
+function generateSessionId(): string {
+  const bytes = new Uint8Array(32)
+  crypto.getRandomValues(bytes)
+  return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('')
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // pathname을 헤더에 주입 (서버 컴포넌트의 headers()로 읽기 위함)
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-nexibase-path', pathname);
+
+  // 방문 로깅용 세션 쿠키 관리 (프록시에서 처리해야 Set-Cookie가 실제로 전송됨)
+  // logVisit()은 after()에서 실행되므로 그 시점에 cookies().set()을 호출해도
+  // 응답이 이미 flush되어 브라우저까지 도달하지 않는다. 프록시는 응답 커밋
+  // 이전에 실행되므로 여기서 처리한다. sessionId는 x-nexibase-sid 헤더로
+  // visitLogger에 전달된다.
+  let sessionId = request.cookies.get(VISIT_SESSION_COOKIE)?.value
+  const isNewSession = !sessionId
+  if (!sessionId) {
+    sessionId = generateSessionId()
+  }
+  requestHeaders.set('x-nexibase-sid', sessionId)
 
   // 비활성 플러그인 라우트 차단
   for (const slug of allPluginSlugs) {
@@ -68,6 +90,17 @@ export async function proxy(request: NextRequest) {
       path: "/",
       secure: process.env.NODE_ENV === "production",
     });
+  }
+
+  // 새 방문자일 때만 방문 세션 쿠키 설정
+  if (isNewSession) {
+    response.cookies.set(VISIT_SESSION_COOKIE, sessionId, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 60 * 60 * 24 * 30, // 30일
+      path: '/',
+    })
   }
 
   return response;

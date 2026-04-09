@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+// 빌드 시 정적 최적화되면 숫자가 프리렌더링되므로 항상 동적 실행 강제
+export const dynamic = 'force-dynamic'
+
 interface Stats {
   online: number
   today: number
@@ -34,15 +37,27 @@ async function countDistinctSessions(start: Date, end?: Date): Promise<number> {
   return Number(rows[0]?.count ?? 0)
 }
 
+/**
+ * 현재 시각 기준 KST(Asia/Seoul, UTC+9) 자정의 Date 객체를 반환.
+ * 서버 timezone과 무관하게 항상 한국 시간 기준 00:00:00을 계산한다.
+ */
+function kstTodayStart(now: Date): Date {
+  // UTC 시각을 9시간 전으로 이동하면 "KST 기준 날짜의 UTC 자정"이 됨
+  const kst = new Date(now.getTime() + 9 * 60 * 60 * 1000)
+  kst.setUTCHours(0, 0, 0, 0)
+  // 다시 UTC로 변환 (KST 00:00 = UTC 전날 15:00)
+  return new Date(kst.getTime() - 9 * 60 * 60 * 1000)
+}
+
 async function fetchStats(): Promise<Stats> {
   const now = new Date()
+  // Invariant: online window(10min) >= 2 * cache TTL(120s) + poll interval(120s),
+  // so 접속자 수치가 캐시 주기 경계에서 순간적으로 0이 되지 않는다.
+  // 이 관계를 유지하지 않으면 위젯이 깜빡일 수 있음.
   const tenMinAgo = new Date(now.getTime() - 10 * 60 * 1000)
 
-  const todayStart = new Date(now)
-  todayStart.setHours(0, 0, 0, 0)
-
-  const yesterdayStart = new Date(todayStart)
-  yesterdayStart.setDate(yesterdayStart.getDate() - 1)
+  const todayStart = kstTodayStart(now)
+  const yesterdayStart = new Date(todayStart.getTime() - 24 * 60 * 60 * 1000)
 
   const thirtyDaysAgo = new Date(now)
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)

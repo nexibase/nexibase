@@ -1,62 +1,70 @@
-import { headers, cookies } from 'next/headers'
-import { randomBytes } from 'crypto'
+import { headers } from 'next/headers'
 import { isbot } from 'isbot'
 import { prisma } from '@/lib/prisma'
 
-const VISIT_SESSION_COOKIE = 'nb_visit_sid'
-const SESSION_MAX_AGE = 60 * 60 * 24 * 30 // 30일
+/**
+ * logVisit()에 전달할 요청 스냅샷.
+ * Next.js는 after() 콜백 내부에서 headers() 호출을 금지하므로,
+ * 호출 측(RootLayout)에서 미리 값을 읽어 전달해야 한다.
+ */
+export interface VisitContext {
+  userAgent: string
+  pathname: string
+  sessionId: string | null
+  referer: string | null
+  ip: string
+}
 
 /**
- * 현재 요청을 VisitLog에 기록한다.
+ * 현재 요청의 헤더를 읽어 VisitContext 스냅샷을 만든다.
+ * 반드시 after() 외부(서버 컴포넌트 본문)에서 호출할 것.
+ *
+ * 세션 쿠키(nb_visit_sid)는 proxy.ts에서 관리되며, sessionId는
+ * x-nexibase-sid 헤더로 이 함수에 전달된다. (after()에서는 응답이
+ * 이미 flush되어 cookies().set()이 효과 없으므로 프록시에서 처리)
+ */
+export async function captureVisitContext(): Promise<VisitContext> {
+  const h = await headers()
+  const rawPath = h.get('x-nexibase-path') || '/'
+  const forwardedFor = h.get('x-forwarded-for')
+  const realIp = h.get('x-real-ip')
+  return {
+    userAgent: h.get('user-agent') || '',
+    pathname: extractPathname(rawPath),
+    sessionId: h.get('x-nexibase-sid'),
+    referer: h.get('referer') || null,
+    ip: (forwardedFor?.split(',')[0].trim() || realIp || 'unknown').slice(0, 45),
+  }
+}
+
+/**
+ * 캡처된 요청 스냅샷을 VisitLog에 기록한다.
  * Root layout에서 `after()`로 호출되어 응답 후 백그라운드에 실행된다.
  * 봇 / 정적 자원 / API / admin 경로는 제외한다.
- * DB 에러는 조용히 무시한다 (로깅 실패로 페이지가 죽지 않게).
+ * DB 에러는 console.error로 로깅만 하고 삼킨다 (after() 콜백이라 페이지 영향 없음).
  */
-export async function logVisit(userId?: number | null): Promise<void> {
+export async function logVisit(
+  ctx: VisitContext,
+  userId?: number | null
+): Promise<void> {
   try {
-    const h = await headers()
-    const userAgent = h.get('user-agent') || ''
-
     // 봇 제외
-    if (!userAgent || isbot(userAgent)) return
-
-    const rawPath = h.get('x-nexibase-path') || h.get('referer') || '/'
-    const pathname = extractPathname(rawPath)
+    if (!ctx.userAgent || isbot(ctx.userAgent)) return
 
     // 트래킹 제외 경로
-    if (shouldSkip(pathname)) return
+    if (shouldSkip(ctx.pathname)) return
 
-    const referer = h.get('referer') || null
-    const forwardedFor = h.get('x-forwarded-for')
-    const realIp = h.get('x-real-ip')
-    const ip = (forwardedFor?.split(',')[0].trim() || realIp || 'unknown').slice(0, 45)
-
-    // 세션 쿠키 (고유 방문자 식별용)
-    const cookieStore = await cookies()
-    let sessionId = cookieStore.get(VISIT_SESSION_COOKIE)?.value
-    if (!sessionId) {
-      sessionId = randomBytes(32).toString('hex')
-      try {
-        cookieStore.set(VISIT_SESSION_COOKIE, sessionId, {
-          httpOnly: true,
-          sameSite: 'lax',
-          secure: process.env.NODE_ENV === 'production',
-          maxAge: SESSION_MAX_AGE,
-          path: '/',
-        })
-      } catch {
-        // Server Component에서 cookies().set()은 상황에 따라 에러 가능 — 무시
-      }
-    }
+    // 프록시가 sessionId를 주입하지 않은 경우 (예: 테스트) 무시
+    if (!ctx.sessionId) return
 
     await prisma.visitLog.create({
       data: {
-        sessionId,
+        sessionId: ctx.sessionId,
         userId: userId ?? null,
-        ip,
-        path: pathname.slice(0, 500),
-        referer: referer?.slice(0, 500) ?? null,
-        userAgent: userAgent.slice(0, 500),
+        ip: ctx.ip,
+        path: ctx.pathname.slice(0, 500),
+        referer: ctx.referer?.slice(0, 500) ?? null,
+        userAgent: ctx.userAgent.slice(0, 500),
       },
     })
   } catch (err) {
