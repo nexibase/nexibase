@@ -40,13 +40,20 @@ export default function WidgetRenderer({ zone, widgets }: WidgetRendererProps) {
     )
   }
 
-  // 혼합 너비 → 12컬럼 그리드
+  // 혼합 너비 → 12컬럼 그리드 (모바일: 전부 full-width 스택, md+: 지정된 span 적용)
+  const MD_SPAN_CLASS: Record<number, string> = {
+    1: 'md:col-span-1', 2: 'md:col-span-2', 3: 'md:col-span-3',
+    4: 'md:col-span-4', 5: 'md:col-span-5', 6: 'md:col-span-6',
+    7: 'md:col-span-7', 8: 'md:col-span-8', 9: 'md:col-span-9',
+    10: 'md:col-span-10', 11: 'md:col-span-11', 12: 'md:col-span-12',
+  }
+
   return (
     <div className="grid grid-cols-12 gap-4">
       {zoneWidgets.map((widget) => {
-        const span = Math.min(widget.colSpan || 12, 12)
+        const span = Math.min(Math.max(widget.colSpan || 12, 1), 12)
         return (
-          <div key={widget.id} style={{ gridColumn: `span ${span}` }}>
+          <div key={widget.id} className={`col-span-12 ${MD_SPAN_CLASS[span]}`}>
             {renderWidgetContent(widget)}
           </div>
         )
