@@ -6,6 +6,10 @@ const allPluginSlugs = Object.values(pluginManifest).map(p => p.slug);
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // pathname을 헤더에 주입 (서버 컴포넌트의 headers()로 읽기 위함)
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('x-nexibase-path', pathname);
+
   // 비활성 플러그인 라우트 차단
   for (const slug of allPluginSlugs) {
     const isPluginRoute =
@@ -46,7 +50,11 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  const response = NextResponse.next();
+  const response = NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
 
   // NextAuth 세션 토큰 쿠키를 세션 쿠키로 변환
   const sessionToken = request.cookies.get("next-auth.session-token");
