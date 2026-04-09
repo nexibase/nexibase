@@ -159,3 +159,18 @@ model LoginAttempt {
   @@index([ip, createdAt])
   @@map("login_attempts")
 }
+
+model VisitLog {
+  id        Int      @id @default(autoincrement())
+  sessionId String   @db.VarChar(64)
+  userId    Int?
+  ip        String   @db.VarChar(45)
+  path      String   @db.VarChar(500)
+  referer   String?  @db.VarChar(500)
+  userAgent String?  @db.VarChar(500)
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([sessionId, createdAt])
+  @@map("visit_logs")
+}
