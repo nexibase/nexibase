@@ -26,23 +26,19 @@ interface WidgetData {
   pluginName: string | null
 }
 
-interface WidgetSettingsField {
-  type: string
+interface WidgetMetadata {
   label: string
-  default: unknown
+  description: string
+  defaultZone: string
+  defaultColSpan: number
+  defaultRowSpan: number
+  settingsSchema: Record<string, unknown> | null
 }
 
-// Must match registry.ts
-const WIDGET_META: Record<string, { label: string; description: string; settingsSchema: Record<string, WidgetSettingsField> | null }> = {
-  'welcome-banner': { label: '환영 배너', description: '로그인 사용자 환영 메시지와 CTA 버튼', settingsSchema: null },
-  'site-stats': { label: '사이트 통계', description: '회원, 게시글, 댓글, 게시판 통계 카드', settingsSchema: null },
-  'latest-posts': { label: '최근 게시글', description: '최근 게시글 목록', settingsSchema: { limit: { type: 'number', label: '표시 개수', default: 6 } } },
-  'popular-boards': { label: '인기 게시판', description: '인기 게시판 랭킹', settingsSchema: { limit: { type: 'number', label: '표시 개수', default: 5 } } },
-  'shop-shortcut': { label: '쇼핑몰 바로가기', description: '쇼핑몰 링크 카드', settingsSchema: null },
-  'auction-live': { label: '진행중 경매', description: '진행중인 경매 목록', settingsSchema: { limit: { type: 'number', label: '표시 개수', default: 4 } } },
-  'community-guide': { label: '커뮤니티 가이드', description: '커뮤니티 이용 가이드', settingsSchema: null },
-  'board-cards': { label: '게시판 카드', description: '게시판 카드 그리드', settingsSchema: { limit: { type: 'number', label: '표시 개수', default: 4 } } },
-  'demo-guide': { label: '데모 사이트 안내', description: '데모 사이트 및 데모 계정 안내', settingsSchema: null },
+// "feature1_title" → "Feature1 title"
+function humanizeKey(key: string): string {
+  const spaced = key.replace(/[_-]+/g, ' ').trim()
+  return spaced.charAt(0).toUpperCase() + spaced.slice(1)
 }
 
 const ZONES = ['top', 'center', 'bottom'] as const
@@ -62,6 +58,7 @@ const LAYOUT_ZONE_LABELS: Record<string, string> = {
 export default function HomeWidgetsAdminPage() {
   const [widgets, setWidgets] = useState<WidgetData[]>([])
   const [unregistered, setUnregistered] = useState<string[]>([])
+  const [widgetMeta, setWidgetMeta] = useState<Record<string, WidgetMetadata>>({})
   const [selectedWidget, setSelectedWidget] = useState<WidgetData | null>(null)
   const [editSettings, setEditSettings] = useState<Record<string, unknown>>({})
   const [saving, setSaving] = useState(false)
@@ -74,6 +71,7 @@ export default function HomeWidgetsAdminPage() {
         const data = await res.json()
         setWidgets(data.widgets || [])
         setUnregistered(data.unregistered || [])
+        setWidgetMeta(data.metadata || {})
       }
     } catch (error) {
       console.error('위젯 조회 에러:', error)
@@ -202,7 +200,7 @@ export default function HomeWidgetsAdminPage() {
   }
 
   const handleCreateWidget = async (widgetKey: string, zone: string = 'main') => {
-    const meta = WIDGET_META[widgetKey]
+    const meta = widgetMeta[widgetKey]
     if (!meta) return
     try {
       await fetch('/api/admin/home-widgets/layout', {
@@ -221,7 +219,7 @@ export default function HomeWidgetsAdminPage() {
   }
 
   const renderWidgetCard = (widget: WidgetData, zoneWidgets: WidgetData[]) => {
-    const meta = WIDGET_META[widget.widgetKey]
+    const meta = widgetMeta[widget.widgetKey]
     const isPluginDisabled = widget.pluginFolder && !widget.pluginEnabled
     return (
       <div
@@ -322,27 +320,30 @@ export default function HomeWidgetsAdminPage() {
                     </div>
                   </div>
                   {(() => {
-                    const meta = WIDGET_META[selectedWidget.widgetKey]
+                    const meta = widgetMeta[selectedWidget.widgetKey]
                     if (!meta?.settingsSchema) return null
                     return (
                       <div className="space-y-3">
-                        {Object.entries(meta.settingsSchema).map(([key, schema]) => (
-                          <div key={key}>
-                            <label className="text-sm font-medium">{schema.label}</label>
-                            {schema.type === 'number' ? (
-                              <Input
-                                type="number"
-                                value={(editSettings[key] as number) ?? schema.default}
-                                onChange={(e) => setEditSettings({ ...editSettings, [key]: parseInt(e.target.value) || schema.default })}
-                              />
-                            ) : (
-                              <Input
-                                value={(editSettings[key] as string) ?? ''}
-                                onChange={(e) => setEditSettings({ ...editSettings, [key]: e.target.value })}
-                              />
-                            )}
-                          </div>
-                        ))}
+                        {Object.entries(meta.settingsSchema).map(([key, defaultValue]) => {
+                          const isNumber = typeof defaultValue === 'number'
+                          return (
+                            <div key={key}>
+                              <label className="text-sm font-medium">{humanizeKey(key)}</label>
+                              {isNumber ? (
+                                <Input
+                                  type="number"
+                                  value={(editSettings[key] as number) ?? (defaultValue as number)}
+                                  onChange={(e) => setEditSettings({ ...editSettings, [key]: parseInt(e.target.value) || (defaultValue as number) })}
+                                />
+                              ) : (
+                                <Input
+                                  value={(editSettings[key] as string) ?? (defaultValue as string) ?? ''}
+                                  onChange={(e) => setEditSettings({ ...editSettings, [key]: e.target.value })}
+                                />
+                              )}
+                            </div>
+                          )
+                        })}
                       </div>
                     )
                   })()}
@@ -410,7 +411,7 @@ export default function HomeWidgetsAdminPage() {
                 <CardContent>
                   <div className="space-y-2">
                     {unregistered.map(key => {
-                      const meta = WIDGET_META[key]
+                      const meta = widgetMeta[key]
                       return (
                         <div key={key} className="flex items-center justify-between px-3 py-2 border rounded-md">
                           <div>

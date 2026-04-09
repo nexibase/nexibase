@@ -3,19 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getAdminUser } from '@/lib/auth'
 import { pluginManifest } from '@/plugins/_generated'
 import { isPluginEnabled } from '@/lib/plugins'
-
-// Widget registry keys — must match src/lib/widgets/registry.ts
-const REGISTRY_KEYS = [
-  'welcome-banner',
-  'site-stats',
-  'latest-posts',
-  'popular-boards',
-  'shop-shortcut',
-  'auction-live',
-  'community-guide',
-  'board-cards',
-  'demo-guide',
-]
+import { widgetMetadata, widgetKeys } from '@/lib/widgets/_generated-metadata'
 
 // widgetKey → plugin folder 매핑
 function getWidgetPlugin(widgetKey: string): string | null {
@@ -66,9 +54,13 @@ export async function GET() {
     )
 
     const existingKeys = new Set(widgets.map(w => w.widgetKey))
-    const unregistered = REGISTRY_KEYS.filter(key => !existingKeys.has(key))
+    const unregistered = widgetKeys.filter(key => !existingKeys.has(key))
 
-    return NextResponse.json({ widgets: widgetsWithPluginStatus, unregistered })
+    return NextResponse.json({
+      widgets: widgetsWithPluginStatus,
+      unregistered,
+      metadata: widgetMetadata,
+    })
   } catch (error) {
     console.error('관리자 위젯 조회 에러:', error)
     return NextResponse.json({ error: '서버 오류' }, { status: 500 })
