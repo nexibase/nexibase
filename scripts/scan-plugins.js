@@ -8,6 +8,7 @@ const SCHEMA_BASE = path.join(__dirname, '..', 'prisma', 'schema.base.prisma')
 const SCHEMA_OUTPUT = path.join(__dirname, '..', 'prisma', 'schema.prisma')
 const WIDGETS_DIR = path.join(__dirname, '..', 'src', 'widgets')
 const WIDGET_REGISTRY_OUTPUT = path.join(__dirname, '..', 'src', 'lib', 'widgets', '_generated-registry.ts')
+const WIDGET_METADATA_OUTPUT = path.join(__dirname, '..', 'src', 'lib', 'widgets', '_generated-metadata.ts')
 
 function scanPlugins() {
   if (!fs.existsSync(PLUGINS_DIR)) {
@@ -105,11 +106,11 @@ function scanPlugins() {
         const wZone = (wContent.match(/defaultZone:\s*['"]([^'"]+)['"]/) || [])[1] || 'main'
         const wColSpan = parseInt((wContent.match(/defaultColSpan:\s*(\d+)/) || [])[1] || '1')
         const wRowSpan = parseInt((wContent.match(/defaultRowSpan:\s*(\d+)/) || [])[1] || '1')
-        const settingsMatch = wContent.match(/settingsSchema:\s*(\{[^}]+\}|null)/)
+        const rawSchema = extractSettingsSchema(wContent)
         let wSettings = null
-        if (settingsMatch && settingsMatch[1] !== 'null') {
+        if (rawSchema && rawSchema !== 'null') {
           try {
-            wSettings = JSON.parse(settingsMatch[1].replace(/(\w+):/g, '"$1":'))
+            wSettings = JSON.parse(rawSchema.replace(/(\w+):/g, '"$1":').replace(/,(\s*[}\]])/g, '$1'))
           } catch { wSettings = null }
         }
         widgetMetas.push({ widgetKey: kebabKey, title: wTitle, defaultZone: wZone, defaultColSpan: wColSpan, defaultRowSpan: wRowSpan, settingsSchema: wSettings })
@@ -156,12 +157,45 @@ function scanPlugins() {
 
   generateManifest(plugins)
   generateWidgetRegistry(plugins)
+  generateWidgetMetadata(plugins)
   generateHeaderWidgetRegistry(plugins)
   generateAppWrappers(plugins)
   mergeSchemas(plugins)
 }
 
-function generateWidgetRegistry(plugins) {
+// Extract a balanced object literal starting at the position of `key:` inside content.
+// Returns the raw source slice (e.g., "{ title: '주요 기능', nested: { a: 1 } }") or 'null' or null when not found.
+function extractSettingsSchema(content) {
+  const keyMatch = content.match(/settingsSchema:\s*/)
+  if (!keyMatch) return null
+  const start = keyMatch.index + keyMatch[0].length
+  if (content.slice(start, start + 4) === 'null') return 'null'
+  if (content[start] !== '{') return null
+  let depth = 0
+  for (let i = start; i < content.length; i++) {
+    const ch = content[i]
+    if (ch === '{') depth++
+    else if (ch === '}') {
+      depth--
+      if (depth === 0) return content.slice(start, i + 1)
+    }
+  }
+  return null
+}
+
+function parseWidgetMeta(metaPath, baseName) {
+  const mContent = fs.readFileSync(metaPath, 'utf-8')
+  const kebabKey = baseName.replace(/([A-Z])/g, '-$1').toLowerCase().replace(/^-/, '')
+  const title = (mContent.match(/title:\s*['"]([^'"]+)['"]/) || [])[1] || baseName
+  const description = (mContent.match(/description:\s*['"]([^'"]+)['"]/) || [])[1] || ''
+  const defaultZone = (mContent.match(/defaultZone:\s*['"]([^'"]+)['"]/) || [])[1] || 'main'
+  const defaultColSpan = parseInt((mContent.match(/defaultColSpan:\s*(\d+)/) || [])[1] || '1')
+  const defaultRowSpan = parseInt((mContent.match(/defaultRowSpan:\s*(\d+)/) || [])[1] || '1')
+  const settingsSchema = extractSettingsSchema(mContent) || 'null'
+  return { key: kebabKey, title, description, defaultZone, defaultColSpan, defaultRowSpan, settingsSchema }
+}
+
+function collectWidgetEntries(plugins) {
   const widgetEntries = []
 
   // 1. Scan independent widgets from src/widgets/*.meta.ts
@@ -169,34 +203,16 @@ function generateWidgetRegistry(plugins) {
     const metaFiles = fs.readdirSync(WIDGETS_DIR).filter(f => f.endsWith('.meta.ts'))
     for (const mf of metaFiles) {
       const baseName = mf.replace('.meta.ts', '')
-      const kebabKey = baseName.replace(/([A-Z])/g, '-$1').toLowerCase().replace(/^-/, '')
-      const mContent = fs.readFileSync(path.join(WIDGETS_DIR, mf), 'utf-8')
-      const title = (mContent.match(/title:\s*['"]([^'"]+)['"]/) || [])[1] || baseName
-      const description = (mContent.match(/description:\s*['"]([^'"]+)['"]/) || [])[1] || ''
-      const defaultZone = (mContent.match(/defaultZone:\s*['"]([^'"]+)['"]/) || [])[1] || 'main'
-      const defaultColSpan = parseInt((mContent.match(/defaultColSpan:\s*(\d+)/) || [])[1] || '1')
-      const defaultRowSpan = parseInt((mContent.match(/defaultRowSpan:\s*(\d+)/) || [])[1] || '1')
-      const settingsMatch = mContent.match(/settingsSchema:\s*(\{[^}]+\}|null)/)
-      let settingsSchema = 'null'
-      if (settingsMatch && settingsMatch[1] !== 'null') {
-        settingsSchema = settingsMatch[1]
-      }
-
+      const parsed = parseWidgetMeta(path.join(WIDGETS_DIR, mf), baseName)
       widgetEntries.push({
-        key: kebabKey,
+        ...parsed,
         importPath: `@/widgets/${baseName}`,
         varName: baseName,
-        title,
-        description,
-        defaultZone,
-        defaultColSpan,
-        defaultRowSpan,
-        settingsSchema,
       })
     }
   }
 
-  // 2. Include plugin widgets from manifest data
+  // 2. Include plugin widgets
   for (const p of plugins) {
     if (!p.hasWidgets) continue
     const widgetsDir = path.join(PLUGINS_DIR, p.folder, 'widgets')
@@ -205,32 +221,20 @@ function generateWidgetRegistry(plugins) {
     const metaFiles = fs.readdirSync(widgetsDir).filter(f => f.endsWith('.meta.ts'))
     for (const mf of metaFiles) {
       const baseName = mf.replace('.meta.ts', '')
-      const kebabKey = `${baseName.replace(/([A-Z])/g, '-$1').toLowerCase().replace(/^-/, '')}`
-      const mContent = fs.readFileSync(path.join(widgetsDir, mf), 'utf-8')
-      const title = (mContent.match(/title:\s*['"]([^'"]+)['"]/) || [])[1] || baseName
-      const description = (mContent.match(/description:\s*['"]([^'"]+)['"]/) || [])[1] || ''
-      const defaultZone = (mContent.match(/defaultZone:\s*['"]([^'"]+)['"]/) || [])[1] || 'main'
-      const defaultColSpan = parseInt((mContent.match(/defaultColSpan:\s*(\d+)/) || [])[1] || '1')
-      const defaultRowSpan = parseInt((mContent.match(/defaultRowSpan:\s*(\d+)/) || [])[1] || '1')
-      const settingsMatch = mContent.match(/settingsSchema:\s*(\{[^}]+\}|null)/)
-      let settingsSchema = 'null'
-      if (settingsMatch && settingsMatch[1] !== 'null') {
-        settingsSchema = settingsMatch[1]
-      }
-
+      const parsed = parseWidgetMeta(path.join(widgetsDir, mf), baseName)
       widgetEntries.push({
-        key: kebabKey,
+        ...parsed,
         importPath: `@/plugins/${p.folder}/widgets/${baseName}`,
         varName: `${p.folder.replace(/-/g, '_')}_${baseName}`,
-        title,
-        description,
-        defaultZone,
-        defaultColSpan,
-        defaultRowSpan,
-        settingsSchema,
       })
     }
   }
+
+  return widgetEntries
+}
+
+function generateWidgetRegistry(plugins) {
+  const widgetEntries = collectWidgetEntries(plugins)
 
   // Generate the file
   const dynamicImports = widgetEntries.map(w =>
@@ -276,6 +280,43 @@ ${registryEntries}
   }
   fs.writeFileSync(WIDGET_REGISTRY_OUTPUT, output, 'utf-8')
   console.log(`[scan-plugins] Generated widget registry with ${widgetEntries.length} widget(s) at ${WIDGET_REGISTRY_OUTPUT}`)
+}
+
+function generateWidgetMetadata(plugins) {
+  const widgetEntries = collectWidgetEntries(plugins)
+
+  const metadataEntries = widgetEntries.map(w =>
+    `  '${w.key}': {
+    label: '${w.title}',
+    description: '${w.description}',
+    defaultZone: '${w.defaultZone}',
+    defaultColSpan: ${w.defaultColSpan},
+    defaultRowSpan: ${w.defaultRowSpan},
+    settingsSchema: ${w.settingsSchema},
+  }`
+  ).join(',\n')
+
+  const output = `// AUTO-GENERATED by scripts/scan-plugins.js — do not edit manually
+// Metadata-only widget info. Safe to import from server routes (no component imports).
+
+export interface WidgetMetadata {
+  label: string
+  description: string
+  defaultZone: string
+  defaultColSpan: number
+  defaultRowSpan: number
+  settingsSchema: Record<string, unknown> | null
+}
+
+export const widgetMetadata: Record<string, WidgetMetadata> = {
+${metadataEntries}
+}
+
+export const widgetKeys = Object.keys(widgetMetadata)
+`
+
+  fs.writeFileSync(WIDGET_METADATA_OUTPUT, output, 'utf-8')
+  console.log(`[scan-plugins] Generated widget metadata with ${widgetEntries.length} widget(s) at ${WIDGET_METADATA_OUTPUT}`)
 }
 
 function generateManifest(plugins) {
