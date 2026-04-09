@@ -43,6 +43,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "isbot": "^5.1.37",
     "isomorphic-dompurify": "^3.1.0",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.528.0",
