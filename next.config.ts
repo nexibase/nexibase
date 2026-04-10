@@ -1,6 +1,11 @@
 import type { NextConfig } from "next";
+import pkg from "./package.json" with { type: "json" };
 
 const nextConfig: NextConfig = {
+  env: {
+    // package.json 버전을 빌드 시점에 클라이언트에 주입
+    NEXT_PUBLIC_APP_VERSION: pkg.version,
+  },
   typescript: {
     ignoreBuildErrors: true,
   },

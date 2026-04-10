@@ -30,6 +30,7 @@ import {
   LayoutGrid,
   Puzzle,
   Gavel,
+  GitBranch,
   type LucideIcon,
 } from "lucide-react"
 
@@ -123,12 +124,15 @@ const getCachedPlugins = (): PluginInfo[] => {
   }
 }
 
+const CURRENT_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || ''
+
 export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({})
   const [user, setUser] = useState<UserInfo | null>(getCachedUser)
   const [plugins, setPlugins] = useState<PluginInfo[]>(getCachedPlugins)
+  const [latestVersion, setLatestVersion] = useState<string>('')
   const router = useRouter()
   const pathname = usePathname()
   const { theme, setTheme } = useTheme()
@@ -180,6 +184,32 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
     }
 
     fetchPlugins()
+
+    // GitHub에서 NexiBase 코어 최신 버전(tag) 가져오기 (세션 캐시 10분)
+    const fetchLatestVersion = async () => {
+      try {
+        const cachedVersion = sessionStorage.getItem('nexibase_latest_version')
+        const cachedAt = sessionStorage.getItem('nexibase_latest_version_at')
+        const TEN_MIN = 10 * 60 * 1000
+        if (cachedVersion && cachedAt && Date.now() - Number(cachedAt) < TEN_MIN) {
+          setLatestVersion(cachedVersion)
+          return
+        }
+        const res = await fetch('https://api.github.com/repos/nexibase/nexibase/tags')
+        if (!res.ok) return
+        const tags = await res.json()
+        const tag = tags?.[0]?.name || ''
+        const normalized = tag.startsWith('v') ? tag.slice(1) : tag
+        if (normalized) {
+          setLatestVersion(normalized)
+          sessionStorage.setItem('nexibase_latest_version', normalized)
+          sessionStorage.setItem('nexibase_latest_version_at', String(Date.now()))
+        }
+      } catch {
+        // 네트워크 실패 시 무시
+      }
+    }
+    fetchLatestVersion()
 
     // 플러그인 상태 변경 이벤트 리스너
     const handlePluginChange = () => {
@@ -452,6 +482,43 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
                 </div>
               </div>
             </div>
+
+            {/* 버전 정보 */}
+            {CURRENT_VERSION && (
+              <div className="pt-3 mt-2 border-t border-border">
+                <div className="px-2 space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="flex items-center gap-1.5 text-muted-foreground">
+                      <Package className="h-3 w-3" />
+                      여기 버전
+                    </span>
+                    <span className="font-mono font-medium">v{CURRENT_VERSION}</span>
+                  </div>
+                  {latestVersion && (
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="flex items-center gap-1.5 text-muted-foreground">
+                        <GitBranch className="h-3 w-3" />
+                        최신 버전
+                      </span>
+                      <a
+                        href="https://github.com/nexibase/nexibase/tags"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`font-mono font-medium ${
+                          latestVersion !== CURRENT_VERSION
+                            ? 'text-amber-600 dark:text-amber-400 underline'
+                            : 'text-green-600 dark:text-green-400'
+                        }`}
+                        title={latestVersion !== CURRENT_VERSION ? '업데이트가 있습니다 — 태그 목록 열기' : '최신 버전을 사용 중입니다'}
+                      >
+                        v{latestVersion}
+                        {latestVersion !== CURRENT_VERSION ? ' ↗' : ' ✓'}
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </nav>
         </div>
       </div>
