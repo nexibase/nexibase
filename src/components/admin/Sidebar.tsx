@@ -512,7 +512,6 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
                         title={latestVersion !== CURRENT_VERSION ? '업데이트가 있습니다 — 태그 목록 열기' : '최신 버전을 사용 중입니다'}
                       >
                         v{latestVersion}
-                        {latestVersion !== CURRENT_VERSION ? ' ↗' : ' ✓'}
                       </a>
                     </div>
                   )}
