@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useTranslations, useLocale } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Flame } from "lucide-react"
@@ -17,14 +17,13 @@ interface Board {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function PopularBoards({ settings }: { settings?: Record<string, any> }) {
   const t = useTranslations('boards')
-  const locale = useLocale()
   const [boards, setBoards] = useState<Board[]>([])
   const limit = settings?.limit || 5
 
   useEffect(() => {
     const fetchBoards = async () => {
       try {
-        const res = await fetch(`/api/boards?limit=${limit}&locale=${locale}`)
+        const res = await fetch(`/api/boards?limit=${limit}`)
         if (res.ok) {
           const data = await res.json()
           setBoards(data.boards || [])
@@ -34,7 +33,7 @@ export default function PopularBoards({ settings }: { settings?: Record<string, 
       }
     }
     fetchBoards()
-  }, [limit, locale])
+  }, [limit])
 
   if (boards.length === 0) return null
 

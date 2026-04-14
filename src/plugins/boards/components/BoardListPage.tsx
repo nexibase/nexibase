@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { useLocale } from "next-intl"
 import Link from "next/link"
 import { useTranslations } from 'next-intl'
 import { Button } from "@/components/ui/button"
@@ -73,7 +72,6 @@ export default function BoardListPage() {
   const router = useRouter()
   const slug = params.slug as string
   const t = useTranslations('boards')
-  const locale = useLocale()
 
   const [board, setBoard] = useState<Board | null>(null)
   const [posts, setPosts] = useState<Post[]>([])
@@ -108,7 +106,7 @@ export default function BoardListPage() {
         page: page.toString()
       })
 
-      const response = await fetch(`/api/boards/${slug}/posts?${params}&locale=${locale}`)
+      const response = await fetch(`/api/boards/${slug}/posts?${params}`)
       const data = await response.json()
 
       if (!response.ok) {
@@ -134,7 +132,7 @@ export default function BoardListPage() {
     } finally {
       setLoading(false)
     }
-  }, [slug, page, t, locale])
+  }, [slug, page, t])
 
   useEffect(() => {
     fetchUser()

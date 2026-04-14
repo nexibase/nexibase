@@ -8,21 +8,10 @@ import { Sidebar } from "@/components/admin/Sidebar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { ArrowLeft, Loader2, Save, Trash2, ExternalLink } from "lucide-react"
 import Link from "next/link"
-import { LocaleTabs } from "@/components/admin/LocaleTabs"
-import { LocaleField } from "@/components/admin/LocaleField"
-import { routing } from "@/i18n/routing"
-
-interface BoardTranslationRow {
-  locale: string
-  name: string
-  description: string | null
-  source: 'auto' | 'manual'
-}
 
 interface Board {
   id: string
@@ -43,7 +32,6 @@ interface Board {
   displayType: string
   isActive: boolean
   postCount: number
-  translations?: BoardTranslationRow[]
 }
 
 export default function BoardEditPage({ params }: { params: Promise<{ id: string }> }) {
@@ -53,7 +41,6 @@ export default function BoardEditPage({ params }: { params: Promise<{ id: string
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [board, setBoard] = useState<Board | null>(null)
-  const [translations, setTranslations] = useState<Record<string, { name: string; description: string; source: 'auto' | 'manual' | 'missing' }>>({})
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -96,17 +83,6 @@ export default function BoardEditPage({ params }: { params: Promise<{ id: string
             displayType: b.displayType || 'list',
             isActive: b.isActive ?? true,
           })
-          if (Array.isArray(b.translations)) {
-            const trMap: Record<string, { name: string; description: string; source: 'auto' | 'manual' | 'missing' }> = {}
-            for (const row of b.translations as BoardTranslationRow[]) {
-              trMap[row.locale] = {
-                name: row.name,
-                description: row.description ?? '',
-                source: row.source,
-              }
-            }
-            setTranslations(trMap)
-          }
         }
       })
       .finally(() => setLoading(false))
@@ -115,19 +91,10 @@ export default function BoardEditPage({ params }: { params: Promise<{ id: string
   const handleSave = async () => {
     setSaving(true)
     try {
-      const manualTranslations = Object.fromEntries(
-        Object.entries(translations)
-          .filter(([, v]) => v.source === 'manual')
-          .map(([loc, v]) => [loc, { name: v.name, description: v.description }])
-      )
-      const payload = {
-        ...formData,
-        translations: Object.keys(manualTranslations).length > 0 ? manualTranslations : undefined,
-      }
       const res = await fetch(`/api/admin/boards/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(formData),
       })
       const data = await res.json()
       if (res.ok) {
@@ -224,47 +191,13 @@ export default function BoardEditPage({ params }: { params: Promise<{ id: string
                   <Input value={board.slug} disabled className="bg-muted" />
                   <p className="text-xs text-muted-foreground">{t('admin.slugCannotChange')}</p>
                 </div>
+                <div className="space-y-2">
+                  <Label>{t('admin.boardName')} <span className="text-red-500">*</span></Label>
+                  <Input value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} required />
+                </div>
                 <div className="space-y-2 md:col-span-2">
-                  <LocaleTabs
-                    getStatus={(locale) => locale === routing.defaultLocale ? undefined : translations[locale]?.source ?? 'missing'}
-                    renderTab={(locale, isDefault) => {
-                      if (isDefault) {
-                        return (
-                          <>
-                            <LocaleField label={t('admin.boardName')} isDefaultLocale>
-                              <Input value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} required />
-                            </LocaleField>
-                            <LocaleField label={t('admin.description')} isDefaultLocale>
-                              <Textarea value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} placeholder={t('admin.descPlaceholderShort')} />
-                            </LocaleField>
-                          </>
-                        )
-                      }
-                      const tr = translations[locale] ?? { name: '', description: '', source: 'missing' as const }
-                      return (
-                        <>
-                          <LocaleField label={t('admin.boardName')} isDefaultLocale={false} subLocaleHint="비워두면 영문 원본이 노출됩니다. 수정하면 수동 번역으로 전환됩니다.">
-                            <Input
-                              value={tr.name}
-                              onChange={e => setTranslations({
-                                ...translations,
-                                [locale]: { ...tr, name: e.target.value, source: 'manual' }
-                              })}
-                            />
-                          </LocaleField>
-                          <LocaleField label={t('admin.description')} isDefaultLocale={false}>
-                            <Textarea
-                              value={tr.description}
-                              onChange={e => setTranslations({
-                                ...translations,
-                                [locale]: { ...tr, description: e.target.value, source: 'manual' }
-                              })}
-                            />
-                          </LocaleField>
-                        </>
-                      )
-                    }}
-                  />
+                  <Label>{t('admin.description')}</Label>
+                  <Input value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} placeholder={t('admin.descPlaceholderShort')} />
                 </div>
                 <div className="space-y-2">
                   <Label>{t('admin.category')}</Label>

@@ -3,7 +3,6 @@ import { prisma } from '@/lib/prisma'
 import { getAdminUser } from '@/lib/auth'
 import { pluginManifest } from '@/plugins/_generated'
 import { isPluginEnabled } from '@/lib/plugins'
-import { autoTranslateEntity } from '@/lib/translation/auto-translate'
 
 // Menu URL → plugin folder 매핑
 function getMenuPlugin(url: string): string | null {
@@ -28,10 +27,8 @@ export async function GET() {
     const menus = await prisma.menu.findMany({
       where: { parentId: null },
       include: {
-        translations: true,
         children: {
           orderBy: { sortOrder: 'asc' },
-          include: { translations: true },
         },
       },
       orderBy: [{ position: 'asc' }, { sortOrder: 'asc' }],
@@ -107,23 +104,6 @@ export async function POST(request: NextRequest) {
         sortOrder: sortOrder || 0,
       },
     })
-
-    // Upsert manual translations if provided
-    if (body.translations) {
-      for (const [locale, fields] of Object.entries(body.translations as Record<string, { label: string }>)) {
-        await prisma.menuTranslation.upsert({
-          where: { menuId_locale: { menuId: menu.id, locale } },
-          create: { menuId: menu.id, locale, label: fields.label, source: 'manual' },
-          update: { label: fields.label, source: 'manual' },
-        })
-      }
-    }
-
-    try {
-      await autoTranslateEntity('menu', menu.id, { label: menu.label })
-    } catch (e) {
-      console.error('[menu POST] autoTranslateEntity failed:', e)
-    }
 
     return NextResponse.json({ menu })
   } catch (error) {

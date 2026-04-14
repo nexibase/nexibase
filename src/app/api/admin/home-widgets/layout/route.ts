@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminUser } from '@/lib/auth'
-import { autoTranslateEntity } from '@/lib/translation/auto-translate'
 
 // PUT /api/admin/home-widgets/layout — bulk save layout
 export async function PUT(request: NextRequest) {
@@ -34,7 +33,7 @@ export async function PUT(request: NextRequest) {
         where: { widgetKey: create.widgetKey }
       })
       if (!existing) {
-        const created = await prisma.homeWidget.create({
+        await prisma.homeWidget.create({
           data: {
             widgetKey: create.widgetKey,
             zone: create.zone,
@@ -45,11 +44,6 @@ export async function PUT(request: NextRequest) {
             sortOrder: 99,
           }
         })
-        try {
-          await autoTranslateEntity('homeWidget', created.id, { title: created.title })
-        } catch (e) {
-          console.error('[homeWidget create] autoTranslateEntity failed:', e)
-        }
       }
       return NextResponse.json({ success: true })
     }

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getLocaleFromRequest, flattenTranslation } from '@/lib/translation/resolver'
 
 // 게시판 정보 조회
 export async function GET(
@@ -9,7 +8,6 @@ export async function GET(
 ) {
   try {
     const { slug } = await params
-    const locale = getLocaleFromRequest(request)
 
     const board = await prisma.board.findUnique({
       where: { slug },
@@ -31,8 +29,7 @@ export async function GET(
         sortOrder: true,
         displayType: true,
         isActive: true,
-        postCount: true,
-        translations: { where: { locale } }
+        postCount: true
       }
     })
 
@@ -50,11 +47,9 @@ export async function GET(
       )
     }
 
-    const localized = flattenTranslation(board as any, locale, ['name', 'description'])
-
     return NextResponse.json({
       success: true,
-      board: localized
+      board
     })
   } catch (error) {
     console.error('게시판 조회 에러:', error)

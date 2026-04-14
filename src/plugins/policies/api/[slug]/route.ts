@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getLocaleFromRequest, flattenTranslation } from '@/lib/translation/resolver'
 
 export async function GET(
   request: NextRequest,
@@ -10,7 +9,6 @@ export async function GET(
     const { slug } = await params
     const { searchParams } = new URL(request.url)
     const version = searchParams.get('v')
-    const locale = getLocaleFromRequest(request)
 
     let policy
 
@@ -18,13 +16,11 @@ export async function GET(
       policy = await prisma.policy.findUnique({
         where: {
           slug_version: { slug, version }
-        },
-        include: { translations: { where: { locale } } }
+        }
       })
     } else {
       policy = await prisma.policy.findFirst({
-        where: { slug, isActive: true },
-        include: { translations: { where: { locale } } }
+        where: { slug, isActive: true }
       })
     }
 
@@ -45,11 +41,9 @@ export async function GET(
       orderBy: { createdAt: 'desc' }
     })
 
-    const localized = flattenTranslation(policy as any, locale, ['title', 'content'])
-
     return NextResponse.json({
       success: true,
-      policy: localized,
+      policy,
       versions
     })
   } catch (error) {

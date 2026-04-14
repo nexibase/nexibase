@@ -1,12 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminUser } from '@/lib/auth'
-import {
-  translateSettingOnSave,
-  invalidateSettingTranslations,
-  isTranslatableSettingKey,
-  TRANSLATABLE_SETTING_KEYS,
-} from '@/lib/translation/settings'
 
 // 설정 조회
 export async function GET() {
@@ -24,12 +18,7 @@ export async function GET() {
       settingsMap[s.key] = s.value
     })
 
-    // 번역 가능한 3개 키의 기존 번역 목록 반환
-    const translations = await prisma.settingTranslation.findMany({
-      where: { key: { in: TRANSLATABLE_SETTING_KEYS as string[] } },
-    })
-
-    return NextResponse.json({ settings: settingsMap, translations })
+    return NextResponse.json({ settings: settingsMap })
   } catch (error) {
     console.error('설정 조회 에러:', error)
     return NextResponse.json(
@@ -48,10 +37,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { settings, translations } = body as {
-      settings: Record<string, string>
-      translations?: Record<string, Record<string, string>>
-    }
+    const { settings } = body as { settings: Record<string, string> }
 
     if (!settings || typeof settings !== 'object') {
       return NextResponse.json(
@@ -60,42 +46,20 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 각 설정을 upsert하고, 번역 대상이면 자동 번역도 수행
-    for (const [key, value] of Object.entries(settings)) {
-      await prisma.setting.upsert({
+    // 각 설정을 upsert
+    const promises = Object.entries(settings).map(([key, value]) =>
+      prisma.setting.upsert({
         where: { key },
         update: { value: String(value) },
-        create: { key, value: String(value) },
+        create: { key, value: String(value) }
       })
+    )
 
-      if (isTranslatableSettingKey(key)) {
-        try {
-          await invalidateSettingTranslations(key)
-          await translateSettingOnSave(key, String(value))
-        } catch (err) {
-          console.error('[translateSettingOnSave]', key, err)
-        }
-      }
-    }
-
-    // 수동 번역 오버라이드 처리
-    if (translations) {
-      for (const [key, byLocale] of Object.entries(translations as Record<string, Record<string, string>>)) {
-        if (!isTranslatableSettingKey(key)) continue
-        for (const [locale, value] of Object.entries(byLocale)) {
-          if (!value) continue
-          await prisma.settingTranslation.upsert({
-            where: { key_locale: { key, locale } },
-            create: { key, locale, value, source: 'manual' },
-            update: { value, source: 'manual' },
-          })
-        }
-      }
-    }
+    await Promise.all(promises)
 
     return NextResponse.json({
       success: true,
-      message: '설정이 저장되었습니다.',
+      message: '설정이 저장되었습니다.'
     })
   } catch (error) {
     console.error('설정 저장 에러:', error)
