@@ -74,7 +74,9 @@
     "noNotifications": "알림이 없습니다",
     "markAllRead": "모두 읽음",
     "more": "더보기",
-    "menu": "메뉴"
+    "menu": "메뉴",
+    "viewAllNotifications": "모든 알림 보기",
+    "defaultUser": "사용자"
   },
   "footer": {
     "community": "커뮤니티",

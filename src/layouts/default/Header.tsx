@@ -259,20 +259,20 @@ export default function Header() {
                   {notificationOpen && (
                     <div className="fixed md:absolute left-2 right-2 md:left-auto md:right-0 top-16 md:top-full md:mt-2 md:w-80 bg-background border rounded-lg shadow-lg z-50">
                       <div className="flex items-center justify-between px-4 py-3 border-b">
-                        <span className="font-medium">알림</span>
+                        <span className="font-medium">{t('notifications')}</span>
                         {unreadCount > 0 && (
                           <button
                             onClick={markAllAsRead}
                             className="text-xs text-primary hover:underline"
                           >
-                            모두 읽음
+                            {t('markAllRead')}
                           </button>
                         )}
                       </div>
                       <div className="max-h-[60vh] md:max-h-80 overflow-y-auto">
                         {notifications.length === 0 ? (
                           <div className="px-4 py-8 text-center text-muted-foreground text-sm">
-                            알림이 없습니다
+                            {t('noNotifications')}
                           </div>
                         ) : (
                           notifications.map((notification) => (
@@ -312,7 +312,7 @@ export default function Header() {
                           onClick={() => setNotificationOpen(false)}
                           className="text-xs text-primary hover:underline"
                         >
-                          모든 알림 보기
+                          {t('viewAllNotifications')}
                         </Link>
                       </div>
                     </div>
@@ -348,7 +348,7 @@ export default function Header() {
                             </AvatarFallback>
                           </Avatar>
                           <span className="text-sm font-medium max-w-[100px] truncate">
-                            {user.nickname || '사용자'}
+                            {user.nickname || t('defaultUser')}
                           </span>
                           <Button variant="ghost" size="sm" onClick={handleLogout} className="text-muted-foreground">
                             <LogOut className="h-4 w-4" />
@@ -491,7 +491,7 @@ export default function Header() {
                         moreMenuOpen ? 'bg-muted text-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                       }`}
                     >
-                      더보기
+                      {t('more')}
                       <ChevronDown className={`h-4 w-4 transition-transform ${moreMenuOpen ? 'rotate-180' : ''}`} />
                     </button>
                     {moreMenuOpen && (
@@ -546,7 +546,7 @@ export default function Header() {
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{user.nickname || '사용자'}</p>
+                      <p className="text-sm font-medium truncate">{user.nickname || t('defaultUser')}</p>
                       <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                     </div>
                   </div>

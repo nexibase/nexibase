@@ -74,7 +74,9 @@
     "noNotifications": "No notifications",
     "markAllRead": "Mark all read",
     "more": "More",
-    "menu": "Menu"
+    "menu": "Menu",
+    "viewAllNotifications": "View all notifications",
+    "defaultUser": "User"
   },
   "footer": {
     "community": "Community",
