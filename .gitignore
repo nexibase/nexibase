@@ -122,3 +122,7 @@ bun.lockb
 
 # 이니시스 샘플 코드 (참고용)
 /general_pc/
+
+# secrets (Google Cloud service account keys 등)
+/.secrets/
+*-sa.json

@@ -7,6 +7,14 @@ import {
   isTranslatableSettingKey,
   TRANSLATABLE_SETTING_KEYS,
 } from '@/lib/translation/settings'
+import {
+  TRANSLATION_SETTING_KEYS,
+  MASKED_CREDENTIALS_VALUE,
+  isMaskedCredentialsValue,
+  resetTranslateClientCache,
+} from '@/lib/translation/google-client'
+
+const CREDENTIALS_KEY = 'google_translate_credentials_json'
 
 // 설정 조회
 export async function GET() {
@@ -18,10 +26,14 @@ export async function GET() {
 
     const settings = await prisma.setting.findMany()
 
-    // key-value 객체로 변환
+    // key-value 객체로 변환 (민감 키는 마스킹)
     const settingsMap: Record<string, string> = {}
     settings.forEach(s => {
-      settingsMap[s.key] = s.value
+      if (s.key === CREDENTIALS_KEY && s.value) {
+        settingsMap[s.key] = MASKED_CREDENTIALS_VALUE
+      } else {
+        settingsMap[s.key] = s.value
+      }
     })
 
     // 번역 가능한 3개 키의 기존 번역 목록 반환
@@ -61,21 +73,38 @@ export async function POST(request: NextRequest) {
     }
 
     // 각 설정을 upsert하고, 번역 대상이면 자동 번역도 수행
+    let translationSettingTouched = false
     for (const [key, value] of Object.entries(settings)) {
+      const stringValue = String(value)
+
+      // credentials 마스킹 값이면 기존 값 유지 (덮어쓰지 않음)
+      if (key === CREDENTIALS_KEY && isMaskedCredentialsValue(stringValue)) {
+        continue
+      }
+
       await prisma.setting.upsert({
         where: { key },
-        update: { value: String(value) },
-        create: { key, value: String(value) },
+        update: { value: stringValue },
+        create: { key, value: stringValue },
       })
+
+      if ((TRANSLATION_SETTING_KEYS as readonly string[]).includes(key)) {
+        translationSettingTouched = true
+      }
 
       if (isTranslatableSettingKey(key)) {
         try {
           await invalidateSettingTranslations(key)
-          await translateSettingOnSave(key, String(value))
+          await translateSettingOnSave(key, stringValue)
         } catch (err) {
           console.error('[translateSettingOnSave]', key, err)
         }
       }
+    }
+
+    // Google Translate 설정이 바뀌면 클라이언트 캐시 무효화
+    if (translationSettingTouched) {
+      resetTranslateClientCache()
     }
 
     // 수동 번역 오버라이드 처리

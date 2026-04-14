@@ -61,6 +61,9 @@ interface SettingsData {
   ga4_property_id: string
   ga4_service_account_json: string
 
+  // 번역 API (Google Cloud Translation)
+  google_translate_project_id: string
+  google_translate_credentials_json: string
 }
 
 interface ThemeInfo {
@@ -97,7 +100,9 @@ const DEFAULT_SETTINGS: SettingsData = {
   theme_folder: 'default',
   google_analytics_id: '',
   ga4_property_id: '',
-  ga4_service_account_json: ''
+  ga4_service_account_json: '',
+  google_translate_project_id: '',
+  google_translate_credentials_json: ''
 }
 
 export default function SettingsPage() {
@@ -161,6 +166,48 @@ export default function SettingsPage() {
       }
     } catch (err) {
       setGaTestResult({ status: 'error', message: err instanceof Error ? err.message : String(err) })
+    }
+  }
+
+  // 번역 API 섹션 전용 상태
+  const [translateJsonEditing, setTranslateJsonEditing] = useState(false)
+  const [translateJsonDraft, setTranslateJsonDraft] = useState('')
+  const [translateTestResult, setTranslateTestResult] = useState<
+    | { status: 'idle' }
+    | { status: 'loading' }
+    | { status: 'success'; sample: string }
+    | { status: 'error'; message: string }
+  >({ status: 'idle' })
+
+  const handleTranslateJsonEdit = () => {
+    setTranslateJsonDraft('')
+    setTranslateJsonEditing(true)
+  }
+
+  const handleTranslateJsonCancel = () => {
+    setTranslateJsonEditing(false)
+    setTranslateJsonDraft('')
+  }
+
+  const handleTranslateJsonApply = () => {
+    handleChange('google_translate_credentials_json', translateJsonDraft)
+    setTranslateJsonEditing(false)
+    setTranslateJsonDraft('')
+    if (translateTestResult.status !== 'idle') setTranslateTestResult({ status: 'idle' })
+  }
+
+  const handleTranslateTest = async () => {
+    setTranslateTestResult({ status: 'loading' })
+    try {
+      const res = await fetch('/api/admin/translations/test', { method: 'POST' })
+      const data = await res.json()
+      if (data.ok) {
+        setTranslateTestResult({ status: 'success', sample: data.sample })
+      } else {
+        setTranslateTestResult({ status: 'error', message: data.error || 'Unknown error' })
+      }
+    } catch (err) {
+      setTranslateTestResult({ status: 'error', message: err instanceof Error ? err.message : String(err) })
     }
   }
 
@@ -663,6 +710,116 @@ export default function SettingsPage() {
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {t('gaTestSavedWarning')}
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* 번역 API (Google Cloud Translation) */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5" />
+                  번역 API
+                </CardTitle>
+                <CardDescription>
+                  Google Cloud Translation으로 관리자 콘텐츠(게시판·메뉴·약관 등)를 저장 시점에 자동 번역합니다. 설정하지 않으면 수동 번역만 사용됩니다.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="rounded-md border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-900 p-3 text-sm">
+                  <p className="font-medium mb-1">설정 방법</p>
+                  <p className="text-muted-foreground">
+                    Google Cloud Console에서 Translation API를 활성화한 뒤, 서비스 계정(역할: Cloud Translation API 사용자)을 만들고 JSON 키를 발급받아 아래에 붙여넣으세요.
+                  </p>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="google_translate_project_id">Google Cloud Project ID</Label>
+                  <Input
+                    id="google_translate_project_id"
+                    value={settings.google_translate_project_id}
+                    onChange={(e) => handleChange('google_translate_project_id', e.target.value)}
+                    placeholder="nexibase-i18n"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Google Cloud Console에 표시되는 프로젝트 ID를 입력합니다.
+                  </p>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="google_translate_credentials_json">서비스 계정 JSON</Label>
+                  {!translateJsonEditing ? (
+                    <div className="flex items-center gap-2 rounded-md border px-3 py-2">
+                      {settings.google_translate_credentials_json ? (
+                        <span className="text-sm text-green-700 dark:text-green-400">
+                          ✓ JSON 키가 저장되어 있습니다
+                        </span>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">
+                          저장된 키가 없습니다
+                        </span>
+                      )}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="ml-auto"
+                        onClick={handleTranslateJsonEdit}
+                      >
+                        {settings.google_translate_credentials_json ? '변경' : '입력'}
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <Textarea
+                        id="google_translate_credentials_json"
+                        value={translateJsonDraft}
+                        onChange={(e) => setTranslateJsonDraft(e.target.value)}
+                        placeholder='{"type":"service_account","project_id":"...","private_key":"..."}'
+                        rows={8}
+                        className="font-mono text-sm"
+                      />
+                      <div className="flex gap-2">
+                        <Button type="button" size="sm" onClick={handleTranslateJsonApply}>
+                          적용
+                        </Button>
+                        <Button type="button" variant="outline" size="sm" onClick={handleTranslateJsonCancel}>
+                          취소
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                  <p className="text-sm text-muted-foreground">
+                    보안상 저장된 JSON 내용은 화면에 표시되지 않습니다. 변경하려면 새 JSON을 붙여넣고 저장하세요.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3 pt-2 border-t">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleTranslateTest}
+                    disabled={
+                      translateTestResult.status === 'loading' ||
+                      !settings.google_translate_project_id ||
+                      !settings.google_translate_credentials_json
+                    }
+                  >
+                    {translateTestResult.status === 'loading' ? '테스트 중...' : '연결 테스트'}
+                  </Button>
+                  {translateTestResult.status === 'success' && (
+                    <span className="text-sm text-green-700 dark:text-green-400">
+                      ✓ 번역 성공: "Hello, world!" → "{translateTestResult.sample}"
+                    </span>
+                  )}
+                  {translateTestResult.status === 'error' && (
+                    <span className="text-sm text-red-600 dark:text-red-400">
+                      ✗ {translateTestResult.message}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  연결 테스트는 저장된 설정값을 사용합니다. 새로 입력한 내용을 먼저 저장한 뒤 테스트하세요.
                 </p>
               </CardContent>
             </Card>
