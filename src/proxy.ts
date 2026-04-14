@@ -39,6 +39,19 @@ async function getInstallState(): Promise<InstallState> {
   }
 }
 
+/**
+ * DB에서 site_locale 설정을 읽는다. next-intl 미들웨어가 올바른 locale로
+ * 페이지를 rewrite하도록 요청 쿠키에 NEXT_LOCALE을 강제로 덮어쓰는 데 사용.
+ */
+async function getSiteLocaleForMiddleware(): Promise<string | null> {
+  try {
+    const setting = await prisma.setting.findUnique({ where: { key: 'site_locale' } })
+    return setting?.value || null
+  } catch {
+    return null
+  }
+}
+
 const ALLOWED_WHEN_NOT_INSTALLED = [
   '/install',
   '/api/install',
@@ -170,8 +183,20 @@ export async function proxy(request: NextRequest) {
     return attachSessionCookie(NextResponse.next(), request)
   }
 
-  // 페이지 라우트: next-intl 먼저 실행
+  // next-intl 미들웨어가 브라우저 Accept-Language 또는 stale 쿠키로
+  // locale을 결정하지 않도록, 요청 쿠키에 DB의 site_locale을 강제 주입.
+  const dbLocale = await getSiteLocaleForMiddleware()
+  if (dbLocale) {
+    request.cookies.set('NEXT_LOCALE', dbLocale)
+  }
+
+  // 페이지 라우트: next-intl 실행
   const intlResponse = intlMiddleware(request)
+
+  // intl 응답 쿠키도 DB 값으로 강제 설정 (클라이언트 브라우저 동기화)
+  if (dbLocale) {
+    intlResponse.cookies.set('NEXT_LOCALE', dbLocale)
+  }
 
   // intl이 리다이렉트/리라이트를 수행한 경우 그대로 반환 (세션 쿠키만 붙여서)
   const isIntlRedirect = intlResponse.status === 307 || intlResponse.status === 308
