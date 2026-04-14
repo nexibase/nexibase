@@ -1,81 +1,111 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { pluginManifest } from '@/plugins/_generated';
+import { NextRequest, NextResponse } from 'next/server'
+import createMiddleware from 'next-intl/middleware'
+import { pluginManifest } from '@/plugins/_generated'
+import { routing } from '@/i18n/routing'
 
-const allPluginSlugs = Object.values(pluginManifest).map(p => p.slug);
+const intlMiddleware = createMiddleware(routing)
+const allPluginSlugs = Object.values(pluginManifest).map(p => p.slug)
+const LOCALE_SEGMENTS = routing.locales.map(l => `/${l}`)
 
-export async function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+function stripLocale(pathname: string): string {
+  for (const seg of LOCALE_SEGMENTS) {
+    if (pathname === seg) return '/'
+    if (pathname.startsWith(seg + '/')) return pathname.slice(seg.length)
+  }
+  return pathname
+}
 
-  // 비활성 플러그인 라우트 차단
+async function checkPluginBlocked(
+  request: NextRequest,
+  pathname: string,
+  isApi: boolean,
+): Promise<NextResponse | null> {
   for (const slug of allPluginSlugs) {
-    const isPluginRoute =
-      pathname === `/${slug}` ||
-      pathname.startsWith(`/${slug}/`) ||
-      pathname === `/api/${slug}` ||
-      pathname.startsWith(`/api/${slug}/`) ||
-      pathname === `/admin/${slug}` ||
-      pathname.startsWith(`/admin/${slug}/`) ||
-      pathname === `/api/admin/${slug}` ||
-      pathname.startsWith(`/api/admin/${slug}/`);
+    const isPluginRoute = isApi
+      ? (pathname === `/api/${slug}` ||
+         pathname.startsWith(`/api/${slug}/`) ||
+         pathname === `/api/admin/${slug}` ||
+         pathname.startsWith(`/api/admin/${slug}/`))
+      : (pathname === `/${slug}` ||
+         pathname.startsWith(`/${slug}/`) ||
+         pathname === `/admin/${slug}` ||
+         pathname.startsWith(`/admin/${slug}/`))
 
-    if (isPluginRoute) {
-      const folder = Object.entries(pluginManifest).find(([, meta]) => meta.slug === slug)?.[0];
-      if (!folder) continue;
+    if (!isPluginRoute) continue
 
-      try {
-        const baseUrl = request.nextUrl.origin;
-        const res = await fetch(`${baseUrl}/api/settings/plugin-status?folder=${folder}`, {
-          headers: { 'x-middleware-check': 'true' },
-        });
+    const folder = Object.entries(pluginManifest).find(([, meta]) => meta.slug === slug)?.[0]
+    if (!folder) continue
 
-        if (res.ok) {
-          const data = await res.json();
-          if (data.enabled === false) {
-            if (pathname.startsWith('/api/')) {
-              return NextResponse.json(
-                { error: '이 기능은 비활성화되었습니다.' },
-                { status: 404 }
-              );
-            }
-            return NextResponse.rewrite(new URL('/not-found', request.url));
+    try {
+      const baseUrl = request.nextUrl.origin
+      const res = await fetch(`${baseUrl}/api/settings/plugin-status?folder=${folder}`, {
+        headers: { 'x-middleware-check': 'true' },
+      })
+      if (res.ok) {
+        const data = await res.json()
+        if (data.enabled === false) {
+          if (isApi) {
+            return NextResponse.json(
+              { error: '이 기능은 비활성화되었습니다.' },
+              { status: 404 },
+            )
           }
+          return NextResponse.rewrite(new URL('/not-found', request.url))
         }
-      } catch {
-        // 체크 실패 시 통과 (서버 시작 중일 수 있음)
       }
+    } catch {
+      // 체크 실패 시 통과 (서버 시작 중일 수 있음)
     }
   }
+  return null
+}
 
-  const response = NextResponse.next();
-
-  // NextAuth 세션 토큰 쿠키를 세션 쿠키로 변환
-  const sessionToken = request.cookies.get("next-auth.session-token");
-
+function attachSessionCookie(response: NextResponse, request: NextRequest): NextResponse {
+  const sessionToken = request.cookies.get('next-auth.session-token')
   if (sessionToken) {
     response.cookies.set({
-      name: "next-auth.session-token",
+      name: 'next-auth.session-token',
       value: sessionToken.value,
       httpOnly: true,
-      sameSite: "lax",
-      path: "/",
-      secure: process.env.NODE_ENV === "production",
-    });
+      sameSite: 'lax',
+      path: '/',
+      secure: process.env.NODE_ENV === 'production',
+    })
+  }
+  return response
+}
+
+export async function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl
+
+  // API는 locale 처리 없이 플러그인 체크 + 세션 쿠키만
+  if (pathname.startsWith('/api/')) {
+    const blocked = await checkPluginBlocked(request, pathname, true)
+    if (blocked) return blocked
+    return attachSessionCookie(NextResponse.next(), request)
   }
 
-  return response;
+  // 페이지 라우트: next-intl 먼저 실행
+  const intlResponse = intlMiddleware(request)
+
+  // intl이 리다이렉트/리라이트를 수행한 경우 그대로 반환 (세션 쿠키만 붙여서)
+  const isIntlRedirect = intlResponse.status === 307 || intlResponse.status === 308
+  const isIntlRewrite = intlResponse.headers.get('x-middleware-rewrite') !== null
+
+  if (isIntlRedirect || isIntlRewrite) {
+    return attachSessionCookie(intlResponse, request)
+  }
+
+  // intl이 통과시킨 경우: locale 제거한 경로로 플러그인 체크
+  const pagePath = stripLocale(pathname)
+  const blocked = await checkPluginBlocked(request, pagePath, false)
+  if (blocked) return blocked
+
+  return attachSessionCookie(NextResponse.next(), request)
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - image files
-     *
-     * API 라우트도 포함하여 소셜 로그인 콜백에서 설정되는 쿠키도 처리
-     */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.png$|.*\\.jpg$|.*\\.jpeg$|.*\\.gif$|.*\\.webp$|.*\\.svg$|.*\\.ico$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|uploads|themes|.*\\.(?:png|jpg|jpeg|gif|webp|svg|ico|css|js|txt|xml)$).*)',
   ],
-};
+}
