@@ -77,7 +77,8 @@ export async function POST(request: NextRequest) {
     await runInstall(validation.params!)
     const { markInstalled } = await import('@/proxy')
     markInstalled()
-    // TODO(Task 7): setCachedLocale(validation.params!.locale) after it exists in request.ts
+    const { setCachedLocale } = await import('@/i18n/request')
+    setCachedLocale(validation.params!.locale)
     return NextResponse.json({ success: true, redirectTo: '/admin/login' })
   } catch (err) {
     if (err instanceof InstallError) {
