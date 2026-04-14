@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Github, Twitter, MessageCircle } from "lucide-react"
+import { useTranslations } from 'next-intl'
 
 interface FooterSettings {
   site_name: string
@@ -17,6 +18,7 @@ interface FooterMenuItem {
 }
 
 export default function Footer() {
+  const t = useTranslations('footer')
   const [settings, setSettings] = useState<FooterSettings>({
     site_name: 'NexiBase',
     footer_copyright: '',
@@ -94,10 +96,10 @@ export default function Footer() {
             <>
               {/* 폴백: 하드코딩 메뉴 */}
               <div>
-                <h4 className="font-semibold text-foreground mb-3 text-sm">커뮤니티</h4>
+                <h4 className="font-semibold text-foreground mb-3 text-sm">{t('community')}</h4>
                 <ul className="space-y-2">
-                  <li><Link href="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">홈</Link></li>
-                  <li><Link href="/posts/popular" className="text-sm text-muted-foreground hover:text-foreground transition-colors">인기 게시글</Link></li>
+                  <li><Link href="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">{t('home')}</Link></li>
+                  <li><Link href="/posts/popular" className="text-sm text-muted-foreground hover:text-foreground transition-colors">{t('popular')}</Link></li>
                   <li><Link href="/boards" className="text-sm text-muted-foreground hover:text-foreground transition-colors">전체 게시판</Link></li>
                 </ul>
               </div>
