@@ -1,17 +1,14 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { pluginManifest } from '@/plugins/_generated'
+import { getLocaleFromRequest } from '@/lib/translation/resolver'
+import { getLocalizedSettings } from '@/lib/translation/settings'
 
 // 공개 설정 조회 (인증 불필요)
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const settings = await prisma.setting.findMany()
-
-    // key-value 객체로 변환
-    const settingsMap: Record<string, string> = {}
-    settings.forEach(s => {
-      settingsMap[s.key] = s.value
-    })
+    const locale = getLocaleFromRequest(req)
+    const settingsMap = await getLocalizedSettings(locale)
 
     // 활성 플러그인 목록
     const enabledPlugins: string[] = []

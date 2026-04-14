@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { Sidebar } from "@/components/admin/Sidebar"
+import { LocaleTabs } from "@/components/admin/LocaleTabs"
+import { LocaleField } from "@/components/admin/LocaleField"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -26,6 +28,7 @@ import {
   ImageIcon,
   BarChart3,
 } from "lucide-react"
+import { routing } from "@/i18n/routing"
 
 interface FooterLink {
   label: string
@@ -43,6 +46,7 @@ interface SettingsData {
   email_verification_required: string
 
   // 푸터 설정
+  footer_text: string
   footer_copyright: string
   footer_links: string
 
@@ -72,12 +76,21 @@ interface LayoutInfo {
   files: { Header: boolean; HomePage: boolean; Footer: boolean }
 }
 
+// SettingTranslation row from API
+interface TranslationRow {
+  key: string
+  locale: string
+  value: string
+  source: string
+}
+
 const DEFAULT_SETTINGS: SettingsData = {
   site_name: 'NexiBase',
   site_description: '',
   site_logo: '',
   signup_enabled: 'true',
   email_verification_required: 'false',
+  footer_text: '',
   footer_copyright: '',
   footer_links: '[]',
   layout_folder: 'default',
@@ -97,6 +110,11 @@ export default function SettingsPage() {
   const [hasSettings, setHasSettings] = useState(false)
   const [layouts, setLayouts] = useState<LayoutInfo[]>([])
   const [themes, setThemes] = useState<ThemeInfo[]>([])
+
+  // sub-locale translations: { locale: { site_name?, site_description?, footer_text? } }
+  const [settingTranslations, setSettingTranslations] = useState<Record<string, Record<string, string>>>({})
+  // existing translation source info: "locale__key" -> source
+  const [translationSources, setTranslationSources] = useState<Record<string, string>>({})
 
   // Google Analytics 섹션 전용 상태
   const [gaJsonEditing, setGaJsonEditing] = useState(false)
@@ -174,6 +192,20 @@ export default function SettingsPage() {
         }
         setSettings(newSettings)
         setFooterLinks(parseFooterLinks(newSettings.footer_links))
+
+        // 기존 번역 rows를 settingTranslations state에 로드
+        if (Array.isArray(data.translations)) {
+          const byLocale: Record<string, Record<string, string>> = {}
+          const sources: Record<string, string> = {}
+          for (const row of data.translations as TranslationRow[]) {
+            if (row.locale === routing.defaultLocale) continue
+            if (!byLocale[row.locale]) byLocale[row.locale] = {}
+            byLocale[row.locale][row.key] = row.value
+            sources[`${row.locale}__${row.key}`] = row.source
+          }
+          setSettingTranslations(byLocale)
+          setTranslationSources(sources)
+        }
       }
     } catch (error) {
       console.error('설정 조회 에러:', error)
@@ -213,7 +245,10 @@ export default function SettingsPage() {
       const response = await fetch('/api/admin/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ settings: settingsToSave })
+        body: JSON.stringify({
+          settings: settingsToSave,
+          translations: settingTranslations,
+        }),
       })
 
       const data = await response.json()
@@ -263,6 +298,16 @@ export default function SettingsPage() {
     setSettings(prev => ({ ...prev, [key]: value }))
   }
 
+  // sub-locale 번역 값 변경 핸들러
+  const handleTranslationChange = (locale: string, key: string, value: string) => {
+    setSettingTranslations(prev => ({
+      ...prev,
+      [locale]: { ...prev[locale], [key]: value },
+    }))
+    // mark source as manual once user edits
+    setTranslationSources(prev => ({ ...prev, [`${locale}__${key}`]: 'manual' }))
+  }
+
   // 스위치 변경 핸들러
   const handleSwitchChange = (key: keyof SettingsData, checked: boolean) => {
     setSettings(prev => ({ ...prev, [key]: checked ? 'true' : 'false' }))
@@ -283,6 +328,15 @@ export default function SettingsPage() {
     setFooterLinks(footerLinks.map((link, i) =>
       i === index ? { ...link, [field]: value } : link
     ))
+  }
+
+  // LocaleTabs getStatus helper for a given field key
+  const getFieldStatus = (fieldKey: string) => (locale: string) => {
+    if (locale === routing.defaultLocale) return undefined
+    const src = translationSources[`${locale}__${fieldKey}`]
+    if (!src) return 'missing' as const
+    if (src === 'manual') return 'manual' as const
+    return 'auto' as const
   }
 
   if (loading) {
@@ -349,30 +403,68 @@ export default function SettingsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* site_name — translatable */}
                 <div className="grid gap-2">
-                  <Label htmlFor="site_name">{t('siteName')}</Label>
-                  <Input
-                    id="site_name"
-                    value={settings.site_name}
-                    onChange={(e) => handleChange('site_name', e.target.value)}
-                    placeholder="NexiBase"
+                  <Label>{t('siteName')}</Label>
+                  <LocaleTabs
+                    getStatus={getFieldStatus('site_name')}
+                    renderTab={(locale, isDefault) => (
+                      <LocaleField
+                        label={t('siteName')}
+                        isDefaultLocale={isDefault}
+                        subLocaleHint={t('translationSubLocaleHint')}
+                      >
+                        {isDefault ? (
+                          <Input
+                            value={settings.site_name}
+                            onChange={(e) => handleChange('site_name', e.target.value)}
+                            placeholder="NexiBase"
+                          />
+                        ) : (
+                          <Input
+                            value={settingTranslations[locale]?.site_name ?? ''}
+                            onChange={(e) => handleTranslationChange(locale, 'site_name', e.target.value)}
+                            placeholder="NexiBase"
+                          />
+                        )}
+                      </LocaleField>
+                    )}
                   />
                 </div>
 
+                {/* site_description — translatable */}
                 <div className="grid gap-2">
-                  <Label htmlFor="site_description">{t('siteDescription')}</Label>
-                  <Textarea
-                    id="site_description"
-                    value={settings.site_description}
-                    onChange={(e) => handleChange('site_description', e.target.value)}
-                    placeholder={t('siteDescriptionPlaceholder')}
-                    rows={3}
+                  <Label>{t('siteDescription')}</Label>
+                  <LocaleTabs
+                    getStatus={getFieldStatus('site_description')}
+                    renderTab={(locale, isDefault) => (
+                      <LocaleField
+                        label={t('siteDescription')}
+                        helperText={isDefault ? t('seoMetaDesc') : undefined}
+                        isDefaultLocale={isDefault}
+                        subLocaleHint={t('translationSubLocaleHint')}
+                      >
+                        {isDefault ? (
+                          <Textarea
+                            value={settings.site_description}
+                            onChange={(e) => handleChange('site_description', e.target.value)}
+                            placeholder={t('siteDescriptionPlaceholder')}
+                            rows={3}
+                          />
+                        ) : (
+                          <Textarea
+                            value={settingTranslations[locale]?.site_description ?? ''}
+                            onChange={(e) => handleTranslationChange(locale, 'site_description', e.target.value)}
+                            placeholder={t('siteDescriptionPlaceholder')}
+                            rows={3}
+                          />
+                        )}
+                      </LocaleField>
+                    )}
                   />
-                  <p className="text-sm text-muted-foreground">
-                    {t('seoMetaDesc')}
-                  </p>
                 </div>
 
+                {/* site_logo — NOT translatable, stays as-is */}
                 <div className="grid gap-2">
                   <Label>{t('siteLogo')}</Label>
                   <div className="flex items-center gap-4">
@@ -575,7 +667,7 @@ export default function SettingsPage() {
               </CardContent>
             </Card>
 
-            {/* 회원 설정 */}
+            {/* 회원 설정 — NOT translatable, unchanged */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -629,6 +721,38 @@ export default function SettingsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* footer_text — translatable */}
+                <div className="grid gap-2">
+                  <Label>{t('footerText')}</Label>
+                  <LocaleTabs
+                    getStatus={getFieldStatus('footer_text')}
+                    renderTab={(locale, isDefault) => (
+                      <LocaleField
+                        label={t('footerText')}
+                        isDefaultLocale={isDefault}
+                        subLocaleHint={t('translationSubLocaleHint')}
+                      >
+                        {isDefault ? (
+                          <Textarea
+                            value={settings.footer_text}
+                            onChange={(e) => handleChange('footer_text', e.target.value)}
+                            placeholder={t('footerTextPlaceholder')}
+                            rows={2}
+                          />
+                        ) : (
+                          <Textarea
+                            value={settingTranslations[locale]?.footer_text ?? ''}
+                            onChange={(e) => handleTranslationChange(locale, 'footer_text', e.target.value)}
+                            placeholder={t('footerTextPlaceholder')}
+                            rows={2}
+                          />
+                        )}
+                      </LocaleField>
+                    )}
+                  />
+                </div>
+
+                {/* footer_copyright — NOT translatable */}
                 <div className="grid gap-2">
                   <Label htmlFor="footer_copyright">{t('copyrightText')}</Label>
                   <Input
