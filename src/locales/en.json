@@ -1,4 +1,65 @@
 {
+  "editor": {
+    "bold": "Bold",
+    "italic": "Italic",
+    "underline": "Underline",
+    "strike": "Strikethrough",
+    "code": "Code",
+    "link": "Link",
+    "linkPlaceholder": "Enter URL",
+    "linkRemove": "Remove link",
+    "image": "Image",
+    "imageUpload": "Upload image",
+    "imageUrl": "Image URL",
+    "imageUrlPlaceholder": "Enter image URL",
+    "heading1": "Heading 1",
+    "heading2": "Heading 2",
+    "heading3": "Heading 3",
+    "bulletList": "Bullet list",
+    "orderedList": "Numbered list",
+    "blockquote": "Quote",
+    "horizontalRule": "Horizontal rule",
+    "undo": "Undo",
+    "redo": "Redo",
+    "sourceMode": "Source",
+    "uploading": "Uploading...",
+    "uploadFailed": "Upload failed",
+    "imageOnly": "Only image files allowed",
+    "fileTooLarge": "File too large",
+    "placeholder": "Enter content..."
+  },
+  "image": {
+    "viewer": "Image viewer",
+    "close": "Close",
+    "previous": "Previous",
+    "next": "Next",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "download": "Download",
+    "openInNewTab": "Open in new tab"
+  },
+  "errors": {
+    "loginRequired": "Login required",
+    "permissionDenied": "Permission denied",
+    "notFound": "Not found",
+    "serverError": "Server error",
+    "invalidRequest": "Invalid request",
+    "featureDisabled": "This feature is disabled."
+  },
+  "email": {
+    "verifySubject": "Email verification",
+    "verifyHello": "Hello!",
+    "verifyMessage": "Please click the button below to verify your email address.",
+    "verifyButton": "Verify email",
+    "verifyExpiresIn24h": "This link expires in 24 hours.",
+    "verifyIgnoreIfNotRequested": "If you didn't request this verification, please ignore this email.",
+    "sendFailed": "Failed to send email"
+  },
+  "notification": {
+    "newComment": "New comment on your post",
+    "newReply": "New reply to your comment",
+    "newReaction": "Someone reacted to your post"
+  },
   "header": {
     "search": "Search...",
     "lightMode": "Light mode",

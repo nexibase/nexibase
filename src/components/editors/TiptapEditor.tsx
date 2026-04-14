@@ -7,6 +7,7 @@ import Image from '@tiptap/extension-image'
 import Placeholder from '@tiptap/extension-placeholder'
 import Underline from '@tiptap/extension-underline'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import {
   Bold,
   Italic,
@@ -42,9 +43,11 @@ interface TiptapEditorProps {
 export function TiptapEditor({
   content,
   onChange,
-  placeholder = '내용을 입력하세요...',
+  placeholder,
   className
 }: TiptapEditorProps) {
+  const t = useTranslations('editor')
+  const effectivePlaceholder = placeholder ?? t('placeholder')
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -66,7 +69,7 @@ export function TiptapEditor({
         allowBase64: true,
       }),
       Placeholder.configure({
-        placeholder
+        placeholder: effectivePlaceholder
       })
     ],
     content,
@@ -92,7 +95,7 @@ export function TiptapEditor({
     if (!editor) return
 
     const previousUrl = editor.getAttributes('link').href
-    const url = window.prompt('URL을 입력하세요:', previousUrl)
+    const url = window.prompt(t('linkPlaceholder'), previousUrl)
 
     if (url === null) return
 
@@ -107,7 +110,7 @@ export function TiptapEditor({
   const addImageByUrl = useCallback(() => {
     if (!editor) return
 
-    const url = window.prompt('이미지 URL을 입력하세요:')
+    const url = window.prompt(t('imageUrlPlaceholder'))
 
     if (url) {
       editor.chain().focus().setImage({ src: url }).run()
@@ -149,13 +152,13 @@ export function TiptapEditor({
 
     // 파일 타입 검증
     if (!file.type.startsWith('image/')) {
-      alert('이미지 파일만 업로드 가능합니다.')
+      alert(t('imageOnly'))
       return
     }
 
     // 파일 크기 검증 (10MB)
     if (file.size > 10 * 1024 * 1024) {
-      alert('파일 크기는 10MB 이하여야 합니다.')
+      alert(t('fileTooLarge'))
       return
     }
 
@@ -174,11 +177,11 @@ export function TiptapEditor({
       if (response.ok && data.url) {
         editor.chain().focus().setImage({ src: data.url }).run()
       } else {
-        alert(data.error || '이미지 업로드에 실패했습니다.')
+        alert(data.error || t('uploadFailed'))
       }
     } catch (error) {
       console.error('이미지 업로드 에러:', error)
-      alert('이미지 업로드 중 오류가 발생했습니다.')
+      alert(t('uploadFailed'))
     } finally {
       setUploading(false)
       // input 초기화
@@ -205,35 +208,35 @@ export function TiptapEditor({
           <ToolbarButton
             onClick={() => editor.chain().focus().toggleBold().run()}
             isActive={editor.isActive('bold')}
-            title="굵게"
+            title={t('bold')}
           >
             <Bold className="h-4 w-4" />
           </ToolbarButton>
           <ToolbarButton
             onClick={() => editor.chain().focus().toggleItalic().run()}
             isActive={editor.isActive('italic')}
-            title="기울임"
+            title={t('italic')}
           >
             <Italic className="h-4 w-4" />
           </ToolbarButton>
           <ToolbarButton
             onClick={() => editor.chain().focus().toggleUnderline().run()}
             isActive={editor.isActive('underline')}
-            title="밑줄"
+            title={t('underline')}
           >
             <UnderlineIcon className="h-4 w-4" />
           </ToolbarButton>
           <ToolbarButton
             onClick={() => editor.chain().focus().toggleStrike().run()}
             isActive={editor.isActive('strike')}
-            title="취소선"
+            title={t('strike')}
           >
             <Strikethrough className="h-4 w-4" />
           </ToolbarButton>
           <ToolbarButton
             onClick={() => editor.chain().focus().toggleCode().run()}
             isActive={editor.isActive('code')}
-            title="인라인 코드"
+            title={t('code')}
           >
             <Code className="h-4 w-4" />
           </ToolbarButton>
@@ -244,21 +247,21 @@ export function TiptapEditor({
           <ToolbarButton
             onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
             isActive={editor.isActive('heading', { level: 1 })}
-            title="제목 1"
+            title={t('heading1')}
           >
             <Heading1 className="h-4 w-4" />
           </ToolbarButton>
           <ToolbarButton
             onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
             isActive={editor.isActive('heading', { level: 2 })}
-            title="제목 2"
+            title={t('heading2')}
           >
             <Heading2 className="h-4 w-4" />
           </ToolbarButton>
           <ToolbarButton
             onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
             isActive={editor.isActive('heading', { level: 3 })}
-            title="제목 3"
+            title={t('heading3')}
           >
             <Heading3 className="h-4 w-4" />
           </ToolbarButton>
@@ -269,21 +272,21 @@ export function TiptapEditor({
           <ToolbarButton
             onClick={() => editor.chain().focus().toggleBulletList().run()}
             isActive={editor.isActive('bulletList')}
-            title="글머리 기호"
+            title={t('bulletList')}
           >
             <List className="h-4 w-4" />
           </ToolbarButton>
           <ToolbarButton
             onClick={() => editor.chain().focus().toggleOrderedList().run()}
             isActive={editor.isActive('orderedList')}
-            title="번호 목록"
+            title={t('orderedList')}
           >
             <ListOrdered className="h-4 w-4" />
           </ToolbarButton>
           <ToolbarButton
             onClick={() => editor.chain().focus().toggleBlockquote().run()}
             isActive={editor.isActive('blockquote')}
-            title="인용"
+            title={t('blockquote')}
           >
             <Quote className="h-4 w-4" />
           </ToolbarButton>
@@ -294,14 +297,14 @@ export function TiptapEditor({
           <ToolbarButton
             onClick={setLink}
             isActive={editor.isActive('link')}
-            title="링크"
+            title={t('link')}
           >
             <LinkIcon className="h-4 w-4" />
           </ToolbarButton>
           <ToolbarButton
             onClick={triggerFileUpload}
             disabled={uploading}
-            title="이미지 업로드"
+            title={t('imageUpload')}
           >
             {uploading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -311,13 +314,13 @@ export function TiptapEditor({
           </ToolbarButton>
           <ToolbarButton
             onClick={addImageByUrl}
-            title="이미지 URL"
+            title={t('imageUrl')}
           >
             <ImageIcon className="h-4 w-4" />
           </ToolbarButton>
           <ToolbarButton
             onClick={() => editor.chain().focus().setHorizontalRule().run()}
-            title="구분선"
+            title={t('horizontalRule')}
           >
             <Minus className="h-4 w-4" />
           </ToolbarButton>
@@ -337,14 +340,14 @@ export function TiptapEditor({
           <ToolbarButton
             onClick={() => editor.chain().focus().undo().run()}
             disabled={!editor.can().undo() || sourceMode}
-            title="실행 취소"
+            title={t('undo')}
           >
             <Undo className="h-4 w-4" />
           </ToolbarButton>
           <ToolbarButton
             onClick={() => editor.chain().focus().redo().run()}
             disabled={!editor.can().redo() || sourceMode}
-            title="다시 실행"
+            title={t('redo')}
           >
             <Redo className="h-4 w-4" />
           </ToolbarButton>
@@ -355,7 +358,7 @@ export function TiptapEditor({
           <ToolbarButton
             onClick={toggleSourceMode}
             isActive={sourceMode}
-            title={sourceMode ? "에디터 모드" : "HTML 소스 보기"}
+            title={t('sourceMode')}
           >
             <Code2 className="h-4 w-4" />
           </ToolbarButton>
@@ -368,7 +371,7 @@ export function TiptapEditor({
           value={sourceContent}
           onChange={(e) => handleSourceChange(e.target.value)}
           className="min-h-[300px] font-mono text-sm border-0 rounded-none focus-visible:ring-0 resize-none"
-          placeholder="HTML 코드를 입력하세요..."
+          placeholder={t('placeholder')}
         />
       ) : (
         <EditorContent editor={editor} />

@@ -1,4 +1,65 @@
 {
+  "editor": {
+    "bold": "굵게",
+    "italic": "기울임",
+    "underline": "밑줄",
+    "strike": "취소선",
+    "code": "코드",
+    "link": "링크",
+    "linkPlaceholder": "URL을 입력하세요",
+    "linkRemove": "링크 제거",
+    "image": "이미지",
+    "imageUpload": "이미지 업로드",
+    "imageUrl": "이미지 URL",
+    "imageUrlPlaceholder": "이미지 URL을 입력하세요",
+    "heading1": "제목 1",
+    "heading2": "제목 2",
+    "heading3": "제목 3",
+    "bulletList": "글머리 기호",
+    "orderedList": "번호 목록",
+    "blockquote": "인용",
+    "horizontalRule": "구분선",
+    "undo": "실행 취소",
+    "redo": "다시 실행",
+    "sourceMode": "소스",
+    "uploading": "업로드 중...",
+    "uploadFailed": "업로드 실패",
+    "imageOnly": "이미지 파일만 업로드 가능합니다",
+    "fileTooLarge": "파일이 너무 큽니다",
+    "placeholder": "내용을 입력하세요..."
+  },
+  "image": {
+    "viewer": "이미지 뷰어",
+    "close": "닫기",
+    "previous": "이전",
+    "next": "다음",
+    "zoomIn": "확대",
+    "zoomOut": "축소",
+    "download": "다운로드",
+    "openInNewTab": "새 탭에서 열기"
+  },
+  "errors": {
+    "loginRequired": "로그인이 필요합니다",
+    "permissionDenied": "권한이 없습니다",
+    "notFound": "찾을 수 없습니다",
+    "serverError": "서버 오류가 발생했습니다",
+    "invalidRequest": "잘못된 요청입니다",
+    "featureDisabled": "이 기능은 비활성화되었습니다."
+  },
+  "email": {
+    "verifySubject": "이메일 인증",
+    "verifyHello": "안녕하세요!",
+    "verifyMessage": "아래 버튼을 클릭하여 이메일 주소를 인증해주세요.",
+    "verifyButton": "이메일 인증하기",
+    "verifyExpiresIn24h": "이 링크는 24시간 후에 만료됩니다.",
+    "verifyIgnoreIfNotRequested": "본인이 요청하지 않았다면 이 이메일을 무시해주세요.",
+    "sendFailed": "이메일 발송에 실패했습니다"
+  },
+  "notification": {
+    "newComment": "회원님의 게시글에 새 댓글이 달렸습니다",
+    "newReply": "회원님의 댓글에 답글이 달렸습니다",
+    "newReaction": "회원님의 게시글에 반응이 있습니다"
+  },
   "header": {
     "search": "검색어를 입력하세요...",
     "lightMode": "라이트 모드",
