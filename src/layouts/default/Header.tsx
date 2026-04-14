@@ -12,6 +12,8 @@ import Image from "next/image"
 import { useRouter, usePathname } from "next/navigation"
 import { headerWidgets } from "@/lib/widgets/_generated-header-widgets"
 import { useSite } from "@/lib/SiteContext"
+import { useTranslations } from 'next-intl'
+import { LocaleSwitcher } from '@/components/layout/LocaleSwitcher'
 
 interface Notification {
   id: number
@@ -25,6 +27,7 @@ interface Notification {
 
 export default function Header() {
   const { user, setUser, settings, boards, headerMenus, isLoading } = useSite()
+  const t = useTranslations('header')
   const [mounted, setMounted] = useState(false)
   const [moreMenuOpen, setMoreMenuOpen] = useState(false)
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null)
@@ -205,7 +208,7 @@ export default function Header() {
               <form onSubmit={handleSearch} className="w-full relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="검색어를 입력하세요..."
+                  placeholder={t('search')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10 bg-background border-muted-foreground/20"
@@ -215,12 +218,13 @@ export default function Header() {
 
             {/* 우측 액션 */}
             <div className="flex items-center gap-2">
+              <LocaleSwitcher />
               {/* 테마 토글 */}
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={toggleTheme}
-                title={mounted ? (theme === 'dark' ? '라이트 모드' : '다크 모드') : '테마 변경'}
+                title={mounted ? (theme === 'dark' ? t('lightMode') : t('darkMode')) : t('darkMode')}
               >
                 {mounted ? (
                   theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />
@@ -336,7 +340,7 @@ export default function Header() {
                         {/* 관리자 바로가기 */}
                         {user.role === 'admin' && (
                           <Link href="/admin">
-                            <Button variant="ghost" size="icon" title="관리자">
+                            <Button variant="ghost" size="icon" title={t('admin')}>
                               <Settings className="h-5 w-5" />
                             </Button>
                           </Link>
@@ -359,11 +363,11 @@ export default function Header() {
                     ) : (
                       <>
                         <Link href={`/login?callbackUrl=${encodeURIComponent(pathname)}`}>
-                          <Button variant="ghost" size="sm">로그인</Button>
+                          <Button variant="ghost" size="sm">{t('login')}</Button>
                         </Link>
                         {settings.signup_enabled === 'true' && (
                           <Link href="/signup">
-                            <Button size="sm">회원가입</Button>
+                            <Button size="sm">{t('signup')}</Button>
                           </Link>
                         )}
                       </>
@@ -387,7 +391,7 @@ export default function Header() {
                       </Link>
                     ) : (
                       <Link href={`/login?callbackUrl=${encodeURIComponent(pathname)}`}>
-                        <Button variant="ghost" size="sm" className="text-xs px-2">로그인</Button>
+                        <Button variant="ghost" size="sm" className="text-xs px-2">{t('login')}</Button>
                       </Link>
                     )}
                   </>
@@ -539,7 +543,7 @@ export default function Header() {
                 <form onSubmit={handleSearch} className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="검색어를 입력하세요..."
+                    placeholder={t('search')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-10"
@@ -629,12 +633,12 @@ export default function Header() {
                 </div>
               ))}
               {user && (
-                <Link href="/mypage" className={`block px-3 py-2 text-sm rounded-md ${pathname?.startsWith('/mypage') ? 'bg-primary/10 text-primary' : 'hover:bg-muted'}`} onClick={() => setMobileMenuOpen(false)}>마이페이지</Link>
+                <Link href="/mypage" className={`block px-3 py-2 text-sm rounded-md ${pathname?.startsWith('/mypage') ? 'bg-primary/10 text-primary' : 'hover:bg-muted'}`} onClick={() => setMobileMenuOpen(false)}>{t('mypage')}</Link>
               )}
               {user?.role === 'admin' && (
                 <>
                   <div className="border-t my-2" />
-                  <Link href="/admin" className="block px-3 py-2 text-sm font-medium text-primary rounded-md hover:bg-muted" onClick={() => setMobileMenuOpen(false)}>관리자</Link>
+                  <Link href="/admin" className="block px-3 py-2 text-sm font-medium text-primary rounded-md hover:bg-muted" onClick={() => setMobileMenuOpen(false)}>{t('admin')}</Link>
                 </>
               )}
               {user && (
@@ -647,7 +651,7 @@ export default function Header() {
                     }}
                     className="w-full text-left px-3 py-2 text-sm text-red-500 rounded-md hover:bg-muted"
                   >
-                    로그아웃
+                    {t('logout')}
                   </button>
                 </>
               )}
