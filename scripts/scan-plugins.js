@@ -662,7 +662,9 @@ ${entries}
 function mergeLocales(plugins) {
   const CORE_LOCALES_DIR = path.join(__dirname, '..', 'src', 'locales')
   const OUT_DIR = path.join(__dirname, '..', 'src', 'messages')
-  const LOCALES = ['en']
+  const LOCALES = fs.readdirSync(CORE_LOCALES_DIR)
+    .filter(f => f.endsWith('.json'))
+    .map(f => f.replace('.json', ''))
 
   if (!fs.existsSync(OUT_DIR)) {
     fs.mkdirSync(OUT_DIR, { recursive: true })
