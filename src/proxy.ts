@@ -42,12 +42,14 @@ async function getInstallState(): Promise<InstallState> {
 const ALLOWED_WHEN_NOT_INSTALLED = [
   '/install',
   '/api/install',
+  '/api/auth',  // next-auth 세션 체크 등 (SessionProvider 동작 유지)
   '/_next/',
   '/favicon.ico',
 ]
 
 const ALLOWED_WHEN_SETUP_REQUIRED = [
   '/setup-required',
+  '/api/auth',
   '/_next/',
   '/favicon.ico',
 ]
