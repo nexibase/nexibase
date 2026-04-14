@@ -7,7 +7,7 @@ import { Loader2, FileText, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { sanitizeHtml } from "@/lib/sanitize"
-import { useTranslations, useLocale } from 'next-intl'
+import { useTranslations } from 'next-intl'
 
 interface Content {
   id: number
@@ -19,7 +19,6 @@ interface Content {
 
 export default function ContentPage() {
   const t = useTranslations('contents')
-  const locale = useLocale()
   const params = useParams()
   const slug = params.slug as string
 
@@ -30,7 +29,7 @@ export default function ContentPage() {
   useEffect(() => {
     const fetchContent = async () => {
       try {
-        const response = await fetch(`/api/contents/${slug}?locale=${locale}`)
+        const response = await fetch(`/api/contents/${slug}`)
         const data = await response.json()
 
         if (response.ok) {
@@ -49,7 +48,7 @@ export default function ContentPage() {
     if (slug) {
       fetchContent()
     }
-  }, [slug, t, locale])
+  }, [slug, t])
 
   if (loading) {
     return (

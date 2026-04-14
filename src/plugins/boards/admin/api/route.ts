@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminUser } from '@/lib/auth'
-import { autoTranslateEntity } from '@/lib/translation/auto-translate'
 
 // 게시판 목록 조회
 export async function GET(request: NextRequest) {
@@ -141,16 +140,6 @@ export async function POST(request: NextRequest) {
         isActive: isActive ?? true
       }
     })
-
-    // 저장 후 자동 번역 트리거 (실패해도 생성 응답에 영향 없음)
-    try {
-      await autoTranslateEntity('board', newBoard.id, {
-        name: newBoard.name,
-        description: newBoard.description,
-      })
-    } catch (translateError) {
-      console.error('[auto-translate] board 생성 번역 실패:', translateError)
-    }
 
     return NextResponse.json({
       success: true,

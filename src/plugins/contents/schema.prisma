@@ -1,29 +1,13 @@
 model Content {
-  id           Int                  @id @default(autoincrement())
-  slug         String               @unique @db.VarChar(100)
-  title        String               @db.VarChar(200)
-  content      String               @db.LongText
-  isPublic     Boolean              @default(true)
-  createdAt    DateTime             @default(now())
-  updatedAt    DateTime             @updatedAt
-  translations ContentTranslation[]
+  id        Int      @id @default(autoincrement())
+  slug      String   @unique @db.VarChar(100)
+  title     String   @db.VarChar(200)
+  content   String   @db.LongText
+  isPublic  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([slug])
   @@index([isPublic])
   @@map("contents")
-}
-
-model ContentTranslation {
-  id        Int      @id @default(autoincrement())
-  contentId Int
-  locale    String   @db.VarChar(10)
-  title     String   @db.VarChar(200)
-  content   String   @db.LongText
-  source    String   @default("auto") @db.VarChar(10)
-  updatedAt DateTime @updatedAt
-  parent    Content  @relation(fields: [contentId], references: [id], onDelete: Cascade)
-
-  @@unique([contentId, locale])
-  @@index([contentId])
-  @@map("content_translations")
 }

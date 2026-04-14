@@ -13,7 +13,6 @@ import { useRouter, usePathname } from "next/navigation"
 import { headerWidgets } from "@/lib/widgets/_generated-header-widgets"
 import { useSite } from "@/lib/SiteContext"
 import { useTranslations } from 'next-intl'
-import { LocaleSwitcher } from '@/components/layout/LocaleSwitcher'
 
 interface Notification {
   id: number
@@ -218,7 +217,6 @@ export default function Header() {
 
             {/* 우측 액션 */}
             <div className="flex items-center gap-2">
-              <LocaleSwitcher />
               {/* 테마 토글 */}
               <Button
                 variant="ghost"

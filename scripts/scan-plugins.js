@@ -601,7 +601,7 @@ ${pluginSchemas.join('\n')}
 function mergeLocales(plugins) {
   const CORE_LOCALES_DIR = path.join(__dirname, '..', 'src', 'locales')
   const OUT_DIR = path.join(__dirname, '..', 'src', 'messages')
-  const LOCALES = ['en', 'ko']
+  const LOCALES = ['en']
 
   if (!fs.existsSync(OUT_DIR)) {
     fs.mkdirSync(OUT_DIR, { recursive: true })

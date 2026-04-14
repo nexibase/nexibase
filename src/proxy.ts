@@ -15,18 +15,8 @@ function stripLocale(pathname: string): string {
   return pathname
 }
 
-const DISABLED_MESSAGES: Record<string, string> = {
-  en: 'This feature is disabled.',
-  ko: '이 기능은 비활성화되었습니다.',
-}
-
-function disabledMessage(pathname: string): string {
-  for (const locale of ['en', 'ko']) {
-    if (pathname === `/${locale}` || pathname.startsWith(`/${locale}/`)) {
-      return DISABLED_MESSAGES[locale]
-    }
-  }
-  return DISABLED_MESSAGES.en
+function disabledMessage(_pathname: string): string {
+  return 'This feature is disabled.'
 }
 
 async function checkPluginBlocked(

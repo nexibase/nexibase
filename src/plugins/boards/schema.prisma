@@ -19,8 +19,7 @@ model Board {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
   displayType       String   @default("list") @db.VarChar(20)
-  posts        Post[]
-  translations BoardTranslation[]
+  posts             Post[]
 
   @@index([slug])
   @@index([category])
@@ -116,19 +115,4 @@ model Reaction {
   @@index([postId])
   @@index([commentId])
   @@map("reactions")
-}
-
-model BoardTranslation {
-  id          Int      @id @default(autoincrement())
-  boardId     Int
-  locale      String   @db.VarChar(10)
-  name        String   @db.VarChar(100)
-  description String?  @db.VarChar(500)
-  source      String   @default("auto") @db.VarChar(10)
-  updatedAt   DateTime @updatedAt
-  board       Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
-
-  @@unique([boardId, locale])
-  @@index([boardId])
-  @@map("board_translations")
 }

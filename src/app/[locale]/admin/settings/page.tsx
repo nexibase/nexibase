@@ -4,8 +4,6 @@ import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { Sidebar } from "@/components/admin/Sidebar"
-import { LocaleTabs } from "@/components/admin/LocaleTabs"
-import { LocaleField } from "@/components/admin/LocaleField"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -28,7 +26,6 @@ import {
   ImageIcon,
   BarChart3,
 } from "lucide-react"
-import { routing } from "@/i18n/routing"
 
 interface FooterLink {
   label: string
@@ -46,7 +43,6 @@ interface SettingsData {
   email_verification_required: string
 
   // 푸터 설정
-  footer_text: string
   footer_copyright: string
   footer_links: string
 
@@ -61,9 +57,6 @@ interface SettingsData {
   ga4_property_id: string
   ga4_service_account_json: string
 
-  // 번역 API (Google Cloud Translation)
-  google_translate_project_id: string
-  google_translate_credentials_json: string
 }
 
 interface ThemeInfo {
@@ -79,30 +72,19 @@ interface LayoutInfo {
   files: { Header: boolean; HomePage: boolean; Footer: boolean }
 }
 
-// SettingTranslation row from API
-interface TranslationRow {
-  key: string
-  locale: string
-  value: string
-  source: string
-}
-
 const DEFAULT_SETTINGS: SettingsData = {
   site_name: 'NexiBase',
   site_description: '',
   site_logo: '',
   signup_enabled: 'true',
   email_verification_required: 'false',
-  footer_text: '',
   footer_copyright: '',
   footer_links: '[]',
   layout_folder: 'default',
   theme_folder: 'default',
   google_analytics_id: '',
   ga4_property_id: '',
-  ga4_service_account_json: '',
-  google_translate_project_id: '',
-  google_translate_credentials_json: ''
+  ga4_service_account_json: ''
 }
 
 export default function SettingsPage() {
@@ -115,11 +97,6 @@ export default function SettingsPage() {
   const [hasSettings, setHasSettings] = useState(false)
   const [layouts, setLayouts] = useState<LayoutInfo[]>([])
   const [themes, setThemes] = useState<ThemeInfo[]>([])
-
-  // sub-locale translations: { locale: { site_name?, site_description?, footer_text? } }
-  const [settingTranslations, setSettingTranslations] = useState<Record<string, Record<string, string>>>({})
-  // existing translation source info: "locale__key" -> source
-  const [translationSources, setTranslationSources] = useState<Record<string, string>>({})
 
   // Google Analytics 섹션 전용 상태
   const [gaJsonEditing, setGaJsonEditing] = useState(false)
@@ -169,48 +146,6 @@ export default function SettingsPage() {
     }
   }
 
-  // 번역 API 섹션 전용 상태
-  const [translateJsonEditing, setTranslateJsonEditing] = useState(false)
-  const [translateJsonDraft, setTranslateJsonDraft] = useState('')
-  const [translateTestResult, setTranslateTestResult] = useState<
-    | { status: 'idle' }
-    | { status: 'loading' }
-    | { status: 'success'; sample: string }
-    | { status: 'error'; message: string }
-  >({ status: 'idle' })
-
-  const handleTranslateJsonEdit = () => {
-    setTranslateJsonDraft('')
-    setTranslateJsonEditing(true)
-  }
-
-  const handleTranslateJsonCancel = () => {
-    setTranslateJsonEditing(false)
-    setTranslateJsonDraft('')
-  }
-
-  const handleTranslateJsonApply = () => {
-    handleChange('google_translate_credentials_json', translateJsonDraft)
-    setTranslateJsonEditing(false)
-    setTranslateJsonDraft('')
-    if (translateTestResult.status !== 'idle') setTranslateTestResult({ status: 'idle' })
-  }
-
-  const handleTranslateTest = async () => {
-    setTranslateTestResult({ status: 'loading' })
-    try {
-      const res = await fetch('/api/admin/translations/test', { method: 'POST' })
-      const data = await res.json()
-      if (data.ok) {
-        setTranslateTestResult({ status: 'success', sample: data.sample })
-      } else {
-        setTranslateTestResult({ status: 'error', message: data.error || 'Unknown error' })
-      }
-    } catch (err) {
-      setTranslateTestResult({ status: 'error', message: err instanceof Error ? err.message : String(err) })
-    }
-  }
-
   // JSON 문자열을 FooterLink 배열로 파싱
   const parseFooterLinks = (jsonStr: string): FooterLink[] => {
     try {
@@ -239,20 +174,6 @@ export default function SettingsPage() {
         }
         setSettings(newSettings)
         setFooterLinks(parseFooterLinks(newSettings.footer_links))
-
-        // 기존 번역 rows를 settingTranslations state에 로드
-        if (Array.isArray(data.translations)) {
-          const byLocale: Record<string, Record<string, string>> = {}
-          const sources: Record<string, string> = {}
-          for (const row of data.translations as TranslationRow[]) {
-            if (row.locale === routing.defaultLocale) continue
-            if (!byLocale[row.locale]) byLocale[row.locale] = {}
-            byLocale[row.locale][row.key] = row.value
-            sources[`${row.locale}__${row.key}`] = row.source
-          }
-          setSettingTranslations(byLocale)
-          setTranslationSources(sources)
-        }
       }
     } catch (error) {
       console.error('설정 조회 에러:', error)
@@ -292,10 +213,7 @@ export default function SettingsPage() {
       const response = await fetch('/api/admin/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          settings: settingsToSave,
-          translations: settingTranslations,
-        }),
+        body: JSON.stringify({ settings: settingsToSave })
       })
 
       const data = await response.json()
@@ -345,16 +263,6 @@ export default function SettingsPage() {
     setSettings(prev => ({ ...prev, [key]: value }))
   }
 
-  // sub-locale 번역 값 변경 핸들러
-  const handleTranslationChange = (locale: string, key: string, value: string) => {
-    setSettingTranslations(prev => ({
-      ...prev,
-      [locale]: { ...prev[locale], [key]: value },
-    }))
-    // mark source as manual once user edits
-    setTranslationSources(prev => ({ ...prev, [`${locale}__${key}`]: 'manual' }))
-  }
-
   // 스위치 변경 핸들러
   const handleSwitchChange = (key: keyof SettingsData, checked: boolean) => {
     setSettings(prev => ({ ...prev, [key]: checked ? 'true' : 'false' }))
@@ -375,15 +283,6 @@ export default function SettingsPage() {
     setFooterLinks(footerLinks.map((link, i) =>
       i === index ? { ...link, [field]: value } : link
     ))
-  }
-
-  // LocaleTabs getStatus helper for a given field key
-  const getFieldStatus = (fieldKey: string) => (locale: string) => {
-    if (locale === routing.defaultLocale) return undefined
-    const src = translationSources[`${locale}__${fieldKey}`]
-    if (!src) return 'missing' as const
-    if (src === 'manual') return 'manual' as const
-    return 'auto' as const
   }
 
   if (loading) {
@@ -450,68 +349,30 @@ export default function SettingsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* site_name — translatable */}
                 <div className="grid gap-2">
-                  <Label>{t('siteName')}</Label>
-                  <LocaleTabs
-                    getStatus={getFieldStatus('site_name')}
-                    renderTab={(locale, isDefault) => (
-                      <LocaleField
-                        label={t('siteName')}
-                        isDefaultLocale={isDefault}
-                        subLocaleHint={t('translationSubLocaleHint')}
-                      >
-                        {isDefault ? (
-                          <Input
-                            value={settings.site_name}
-                            onChange={(e) => handleChange('site_name', e.target.value)}
-                            placeholder="NexiBase"
-                          />
-                        ) : (
-                          <Input
-                            value={settingTranslations[locale]?.site_name ?? ''}
-                            onChange={(e) => handleTranslationChange(locale, 'site_name', e.target.value)}
-                            placeholder="NexiBase"
-                          />
-                        )}
-                      </LocaleField>
-                    )}
+                  <Label htmlFor="site_name">{t('siteName')}</Label>
+                  <Input
+                    id="site_name"
+                    value={settings.site_name}
+                    onChange={(e) => handleChange('site_name', e.target.value)}
+                    placeholder="NexiBase"
                   />
                 </div>
 
-                {/* site_description — translatable */}
                 <div className="grid gap-2">
-                  <Label>{t('siteDescription')}</Label>
-                  <LocaleTabs
-                    getStatus={getFieldStatus('site_description')}
-                    renderTab={(locale, isDefault) => (
-                      <LocaleField
-                        label={t('siteDescription')}
-                        helperText={isDefault ? t('seoMetaDesc') : undefined}
-                        isDefaultLocale={isDefault}
-                        subLocaleHint={t('translationSubLocaleHint')}
-                      >
-                        {isDefault ? (
-                          <Textarea
-                            value={settings.site_description}
-                            onChange={(e) => handleChange('site_description', e.target.value)}
-                            placeholder={t('siteDescriptionPlaceholder')}
-                            rows={3}
-                          />
-                        ) : (
-                          <Textarea
-                            value={settingTranslations[locale]?.site_description ?? ''}
-                            onChange={(e) => handleTranslationChange(locale, 'site_description', e.target.value)}
-                            placeholder={t('siteDescriptionPlaceholder')}
-                            rows={3}
-                          />
-                        )}
-                      </LocaleField>
-                    )}
+                  <Label htmlFor="site_description">{t('siteDescription')}</Label>
+                  <Textarea
+                    id="site_description"
+                    value={settings.site_description}
+                    onChange={(e) => handleChange('site_description', e.target.value)}
+                    placeholder={t('siteDescriptionPlaceholder')}
+                    rows={3}
                   />
+                  <p className="text-sm text-muted-foreground">
+                    {t('seoMetaDesc')}
+                  </p>
                 </div>
 
-                {/* site_logo — NOT translatable, stays as-is */}
                 <div className="grid gap-2">
                   <Label>{t('siteLogo')}</Label>
                   <div className="flex items-center gap-4">
@@ -714,117 +575,7 @@ export default function SettingsPage() {
               </CardContent>
             </Card>
 
-            {/* 번역 API (Google Cloud Translation) */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5" />
-                  번역 API
-                </CardTitle>
-                <CardDescription>
-                  Google Cloud Translation으로 관리자 콘텐츠(게시판·메뉴·약관 등)를 저장 시점에 자동 번역합니다. 설정하지 않으면 수동 번역만 사용됩니다.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="rounded-md border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-900 p-3 text-sm">
-                  <p className="font-medium mb-1">설정 방법</p>
-                  <p className="text-muted-foreground">
-                    Google Cloud Console에서 Translation API를 활성화한 뒤, 서비스 계정(역할: Cloud Translation API 사용자)을 만들고 JSON 키를 발급받아 아래에 붙여넣으세요.
-                  </p>
-                </div>
-
-                <div className="grid gap-2">
-                  <Label htmlFor="google_translate_project_id">Google Cloud Project ID</Label>
-                  <Input
-                    id="google_translate_project_id"
-                    value={settings.google_translate_project_id}
-                    onChange={(e) => handleChange('google_translate_project_id', e.target.value)}
-                    placeholder="nexibase-i18n"
-                  />
-                  <p className="text-sm text-muted-foreground">
-                    Google Cloud Console에 표시되는 프로젝트 ID를 입력합니다.
-                  </p>
-                </div>
-
-                <div className="grid gap-2">
-                  <Label htmlFor="google_translate_credentials_json">서비스 계정 JSON</Label>
-                  {!translateJsonEditing ? (
-                    <div className="flex items-center gap-2 rounded-md border px-3 py-2">
-                      {settings.google_translate_credentials_json ? (
-                        <span className="text-sm text-green-700 dark:text-green-400">
-                          ✓ JSON 키가 저장되어 있습니다
-                        </span>
-                      ) : (
-                        <span className="text-sm text-muted-foreground">
-                          저장된 키가 없습니다
-                        </span>
-                      )}
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="ml-auto"
-                        onClick={handleTranslateJsonEdit}
-                      >
-                        {settings.google_translate_credentials_json ? '변경' : '입력'}
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <Textarea
-                        id="google_translate_credentials_json"
-                        value={translateJsonDraft}
-                        onChange={(e) => setTranslateJsonDraft(e.target.value)}
-                        placeholder='{"type":"service_account","project_id":"...","private_key":"..."}'
-                        rows={8}
-                        className="font-mono text-sm"
-                      />
-                      <div className="flex gap-2">
-                        <Button type="button" size="sm" onClick={handleTranslateJsonApply}>
-                          적용
-                        </Button>
-                        <Button type="button" variant="outline" size="sm" onClick={handleTranslateJsonCancel}>
-                          취소
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                  <p className="text-sm text-muted-foreground">
-                    보안상 저장된 JSON 내용은 화면에 표시되지 않습니다. 변경하려면 새 JSON을 붙여넣고 저장하세요.
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-3 pt-2 border-t">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleTranslateTest}
-                    disabled={
-                      translateTestResult.status === 'loading' ||
-                      !settings.google_translate_project_id ||
-                      !settings.google_translate_credentials_json
-                    }
-                  >
-                    {translateTestResult.status === 'loading' ? '테스트 중...' : '연결 테스트'}
-                  </Button>
-                  {translateTestResult.status === 'success' && (
-                    <span className="text-sm text-green-700 dark:text-green-400">
-                      ✓ 번역 성공: "Hello, world!" → "{translateTestResult.sample}"
-                    </span>
-                  )}
-                  {translateTestResult.status === 'error' && (
-                    <span className="text-sm text-red-600 dark:text-red-400">
-                      ✗ {translateTestResult.message}
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  연결 테스트는 저장된 설정값을 사용합니다. 새로 입력한 내용을 먼저 저장한 뒤 테스트하세요.
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* 회원 설정 — NOT translatable, unchanged */}
+            {/* 회원 설정 */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -878,38 +629,6 @@ export default function SettingsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* footer_text — translatable */}
-                <div className="grid gap-2">
-                  <Label>{t('footerText')}</Label>
-                  <LocaleTabs
-                    getStatus={getFieldStatus('footer_text')}
-                    renderTab={(locale, isDefault) => (
-                      <LocaleField
-                        label={t('footerText')}
-                        isDefaultLocale={isDefault}
-                        subLocaleHint={t('translationSubLocaleHint')}
-                      >
-                        {isDefault ? (
-                          <Textarea
-                            value={settings.footer_text}
-                            onChange={(e) => handleChange('footer_text', e.target.value)}
-                            placeholder={t('footerTextPlaceholder')}
-                            rows={2}
-                          />
-                        ) : (
-                          <Textarea
-                            value={settingTranslations[locale]?.footer_text ?? ''}
-                            onChange={(e) => handleTranslationChange(locale, 'footer_text', e.target.value)}
-                            placeholder={t('footerTextPlaceholder')}
-                            rows={2}
-                          />
-                        )}
-                      </LocaleField>
-                    )}
-                  />
-                </div>
-
-                {/* footer_copyright — NOT translatable */}
                 <div className="grid gap-2">
                   <Label htmlFor="footer_copyright">{t('copyrightText')}</Label>
                   <Input

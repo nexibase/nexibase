@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useTranslations, useLocale } from "next-intl"
+import { useTranslations } from "next-intl"
 import WidgetRenderer from "@/lib/widgets/renderer"
 
 interface WidgetData {
@@ -18,14 +18,13 @@ interface WidgetData {
 
 export default function HomePage() {
   const tc = useTranslations('common')
-  const locale = useLocale()
   const [allWidgets, setAllWidgets] = useState<WidgetData[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     const fetchWidgets = async () => {
       try {
-        const res = await fetch(`/api/home-widgets?locale=${locale}`)
+        const res = await fetch('/api/home-widgets')
         if (res.ok) {
           const data = await res.json()
           const widgets: WidgetData[] = []
@@ -43,7 +42,7 @@ export default function HomePage() {
       }
     }
     fetchWidgets()
-  }, [locale])
+  }, [])
 
   const topWidgets = allWidgets.filter(w => w.zone === 'top')
   const centerWidgets = allWidgets.filter(w => w.zone === 'center')

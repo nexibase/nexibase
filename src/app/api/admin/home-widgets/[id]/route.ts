@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminUser } from '@/lib/auth'
-import { autoTranslateEntity, invalidateAutoTranslations } from '@/lib/translation/auto-translate'
 
 // PUT /api/admin/home-widgets/[id] — update widget settings/zone/order
 export async function PUT(
@@ -18,8 +17,6 @@ export async function PUT(
     const widgetId = parseInt(id)
     const body = await request.json()
 
-    const titleChanged = body.title !== undefined
-
     const widget = await prisma.homeWidget.update({
       where: { id: widgetId },
       data: {
@@ -32,27 +29,6 @@ export async function PUT(
         ...(body.sortOrder !== undefined && { sortOrder: body.sortOrder }),
       },
     })
-
-    // Upsert manual translations if provided
-    if (body.translations) {
-      for (const [locale, fields] of Object.entries(body.translations as Record<string, { title: string }>)) {
-        await prisma.homeWidgetTranslation.upsert({
-          where: { widgetId_locale: { widgetId: widget.id, locale } },
-          create: { widgetId: widget.id, locale, title: fields.title, source: 'manual' },
-          update: { title: fields.title, source: 'manual' },
-        })
-      }
-    }
-
-    // If title changed, invalidate auto-translations and re-translate
-    if (titleChanged) {
-      try {
-        await invalidateAutoTranslations('homeWidget', widget.id)
-        await autoTranslateEntity('homeWidget', widget.id, { title: widget.title })
-      } catch (e) {
-        console.error('[homeWidget PUT] auto-translate failed:', e)
-      }
-    }
 
     return NextResponse.json({ widget })
   } catch (error) {

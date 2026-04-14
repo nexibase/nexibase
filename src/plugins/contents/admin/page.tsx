@@ -25,16 +25,6 @@ import {
   FileEdit,
 } from "lucide-react"
 import { useTranslations } from 'next-intl'
-import { LocaleTabs } from "@/components/admin/LocaleTabs"
-import { LocaleField } from "@/components/admin/LocaleField"
-import { routing } from "@/i18n/routing"
-
-interface ContentTranslationRow {
-  locale: string
-  title: string
-  content: string
-  source: 'auto' | 'manual'
-}
 
 interface Content {
   id: number
@@ -45,7 +35,6 @@ interface Content {
   createdAt: string
   updatedAt: string
   selected?: boolean
-  translations?: ContentTranslationRow[]
 }
 
 // 콘텐츠 모달
@@ -58,7 +47,7 @@ function ContentModal({
   isOpen: boolean
   onClose: () => void
   content: Content | null
-  onSave: (data: Partial<Content> & { translations?: Record<string, { title: string; content: string }> }) => void
+  onSave: (data: Partial<Content>) => void
 }) {
   const t = useTranslations('contents.admin')
   const [formData, setFormData] = useState({
@@ -67,7 +56,6 @@ function ContentModal({
     content: '',
     isPublic: true,
   })
-  const [translations, setTranslations] = useState<Record<string, { title: string; content: string; source: 'auto' | 'manual' | 'missing' }>>({})
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
@@ -78,19 +66,6 @@ function ContentModal({
         content: content.content || '',
         isPublic: content.isPublic ?? true,
       })
-      if (Array.isArray(content.translations)) {
-        const trMap: Record<string, { title: string; content: string; source: 'auto' | 'manual' | 'missing' }> = {}
-        for (const row of content.translations as ContentTranslationRow[]) {
-          trMap[row.locale] = {
-            title: row.title,
-            content: row.content,
-            source: row.source,
-          }
-        }
-        setTranslations(trMap)
-      } else {
-        setTranslations({})
-      }
     } else {
       setFormData({
         slug: '',
@@ -98,22 +73,13 @@ function ContentModal({
         content: '',
         isPublic: true,
       })
-      setTranslations({})
     }
   }, [content, isOpen])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    const manualTranslations = Object.fromEntries(
-      Object.entries(translations)
-        .filter(([, v]) => v.source === 'manual')
-        .map(([loc, v]) => [loc, { title: v.title, content: v.content }])
-    )
-    await onSave({
-      ...formData,
-      translations: Object.keys(manualTranslations).length > 0 ? manualTranslations : undefined,
-    })
+    await onSave(formData)
     setLoading(false)
   }
 
@@ -136,73 +102,47 @@ function ContentModal({
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="slug">
-              {t('slugRequired')} <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="slug"
-              placeholder="about, company, contact..."
-              value={formData.slug}
-              onChange={(e) => setFormData({ ...formData, slug: e.target.value.toLowerCase() })}
-              className={content ? 'bg-muted' : ''}
-              disabled={!!content}
-              required
-            />
-            <p className="text-xs text-muted-foreground">
-              {t('slugHint')}
-            </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="slug">
+                {t('slugRequired')} <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="slug"
+                placeholder="about, company, contact..."
+                value={formData.slug}
+                onChange={(e) => setFormData({ ...formData, slug: e.target.value.toLowerCase() })}
+                className={content ? 'bg-muted' : ''}
+                disabled={!!content}
+                required
+              />
+              <p className="text-xs text-muted-foreground">
+                {t('slugHint')}
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="title">
+                {t('titleRequired')} <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="title"
+                placeholder={t('titlePlaceholder')}
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                required
+              />
+            </div>
           </div>
 
-          <LocaleTabs
-            getStatus={(locale) => locale === routing.defaultLocale ? undefined : translations[locale]?.source ?? 'missing'}
-            renderTab={(locale, isDefault) => {
-              if (isDefault) {
-                return (
-                  <>
-                    <LocaleField label={`${t('titleRequired')} *`} isDefaultLocale>
-                      <Input
-                        placeholder={t('titlePlaceholder')}
-                        value={formData.title}
-                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                        required
-                      />
-                    </LocaleField>
-                    <LocaleField label={t('content')} isDefaultLocale>
-                      <TiptapEditor
-                        content={formData.content}
-                        onChange={(value) => setFormData({ ...formData, content: value })}
-                        placeholder={t('contentPlaceholder')}
-                      />
-                    </LocaleField>
-                  </>
-                )
-              }
-              const tr = translations[locale] ?? { title: '', content: '', source: 'missing' as const }
-              return (
-                <>
-                  <LocaleField label={t('titleRequired')} isDefaultLocale={false} subLocaleHint="비워두면 기본 언어 원본이 노출됩니다. 수정하면 수동 번역으로 전환됩니다.">
-                    <Input
-                      value={tr.title}
-                      onChange={(e) => setTranslations({
-                        ...translations,
-                        [locale]: { ...tr, title: e.target.value, source: 'manual' }
-                      })}
-                    />
-                  </LocaleField>
-                  <LocaleField label={t('content')} isDefaultLocale={false}>
-                    <TiptapEditor
-                      content={tr.content}
-                      onChange={(value) => setTranslations({
-                        ...translations,
-                        [locale]: { ...tr, content: value, source: 'manual' }
-                      })}
-                    />
-                  </LocaleField>
-                </>
-              )
-            }}
-          />
+          <div className="space-y-2">
+            <Label>{t('content')}</Label>
+            <TiptapEditor
+              content={formData.content}
+              onChange={(value) => setFormData({ ...formData, content: value })}
+              placeholder={t('contentPlaceholder')}
+            />
+          </div>
 
           <div className="flex items-center space-x-2">
             <input
@@ -296,7 +236,7 @@ export default function ContentsPage() {
   }, [fetchContents])
 
   // 콘텐츠 저장
-  const handleSaveContent = async (formData: Partial<Content> & { translations?: Record<string, { title: string; content: string }> }) => {
+  const handleSaveContent = async (formData: Partial<Content>) => {
     try {
       const url = editingContent
         ? `/api/admin/contents/${editingContent.id}`

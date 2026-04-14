@@ -25,16 +25,6 @@ import {
   Scale,
 } from "lucide-react"
 import { useTranslations } from 'next-intl'
-import { LocaleTabs } from "@/components/admin/LocaleTabs"
-import { LocaleField } from "@/components/admin/LocaleField"
-import { routing } from "@/i18n/routing"
-
-interface PolicyTranslationRow {
-  locale: string
-  title: string
-  content: string
-  source: 'auto' | 'manual'
-}
 
 interface Policy {
   id: number
@@ -46,7 +36,6 @@ interface Policy {
   createdAt: string
   updatedAt: string
   selected?: boolean
-  translations?: PolicyTranslationRow[]
 }
 
 interface SlugGroup {
@@ -64,7 +53,7 @@ function PolicyModal({
   isOpen: boolean
   onClose: () => void
   policy: Policy | null
-  onSave: (data: Partial<Policy> & { translations?: Record<string, { title: string; content: string }> }) => void
+  onSave: (data: Partial<Policy>) => void
 }) {
   const t = useTranslations('policies.admin')
   const [formData, setFormData] = useState({
@@ -73,7 +62,6 @@ function PolicyModal({
     title: '',
     content: '',
   })
-  const [translations, setTranslations] = useState<Record<string, { title: string; content: string; source: 'auto' | 'manual' | 'missing' }>>({})
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
@@ -84,19 +72,6 @@ function PolicyModal({
         title: policy.title || '',
         content: policy.content || '',
       })
-      if (Array.isArray(policy.translations)) {
-        const trMap: Record<string, { title: string; content: string; source: 'auto' | 'manual' | 'missing' }> = {}
-        for (const row of policy.translations as PolicyTranslationRow[]) {
-          trMap[row.locale] = {
-            title: row.title,
-            content: row.content,
-            source: row.source,
-          }
-        }
-        setTranslations(trMap)
-      } else {
-        setTranslations({})
-      }
     } else {
       setFormData({
         slug: '',
@@ -104,22 +79,13 @@ function PolicyModal({
         title: '',
         content: '',
       })
-      setTranslations({})
     }
   }, [policy, isOpen])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    const manualTranslations = Object.fromEntries(
-      Object.entries(translations)
-        .filter(([, v]) => v.source === 'manual')
-        .map(([loc, v]) => [loc, { title: v.title, content: v.content }])
-    )
-    await onSave({
-      ...formData,
-      translations: Object.keys(manualTranslations).length > 0 ? manualTranslations : undefined,
-    })
+    await onSave(formData)
     setLoading(false)
   }
 
@@ -142,7 +108,7 @@ function PolicyModal({
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="slug">
                 {t('slugRequired')} <span className="text-red-500">*</span>
@@ -178,57 +144,29 @@ function PolicyModal({
                 {t('versionHint')}
               </p>
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="title">
+                {t('titleRequired')} <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="title"
+                placeholder={t('titlePlaceholder')}
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                required
+              />
+            </div>
           </div>
 
-          <LocaleTabs
-            getStatus={(locale) => locale === routing.defaultLocale ? undefined : translations[locale]?.source ?? 'missing'}
-            renderTab={(locale, isDefault) => {
-              if (isDefault) {
-                return (
-                  <>
-                    <LocaleField label={`${t('titleRequired')} *`} isDefaultLocale>
-                      <Input
-                        placeholder={t('titlePlaceholder')}
-                        value={formData.title}
-                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                        required
-                      />
-                    </LocaleField>
-                    <LocaleField label={t('content')} isDefaultLocale>
-                      <TiptapEditor
-                        content={formData.content}
-                        onChange={(value) => setFormData({ ...formData, content: value })}
-                        placeholder={t('contentPlaceholder')}
-                      />
-                    </LocaleField>
-                  </>
-                )
-              }
-              const tr = translations[locale] ?? { title: '', content: '', source: 'missing' as const }
-              return (
-                <>
-                  <LocaleField label={t('titleRequired')} isDefaultLocale={false} subLocaleHint="비워두면 기본 언어 원본이 노출됩니다. 수정하면 수동 번역으로 전환됩니다.">
-                    <Input
-                      value={tr.title}
-                      onChange={(e) => setTranslations({
-                        ...translations,
-                        [locale]: { ...tr, title: e.target.value, source: 'manual' }
-                      })}
-                    />
-                  </LocaleField>
-                  <LocaleField label={t('content')} isDefaultLocale={false}>
-                    <TiptapEditor
-                      content={tr.content}
-                      onChange={(value) => setTranslations({
-                        ...translations,
-                        [locale]: { ...tr, content: value, source: 'manual' }
-                      })}
-                    />
-                  </LocaleField>
-                </>
-              )
-            }}
-          />
+          <div className="space-y-2">
+            <Label>{t('content')}</Label>
+            <TiptapEditor
+              content={formData.content}
+              onChange={(value) => setFormData({ ...formData, content: value })}
+              placeholder={t('contentPlaceholder')}
+            />
+          </div>
 
           {!policy && (
             <p className="text-sm text-muted-foreground bg-muted p-3 rounded-lg">
@@ -318,7 +256,7 @@ export default function PoliciesPage() {
   }, [fetchPolicies])
 
   // 약관 저장
-  const handleSavePolicy = async (formData: Partial<Policy> & { translations?: Record<string, { title: string; content: string }> }) => {
+  const handleSavePolicy = async (formData: Partial<Policy>) => {
     try {
       const url = editingPolicy
         ? `/api/admin/policies/${editingPolicy.id}`
@@ -666,7 +604,6 @@ export default function PoliciesPage() {
         policy={editingPolicy}
         onSave={handleSavePolicy}
       />
-
     </div>
   )
 }
