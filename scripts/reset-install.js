@@ -70,8 +70,18 @@ async function main() {
   await prisma.board.deleteMany({})
   console.log('✓ boards 삭제 (cascade로 posts·comments·reactions·attachments 포함)')
 
+  // Shop 플러그인의 user-referencing 테이블 (Order는 cascade 없음)
+  if (prisma.order) {
+    await prisma.order.deleteMany({})
+    console.log('✓ shop orders 삭제 (cascade로 order_items 포함)')
+  }
+  if (prisma.pendingOrder) {
+    await prisma.pendingOrder.deleteMany({})
+    console.log('✓ shop pending_orders 삭제')
+  }
+
   await prisma.user.deleteMany({})
-  console.log('✓ users 삭제 (cascade로 accounts·notifications·user_addresses 포함)')
+  console.log('✓ users 삭제 (cascade로 accounts·notifications·user_addresses·reviews·qnas·wishlists 포함)')
 
   console.log('')
   console.log('완료.')
