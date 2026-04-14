@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { Github, Twitter, MessageCircle } from "lucide-react"
-import { useTranslations } from 'next-intl'
 
 interface FooterSettings {
   site_name: string
@@ -18,7 +16,6 @@ interface FooterMenuItem {
 }
 
 export default function Footer() {
-  const t = useTranslations('footer')
   const [settings, setSettings] = useState<FooterSettings>({
     site_name: 'NexiBase',
     footer_copyright: '',
@@ -92,34 +89,7 @@ export default function Footer() {
                 </ul>
               </div>
             ))
-          ) : (
-            <>
-              {/* 폴백: 하드코딩 메뉴 */}
-              <div>
-                <h4 className="font-semibold text-foreground mb-3 text-sm">{t('community')}</h4>
-                <ul className="space-y-2">
-                  <li><Link href="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">{t('home')}</Link></li>
-                  <li><Link href="/posts/popular" className="text-sm text-muted-foreground hover:text-foreground transition-colors">{t('popular')}</Link></li>
-                  <li><Link href="/boards" className="text-sm text-muted-foreground hover:text-foreground transition-colors">전체 게시판</Link></li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-semibold text-foreground mb-3 text-sm">정보</h4>
-                <ul className="space-y-2">
-                  <li><Link href="/contents/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">회사소개</Link></li>
-                  <li><Link href="/contents/faq" className="text-sm text-muted-foreground hover:text-foreground transition-colors">자주 묻는 질문</Link></li>
-                  <li><Link href="/contents/contact" className="text-sm text-muted-foreground hover:text-foreground transition-colors">문의하기</Link></li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-semibold text-foreground mb-3 text-sm">정책</h4>
-                <ul className="space-y-2">
-                  <li><Link href="/policies/terms" className="text-sm text-muted-foreground hover:text-foreground transition-colors">이용약관</Link></li>
-                  <li><Link href="/policies/privacy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">개인정보처리방침</Link></li>
-                </ul>
-              </div>
-            </>
-          )}
+          ) : null /* DB 메뉴 로드 전엔 빈 상태 (하드코딩 한국어 fallback 제거) */}
         </div>
 
         {/* 하단 Copyright */}
