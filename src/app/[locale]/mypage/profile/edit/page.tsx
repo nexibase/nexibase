@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import Link from "next/link"
 import { MyPageLayout } from "@/components/layout/MyPageLayout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -20,6 +21,8 @@ interface UserInfo {
 }
 
 export default function EditProfilePage() {
+  const t = useTranslations('mypage')
+  const tc = useTranslations('common')
   const router = useRouter()
   const [user, setUser] = useState<UserInfo | null>(null)
   const [loading, setLoading] = useState(true)
@@ -56,15 +59,15 @@ export default function EditProfilePage() {
         body: JSON.stringify({ nickname, name, phone }),
       })
       if (res.ok) {
-        setMessage('저장되었습니다.')
+        setMessage(t('saved'))
         const data = await res.json()
         if (data.user) setUser(data.user)
       } else {
         const data = await res.json()
-        setMessage(data.error || '저장 실패')
+        setMessage(data.error || t('saveFailed'))
       }
     } catch {
-      setMessage('서버 오류')
+      setMessage(t('serverError'))
     } finally {
       setSaving(false)
       setTimeout(() => setMessage(''), 3000)
@@ -82,12 +85,12 @@ export default function EditProfilePage() {
       const data = await res.json()
       if (res.ok && data.imageUrl) {
         setUser(prev => prev ? { ...prev, image: data.imageUrl } : prev)
-        setMessage('프로필 이미지가 변경되었습니다.')
+        setMessage(t('profileImageChanged'))
       } else {
-        setMessage(data.error || '이미지 업로드 실패')
+        setMessage(data.error || t('imageUploadFailed'))
       }
     } catch {
-      setMessage('이미지 업로드 실패')
+      setMessage(t('imageUploadFailed'))
     } finally {
       setUploadingImage(false)
       if (fileInputRef.current) fileInputRef.current.value = ''
@@ -102,10 +105,10 @@ export default function EditProfilePage() {
       const res = await fetch('/api/me/profile-image', { method: 'DELETE' })
       if (res.ok) {
         setUser(prev => prev ? { ...prev, image: null } : prev)
-        setMessage('프로필 이미지가 삭제되었습니다.')
+        setMessage(t('profileImageDeleted'))
       }
     } catch {
-      setMessage('이미지 삭제 실패')
+      setMessage(t('imageDeleteFailed'))
     } finally {
       setUploadingImage(false)
       setTimeout(() => setMessage(''), 3000)
@@ -115,7 +118,7 @@ export default function EditProfilePage() {
   if (loading) {
     return (
       <MyPageLayout>
-        <div className="py-12 text-center text-muted-foreground">로딩 중...</div>
+        <div className="py-12 text-center text-muted-foreground">{tc('loading')}</div>
       </MyPageLayout>
     )
   }
@@ -131,7 +134,7 @@ export default function EditProfilePage() {
               <ArrowLeft className="h-5 w-5" />
             </Button>
           </Link>
-          <h1 className="text-xl font-bold">프로필 수정</h1>
+          <h1 className="text-xl font-bold">{t('editProfile')}</h1>
         </div>
 
         {message && (
@@ -164,11 +167,11 @@ export default function EditProfilePage() {
           />
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={uploadingImage}>
-              <Camera className="h-3.5 w-3.5 mr-1" /> 변경
+              <Camera className="h-3.5 w-3.5 mr-1" /> {t('changeImage')}
             </Button>
             {user.image && (
               <Button variant="outline" size="sm" onClick={handleImageDelete} disabled={uploadingImage} className="text-destructive hover:text-destructive">
-                <Trash2 className="h-3.5 w-3.5 mr-1" /> 삭제
+                <Trash2 className="h-3.5 w-3.5 mr-1" /> {t('deleteImage')}
               </Button>
             )}
           </div>
@@ -176,29 +179,29 @@ export default function EditProfilePage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">기본 정보</CardTitle>
+            <CardTitle className="text-base">{t('basicInfo')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label>닉네임</Label>
+              <Label>{t('nickname')}</Label>
               <Input value={nickname} onChange={e => setNickname(e.target.value)} />
             </div>
             <div>
-              <Label>이름</Label>
-              <Input value={name} onChange={e => setName(e.target.value)} placeholder="실명" />
+              <Label>{t('name')}</Label>
+              <Input value={name} onChange={e => setName(e.target.value)} placeholder={t('realNamePlaceholder')} />
             </div>
             <div>
-              <Label>연락처</Label>
-              <Input value={phone} onChange={e => setPhone(e.target.value)} placeholder="010-0000-0000" />
+              <Label>{t('phone')}</Label>
+              <Input value={phone} onChange={e => setPhone(e.target.value)} placeholder={t('phonePlaceholder')} />
             </div>
             <div>
-              <Label>이메일</Label>
+              <Label>{t('email')}</Label>
               <Input value={user.email} disabled className="bg-muted" />
-              <p className="text-xs text-muted-foreground mt-1">이메일은 변경할 수 없습니다</p>
+              <p className="text-xs text-muted-foreground mt-1">{t('emailReadonly')}</p>
             </div>
             <Button onClick={handleSave} disabled={saving} className="w-full">
               <Save className="h-4 w-4 mr-2" />
-              {saving ? '저장 중...' : '저장'}
+              {saving ? t('saving') : t('save')}
             </Button>
           </CardContent>
         </Card>

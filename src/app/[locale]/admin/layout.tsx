@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 
 export default function AdminLayout({
   children,
@@ -9,6 +10,7 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   const router = useRouter()
+  const t = useTranslations('admin')
   const [isLoading, setIsLoading] = useState(true)
   const [isAuthorized, setIsAuthorized] = useState(false)
 
@@ -24,7 +26,7 @@ export default function AdminLayout({
         }
 
         if (data.user.role !== 'admin') {
-          alert('관리자만 접근할 수 있습니다.')
+          alert(t('adminOnlyAccess'))
           router.push('/')
           return
         }
@@ -39,7 +41,7 @@ export default function AdminLayout({
     }
 
     checkAdmin()
-  }, [router])
+  }, [router, t])
 
   if (isLoading) {
     return (

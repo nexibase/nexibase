@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
+import { useTranslations } from 'next-intl'
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -44,11 +45,11 @@ const EmojiIcon = ({ emoji, className }: { emoji: string; className?: string }) 
 
 // 리액션 타입 정의 (긍정적인 것만)
 const REACTIONS = [
-  { type: 'like', emoji: '👍', label: '좋아요', color: 'text-blue-500', bgActive: 'bg-blue-500 hover:bg-blue-600 ring-blue-500' },
-  { type: 'haha', emoji: '😂', label: '웃겨요', color: 'text-yellow-500', bgActive: 'bg-yellow-500 hover:bg-yellow-600 ring-yellow-500 text-black' },
-  { type: 'agree', emoji: '👌', label: '동의해요', color: 'text-green-500', bgActive: 'bg-green-500 hover:bg-green-600 ring-green-500' },
-  { type: 'thanks', emoji: '🙏', label: '감사해요', color: 'text-pink-500', bgActive: 'bg-pink-500 hover:bg-pink-600 ring-pink-500' },
-  { type: 'wow', emoji: '😮', label: '놀라워요', color: 'text-purple-500', bgActive: 'bg-purple-500 hover:bg-purple-600 ring-purple-500' },
+  { type: 'like', emoji: '👍', color: 'text-blue-500', bgActive: 'bg-blue-500 hover:bg-blue-600 ring-blue-500' },
+  { type: 'haha', emoji: '😂', color: 'text-yellow-500', bgActive: 'bg-yellow-500 hover:bg-yellow-600 ring-yellow-500 text-black' },
+  { type: 'agree', emoji: '👌', color: 'text-green-500', bgActive: 'bg-green-500 hover:bg-green-600 ring-green-500' },
+  { type: 'thanks', emoji: '🙏', color: 'text-pink-500', bgActive: 'bg-pink-500 hover:bg-pink-600 ring-pink-500' },
+  { type: 'wow', emoji: '😮', color: 'text-purple-500', bgActive: 'bg-purple-500 hover:bg-purple-600 ring-purple-500' },
 ] as const
 
 interface Board {
@@ -325,6 +326,7 @@ export default function BoardPostPage() {
   const router = useRouter()
   const slug = params.slug as string
   const postId = params.postId as string
+  const t = useTranslations('boards')
 
   const [board, setBoard] = useState<Board | null>(null)
   const [post, setPost] = useState<Post | null>(null)
@@ -386,11 +388,11 @@ export default function BoardPostPage() {
 
       if (!response.ok) {
         if (response.status === 403) {
-          setError(data.error || '이 글을 볼 권한이 없습니다.')
+          setError(data.error || t('post.viewPermDenied'))
         } else if (response.status === 404) {
-          setError('게시글을 찾을 수 없습니다.')
+          setError(t('post.notFound'))
         } else {
-          setError(data.error || '게시글을 불러올 수 없습니다.')
+          setError(data.error || t('post.loadFailed'))
         }
         return
       }
@@ -404,11 +406,11 @@ export default function BoardPostPage() {
       }
     } catch (error) {
       console.error('게시글 조회 에러:', error)
-      setError('게시글을 불러오는 중 오류가 발생했습니다.')
+      setError(t('post.loadError'))
     } finally {
       setLoading(false)
     }
-  }, [slug, postId])
+  }, [slug, postId, t])
 
   useEffect(() => {
     fetchUser()
@@ -441,7 +443,7 @@ export default function BoardPostPage() {
 
   // 날짜 포맷
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('ko-KR', {
+    return new Date(dateString).toLocaleString(undefined, {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -452,7 +454,7 @@ export default function BoardPostPage() {
 
   // 게시글 삭제
   const handleDelete = async () => {
-    if (!confirm('정말 삭제하시겠습니까?')) return
+    if (!confirm(t('post.reallyDelete'))) return
 
     try {
       const response = await fetch(`/api/boards/${slug}/posts/${postId}`, {
@@ -463,18 +465,18 @@ export default function BoardPostPage() {
         router.push(`/boards/${slug}`)
       } else {
         const data = await response.json()
-        alert(data.error || '삭제에 실패했습니다.')
+        alert(data.error || t('post.deleteFailed'))
       }
     } catch (error) {
       console.error('삭제 에러:', error)
-      alert('삭제 중 오류가 발생했습니다.')
+      alert(t('post.deleteError'))
     }
   }
 
   // 리액션 토글
   const handleReaction = async (type: string) => {
     if (!user) {
-      alert('로그인이 필요합니다.')
+      alert(t('errors.loginRequiredDot'))
       return
     }
 
@@ -503,7 +505,7 @@ export default function BoardPostPage() {
     if (!commentText.trim()) return
 
     if (!user) {
-      alert('로그인이 필요합니다.')
+      alert(t('errors.loginRequiredDot'))
       return
     }
 
@@ -523,11 +525,11 @@ export default function BoardPostPage() {
         setReplyTo(null)
         fetchPost() // 댓글 목록 새로고침
       } else {
-        alert(data.error || '댓글 작성에 실패했습니다.')
+        alert(data.error || t('comment.writeFailed'))
       }
     } catch (error) {
       console.error('댓글 작성 에러:', error)
-      alert('댓글 작성 중 오류가 발생했습니다.')
+      alert(t('comment.writeError'))
     } finally {
       setSubmittingComment(false)
     }
@@ -547,15 +549,15 @@ export default function BoardPostPage() {
         fetchPost()
       } else {
         const data = await res.json()
-        alert(data.error || '수정 실패')
+        alert(data.error || t('comment.editFailed'))
       }
     } catch {
-      alert('수정 중 오류가 발생했습니다.')
+      alert(t('comment.editError'))
     }
   }
 
   const handleCommentDelete = async (commentId: string) => {
-    if (!confirm('댓글을 삭제하시겠습니까?')) return
+    if (!confirm(t('comment.deleteConfirm'))) return
     try {
       const res = await fetch(`/api/boards/${slug}/posts/${postId}/comments/${commentId}`, {
         method: 'DELETE'
@@ -564,10 +566,10 @@ export default function BoardPostPage() {
         fetchPost()
       } else {
         const data = await res.json()
-        alert(data.error || '삭제 실패')
+        alert(data.error || t('comment.deleteFailed'))
       }
     } catch {
-      alert('삭제 중 오류가 발생했습니다.')
+      alert(t('comment.deleteError'))
     }
   }
 
@@ -593,7 +595,7 @@ export default function BoardPostPage() {
               <p className="text-muted-foreground mb-4">{error}</p>
               <Button variant="outline" onClick={() => router.push(`/boards/${slug}`)}>
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                목록으로
+                {t('post.listBtn')}
               </Button>
             </CardContent>
           </Card>
@@ -630,27 +632,27 @@ export default function BoardPostPage() {
               size="sm"
               disabled={!nextPost}
               onClick={() => nextPost && router.push(`/boards/${slug}/${nextPost.id}`)}
-              title={nextPost ? nextPost.title : '이전 글이 없습니다'}
+              title={nextPost ? nextPost.title : t('post.previousMissing')}
               className="px-2 sm:px-3"
             >
               <ChevronLeft className="h-4 w-4 sm:mr-1" />
-              <span className="hidden sm:inline">이전글</span>
+              <span className="hidden sm:inline">{t('post.previous')}</span>
             </Button>
             <Button
               variant="outline"
               size="sm"
               disabled={!prevPost}
               onClick={() => prevPost && router.push(`/boards/${slug}/${prevPost.id}`)}
-              title={prevPost ? prevPost.title : '다음 글이 없습니다'}
+              title={prevPost ? prevPost.title : t('post.nextMissing')}
               className="px-2 sm:px-3"
             >
-              <span className="hidden sm:inline">다음글</span>
+              <span className="hidden sm:inline">{t('post.next')}</span>
               <ChevronRight className="h-4 w-4 sm:ml-1" />
             </Button>
             <Link href={`/boards/${slug}`}>
               <Button variant="outline" size="sm" className="px-2 sm:px-3">
                 <List className="h-4 w-4 sm:mr-1" />
-                <span className="hidden sm:inline">목록</span>
+                <span className="hidden sm:inline">{t('post.list')}</span>
               </Button>
             </Link>
           </div>
@@ -665,13 +667,13 @@ export default function BoardPostPage() {
                 {post.isNotice && (
                   <Badge variant="destructive">
                     <Pin className="h-3 w-3 mr-1" />
-                    공지
+                    {t('noticeBadge')}
                   </Badge>
                 )}
                 {post.isSecret && (
                   <Badge variant="secondary">
                     <Lock className="h-3 w-3 mr-1" />
-                    비밀글
+                    {t('post.secret')}
                   </Badge>
                 )}
               </div>
@@ -716,7 +718,7 @@ export default function BoardPostPage() {
                   const allImgs = Array.from(contentRef.current?.querySelectorAll('img') || [])
                   const images: Attachment[] = allImgs.map((img, i) => ({
                     id: i,
-                    filename: img.alt || `이미지 ${i + 1}`,
+                    filename: img.alt || t('post.imageAlt', { index: i + 1 }),
                     filePath: img.src,
                     fileSize: 0,
                     mimeType: 'image/webp',
@@ -767,7 +769,7 @@ export default function BoardPostPage() {
                 <div className="border rounded-lg p-4 mb-6 bg-muted/30">
                   <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
                     <Paperclip className="h-4 w-4" />
-                    첨부파일 ({post.attachments.length})
+                    {t('post.attachmentsCount', { count: post.attachments.length })}
                   </h4>
                   <div className="space-y-2">
                     {post.attachments.map((file) => {
@@ -800,7 +802,7 @@ export default function BoardPostPage() {
                                 </p>
                                 <p className="text-xs text-muted-foreground">
                                   {formatFileSize(file.fileSize)}
-                                  {file.downloadCount > 0 && ` · 다운로드 ${file.downloadCount}회`}
+                                  {file.downloadCount > 0 && ` ${t('post.downloadCount', { count: file.downloadCount })}`}
                                 </p>
                               </div>
                             </button>
@@ -832,7 +834,7 @@ export default function BoardPostPage() {
                             </p>
                             <p className="text-xs text-muted-foreground">
                               {formatFileSize(file.fileSize)}
-                              {file.downloadCount > 0 && ` · 다운로드 ${file.downloadCount}회`}
+                              {file.downloadCount > 0 && ` ${t('post.downloadCount', { count: file.downloadCount })}`}
                             </p>
                           </div>
                           <div className="w-8 h-8 shrink-0 flex items-center justify-center">
@@ -849,7 +851,7 @@ export default function BoardPostPage() {
             {/* 리액션 버튼들 */}
             {board.useReaction && (
               <div className="flex flex-wrap items-center gap-2 py-4 border-t">
-                {REACTIONS.map(({ type, emoji, label, bgActive }) => {
+                {REACTIONS.map(({ type, emoji, bgActive }) => {
                   const count = reactions[type] || 0
                   const isActive = userReactions.includes(type)
 
@@ -867,7 +869,7 @@ export default function BoardPostPage() {
                       )}
                     >
                       <EmojiIcon emoji={emoji} />
-                      <span className="text-xs">{label}</span>
+                      <span className="text-xs">{t(`reactions.${type}`)}</span>
                       {count > 0 && (
                         <span className={cn(
                           "ml-1 px-1.5 py-0.5 rounded-full text-xs font-medium",
@@ -891,7 +893,7 @@ export default function BoardPostPage() {
                   onClick={() => router.push(`/boards/${slug}/${postId}/edit`)}
                 >
                   <Pencil className="h-4 w-4 mr-1" />
-                  수정
+                  {t('edit')}
                 </Button>
                 <Button
                   variant="outline"
@@ -900,7 +902,7 @@ export default function BoardPostPage() {
                   className="text-destructive hover:text-destructive hover:bg-destructive/10"
                 >
                   <Trash2 className="h-4 w-4 mr-1" />
-                  삭제
+                  {t('delete')}
                 </Button>
               </div>
             )}
@@ -913,7 +915,7 @@ export default function BoardPostPage() {
             <CardContent className="p-3 sm:p-6">
               <h3 className="font-semibold mb-4 flex items-center gap-2">
                 <MessageSquare className="h-5 w-5" />
-                댓글 {post.comments?.length || 0}
+                {t('comment.titleWithCount', { count: post.comments?.length || 0 })}
               </h3>
 
               {/* 인라인 답글 입력폼 */}
@@ -923,14 +925,14 @@ export default function BoardPostPage() {
                     <div className={indent ? "py-2 pl-11" : "py-2"}>
                       <div className="flex items-center gap-2 mb-1.5 text-xs text-primary">
                         <Reply className="h-3 w-3" />
-                        <span>@{nickname}에게 답글</span>
+                        <span>{t('comment.replyTo', { nickname })}</span>
                         <button onClick={() => setReplyTo(null)} className="text-muted-foreground hover:text-foreground">
                           <X className="h-3 w-3" />
                         </button>
                       </div>
                       <form onSubmit={handleCommentSubmit} className="flex gap-2">
                         <Input
-                          placeholder={`@${nickname}에게 답글...`}
+                          placeholder={t('comment.replyPlaceholder', { nickname })}
                           value={commentText}
                           onChange={(e) => setCommentText(e.target.value)}
                           className="flex-1 h-8 text-sm"
@@ -985,19 +987,19 @@ export default function BoardPostPage() {
                                     </PopoverTrigger>
                                     <PopoverContent className="w-32 p-1" align="end">
                                       <button
-                                        onClick={() => { setReplyTo({ id: comment.id, nickname: comment.author.nickname || '익명' }); setCommentText('') }}
+                                        onClick={() => { setReplyTo({ id: comment.id, nickname: comment.author.nickname || t('comment.anonymous') }); setCommentText('') }}
                                         className="w-full text-left px-3 py-1.5 text-sm rounded hover:bg-muted"
-                                      >답글</button>
+                                      >{t('comment.reply')}</button>
                                       {(comment.author.id === user.id || user.role === 'admin') && (
                                         <>
                                           <button
                                             onClick={() => { setEditingComment({ id: comment.id, content: comment.content }); setEditText(comment.content) }}
                                             className="w-full text-left px-3 py-1.5 text-sm rounded hover:bg-muted"
-                                          >수정</button>
+                                          >{t('edit')}</button>
                                           <button
                                             onClick={() => handleCommentDelete(comment.id)}
                                             className="w-full text-left px-3 py-1.5 text-sm rounded hover:bg-muted text-destructive"
-                                          >삭제</button>
+                                          >{t('delete')}</button>
                                         </>
                                       )}
                                     </PopoverContent>
@@ -1008,8 +1010,8 @@ export default function BoardPostPage() {
                                 <div>
                                   <MiniEditor content={editText} onChange={setEditText} />
                                   <div className="flex justify-end gap-2 mt-2">
-                                    <Button size="sm" variant="ghost" onClick={() => setEditingComment(null)}>취소</Button>
-                                    <Button size="sm" onClick={() => handleCommentEdit(comment.id)} disabled={!editText || editText === '<p></p>'}>저장</Button>
+                                    <Button size="sm" variant="ghost" onClick={() => setEditingComment(null)}>{t('post.cancel')}</Button>
+                                    <Button size="sm" onClick={() => handleCommentEdit(comment.id)} disabled={!editText || editText === '<p></p>'}>{t('post.save')}</Button>
                                   </div>
                                 </div>
                               ) : (
@@ -1029,16 +1031,16 @@ export default function BoardPostPage() {
                           <div className="py-2 pl-11 border-b">
                             <div className="flex items-center gap-2 mb-1.5 text-xs text-primary">
                               <Reply className="h-3 w-3" />
-                              <span>@{replyTo.nickname}에게 답글</span>
+                              <span>{t('comment.replyTo', { nickname: replyTo.nickname })}</span>
                               <button onClick={() => setReplyTo(null)} className="text-muted-foreground hover:text-foreground">
                                 <X className="h-3 w-3" />
                               </button>
                             </div>
-                            <MiniEditor content={commentText} onChange={setCommentText} placeholder={`@${replyTo.nickname}에게 답글...`} />
+                            <MiniEditor content={commentText} onChange={setCommentText} placeholder={t('comment.replyPlaceholder', { nickname: replyTo.nickname })} />
                             <div className="flex justify-end mt-2">
                               <Button size="sm" onClick={(e) => handleCommentSubmit(e)} disabled={submittingComment || !commentText || commentText === '<p></p>'}>
                                 {submittingComment ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5 mr-1" />}
-                                답글
+                                {t('comment.reply')}
                               </Button>
                             </div>
                           </div>
@@ -1064,19 +1066,19 @@ export default function BoardPostPage() {
                                         </PopoverTrigger>
                                         <PopoverContent className="w-32 p-1" align="end">
                                           <button
-                                            onClick={() => { setReplyTo({ id: reply.id, nickname: reply.author.nickname || '익명' }); setCommentText('') }}
+                                            onClick={() => { setReplyTo({ id: reply.id, nickname: reply.author.nickname || t('comment.anonymous') }); setCommentText('') }}
                                             className="w-full text-left px-3 py-1.5 text-sm rounded hover:bg-muted"
-                                          >답글</button>
+                                          >{t('comment.reply')}</button>
                                           {(reply.author.id === user.id || user.role === 'admin') && (
                                             <>
                                               <button
                                                 onClick={() => { setEditingComment({ id: reply.id, content: reply.content }); setEditText(reply.content) }}
                                                 className="w-full text-left px-3 py-1.5 text-sm rounded hover:bg-muted"
-                                              >수정</button>
+                                              >{t('edit')}</button>
                                               <button
                                                 onClick={() => handleCommentDelete(reply.id)}
                                                 className="w-full text-left px-3 py-1.5 text-sm rounded hover:bg-muted text-destructive"
-                                              >삭제</button>
+                                              >{t('delete')}</button>
                                             </>
                                           )}
                                         </PopoverContent>
@@ -1086,8 +1088,8 @@ export default function BoardPostPage() {
                                   {editingComment?.id === reply.id ? (
                                     <div className="flex gap-2">
                                       <Input value={editText} onChange={e => setEditText(e.target.value)} className="flex-1 h-8 text-sm" autoFocus />
-                                      <Button size="sm" onClick={() => handleCommentEdit(reply.id)} disabled={!editText.trim()}>저장</Button>
-                                      <Button size="sm" variant="ghost" onClick={() => setEditingComment(null)}>취소</Button>
+                                      <Button size="sm" onClick={() => handleCommentEdit(reply.id)} disabled={!editText.trim()}>{t('post.save')}</Button>
+                                      <Button size="sm" variant="ghost" onClick={() => setEditingComment(null)}>{t('post.cancel')}</Button>
                                     </div>
                                   ) : (
                                     <div className="text-sm">
@@ -1111,16 +1113,16 @@ export default function BoardPostPage() {
                               <div className="py-2 pl-11 border-b">
                                 <div className="flex items-center gap-2 mb-1.5 text-xs text-primary">
                                   <Reply className="h-3 w-3" />
-                                  <span>@{replyTo.nickname}에게 답글</span>
+                                  <span>{t('comment.replyTo', { nickname: replyTo.nickname })}</span>
                                   <button onClick={() => setReplyTo(null)} className="text-muted-foreground hover:text-foreground">
                                     <X className="h-3 w-3" />
                                   </button>
                                 </div>
-                                <MiniEditor content={commentText} onChange={setCommentText} placeholder={`@${replyTo.nickname}에게 답글...`} />
+                                <MiniEditor content={commentText} onChange={setCommentText} placeholder={t('comment.replyPlaceholder', { nickname: replyTo.nickname })} />
                                 <div className="flex justify-end mt-2">
                                   <Button size="sm" onClick={(e) => handleCommentSubmit(e)} disabled={submittingComment || !commentText || commentText === '<p></p>'}>
                                     {submittingComment ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5 mr-1" />}
-                                    답글
+                                    {t('comment.reply')}
                                   </Button>
                                 </div>
                               </div>
@@ -1133,25 +1135,25 @@ export default function BoardPostPage() {
                 </div>
               ) : (
                 <div className="text-center py-8 text-muted-foreground mb-6">
-                  댓글이 없습니다.
+                  {t('comment.noComments')}
                 </div>
               )}
 
               {/* 새 댓글 작성 */}
               {canComment && !replyTo ? (
                 <div>
-                  <MiniEditor content={commentText} onChange={setCommentText} placeholder="댓글을 입력하세요..." />
+                  <MiniEditor content={commentText} onChange={setCommentText} placeholder={t('comment.placeholder')} />
                   <div className="flex justify-end mt-2">
                     <Button size="sm" onClick={(e) => { setReplyTo(null); handleCommentSubmit(e) }} disabled={submittingComment || !commentText || commentText === '<p></p>'}>
                       {submittingComment ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Send className="h-4 w-4 mr-1" />}
-                      댓글 작성
+                      {t('comment.write')}
                     </Button>
                   </div>
                 </div>
               ) : board.commentMemberOnly && !isLoggedIn ? (
                 <div className="text-center">
                   <Link href="/login" className="text-primary hover:underline text-sm">
-                    댓글을 쓰려면 로그인이 필요합니다.
+                    {t('comment.loginRequired')}
                   </Link>
                 </div>
               ) : null}

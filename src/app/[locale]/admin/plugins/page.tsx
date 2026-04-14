@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { useTranslations } from "next-intl"
 import { Sidebar } from "@/components/admin/Sidebar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -29,6 +30,7 @@ interface PluginInfo {
 }
 
 export default function PluginsAdminPage() {
+  const t = useTranslations('admin')
   const [plugins, setPlugins] = useState<PluginInfo[]>([])
   const [editingSlugs, setEditingSlugs] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState<string | null>(null)
@@ -67,15 +69,15 @@ export default function PluginsAdminPage() {
         if (enabled) {
           await fetch(`/api/admin/plugins/${plugin.folder}/activate`, { method: 'POST' })
         }
-        showMessage(`${enabled ? '활성화' : '비활성화'} 되었습니다.`)
+        showMessage(t('pluginEnabledToggle', { action: enabled ? t('actionEnable') : t('actionDisable') }))
         await fetchPlugins()
         window.dispatchEvent(new Event('pluginStatusChanged'))
       } else {
         const data = await res.json()
-        showMessage(data.error || '저장 실패')
+        showMessage(data.error || t('saveFailed'))
       }
     } catch {
-      showMessage('서버 오류')
+      showMessage(t('serverError'))
     } finally {
       setSaving(null)
     }
@@ -94,14 +96,14 @@ export default function PluginsAdminPage() {
       })
       const data = await res.json()
       if (res.ok) {
-        showMessage('slug가 변경되었습니다. 서버를 재시작해야 적용됩니다.')
+        showMessage(t('pluginSlugSaved'))
         setEditingSlugs(prev => { const n = { ...prev }; delete n[folder]; return n })
         await fetchPlugins()
       } else {
-        showMessage(data.error || '저장 실패')
+        showMessage(data.error || t('saveFailed'))
       }
     } catch {
-      showMessage('서버 오류')
+      showMessage(t('serverError'))
     } finally {
       setSaving(null)
     }
@@ -116,9 +118,9 @@ export default function PluginsAdminPage() {
               {plugin.name}
               <Badge variant="outline" className="text-xs">v{plugin.version}</Badge>
               {plugin.enabled ? (
-                <Badge className="text-xs bg-green-500">활성</Badge>
+                <Badge className="text-xs bg-green-500">{t('statusActive')}</Badge>
               ) : (
-                <Badge variant="secondary" className="text-xs">비활성</Badge>
+                <Badge variant="secondary" className="text-xs">{t('inactive')}</Badge>
               )}
             </CardTitle>
             <CardDescription className="mt-1">{plugin.description}</CardDescription>
@@ -132,14 +134,14 @@ export default function PluginsAdminPage() {
         {plugin.defaultEnabled && !plugin.enabled && (
           <p className="text-xs text-amber-500 mt-2 flex items-center gap-1">
             <AlertTriangle className="h-3 w-3" />
-            이 기능을 비활성화하면 관련 페이지와 메뉴가 숨겨집니다
+            {t('pluginDisableWarning')}
           </p>
         )}
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
-            <span className="text-muted-foreground">작성자:</span>{' '}
+            <span className="text-muted-foreground">{t('pluginAuthor')}:</span>{' '}
             <span>{plugin.author}</span>
             {plugin.authorDomain && (
               <a href={plugin.authorDomain} target="_blank" rel="noopener noreferrer" className="ml-1 inline-flex items-center text-primary hover:underline">
@@ -149,29 +151,29 @@ export default function PluginsAdminPage() {
           </div>
           {plugin.repository && (
             <div>
-              <span className="text-muted-foreground">저장소:</span>{' '}
+              <span className="text-muted-foreground">{t('pluginRepo')}:</span>{' '}
               <a href={plugin.repository} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
                 GitHub <ExternalLink className="h-3 w-3 inline" />
               </a>
             </div>
           )}
           <div>
-            <span className="text-muted-foreground">기능:</span>{' '}
-            {plugin.hasRoutes && <Badge variant="outline" className="text-xs mr-1">페이지</Badge>}
-            {plugin.hasApi && <Badge variant="outline" className="text-xs mr-1">API</Badge>}
-            {plugin.hasAdmin && <Badge variant="outline" className="text-xs mr-1">관리자</Badge>}
-            {plugin.hasWidgets && <Badge variant="outline" className="text-xs mr-1">위젯</Badge>}
-            {plugin.hasMenus && <Badge variant="outline" className="text-xs mr-1">메뉴</Badge>}
+            <span className="text-muted-foreground">{t('pluginFeatures')}:</span>{' '}
+            {plugin.hasRoutes && <Badge variant="outline" className="text-xs mr-1">{t('pluginPages')}</Badge>}
+            {plugin.hasApi && <Badge variant="outline" className="text-xs mr-1">{t('pluginApi')}</Badge>}
+            {plugin.hasAdmin && <Badge variant="outline" className="text-xs mr-1">{t('pluginAdmin')}</Badge>}
+            {plugin.hasWidgets && <Badge variant="outline" className="text-xs mr-1">{t('pluginWidgets')}</Badge>}
+            {plugin.hasMenus && <Badge variant="outline" className="text-xs mr-1">{t('pluginMenus')}</Badge>}
           </div>
           <div>
-            <span className="text-muted-foreground">URL 경로:</span>{' '}
+            <span className="text-muted-foreground">{t('pluginUrlPath')}:</span>{' '}
             <code className="text-xs bg-muted px-1 rounded">/{plugin.currentSlug}</code>
           </div>
         </div>
 
         <div className="mt-4 pt-4 border-t">
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">URL 경로 변경:</span>
+            <span className="text-sm text-muted-foreground">{t('pluginUrlChange')}</span>
             <Input
               className="w-48 h-8 text-sm"
               value={editingSlugs[plugin.folder] ?? plugin.currentSlug}
@@ -186,14 +188,14 @@ export default function PluginsAdminPage() {
                 disabled={saving === plugin.folder}
               >
                 <Save className="h-3 w-3 mr-1" />
-                저장
+                {t('saveBtn')}
               </Button>
             )}
           </div>
           {editingSlugs[plugin.folder] && editingSlugs[plugin.folder] !== plugin.currentSlug && (
             <p className="text-xs text-amber-500 mt-1 flex items-center gap-1">
               <AlertTriangle className="h-3 w-3" />
-              slug 변경 후 서버 재시작이 필요합니다
+              {t('pluginSlugWarning')}
             </p>
           )}
         </div>
@@ -213,10 +215,10 @@ export default function PluginsAdminPage() {
             <div>
               <h1 className="text-2xl font-bold flex items-center gap-2">
                 <Puzzle className="h-6 w-6" />
-                플러그인 관리
+                {t('pluginsTitle')}
               </h1>
               <p className="text-muted-foreground mt-1">
-                설치된 플러그인을 활성화/비활성화하고 URL을 변경합니다
+                {t('pluginsDesc')}
               </p>
             </div>
           </div>
@@ -230,7 +232,7 @@ export default function PluginsAdminPage() {
           <div className="space-y-6">
             {defaultPlugins.length > 0 && (
               <div>
-                <h2 className="text-sm font-semibold text-muted-foreground mb-3">기본 제공</h2>
+                <h2 className="text-sm font-semibold text-muted-foreground mb-3">{t('pluginDefault')}</h2>
                 <div className="space-y-4">
                   {defaultPlugins.map(renderPluginCard)}
                 </div>
@@ -239,7 +241,7 @@ export default function PluginsAdminPage() {
 
             {extraPlugins.length > 0 && (
               <div>
-                <h2 className="text-sm font-semibold text-muted-foreground mb-3">추가 플러그인</h2>
+                <h2 className="text-sm font-semibold text-muted-foreground mb-3">{t('pluginExtra')}</h2>
                 <div className="space-y-4">
                   {extraPlugins.map(renderPluginCard)}
                 </div>
@@ -248,7 +250,7 @@ export default function PluginsAdminPage() {
 
             {plugins.length === 0 && (
               <div className="py-12 text-center text-muted-foreground">
-                설치된 플러그인이 없습니다.
+                {t('noPlugins')}
               </div>
             )}
           </div>

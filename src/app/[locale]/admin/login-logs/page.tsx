@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { Sidebar } from "@/components/admin/Sidebar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -33,6 +34,7 @@ interface Pagination {
 }
 
 function LoginLogsContent() {
+  const t = useTranslations('admin')
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -128,10 +130,10 @@ function LoginLogsContent() {
             <div>
               <h1 className="text-2xl font-bold flex items-center gap-2">
                 <ClipboardList className="h-6 w-6" />
-                로그인 기록
+                {t('loginLogsTitle')}
               </h1>
               <p className="text-muted-foreground mt-1">
-                사용자 로그인 시도 기록을 확인합니다.
+                {t('loginLogsDesc')}
               </p>
             </div>
           </div>
@@ -144,7 +146,7 @@ function LoginLogsContent() {
                 <div className="relative flex-1 max-w-xs">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
-                    placeholder="이메일 검색..."
+                    placeholder={t('emailSearchPlaceholder')}
                     value={emailSearch}
                     onChange={(e) => setEmailSearch(e.target.value)}
                     onKeyDown={handleKeyDown}
@@ -155,7 +157,7 @@ function LoginLogsContent() {
                 <div className="relative flex-1 max-w-xs">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
-                    placeholder="IP 검색..."
+                    placeholder={t('ipSearchPlaceholder')}
                     value={ipSearch}
                     onChange={(e) => setIpSearch(e.target.value)}
                     onKeyDown={handleKeyDown}
@@ -172,14 +174,14 @@ function LoginLogsContent() {
                   }}
                   className="flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                 >
-                  <option value="">전체</option>
-                  <option value="true">성공</option>
-                  <option value="false">실패</option>
+                  <option value="">{t('all')}</option>
+                  <option value="true">{t('success')}</option>
+                  <option value="false">{t('failed')}</option>
                 </select>
                 {/* Search Button */}
                 <Button variant="outline" size="sm" onClick={handleSearch}>
                   <Search className="mr-2 h-4 w-4" />
-                  검색
+                  {t('searchBtn')}
                 </Button>
               </div>
             </CardHeader>
@@ -190,19 +192,19 @@ function LoginLogsContent() {
                   <thead>
                     <tr className="border-y bg-muted/50">
                       <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                        상태
+                        {t('logStatus')}
                       </th>
                       <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                        이메일
+                        {t('emailLabel')}
                       </th>
                       <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                        IP
+                        {t('logIp')}
                       </th>
                       <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                        사유
+                        {t('logReason')}
                       </th>
                       <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                        일시
+                        {t('logDate')}
                       </th>
                     </tr>
                   </thead>
@@ -219,7 +221,7 @@ function LoginLogsContent() {
                           colSpan={5}
                           className="h-32 text-center text-muted-foreground"
                         >
-                          로그인 기록이 없습니다.
+                          {t('noLoginLogs')}
                         </td>
                       </tr>
                     ) : (
@@ -258,9 +260,7 @@ function LoginLogsContent() {
               {totalPages > 1 && (
                 <div className="flex items-center justify-between px-4 py-4 border-t">
                   <p className="text-sm text-muted-foreground">
-                    총 {pagination.total}건 중{" "}
-                    {(currentPage - 1) * pagination.limit + 1}-
-                    {Math.min(currentPage * pagination.limit, pagination.total)}
+                    {t('totalOfLogs', { total: pagination.total, from: (currentPage - 1) * pagination.limit + 1, to: Math.min(currentPage * pagination.limit, pagination.total) })}
                   </p>
                   <div className="flex items-center gap-1">
                     <Button

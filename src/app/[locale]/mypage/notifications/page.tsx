@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useTranslations } from "next-intl"
 import { MyPageLayout } from "@/components/layout/MyPageLayout"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -18,6 +19,8 @@ interface Notification {
 }
 
 export default function NotificationsPage() {
+  const t = useTranslations('mypage')
+  const tc = useTranslations('common')
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -65,21 +68,21 @@ export default function NotificationsPage() {
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-bold flex items-center gap-2">
             <Bell className="h-5 w-5" />
-            알림
+            {t('notifications')}
             {unreadCount > 0 && <Badge>{unreadCount}</Badge>}
           </h2>
           {unreadCount > 0 && (
             <Button variant="outline" size="sm" onClick={markAllAsRead}>
               <Check className="h-4 w-4 mr-1" />
-              모두 읽음
+              {t('markAllRead')}
             </Button>
           )}
         </div>
 
         {loading ? (
-          <div className="py-12 text-center text-muted-foreground">로딩 중...</div>
+          <div className="py-12 text-center text-muted-foreground">{tc('loading')}</div>
         ) : notifications.length === 0 ? (
-          <div className="py-12 text-center text-muted-foreground">알림이 없습니다.</div>
+          <div className="py-12 text-center text-muted-foreground">{t('noNotifications')}</div>
         ) : (
           <div className="space-y-2">
             {notifications.map(n => (
@@ -102,7 +105,7 @@ export default function NotificationsPage() {
                     <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{n.message}</p>
                   </div>
                   <span className="text-xs text-muted-foreground shrink-0">
-                    {new Date(n.createdAt).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}
+                    {new Date(n.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                   </span>
                 </div>
               </div>

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -22,6 +23,8 @@ const GoogleIcon = () => (
 
 export default function SignupPage() {
   // Theme: default/SignupPage
+  const t = useTranslations("auth");
+  const tc = useTranslations("common");
   const [email, setEmail] = useState("");
   const [emailStatus, setEmailStatus] = useState<{
     available: boolean | null;
@@ -55,7 +58,7 @@ export default function SignupPage() {
       await signIn(provider, { callbackUrl: "/" });
     } catch (error) {
       console.error(`${provider} 로그인 에러:`, error);
-      alert('소셜 로그인에 실패했습니다.');
+      alert(t("socialLoginFailed"));
     } finally {
       setSocialLoading(null);
     }
@@ -76,7 +79,7 @@ export default function SignupPage() {
           setNickname("관리자");
           setNicknameStatus({
             available: true,
-            message: "관리자로 자동 설정됩니다.",
+            message: t("adminAutoSet"),
             checking: false
           });
         }
@@ -99,7 +102,7 @@ export default function SignupPage() {
     if (!emailValue || !isValidEmail(emailValue)) {
       setEmailStatus({ 
         available: null, 
-        message: emailValue && !isValidEmail(emailValue) ? "올바른 이메일 형식을 입력하세요" : "", 
+        message: emailValue && !isValidEmail(emailValue) ? t("invalidEmail") : "",
         checking: false 
       });
       return;
@@ -127,7 +130,7 @@ export default function SignupPage() {
       } else {
         setEmailStatus({
           available: false,
-          message: data.error || '확인 중 오류가 발생했습니다.',
+          message: data.error || t("checkingError"),
           checking: false
         });
       }
@@ -135,7 +138,7 @@ export default function SignupPage() {
       console.error('이메일 확인 에러:', error);
       setEmailStatus({
         available: false,
-        message: '네트워크 오류가 발생했습니다.',
+        message: t("networkError"),
         checking: false
       });
     }
@@ -170,7 +173,7 @@ export default function SignupPage() {
       } else {
         setNicknameStatus({
           available: false,
-          message: data.error || '확인 중 오류가 발생했습니다.',
+          message: data.error || t("checkingError"),
           checking: false
         });
       }
@@ -178,7 +181,7 @@ export default function SignupPage() {
       console.error('닉네임 확인 에러:', error);
       setNicknameStatus({
         available: false,
-        message: '네트워크 오류가 발생했습니다.',
+        message: t("networkError"),
         checking: false
       });
     }
@@ -236,22 +239,22 @@ export default function SignupPage() {
     
     // 제출 전 최종 검증
     if (!email) {
-      alert('이메일을 입력해주세요.');
+      alert(t("emailRequired"));
       return;
     }
     
     if (!isValidEmail(email)) {
-      alert('올바른 이메일 형식을 입력하세요.');
+      alert(t("invalidEmail"));
       return;
     }
     
     if (emailStatus.available !== true) {
-      alert('이메일 중복 확인을 완료하세요.');
+      alert(t("emailCheckRequired"));
       return;
     }
     
     if (!password) {
-      alert('비밀번호를 입력해주세요.');
+      alert(t("passwordRequired"));
       return;
     }
     
@@ -261,17 +264,17 @@ export default function SignupPage() {
     // }
     
     if (!nickname) {
-      alert('닉네임을 입력해주세요.');
+      alert(t("nicknameRequired"));
       return;
     }
     
     if (nickname.length < 2) {
-      alert('닉네임은 최소 2자 이상이어야 합니다.');
+      alert(t("nicknameMinLength"));
       return;
     }
     
     if (nicknameStatus.available !== true) {
-      alert('닉네임 중복 확인을 완료하세요.');
+      alert(t("nicknameCheckRequired"));
       return;
     }
     
@@ -293,14 +296,14 @@ export default function SignupPage() {
       const data = await response.json();
 
       if (response.ok) {
-        alert('회원가입이 성공적으로 완료되었습니다!');
+        alert(t("signupSuccess"));
         router.push('/login');
       } else {
-        alert(data.error || '회원가입 중 오류가 발생했습니다.');
+        alert(data.error || t("signupError"));
       }
     } catch (error) {
       console.error('회원가입 에러:', error);
-      alert('네트워크 오류가 발생했습니다. 다시 시도해주세요.');
+      alert(`${t("networkError")} ${tc("tryAgain")}`);
     } finally {
       setIsLoading(false);
     }
@@ -321,14 +324,14 @@ export default function SignupPage() {
       <div className="max-w-md w-full space-y-8">
         <Card className="shadow-lg border-border">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-center">회원가입</CardTitle>
+            <CardTitle className="text-2xl font-bold text-center">{t("signupTitle")}</CardTitle>
             <CardDescription className="text-center">
               {isFirstUser ? (
                 <span className="text-blue-600 font-medium">
-                  최초 가입자는 관리자로 등록됩니다
+                  {t("firstUserBecomesAdmin")}
                 </span>
               ) : (
-                "새 계정을 만들어 서비스를 시작하세요"
+                t("signupDescription")
               )}
             </CardDescription>
           </CardHeader>
@@ -336,14 +339,14 @@ export default function SignupPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <label htmlFor="email" className="text-sm font-medium text-foreground">
-                  이메일
+                  {t("email")}
                 </label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="email"
                     type="email"
-                    placeholder="이메일을 입력하세요"
+                    placeholder={t("emailPlaceholder")}
                     value={email}
                     onChange={handleEmailChange}
                     className={`pl-10 ${
@@ -370,14 +373,14 @@ export default function SignupPage() {
             
               <div className="space-y-2">
                 <label htmlFor="password" className="text-sm font-medium text-foreground">
-                  비밀번호
+                  {t("password")}
                 </label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="비밀번호를 입력하세요"
+                    placeholder={t("passwordPlaceholder")}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="pl-10 pr-10"
@@ -397,14 +400,14 @@ export default function SignupPage() {
 
               <div className="space-y-2">
                 <label htmlFor="nickname" className="text-sm font-medium text-foreground">
-                  닉네임
+                  {t("nickname")}
                 </label>
                 <div className="relative">
                   <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="nickname"
                     type="text"
-                    placeholder="닉네임을 입력하세요"
+                    placeholder={t("nicknamePlaceholder")}
                     value={nickname}
                     onChange={handleNicknameChange}
                     className={`pl-10 ${
@@ -435,13 +438,13 @@ export default function SignupPage() {
                 disabled={isLoading || !isFormValid()}
                 className="w-full"
               >
-                {isLoading ? '가입 중...' : '회원가입'}
+                {isLoading ? t("signingUp") : t("signupButton")}
               </Button>
               
               {isLoading && (
                 <div className="text-center">
                   <p className="text-sm text-muted-foreground">
-                    회원가입 처리 중입니다. 메일 발송으로 인해 잠시 시간이 걸릴 수 있습니다.
+                    {t("signupProcessing")}
                   </p>
                   <div className="mt-2">
                     <div className="inline-block animate-spin h-4 w-4 border-2 border-muted border-t-primary rounded-full"></div>
@@ -456,7 +459,7 @@ export default function SignupPage() {
               </div>
               <div className="relative flex justify-center text-xs uppercase">
                 <span className="bg-card px-2 text-muted-foreground">
-                  또는 소셜 계정으로 가입
+                  {t("socialSignupDivider")}
                 </span>
               </div>
             </div>
@@ -475,7 +478,7 @@ export default function SignupPage() {
                 ) : (
                   <>
                     <GoogleIcon />
-                    <span className="ml-2">Google로 계속하기</span>
+                    <span className="ml-2">{t("googleLogin")}</span>
                   </>
                 )}
               </Button>
@@ -493,7 +496,7 @@ export default function SignupPage() {
                     <svg className="w-5 h-5" viewBox="0 0 24 24">
                       <path fill="#03C75A" d="M16.273 12.845L7.376 0H0v24h7.727V11.155L16.624 24H24V0h-7.727z"/>
                     </svg>
-                    <span className="ml-2">Naver로 계속하기</span>
+                    <span className="ml-2">{t("naverLogin")}</span>
                   </>
                 )}
               </Button>
@@ -511,7 +514,7 @@ export default function SignupPage() {
                     <svg className="w-5 h-5" viewBox="0 0 24 24">
                       <path fill="#FEE500" d="M12 3c5.799 0 10.5 3.664 10.5 8.185 0 4.52-4.701 8.184-10.5 8.184a13.5 13.5 0 0 1-1.727-.11l-4.408 2.883c-.501.265-.678.236-.472-.413l.892-3.678c-2.88-1.46-4.785-3.99-4.785-6.866C1.5 6.665 6.201 3 12 3z"/>
                     </svg>
-                    <span className="ml-2">Kakao로 계속하기</span>
+                    <span className="ml-2">{t("kakaoLogin")}</span>
                   </>
                 )}
               </Button>
@@ -521,9 +524,9 @@ export default function SignupPage() {
 
             <div className="text-center">
               <span className="text-sm text-muted-foreground">
-                이미 계정이 있으신가요?{" "}
+                {t("haveAccount")}{" "}
                 <Link href="/login" className="text-primary hover:underline font-medium">
-                  로그인
+                  {t("loginButton")}
                 </Link>
               </span>
             </div>

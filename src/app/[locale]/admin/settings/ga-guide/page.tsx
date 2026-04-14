@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { useTranslations } from "next-intl"
 import { Sidebar } from "@/components/admin/Sidebar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -54,7 +55,7 @@ function Screenshot({ src, alt, caption }: ScreenshotProps) {
         <div
           className="hidden w-full aspect-video items-center justify-center text-sm text-muted-foreground bg-muted border-2 border-dashed"
         >
-          📷 스크린샷 준비 중
+          {/* screenshot pending */}
         </div>
       </div>
       {caption && (
@@ -67,6 +68,7 @@ function Screenshot({ src, alt, caption }: ScreenshotProps) {
 }
 
 export default function GaGuidePage() {
+  const t = useTranslations('admin')
   return (
     <div className="min-h-screen bg-background">
       <div className="flex">
@@ -77,16 +79,16 @@ export default function GaGuidePage() {
             <div>
               <h1 className="text-2xl font-bold flex items-center gap-2">
                 <BarChart3 className="h-6 w-6" />
-                Google Analytics 연동 가이드
+                {t('gaGuideTitle')}
               </h1>
               <p className="text-muted-foreground mt-1">
-                방문자 통계 위젯을 위한 GA4 Data API 설정 방법을 단계별로 안내합니다
+                {t('gaGuideDesc')}
               </p>
             </div>
             <Link href="/admin/settings">
               <Button variant="outline">
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                설정으로 돌아가기
+                {t('backToSettings')}
               </Button>
             </Link>
           </div>
@@ -492,10 +494,10 @@ export default function GaGuidePage() {
                 </p>
                 <div className="flex justify-center gap-2">
                   <Link href="/admin/settings">
-                    <Button variant="outline">설정으로 돌아가기</Button>
+                    <Button variant="outline">{t('backToSettings')}</Button>
                   </Link>
                   <Link href="/admin/home-widgets">
-                    <Button>홈화면관리로 이동</Button>
+                    <Button>{t('goToHomeWidgets')}</Button>
                   </Link>
                 </div>
               </CardContent>

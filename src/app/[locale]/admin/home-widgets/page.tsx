@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { useTranslations } from "next-intl"
 import { Sidebar } from "@/components/admin/Sidebar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -42,20 +43,20 @@ function humanizeKey(key: string): string {
 }
 
 const ZONES = ['top', 'center', 'bottom'] as const
-const ZONE_LABELS: Record<string, string> = {
-  top: '상단 영역',
-  center: '중앙 영역',
-  bottom: '하단 영역',
-}
-
 // 레이아웃 사이드바 영역 (레이아웃 설정에서 관리)
 const LAYOUT_ZONES = ['left', 'right'] as const
-const LAYOUT_ZONE_LABELS: Record<string, string> = {
-  left: '좌측 사이드바',
-  right: '우측 사이드바',
-}
 
 export default function HomeWidgetsAdminPage() {
+  const t = useTranslations('admin')
+  const ZONE_LABELS: Record<string, string> = {
+    top: t('zoneTop'),
+    center: t('zoneCenter'),
+    bottom: t('zoneBottom'),
+  }
+  const LAYOUT_ZONE_LABELS: Record<string, string> = {
+    left: t('zoneLeft'),
+    right: t('zoneRight'),
+  }
   const [widgets, setWidgets] = useState<WidgetData[]>([])
   const [unregistered, setUnregistered] = useState<string[]>([])
   const [widgetMeta, setWidgetMeta] = useState<Record<string, WidgetMetadata>>({})
@@ -93,11 +94,11 @@ export default function HomeWidgetsAdminPage() {
   const handleRemoveWidget = async (widget: WidgetData) => {
     try {
       await fetch(`/api/admin/home-widgets/${widget.id}`, { method: 'DELETE' })
-      showMessage('위젯이 배치 해제되었습니다.')
+      showMessage(t('widgetUnplaced'))
       setSelectedWidget(null)
       await fetchWidgets()
     } catch {
-      showMessage('배치 해제 실패')
+      showMessage(t('widgetUnplaceFailed'))
     }
   }
 
@@ -110,7 +111,7 @@ export default function HomeWidgetsAdminPage() {
       })
       await fetchWidgets()
     } catch {
-      showMessage('변경 실패')
+      showMessage(t('changeFailed'))
     }
   }
 
@@ -151,7 +152,7 @@ export default function HomeWidgetsAdminPage() {
       })
       await fetchWidgets()
     } catch {
-      showMessage('영역 변경 실패')
+      showMessage(t('zoneChangeFailed'))
     }
   }
 
@@ -177,25 +178,25 @@ export default function HomeWidgetsAdminPage() {
           rowSpan: selectedWidget.rowSpan,
         }),
       })
-      showMessage('설정이 저장되었습니다.')
+      showMessage(t('widgetSaved'))
       setSelectedWidget(null)
       await fetchWidgets()
     } catch {
-      showMessage('저장 실패')
+      showMessage(t('saveFailed'))
     } finally {
       setSaving(false)
     }
   }
 
   const handleReset = async () => {
-    if (!confirm('모든 위젯을 삭제하고 기본 배치로 초기화하시겠습니까?')) return
+    if (!confirm(t('resetConfirm'))) return
     try {
       await fetch('/api/admin/home-widgets/reset', { method: 'POST' })
-      showMessage('초기화 완료')
+      showMessage(t('resetDone'))
       setSelectedWidget(null)
       await fetchWidgets()
     } catch {
-      showMessage('초기화 실패')
+      showMessage(t('resetFailed'))
     }
   }
 
@@ -211,10 +212,10 @@ export default function HomeWidgetsAdminPage() {
           create: { widgetKey, zone, title: meta.label },
         }),
       })
-      showMessage(`${meta.label} 위젯이 ${zone} 영역에 배치되었습니다.`)
+      showMessage(t('widgetPlacedInZone', { label: meta.label, zone }))
       await fetchWidgets()
     } catch {
-      showMessage('위젯 배치 실패')
+      showMessage(t('widgetPlaceFailed'))
     }
   }
 
@@ -234,7 +235,7 @@ export default function HomeWidgetsAdminPage() {
         <div className="flex items-center justify-between">
           <span className="text-sm font-medium truncate">{widget.title}</span>
           {isPluginDisabled ? (
-            <Badge variant="destructive" className="text-xs shrink-0">비활성</Badge>
+            <Badge variant="destructive" className="text-xs shrink-0">{t('inactive')}</Badge>
           ) : (
             <div className="flex items-center gap-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
               <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleMoveUp(widget, zoneWidgets)}>
@@ -277,9 +278,9 @@ export default function HomeWidgetsAdminPage() {
       <div className="flex-1 overflow-y-auto p-6">
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-bold">홈화면관리</h1>
+            <h1 className="text-2xl font-bold">{t('homeWidgetsTitle')}</h1>
             <Button variant="outline" size="sm" onClick={handleReset}>
-              초기화
+              {t('resetBtn')}
             </Button>
           </div>
 
@@ -293,13 +294,13 @@ export default function HomeWidgetsAdminPage() {
           <Dialog open={!!selectedWidget} onOpenChange={(open) => !open && setSelectedWidget(null)}>
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
-                <DialogTitle>{selectedWidget?.title} 설정</DialogTitle>
+                <DialogTitle>{t('widgetSettings', { title: selectedWidget?.title ?? '' })}</DialogTitle>
               </DialogHeader>
               {selectedWidget && (
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-sm font-medium">열 너비 (1~12)</label>
+                      <label className="text-sm font-medium">{t('colSpanLabel')}</label>
                       <Input
                         type="number"
                         min={1}
@@ -309,7 +310,7 @@ export default function HomeWidgetsAdminPage() {
                       />
                     </div>
                     <div>
-                      <label className="text-sm font-medium">행 높이</label>
+                      <label className="text-sm font-medium">{t('rowSpanLabel')}</label>
                       <Input
                         type="number"
                         min={1}
@@ -349,7 +350,7 @@ export default function HomeWidgetsAdminPage() {
                   })()}
                   <Button onClick={handleSaveSettings} disabled={saving} className="w-full">
                     <Save className="h-4 w-4 mr-1" />
-                    {saving ? '저장 중...' : '저장'}
+                    {saving ? t('savingText') : t('saveBtn')}
                   </Button>
                 </div>
               )}
@@ -365,12 +366,12 @@ export default function HomeWidgetsAdminPage() {
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium flex items-center justify-between">
                       {ZONE_LABELS[zone]}
-                      <Badge variant="secondary">{zoneWidgets.length}개</Badge>
+                      <Badge variant="secondary">{t('zoneItemsCount', { count: zoneWidgets.length })}</Badge>
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     {zoneWidgets.length > 0 ? zoneWidgets.map(w => renderWidgetCard(w, zoneWidgets)) : (
-                      <div className="py-3 text-center text-muted-foreground text-sm">위젯 없음</div>
+                      <div className="py-3 text-center text-muted-foreground text-sm">{t('noWidgets')}</div>
                     )}
                   </CardContent>
                 </Card>
@@ -379,7 +380,7 @@ export default function HomeWidgetsAdminPage() {
 
             {/* 레이아웃 사이드바 (모든 페이지에 적용) */}
             <div className="border-t pt-4 mt-4">
-              <h2 className="text-lg font-bold mb-3">레이아웃 사이드바 <span className="text-sm font-normal text-muted-foreground">— 모든 페이지에 적용</span></h2>
+              <h2 className="text-lg font-bold mb-3">{t('layoutSidebar')} <span className="text-sm font-normal text-muted-foreground">— {t('layoutSidebarDesc')}</span></h2>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {LAYOUT_ZONES.map(zone => {
                   const zoneWidgets = getWidgetsByZone(zone)
@@ -388,12 +389,12 @@ export default function HomeWidgetsAdminPage() {
                       <CardHeader className="pb-2">
                         <CardTitle className="text-sm font-medium flex items-center justify-between">
                           {LAYOUT_ZONE_LABELS[zone]}
-                          <Badge variant="secondary">{zoneWidgets.length}개</Badge>
+                          <Badge variant="secondary">{t('zoneItemsCount', { count: zoneWidgets.length })}</Badge>
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
                         {zoneWidgets.length > 0 ? zoneWidgets.map(w => renderWidgetCard(w, zoneWidgets)) : (
-                          <div className="py-3 text-center text-muted-foreground text-sm">위젯 없음</div>
+                          <div className="py-3 text-center text-muted-foreground text-sm">{t('noWidgets')}</div>
                         )}
                       </CardContent>
                     </Card>
@@ -406,7 +407,7 @@ export default function HomeWidgetsAdminPage() {
             {unregistered.length > 0 && (
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">미배치 위젯</CardTitle>
+                  <CardTitle className="text-sm font-medium">{t('unplacedWidgets')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
@@ -433,7 +434,7 @@ export default function HomeWidgetsAdminPage() {
                               handleCreateWidget(key, select?.value || 'main')
                             }}>
                               <Plus className="h-4 w-4 mr-1" />
-                              배치
+                              {t('placeBtn')}
                             </Button>
                           </div>
                         </div>

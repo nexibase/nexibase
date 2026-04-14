@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, Suspense } from "react"
+import { useTranslations } from "next-intl"
 import { Sidebar } from "@/components/admin/Sidebar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -13,6 +14,7 @@ interface TrendData {
 }
 
 function UserTrendsContent() {
+  const t = useTranslations('admin')
   const [trends, setTrends] = useState<TrendData[]>([])
   const [totalUsers, setTotalUsers] = useState(0)
   const [periodUsers, setPeriodUsers] = useState(0)
@@ -43,7 +45,7 @@ function UserTrendsContent() {
   }, [fetchTrends])
 
   const handleSeed = async () => {
-    if (!confirm("시드 회원 1000명을 등록하시겠습니까?\n(3개월에 걸쳐 분산 등록됩니다)")) return
+    if (!confirm(t('seedConfirmCreate'))) return
     setSeeding(true)
     try {
       const res = await fetch("/api/admin/users/seed", {
@@ -55,14 +57,14 @@ function UserTrendsContent() {
       alert(data.message)
       fetchTrends()
     } catch {
-      alert("시드 생성 실패")
+      alert(t('seedCreateFailed'))
     } finally {
       setSeeding(false)
     }
   }
 
   const handleDeleteSeed = async () => {
-    if (!confirm("시드 회원을 모두 삭제하시겠습니까?")) return
+    if (!confirm(t('seedConfirmDelete'))) return
     setDeleting(true)
     try {
       const res = await fetch("/api/admin/users/seed", { method: "DELETE" })
@@ -70,7 +72,7 @@ function UserTrendsContent() {
       alert(data.message)
       fetchTrends()
     } catch {
-      alert("시드 삭제 실패")
+      alert(t('seedDeleteFailed'))
     } finally {
       setDeleting(false)
     }
@@ -101,10 +103,10 @@ function UserTrendsContent() {
             <div>
               <h1 className="text-2xl font-bold flex items-center gap-2">
                 <TrendingUp className="h-6 w-6" />
-                가입자 추이
+                {t('userTrendsTitle')}
               </h1>
               <p className="text-muted-foreground mt-1">
-                기간별 신규 가입자 추이를 확인합니다.
+                {t('userTrendsDesc')}
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -115,7 +117,7 @@ function UserTrendsContent() {
                 disabled={seeding}
               >
                 {seeding ? <Loader2 className="mr-2 h-3 w-3 animate-spin" /> : <Download className="mr-2 h-3 w-3" />}
-                시드 1000명 생성
+                {t('seedCreate')}
               </Button>
               <Button
                 variant="outline"
@@ -125,7 +127,7 @@ function UserTrendsContent() {
                 className="text-destructive hover:text-destructive"
               >
                 {deleting ? <Loader2 className="mr-2 h-3 w-3 animate-spin" /> : <Trash2 className="mr-2 h-3 w-3" />}
-                시드 삭제
+                {t('seedDelete')}
               </Button>
             </div>
           </div>
@@ -136,8 +138,8 @@ function UserTrendsContent() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">전체 회원</p>
-                    <p className="text-2xl font-bold">{totalUsers.toLocaleString()}명</p>
+                    <p className="text-sm font-medium text-muted-foreground">{t('totalMembers')}</p>
+                    <p className="text-2xl font-bold">{totalUsers.toLocaleString()}</p>
                   </div>
                   <Users className="h-8 w-8 text-muted-foreground" />
                 </div>
@@ -147,8 +149,8 @@ function UserTrendsContent() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">기간 내 가입</p>
-                    <p className="text-2xl font-bold">{periodUsers.toLocaleString()}명</p>
+                    <p className="text-sm font-medium text-muted-foreground">{t('periodNewUsers')}</p>
+                    <p className="text-2xl font-bold">{periodUsers.toLocaleString()}</p>
                   </div>
                   <TrendingUp className="h-8 w-8 text-muted-foreground" />
                 </div>
@@ -158,9 +160,9 @@ function UserTrendsContent() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">일 평균 가입</p>
+                    <p className="text-sm font-medium text-muted-foreground">{t('dailyAvg')}</p>
                     <p className="text-2xl font-bold">
-                      {trends.length > 0 ? (periodUsers / trends.length).toFixed(1) : 0}명
+                      {trends.length > 0 ? (periodUsers / trends.length).toFixed(1) : 0}
                     </p>
                   </div>
                   <TrendingUp className="h-8 w-8 text-muted-foreground" />
@@ -172,7 +174,7 @@ function UserTrendsContent() {
           {/* 차트 */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>일별 신규 가입자</CardTitle>
+              <CardTitle>{t('dailyNewUsers')}</CardTitle>
               <div className="flex items-center gap-1">
                 {["7", "30", "90"].map((p) => (
                   <Button
@@ -181,7 +183,7 @@ function UserTrendsContent() {
                     size="sm"
                     onClick={() => setPeriod(p)}
                   >
-                    {p}일
+                    {t('daysPeriod', { days: p })}
                   </Button>
                 ))}
               </div>
@@ -213,7 +215,7 @@ function UserTrendsContent() {
                         color: "hsl(var(--popover-foreground))",
                       }}
                       labelStyle={{ fontWeight: 600 }}
-                      formatter={(value) => [`${value}명`, "가입자"]}
+                      formatter={(value) => [`${value}`, t('subscribers')]}
                     />
                     <Line
                       type="linear"

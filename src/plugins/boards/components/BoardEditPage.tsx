@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import { useTranslations } from 'next-intl'
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -79,6 +80,7 @@ export default function BoardEditPage() {
   const router = useRouter()
   const slug = params.slug as string
   const postId = params.postId as string
+  const t = useTranslations('boards')
 
   const [board, setBoard] = useState<Board | null>(null)
   const [post, setPost] = useState<Post | null>(null)
@@ -106,7 +108,7 @@ export default function BoardEditPage() {
         const data = await response.json()
 
         if (!response.ok) {
-          setError(data.error || '게시글을 불러올 수 없습니다.')
+          setError(data.error || t('post.loadFailed'))
           return
         }
 
@@ -129,14 +131,14 @@ export default function BoardEditPage() {
         }
       } catch (error) {
         console.error('게시글 조회 에러:', error)
-        setError('게시글을 불러오는 중 오류가 발생했습니다.')
+        setError(t('post.loadError'))
       } finally {
         setLoading(false)
       }
     }
 
     fetchPost()
-  }, [slug, postId])
+  }, [slug, postId, t])
 
   // 파일 업로드 핸들러
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -145,7 +147,7 @@ export default function BoardEditPage() {
 
     // 최대 5개까지
     if (attachments.length + files.length > 5) {
-      alert('첨부파일은 최대 5개까지 가능합니다.')
+      alert(t('post.maxAttachments'))
       return
     }
 
@@ -167,12 +169,12 @@ export default function BoardEditPage() {
         if (response.ok && data.file) {
           setAttachments(prev => [...prev, { ...data.file, isNew: true }])
         } else {
-          alert(data.error || `${file.name} 업로드에 실패했습니다.`)
+          alert(data.error || t('post.uploadFailed', { name: file.name }))
         }
       }
     } catch (error) {
       console.error('파일 업로드 에러:', error)
-      alert('파일 업로드 중 오류가 발생했습니다.')
+      alert(t('post.uploadError'))
     } finally {
       setUploading(false)
       if (fileInputRef.current) {
@@ -227,12 +229,12 @@ export default function BoardEditPage() {
     e.preventDefault()
 
     if (!title.trim()) {
-      alert('제목을 입력해주세요.')
+      alert(t('post.titleRequired'))
       return
     }
 
     if (!content.trim()) {
-      alert('내용을 입력해주세요.')
+      alert(t('post.contentRequired'))
       return
     }
 
@@ -263,15 +265,15 @@ export default function BoardEditPage() {
 
       if (!response.ok) {
         if (response.status === 401) {
-          alert('로그인이 필요합니다.')
+          alert(t('errors.loginRequiredDot'))
           router.push('/login')
           return
         }
         if (response.status === 403) {
-          alert(data.error || '수정 권한이 없습니다.')
+          alert(data.error || t('post.editPermDenied'))
           return
         }
-        alert(data.error || '수정에 실패했습니다.')
+        alert(data.error || t('post.editFailed'))
         return
       }
 
@@ -279,7 +281,7 @@ export default function BoardEditPage() {
       router.push(`/boards/${slug}/${postId}`)
     } catch (error) {
       console.error('글 수정 에러:', error)
-      alert('수정 중 오류가 발생했습니다.')
+      alert(t('post.editError'))
     } finally {
       setSubmitting(false)
     }
@@ -301,10 +303,10 @@ export default function BoardEditPage() {
         <div className="flex items-center justify-center py-20">
           <Card className="w-full max-w-md">
             <CardContent className="p-6 text-center">
-              <p className="text-muted-foreground mb-4">{error || '게시글을 찾을 수 없습니다.'}</p>
+              <p className="text-muted-foreground mb-4">{error || t('post.notFound')}</p>
               <Button variant="outline" onClick={() => router.back()}>
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                돌아가기
+                {t('post.goBack')}
               </Button>
             </CardContent>
           </Card>
@@ -325,7 +327,7 @@ export default function BoardEditPage() {
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div>
-            <h1 className="text-xl font-bold">글 수정</h1>
+            <h1 className="text-xl font-bold">{t('post.editTitle')}</h1>
             <p className="text-sm text-muted-foreground">{board.name}</p>
           </div>
         </div>
@@ -335,11 +337,11 @@ export default function BoardEditPage() {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="title">
-                  제목 <span className="text-destructive">*</span>
+                  {t('post.title')} <span className="text-destructive">*</span>
                 </Label>
                 <Input
                   id="title"
-                  placeholder="제목을 입력하세요"
+                  placeholder={t('post.titlePlaceholder')}
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   maxLength={200}
@@ -349,12 +351,12 @@ export default function BoardEditPage() {
 
               <div className="space-y-2">
                 <Label>
-                  내용 <span className="text-destructive">*</span>
+                  {t('post.content')} <span className="text-destructive">*</span>
                 </Label>
                 <TiptapEditor
                   content={content}
                   onChange={setContent}
-                  placeholder="내용을 입력하세요..."
+                  placeholder={t('post.contentPlaceholder')}
                 />
               </div>
 
@@ -363,8 +365,8 @@ export default function BoardEditPage() {
                 <div className="space-y-3">
                   <Label className="flex items-center gap-2">
                     <Paperclip className="h-4 w-4" />
-                    파일 첨부
-                    <span className="text-xs text-muted-foreground">(최대 5개, 각 10MB 이하, 드래그로 순서 변경)</span>
+                    {t('post.fileAttach')}
+                    <span className="text-xs text-muted-foreground">{t('post.fileAttachDesc')}</span>
                   </Label>
 
                   {/* 파일 선택 버튼 */}
@@ -389,10 +391,10 @@ export default function BoardEditPage() {
                       ) : (
                         <Upload className="h-4 w-4 mr-2" />
                       )}
-                      파일 선택
+                      {t('post.fileSelect')}
                     </Button>
                     <span className="text-xs text-muted-foreground">
-                      {attachments.length}/5개
+                      {t('post.filesCount', { count: attachments.length })}
                     </span>
                   </div>
 
@@ -430,7 +432,7 @@ export default function BoardEditPage() {
                               <p className="text-sm font-medium truncate">
                                 {file.filename}
                                 {file.isNew && (
-                                  <span className="ml-2 text-xs text-primary">(새 파일)</span>
+                                  <span className="ml-2 text-xs text-primary">{t('post.newFile')}</span>
                                 )}
                               </p>
                               <p className="text-xs text-muted-foreground">
@@ -463,7 +465,7 @@ export default function BoardEditPage() {
                   />
                   <Label htmlFor="isSecret" className="flex items-center gap-1 cursor-pointer">
                     <Lock className="h-4 w-4" />
-                    비밀글
+                    {t('post.secret')}
                   </Label>
                 </div>
               )}
@@ -474,11 +476,11 @@ export default function BoardEditPage() {
                   variant="outline"
                   onClick={() => router.back()}
                 >
-                  취소
+                  {t('post.cancel')}
                 </Button>
                 <Button type="submit" disabled={submitting}>
                   {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                  수정
+                  {t('edit')}
                 </Button>
               </div>
             </form>

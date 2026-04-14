@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { useTranslations } from 'next-intl'
 import { Sidebar } from "@/components/admin/Sidebar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -88,6 +89,7 @@ function BoardModal({
   board: Board | null
   onSave: (data: Partial<Board>) => void
 }) {
+  const t = useTranslations('boards')
   const [formData, setFormData] = useState({
     slug: '',
     name: '',
@@ -165,7 +167,7 @@ function BoardModal({
       <div className="relative bg-background rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto m-4">
         <div className="sticky top-0 bg-background border-b px-6 py-4 flex items-center justify-between">
           <h2 className="text-xl font-semibold">
-            {board ? '게시판 수정' : '게시판 추가'}
+            {board ? t('admin.edit') : t('admin.addBoard')}
           </h2>
           <button
             onClick={onClose}
@@ -178,11 +180,11 @@ function BoardModal({
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* 기본 정보 */}
           <div>
-            <h3 className="text-sm font-medium text-muted-foreground mb-4">기본 정보</h3>
+            <h3 className="text-sm font-medium text-muted-foreground mb-4">{t('admin.basicInfo')}</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="slug">
-                  슬러그 <span className="text-red-500">*</span>
+                  {t('admin.slug')} <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="slug"
@@ -194,17 +196,17 @@ function BoardModal({
                   required
                 />
                 <p className="text-xs text-muted-foreground">
-                  URL에 사용될 영문 소문자, 숫자, 하이픈
+                  {t('admin.slugDesc')}
                 </p>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="name">
-                  게시판 이름 <span className="text-red-500">*</span>
+                  {t('admin.boardName')} <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="name"
-                  placeholder="자유게시판, 공지사항..."
+                  placeholder={t('admin.namePlaceholder')}
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   required
@@ -212,33 +214,33 @@ function BoardModal({
               </div>
 
               <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="description">설명</Label>
+                <Label htmlFor="description">{t('admin.description')}</Label>
                 <Input
                   id="description"
-                  placeholder="게시판 설명을 입력하세요"
+                  placeholder={t('admin.descPlaceholder')}
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="category">카테고리</Label>
+                <Label htmlFor="category">{t('admin.category')}</Label>
                 <select
                   id="category"
                   value={formData.category}
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                   className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
                 >
-                  <option value="">선택 안함</option>
-                  <option value="community">커뮤니티</option>
-                  <option value="support">고객지원</option>
-                  <option value="notice">공지</option>
-                  <option value="gallery">갤러리</option>
+                  <option value="">{t('admin.categoryNone')}</option>
+                  <option value="community">{t('admin.categoryCommunity')}</option>
+                  <option value="support">{t('admin.categorySupport')}</option>
+                  <option value="notice">{t('admin.categoryNotice')}</option>
+                  <option value="gallery">{t('admin.categoryGallery')}</option>
                 </select>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="postsPerPage">페이지당 글 수</Label>
+                <Label htmlFor="postsPerPage">{t('admin.postsPerPage')}</Label>
                 <Input
                   id="postsPerPage"
                   type="number"
@@ -255,8 +257,8 @@ function BoardModal({
 
           {/* 권한 설정 */}
           <div>
-            <h3 className="text-sm font-medium text-muted-foreground mb-4">권한 설정</h3>
-            <p className="text-xs text-muted-foreground mb-4">체크하면 회원만 이용 가능, 체크 해제하면 비회원도 이용 가능</p>
+            <h3 className="text-sm font-medium text-muted-foreground mb-4">{t('admin.permissions')}</h3>
+            <p className="text-xs text-muted-foreground mb-4">{t('admin.permDesc')}</p>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <label className="flex items-center space-x-2 cursor-pointer p-3 border rounded-lg hover:bg-muted/50">
                 <input
@@ -265,7 +267,7 @@ function BoardModal({
                   onChange={(e) => setFormData({ ...formData, listMemberOnly: e.target.checked })}
                   className="rounded border-gray-300"
                 />
-                <span className="text-sm">목록 보기</span>
+                <span className="text-sm">{t('admin.listView')}</span>
               </label>
               <label className="flex items-center space-x-2 cursor-pointer p-3 border rounded-lg hover:bg-muted/50">
                 <input
@@ -274,25 +276,25 @@ function BoardModal({
                   onChange={(e) => setFormData({ ...formData, readMemberOnly: e.target.checked })}
                   className="rounded border-gray-300"
                 />
-                <span className="text-sm">글 읽기</span>
+                <span className="text-sm">{t('admin.readPost')}</span>
               </label>
-              <label className="flex items-center space-x-2 p-3 border rounded-lg bg-muted/30 cursor-not-allowed opacity-70" title="비회원 글쓰기는 지원하지 않습니다">
+              <label className="flex items-center space-x-2 p-3 border rounded-lg bg-muted/30 cursor-not-allowed opacity-70" title={t('admin.writeNotSupportedGuest')}>
                 <input
                   type="checkbox"
                   checked={true}
                   disabled
                   className="rounded border-gray-300"
                 />
-                <span className="text-sm">글 쓰기 <span className="text-xs text-muted-foreground">(회원전용)</span></span>
+                <span className="text-sm">{t('admin.writePost')} <span className="text-xs text-muted-foreground">{t('admin.writeMemberOnlyShort')}</span></span>
               </label>
-              <label className="flex items-center space-x-2 p-3 border rounded-lg bg-muted/30 cursor-not-allowed opacity-70" title="비회원 댓글쓰기는 지원하지 않습니다">
+              <label className="flex items-center space-x-2 p-3 border rounded-lg bg-muted/30 cursor-not-allowed opacity-70" title={t('admin.commentNotSupportedGuest')}>
                 <input
                   type="checkbox"
                   checked={true}
                   disabled
                   className="rounded border-gray-300"
                 />
-                <span className="text-sm">댓글 쓰기 <span className="text-xs text-muted-foreground">(회원전용)</span></span>
+                <span className="text-sm">{t('admin.commentWrite')} <span className="text-xs text-muted-foreground">{t('admin.writeMemberOnlyShort')}</span></span>
               </label>
             </div>
           </div>
@@ -301,7 +303,7 @@ function BoardModal({
 
           {/* 기능 설정 */}
           <div>
-            <h3 className="text-sm font-medium text-muted-foreground mb-4">기능 설정</h3>
+            <h3 className="text-sm font-medium text-muted-foreground mb-4">{t('admin.features')}</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <label className="flex items-center space-x-2 cursor-pointer">
                 <input
@@ -310,7 +312,7 @@ function BoardModal({
                   onChange={(e) => setFormData({ ...formData, useComment: e.target.checked })}
                   className="rounded border-gray-300"
                 />
-                <span className="text-sm">댓글 사용</span>
+                <span className="text-sm">{t('admin.useComment')}</span>
               </label>
               <label className="flex items-center space-x-2 cursor-pointer">
                 <input
@@ -319,7 +321,7 @@ function BoardModal({
                   onChange={(e) => setFormData({ ...formData, useReaction: e.target.checked })}
                   className="rounded border-gray-300"
                 />
-                <span className="text-sm">반응 사용</span>
+                <span className="text-sm">{t('admin.useReaction')}</span>
               </label>
               <label className="flex items-center space-x-2 cursor-pointer">
                 <input
@@ -328,7 +330,7 @@ function BoardModal({
                   onChange={(e) => setFormData({ ...formData, useFile: e.target.checked })}
                   className="rounded border-gray-300"
                 />
-                <span className="text-sm">파일 첨부</span>
+                <span className="text-sm">{t('admin.useFile')}</span>
               </label>
               <label className="flex items-center space-x-2 cursor-pointer">
                 <input
@@ -337,7 +339,7 @@ function BoardModal({
                   onChange={(e) => setFormData({ ...formData, useSecret: e.target.checked })}
                   className="rounded border-gray-300"
                 />
-                <span className="text-sm">비밀글</span>
+                <span className="text-sm">{t('admin.useSecret')}</span>
               </label>
             </div>
           </div>
@@ -346,36 +348,36 @@ function BoardModal({
 
           {/* 표시 설정 */}
           <div>
-            <h3 className="text-sm font-medium text-muted-foreground mb-4">표시 설정</h3>
+            <h3 className="text-sm font-medium text-muted-foreground mb-4">{t('admin.displaySettings')}</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="displayType">표시 형식</Label>
+                <Label htmlFor="displayType">{t('admin.displayType')}</Label>
                 <select
                   id="displayType"
                   value={formData.displayType}
                   onChange={(e) => setFormData({ ...formData, displayType: e.target.value })}
                   className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
                 >
-                  <option value="list">목록형</option>
-                  <option value="gallery">갤러리형</option>
+                  <option value="list">{t('admin.displayList')}</option>
+                  <option value="gallery">{t('admin.displayGallery')}</option>
                 </select>
                 <p className="text-xs text-muted-foreground">
                   {formData.displayType === 'gallery'
-                    ? '첨부파일의 첫 번째 이미지가 썸네일로 표시됩니다'
-                    : '기본 목록 형태로 표시됩니다'}
+                    ? t('admin.displayGalleryDesc')
+                    : t('admin.displayListDesc')}
                 </p>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="sortOrder">정렬 순서</Label>
+                <Label htmlFor="sortOrder">{t('admin.sortOrder')}</Label>
                 <select
                   id="sortOrder"
                   value={formData.sortOrder}
                   onChange={(e) => setFormData({ ...formData, sortOrder: e.target.value })}
                   className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
                 >
-                  <option value="latest">최신순</option>
-                  <option value="popular">인기순</option>
-                  <option value="oldest">오래된순</option>
+                  <option value="latest">{t('admin.sortLatest')}</option>
+                  <option value="popular">{t('admin.sortPopular')}</option>
+                  <option value="oldest">{t('admin.sortOldest')}</option>
                 </select>
               </div>
             </div>
@@ -385,7 +387,7 @@ function BoardModal({
 
           {/* 상태 설정 */}
           <div>
-            <h3 className="text-sm font-medium text-muted-foreground mb-4">상태</h3>
+            <h3 className="text-sm font-medium text-muted-foreground mb-4">{t('admin.statusSection')}</h3>
             <label className="flex items-center space-x-2 cursor-pointer">
               <input
                 type="checkbox"
@@ -393,17 +395,17 @@ function BoardModal({
                 onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
                 className="rounded border-gray-300"
               />
-              <span className="text-sm">활성화</span>
+              <span className="text-sm">{t('admin.activate')}</span>
             </label>
           </div>
 
           <div className="flex justify-end space-x-3 pt-4">
             <Button type="button" variant="outline" onClick={onClose}>
-              취소
+              {t('admin.cancel')}
             </Button>
             <Button type="submit" disabled={loading}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {board ? '수정' : '추가'}
+              {board ? t('edit') : t('admin.add')}
             </Button>
           </div>
         </form>
@@ -470,6 +472,7 @@ function StatCard({ icon: Icon, label, value, color, href, onClick, isActive }: 
 }
 
 export default function BoardsPage() {
+  const t = useTranslations('boards')
   const [activeMenu, setActiveMenu] = useState("boards")
   const [boards, setBoards] = useState<Board[]>([])
   const [stats, setStats] = useState<BoardStats>({ totalBoards: 0, activeBoards: 0, totalPosts: 0 })
@@ -485,7 +488,7 @@ export default function BoardsPage() {
 
   // 기본 게시판 생성
   const handleSeedBoards = async () => {
-    if (!confirm('자유게시판, 공지사항, 문의게시판을 생성하시겠습니까?')) return
+    if (!confirm(t('admin.createDefaultConfirm'))) return
 
     setSeedingBoards(true)
     try {
@@ -498,11 +501,11 @@ export default function BoardsPage() {
         alert(data.message)
         fetchBoards()
       } else {
-        alert(data.error || '생성에 실패했습니다.')
+        alert(data.error || t('admin.createFailed'))
       }
     } catch (error) {
       console.error('기본 게시판 생성 에러:', error)
-      alert('생성 중 오류가 발생했습니다.')
+      alert(t('admin.createError'))
     } finally {
       setSeedingBoards(false)
     }
@@ -566,17 +569,17 @@ export default function BoardsPage() {
         setEditingBoard(null)
         fetchBoards()
       } else {
-        alert(data.error || '저장에 실패했습니다.')
+        alert(data.error || t('admin.saveFailed'))
       }
     } catch (error) {
       console.error('게시판 저장 에러:', error)
-      alert('저장 중 오류가 발생했습니다.')
+      alert(t('admin.saveError'))
     }
   }
 
   // 게시판 삭제
   const handleDelete = async (board: Board) => {
-    if (!confirm(`"${board.name}" 게시판을 삭제하시겠습니까?\n게시글, 댓글, 반응이 모두 삭제됩니다.`)) return
+    if (!confirm(t('admin.deleteBoardConfirm', { name: board.name }))) return
 
     try {
       const response = await fetch(`/api/admin/boards/${board.id}`, {
@@ -587,11 +590,11 @@ export default function BoardsPage() {
         fetchBoards()
       } else {
         const data = await response.json()
-        alert(data.error || '삭제에 실패했습니다.')
+        alert(data.error || t('admin.deleteFailed'))
       }
     } catch (error) {
       console.error('게시판 삭제 에러:', error)
-      alert('삭제 중 오류가 발생했습니다.')
+      alert(t('admin.deleteError'))
     }
   }
 
@@ -599,11 +602,11 @@ export default function BoardsPage() {
   const handleBulkDelete = async () => {
     const selectedIds = boards.filter(b => b.selected).map(b => b.id)
     if (selectedIds.length === 0) {
-      alert('삭제할 게시판을 선택해주세요.')
+      alert(t('admin.selectToDelete'))
       return
     }
 
-    if (!confirm(`${selectedIds.length}개의 게시판을 삭제하시겠습니까?\n관련된 모든 데이터가 삭제됩니다.`)) return
+    if (!confirm(t('admin.bulkDeleteConfirm', { count: selectedIds.length }))) return
 
     try {
       const response = await fetch('/api/admin/boards', {
@@ -617,11 +620,11 @@ export default function BoardsPage() {
         fetchBoards()
       } else {
         const data = await response.json()
-        alert(data.error || '삭제에 실패했습니다.')
+        alert(data.error || t('admin.deleteFailed'))
       }
     } catch (error) {
       console.error('일괄 삭제 에러:', error)
-      alert('삭제 중 오류가 발생했습니다.')
+      alert(t('admin.deleteError'))
     }
   }
 
@@ -660,16 +663,16 @@ export default function BoardsPage() {
           <div className="mb-6">
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <Clipboard className="h-6 w-6" />
-              게시판 관리
+              {t('admin.title')}
             </h1>
-            <p className="text-muted-foreground mt-1">게시판을 생성하고 관리합니다</p>
+            <p className="text-muted-foreground mt-1">{t('admin.subtitle')}</p>
           </div>
 
           {/* 통계 카드 */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <StatCard
               icon={LayoutGrid}
-              label="전체 게시판"
+              label={t('admin.totalBoards')}
               value={stats.totalBoards}
               color="bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400"
               onClick={() => setStatusFilter('all')}
@@ -677,7 +680,7 @@ export default function BoardsPage() {
             />
             <StatCard
               icon={Check}
-              label="활성 게시판"
+              label={t('admin.activeBoards')}
               value={stats.activeBoards}
               color="bg-green-500/10 text-green-600 dark:bg-green-500/20 dark:text-green-400"
               onClick={() => setStatusFilter('active')}
@@ -685,7 +688,7 @@ export default function BoardsPage() {
             />
             <StatCard
               icon={FileText}
-              label="전체 게시글"
+              label={t('admin.totalPosts')}
               value={stats.totalPosts}
               color="bg-purple-500/10 text-purple-600 dark:bg-purple-500/20 dark:text-purple-400"
               href="/posts/latest"
@@ -700,19 +703,19 @@ export default function BoardsPage() {
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
-                      placeholder="게시판 검색..."
+                      placeholder={t('admin.searchPlaceholder')}
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
                       className="pl-10 w-64"
                     />
                   </div>
-                  <Button type="submit" variant="outline">검색</Button>
+                  <Button type="submit" variant="outline">{t('admin.search')}</Button>
                 </form>
 
                 <div className="flex gap-2">
                   <Button onClick={() => { setEditingBoard(null); setModalOpen(true); }}>
                     <Plus className="h-4 w-4 mr-2" />
-                    게시판 추가
+                    {t('admin.addBoard')}
                   </Button>
                 </div>
               </div>
@@ -724,14 +727,14 @@ export default function BoardsPage() {
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg">
-                  게시판 목록
+                  {t('admin.boardList')}
                   {statusFilter === 'active' && (
-                    <span className="ml-2 text-sm font-normal text-muted-foreground">(활성만)</span>
+                    <span className="ml-2 text-sm font-normal text-muted-foreground">{t('admin.activeOnly')}</span>
                   )}
                 </CardTitle>
                 {statusFilter !== 'all' && (
                   <Button variant="ghost" size="sm" onClick={() => setStatusFilter('all')}>
-                    필터 초기화
+                    {t('admin.resetFilter')}
                   </Button>
                 )}
               </div>
@@ -743,22 +746,22 @@ export default function BoardsPage() {
                 </div>
               ) : boards.length === 0 ? (
                 <div className="text-center py-12">
-                  <p className="text-muted-foreground mb-4">게시판이 없습니다.</p>
+                  <p className="text-muted-foreground mb-4">{t('admin.noBoards')}</p>
                   <Button onClick={handleSeedBoards} disabled={seedingBoards}>
                     {seedingBoards ? (
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                     ) : (
                       <Sparkles className="h-4 w-4 mr-2" />
                     )}
-                    기본 게시판 생성
+                    {t('admin.createDefault')}
                   </Button>
                   <p className="text-sm text-muted-foreground mt-2">
-                    자유게시판, 공지사항, 문의게시판이 생성됩니다
+                    {t('admin.createDefaultDesc')}
                   </p>
                 </div>
               ) : filteredBoards.length === 0 ? (
                 <div className="text-center py-12">
-                  <p className="text-muted-foreground">필터 조건에 맞는 게시판이 없습니다.</p>
+                  <p className="text-muted-foreground">{t('admin.noFilterMatch')}</p>
                 </div>
               ) : (
                 <>
@@ -774,13 +777,13 @@ export default function BoardsPage() {
                               className="rounded border-gray-300"
                             />
                           </th>
-                          <th className="p-3 text-left text-sm font-medium text-muted-foreground">게시판</th>
-                          <th className="p-3 text-left text-sm font-medium text-muted-foreground">슬러그</th>
-                          <th className="p-3 text-left text-sm font-medium text-muted-foreground">카테고리</th>
-                          <th className="p-3 text-center text-sm font-medium text-muted-foreground">게시글</th>
-                          <th className="p-3 text-center text-sm font-medium text-muted-foreground">기능</th>
-                          <th className="p-3 text-center text-sm font-medium text-muted-foreground">상태</th>
-                          <th className="p-3 text-center text-sm font-medium text-muted-foreground">관리</th>
+                          <th className="p-3 text-left text-sm font-medium text-muted-foreground">{t('admin.colBoard')}</th>
+                          <th className="p-3 text-left text-sm font-medium text-muted-foreground">{t('admin.colSlug')}</th>
+                          <th className="p-3 text-left text-sm font-medium text-muted-foreground">{t('admin.colCategory')}</th>
+                          <th className="p-3 text-center text-sm font-medium text-muted-foreground">{t('admin.colPosts')}</th>
+                          <th className="p-3 text-center text-sm font-medium text-muted-foreground">{t('admin.colFunc')}</th>
+                          <th className="p-3 text-center text-sm font-medium text-muted-foreground">{t('admin.colStatus')}</th>
+                          <th className="p-3 text-center text-sm font-medium text-muted-foreground">{t('admin.colManage')}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -824,22 +827,22 @@ export default function BoardsPage() {
                             <td className="p-3">
                               <div className="flex justify-center gap-1">
                                 {board.useComment && (
-                                  <span title="댓글" className="p-1 bg-blue-500/10 dark:bg-blue-500/20 rounded">
+                                  <span title={t('admin.iconComment')} className="p-1 bg-blue-500/10 dark:bg-blue-500/20 rounded">
                                     <MessageSquare className="h-3 w-3 text-blue-600 dark:text-blue-400" />
                                   </span>
                                 )}
                                 {board.useReaction && (
-                                  <span title="리액션" className="p-1 bg-pink-500/10 dark:bg-pink-500/20 rounded">
+                                  <span title={t('admin.iconReaction')} className="p-1 bg-pink-500/10 dark:bg-pink-500/20 rounded">
                                     <Heart className="h-3 w-3 text-pink-600 dark:text-pink-400" />
                                   </span>
                                 )}
                                 {board.useFile && (
-                                  <span title="파일" className="p-1 bg-green-500/10 dark:bg-green-500/20 rounded">
+                                  <span title={t('admin.iconFile')} className="p-1 bg-green-500/10 dark:bg-green-500/20 rounded">
                                     <FileText className="h-3 w-3 text-green-600 dark:text-green-400" />
                                   </span>
                                 )}
                                 {board.useSecret && (
-                                  <span title="비밀글" className="p-1 bg-yellow-500/10 dark:bg-yellow-500/20 rounded">
+                                  <span title={t('admin.iconSecret')} className="p-1 bg-yellow-500/10 dark:bg-yellow-500/20 rounded">
                                     <Eye className="h-3 w-3 text-yellow-600 dark:text-yellow-400" />
                                   </span>
                                 )}
@@ -848,10 +851,10 @@ export default function BoardsPage() {
                             <td className="p-3 text-center">
                               {board.isActive ? (
                                 <Badge className="bg-green-500/10 text-green-700 hover:bg-green-500/10 dark:bg-green-500/20 dark:text-green-400">
-                                  활성
+                                  {t('admin.active')}
                                 </Badge>
                               ) : (
-                                <Badge variant="secondary">비활성</Badge>
+                                <Badge variant="secondary">{t('admin.inactive')}</Badge>
                               )}
                             </td>
                             <td className="p-3">

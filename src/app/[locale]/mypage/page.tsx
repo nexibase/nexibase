@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import Link from "next/link"
 import { MyPageLayout } from "@/components/layout/MyPageLayout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -53,6 +54,8 @@ interface LoginLog {
 }
 
 export default function MyPage() {
+  const t = useTranslations('mypage')
+  const tc = useTranslations('common')
   const router = useRouter()
   const [user, setUser] = useState<UserInfo | null>(null)
   const [myPosts, setMyPosts] = useState<MyPost[]>([])
@@ -83,19 +86,19 @@ export default function MyPage() {
   const formatTimeAgo = (dateStr: string) => {
     const diff = Date.now() - new Date(dateStr).getTime()
     const mins = Math.floor(diff / 60000)
-    if (mins < 60) return `${mins}분 전`
+    if (mins < 60) return t('minutesAgo', { mins })
     const hours = Math.floor(mins / 60)
-    if (hours < 24) return `${hours}시간 전`
+    if (hours < 24) return t('hoursAgo', { hours })
     const days = Math.floor(hours / 24)
-    if (days < 7) return `${days}일 전`
-    return new Date(dateStr).toLocaleDateString('ko-KR')
+    if (days < 7) return t('daysAgo', { days })
+    return new Date(dateStr).toLocaleDateString()
   }
 
   return (
     <MyPageLayout>
       <div className="space-y-6">
         {loading ? (
-          <div className="py-12 text-center text-muted-foreground">로딩 중...</div>
+          <div className="py-12 text-center text-muted-foreground">{tc('loading')}</div>
         ) : (
           <>
             {/* 내 정보 */}
@@ -104,7 +107,7 @@ export default function MyPage() {
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base flex items-center gap-2">
                     <User className="h-4 w-4" />
-                    내 정보
+                    {t('myInfo')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -127,16 +130,16 @@ export default function MyPage() {
                     )}
                     <div className="flex items-center gap-2">
                       <Shield className="h-4 w-4 text-muted-foreground" />
-                      <span>Lv.{user.level} {user.role === 'admin' ? '(관리자)' : ''}</span>
+                      <span>Lv.{user.level} {user.role === 'admin' ? t('adminBadge') : ''}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <span>가입 {new Date(user.createdAt).toLocaleDateString('ko-KR')}</span>
+                      <span>{t('joinedPrefix')} {new Date(user.createdAt).toLocaleDateString()}</span>
                     </div>
                     {user.lastLoginAt && (
                       <div className="flex items-center gap-2">
                         <Clock className="h-4 w-4 text-muted-foreground" />
-                        <span>최근 {formatTimeAgo(user.lastLoginAt)}</span>
+                        <span>{t('recentPrefix')} {formatTimeAgo(user.lastLoginAt)}</span>
                       </div>
                     )}
                   </div>
@@ -150,16 +153,16 @@ export default function MyPage() {
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-base flex items-center gap-2">
                     <Monitor className="h-4 w-4" />
-                    로그인 기록
+                    {t('loginHistory')}
                   </CardTitle>
                   <Link href="/mypage/login-history" className="text-xs text-primary hover:underline">
-                    전체보기
+                    {t('viewAll')}
                   </Link>
                 </div>
               </CardHeader>
               <CardContent>
                 {loginLogs.length === 0 ? (
-                  <p className="text-sm text-muted-foreground py-4 text-center">로그인 기록이 없습니다.</p>
+                  <p className="text-sm text-muted-foreground py-4 text-center">{t('noLoginHistory')}</p>
                 ) : (
                   <div className="space-y-2">
                     {loginLogs.slice(0, 5).map(log => (
@@ -169,7 +172,7 @@ export default function MyPage() {
                           <span className="text-muted-foreground">{log.ip}</span>
                         </div>
                         <span className="text-xs text-muted-foreground">
-                          {new Date(log.createdAt).toLocaleString('ko-KR')}
+                          {new Date(log.createdAt).toLocaleString()}
                         </span>
                       </div>
                     ))}
@@ -183,12 +186,12 @@ export default function MyPage() {
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
                   <FileText className="h-4 w-4" />
-                  내가 쓴 글
+                  {t('myWrittenPosts')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {myPosts.length === 0 ? (
-                  <p className="text-sm text-muted-foreground py-4 text-center">작성한 글이 없습니다.</p>
+                  <p className="text-sm text-muted-foreground py-4 text-center">{t('noMyPosts')}</p>
                 ) : (
                   <div className="space-y-3">
                     {myPosts.map(post => (
@@ -220,12 +223,12 @@ export default function MyPage() {
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
                   <MessageSquare className="h-4 w-4" />
-                  내가 쓴 댓글
+                  {t('myWrittenComments')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {myComments.length === 0 ? (
-                  <p className="text-sm text-muted-foreground py-4 text-center">작성한 댓글이 없습니다.</p>
+                  <p className="text-sm text-muted-foreground py-4 text-center">{t('noMyComments')}</p>
                 ) : (
                   <div className="space-y-3">
                     {myComments.map(comment => (
@@ -250,7 +253,7 @@ export default function MyPage() {
         {/* 로그아웃 */}
         <Button variant="outline" onClick={handleLogout} className="w-full text-red-500">
           <LogOut className="h-4 w-4 mr-2" />
-          로그아웃
+          {t('logout')}
         </Button>
       </div>
     </MyPageLayout>

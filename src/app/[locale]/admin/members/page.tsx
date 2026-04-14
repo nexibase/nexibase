@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { Sidebar } from "@/components/admin/Sidebar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -18,6 +19,8 @@ import {
 import { MemberListItem, MemberStats, MemberSearchFilter } from "@/lib/types/member"
 
 function MembersContent() {
+  const t = useTranslations('admin')
+  const tc = useTranslations('common')
   const router = useRouter()
   const searchParams = useSearchParams()
   
@@ -100,10 +103,10 @@ function MembersContent() {
   }, [searchParams])
 
   const filters = [
-    { id: "전체목록", label: "전체목록", count: `${stats.totalMembers}명` },
-    { id: "총회원수", label: `총회원수 ${stats.totalMembers}명`, count: "" },
-    { id: "차단", label: `차단 ${stats.blockedMembers}명`, count: "" },
-    { id: "탈퇴", label: `탈퇴 ${stats.withdrawnMembers}명`, count: "" }
+    { id: "전체목록", label: t('membersFilterAll'), count: `${stats.totalMembers}` },
+    { id: "총회원수", label: `${t('membersFilterTotal')} ${stats.totalMembers}`, count: "" },
+    { id: "차단", label: `${t('membersFilterBlocked')} ${stats.blockedMembers}`, count: "" },
+    { id: "탈퇴", label: `${t('membersFilterWithdrawn')} ${stats.withdrawnMembers}`, count: "" }
   ]
 
   const handleSelectAll = (checked: boolean) => {
@@ -125,7 +128,7 @@ function MembersContent() {
     const selectedMembers = members.filter(member => member.selected)
     if (selectedMembers.length === 0) return
 
-    if (confirm(`선택된 ${selectedMembers.length}명의 회원을 탈퇴 처리하시겠습니까?`)) {
+    if (confirm(t('bulkDeleteConfirm', { count: selectedMembers.length }))) {
       try {
         for (const member of selectedMembers) {
           await fetch(`/api/admin/members?mb_id=${member.mb_id}`, {
@@ -186,9 +189,9 @@ function MembersContent() {
   }
 
   const getStatusText = (member: MemberListItem) => {
-    if (member.mb_leave_date) return "탈퇴"
-    if (member.mb_intercept_date) return "차단"
-    return "정상"
+    if (member.mb_leave_date) return t('statusWithdrawn')
+    if (member.mb_intercept_date) return t('statusBlocked')
+    return t('statusNormal')
   }
 
   const getStatusColor = (member: MemberListItem) => {
@@ -199,10 +202,10 @@ function MembersContent() {
 
   const getCertifyText = (certify: string) => {
     switch (certify) {
-      case 'hp': return '휴대폰'
-      case 'ipin': return '아이핀'
-      case 'simple': return '간편인증'
-      default: return '미인증'
+      case 'hp': return t('certifyHp')
+      case 'ipin': return t('certifyIpin')
+      case 'simple': return t('certifySimple')
+      default: return t('certifyNone')
     }
   }
 
@@ -226,14 +229,14 @@ function MembersContent() {
             {showSuccessMessage && (
               <div className="p-4 bg-green-50 border-b border-green-200">
                 <p className="text-sm text-green-800">
-                  작업이 성공적으로 완료되었습니다.
+                  {t('operationSuccess')}
                 </p>
               </div>
             )}
             
             {/* 헤더 */}
             <div className="flex justify-between items-center p-4 border-b border-gray-200">
-              <h1 className="text-xl font-bold text-gray-900">회원관리</h1>
+              <h1 className="text-xl font-bold text-gray-900">{t('membersTitle')}</h1>
               <div className="flex gap-2">
                 <Button 
                   variant="outline" 
@@ -241,7 +244,7 @@ function MembersContent() {
                   onClick={handleBulkEdit}
                   disabled={!members.some(m => m.selected)}
                 >
-                  선택수정
+                  {t('membersSelectEdit')}
                 </Button>
                 <Button 
                   variant="outline" 
@@ -249,11 +252,11 @@ function MembersContent() {
                   onClick={handleBulkDelete}
                   disabled={!members.some(m => m.selected)}
                 >
-                  선택삭제
+                  {t('membersSelectDelete')}
                 </Button>
                 <Button size="sm" onClick={handleAddMember} className="bg-pink-500 hover:bg-pink-600">
                   <Plus className="w-3 h-3 mr-1" />
-                  회원추가
+                  {t('membersAddButton')}
                 </Button>
               </div>
             </div>
@@ -281,14 +284,14 @@ function MembersContent() {
                   onChange={(e) => handleSearchTypeChange(e.target.value)}
                   className="border border-gray-300 rounded px-2 py-1 text-xs"
                 >
-                  <option value="회원아이디">회원아이디</option>
-                  <option value="이름">이름</option>
-                  <option value="닉네임">닉네임</option>
-                  <option value="이메일">이메일</option>
+                  <option value="회원아이디">{t('searchById')}</option>
+                  <option value="이름">{t('searchByName')}</option>
+                  <option value="닉네임">{t('searchByNick')}</option>
+                  <option value="이메일">{t('searchByEmail')}</option>
                 </select>
                 <Input
                   type="text"
-                  placeholder="검색어를 입력하세요"
+                  placeholder={t('searchPlaceholder')}
                   value={searchValue}
                   onChange={(e) => setSearchValue(e.target.value)}
                   className="flex-1 text-xs"
@@ -303,7 +306,7 @@ function MembersContent() {
             {/* 안내 메시지 */}
             <div className="p-3 bg-blue-50 border-b border-blue-200">
               <p className="text-xs text-blue-800">
-                회원자료 삭제 시 다른 회원이 기존 회원아이디를 사용하지 못하도록 회원아이디, 이름, 닉네임은 삭제하지 않고 영구 보관합니다.
+                {t('membersNotice')}
               </p>
             </div>
 
@@ -320,52 +323,52 @@ function MembersContent() {
                       />
                     </th>
                     <th className="p-2 text-left text-xs font-medium text-gray-700">
-                      <div>아이디</div>
-                      <div className="text-xs text-gray-500">이름 / 닉네임</div>
+                      <div>{t('colId')}</div>
+                      <div className="text-xs text-gray-500">{t('colNameNick')}</div>
                     </th>
-                    <th className="p-2 text-left text-xs font-medium text-gray-700">본인확인</th>
+                    <th className="p-2 text-left text-xs font-medium text-gray-700">{t('colIdVerify')}</th>
                     <th className="p-2 text-left text-xs font-medium text-gray-700">
-                      <div>메일인증</div>
-                      <div className="text-xs text-gray-500">SMS수신</div>
-                    </th>
-                    <th className="p-2 text-left text-xs font-medium text-gray-700">
-                      <div>정보공개</div>
-                      <div className="text-xs text-gray-500">성인인증</div>
+                      <div>{t('colMailVerify')}</div>
+                      <div className="text-xs text-gray-500">{t('colSmsReceive')}</div>
                     </th>
                     <th className="p-2 text-left text-xs font-medium text-gray-700">
-                      <div>메일수신</div>
-                      <div className="text-xs text-gray-500">접근차단</div>
+                      <div>{t('colInfoOpen')}</div>
+                      <div className="text-xs text-gray-500">{t('colAdultCertify')}</div>
                     </th>
                     <th className="p-2 text-left text-xs font-medium text-gray-700">
-                      <div>상태</div>
-                      <div className="text-xs text-gray-500">권한</div>
+                      <div>{t('colMailReceive')}</div>
+                      <div className="text-xs text-gray-500">{t('colAccessBlock')}</div>
                     </th>
                     <th className="p-2 text-left text-xs font-medium text-gray-700">
-                      <div>휴대폰</div>
-                      <div className="text-xs text-gray-500">전화번호</div>
+                      <div>{t('status')}</div>
+                      <div className="text-xs text-gray-500">{t('colStatusRole')}</div>
                     </th>
                     <th className="p-2 text-left text-xs font-medium text-gray-700">
-                      <div>최종접속</div>
-                      <div className="text-xs text-gray-500">가입일</div>
+                      <div>{t('colPhone')}</div>
+                      <div className="text-xs text-gray-500">{t('colTel')}</div>
                     </th>
                     <th className="p-2 text-left text-xs font-medium text-gray-700">
-                      <div>접근그룹</div>
-                      <div className="text-xs text-gray-500">포인트</div>
+                      <div>{t('colLastLogin')}</div>
+                      <div className="text-xs text-gray-500">{t('colJoinDate')}</div>
                     </th>
-                    <th className="p-2 text-left text-xs font-medium text-gray-700">관리</th>
+                    <th className="p-2 text-left text-xs font-medium text-gray-700">
+                      <div>{t('colAccessGroup')}</div>
+                      <div className="text-xs text-gray-500">{t('colPoints')}</div>
+                    </th>
+                    <th className="p-2 text-left text-xs font-medium text-gray-700">{t('colManage')}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {loading ? (
                     <tr>
                       <td colSpan={11} className="p-6 text-center text-xs text-gray-500">
-                        로딩 중...
+                        {t('loadingText')}
                       </td>
                     </tr>
                   ) : members.length === 0 ? (
                     <tr>
                       <td colSpan={11} className="p-6 text-center text-xs text-gray-500">
-                        회원이 없습니다.
+                        {t('noMembers')}
                       </td>
                     </tr>
                   ) : (
@@ -397,12 +400,12 @@ function MembersContent() {
                             )}
                           </div>
                           <div className="text-xs text-gray-600">
-                            {member.mb_sms ? '수신' : '거부'}
+                            {member.mb_sms ? t('receive') : t('reject')}
                           </div>
                         </td>
                         <td className="p-2">
                           <div className="text-xs">
-                            {member.mb_open ? '공개' : '비공개'}
+                            {member.mb_open ? t('openPublic') : t('closedPublic')}
                           </div>
                           <div className="text-xs text-gray-600">
                             {member.mb_adult ? (
@@ -414,10 +417,10 @@ function MembersContent() {
                         </td>
                         <td className="p-2">
                           <div className="text-xs">
-                            {member.mb_mailling ? '수신' : '거부'}
+                            {member.mb_mailling ? t('receive') : t('reject')}
                           </div>
                           <div className="text-xs text-gray-600">
-                            {member.mb_intercept_date ? '차단' : '정상'}
+                            {member.mb_intercept_date ? t('statusBlocked') : t('statusNormal')}
                           </div>
                         </td>
                         <td className="p-2">
@@ -445,11 +448,11 @@ function MembersContent() {
                         <td className="p-2">
                           {member.mb_level >= 10 ? (
                             <Button variant="outline" size="sm" onClick={() => handleGroupMember(member.mb_id)}>
-                              그룹
+                              {t('groupBtn')}
                             </Button>
                           ) : (
                             <Button size="sm" onClick={() => handleEditMember(member.mb_id)}>
-                              수정
+                              {t('editBtn')}
                             </Button>
                           )}
                         </td>
@@ -470,7 +473,7 @@ function MembersContent() {
                     onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
                     disabled={currentPage === 1}
                   >
-                    이전
+                    {tc('previous')}
                   </Button>
                   {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                     <Button
@@ -488,7 +491,7 @@ function MembersContent() {
                     onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
                     disabled={currentPage === totalPages}
                   >
-                    다음
+                    {tc('next')}
                   </Button>
                 </div>
               </div>

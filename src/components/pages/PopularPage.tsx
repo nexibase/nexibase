@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -34,14 +35,15 @@ interface Pagination {
 
 type Period = 'day' | 'week' | 'month' | 'all'
 
-const periodOptions: { value: Period; label: string; icon: React.ReactNode }[] = [
-  { value: 'day', label: '오늘', icon: <Clock className="h-4 w-4" /> },
-  { value: 'week', label: '이번 주', icon: <Calendar className="h-4 w-4" /> },
-  { value: 'month', label: '이번 달', icon: <CalendarDays className="h-4 w-4" /> },
-  { value: 'all', label: '전체', icon: <LayoutList className="h-4 w-4" /> },
-]
-
 export default function PopularPage() {
+  const t = useTranslations('lists')
+  const tc = useTranslations('common')
+  const periodOptions: { value: Period; label: string; icon: React.ReactNode }[] = [
+    { value: 'day', label: t('periodDay'), icon: <Clock className="h-4 w-4" /> },
+    { value: 'week', label: t('periodWeek'), icon: <Calendar className="h-4 w-4" /> },
+    { value: 'month', label: t('periodMonth'), icon: <CalendarDays className="h-4 w-4" /> },
+    { value: 'all', label: t('periodAll'), icon: <LayoutList className="h-4 w-4" /> },
+  ]
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -103,11 +105,11 @@ export default function PopularPage() {
     const diffHours = Math.floor(diffMs / 3600000)
     const diffDays = Math.floor(diffMs / 86400000)
 
-    if (diffMins < 1) return '방금 전'
-    if (diffMins < 60) return `${diffMins}분 전`
-    if (diffHours < 24) return `${diffHours}시간 전`
-    if (diffDays < 7) return `${diffDays}일 전`
-    return date.toLocaleDateString('ko-KR')
+    if (diffMins < 1) return t('justNow')
+    if (diffMins < 60) return t('minutesAgo', { mins: diffMins })
+    if (diffHours < 24) return t('hoursAgo', { hours: diffHours })
+    if (diffDays < 7) return t('daysAgo', { days: diffDays })
+    return date.toLocaleDateString()
   }
 
   const getContentPreview = (content: string) => {
@@ -122,10 +124,10 @@ export default function PopularPage() {
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-2">
           <Flame className="h-6 w-6 text-orange-500" />
-          <h1 className="text-2xl font-bold">인기 게시글</h1>
+          <h1 className="text-2xl font-bold">{t('popularPosts')}</h1>
         </div>
         <p className="text-muted-foreground">
-          많은 회원들이 좋아하는 게시글을 확인하세요
+          {t('popularPostsDescription')}
         </p>
       </div>
 
@@ -181,7 +183,7 @@ export default function PopularPage() {
                         {getContentPreview(post.content)}
                       </p>
                       <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                        <span>{post.author.nickname || '익명'}</span>
+                        <span>{post.author.nickname || tc('anonymous')}</span>
                         <span className="flex items-center gap-1">
                           <ThumbsUp className="h-3 w-3" />
                           {post.likeCount}
@@ -206,7 +208,7 @@ export default function PopularPage() {
       ) : (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
-            해당 기간에 인기 게시글이 없습니다.
+            {t('noPopularPosts')}
           </CardContent>
         </Card>
       )}
@@ -220,7 +222,7 @@ export default function PopularPage() {
             disabled={currentPage === 1}
             onClick={() => handlePageChange(currentPage - 1)}
           >
-            이전
+            {t('prev')}
           </Button>
           <div className="flex items-center gap-1">
             {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
@@ -253,7 +255,7 @@ export default function PopularPage() {
             disabled={currentPage === pagination.totalPages}
             onClick={() => handlePageChange(currentPage + 1)}
           >
-            다음
+            {t('next')}
           </Button>
         </div>
       )}

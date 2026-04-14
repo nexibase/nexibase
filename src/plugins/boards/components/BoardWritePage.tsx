@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
+import { useTranslations } from 'next-intl'
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -65,6 +66,7 @@ export default function BoardWritePage() {
   const params = useParams()
   const router = useRouter()
   const slug = params.slug as string
+  const t = useTranslations('boards')
 
   const [user, setUser] = useState<User | null>(null)
   const [sessionChecked, setSessionChecked] = useState(false)
@@ -94,19 +96,19 @@ export default function BoardWritePage() {
         setUser(data.user)
       } else {
         // 비로그인 시 로그인 페이지로 이동
-        alert('로그인이 필요합니다.')
+        alert(t('errors.loginRequiredDot'))
         router.push(`/login?callbackUrl=/boards/${slug}/create`)
         return
       }
     } catch (err) {
       console.error('세션 체크 에러:', err)
-      alert('로그인이 필요합니다.')
+      alert(t('errors.loginRequiredDot'))
       router.push(`/login?callbackUrl=/boards/${slug}/create`)
       return
     } finally {
       setSessionChecked(true)
     }
-  }, [router, slug])
+  }, [router, slug, t])
 
   useEffect(() => {
     checkSession()
@@ -122,21 +124,21 @@ export default function BoardWritePage() {
         const data = await response.json()
 
         if (!response.ok) {
-          setError(data.error || '게시판 정보를 불러올 수 없습니다.')
+          setError(data.error || t('loadFailed'))
           return
         }
 
         setBoard(data.board)
       } catch (err) {
         console.error('게시판 조회 에러:', err)
-        setError('게시판 정보를 불러오는 중 오류가 발생했습니다.')
+        setError(t('loadError'))
       } finally {
         setLoading(false)
       }
     }
 
     fetchBoard()
-  }, [slug, sessionChecked, user])
+  }, [slug, sessionChecked, user, t])
 
   // 파일 업로드 핸들러
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -145,7 +147,7 @@ export default function BoardWritePage() {
 
     // 최대 5개까지
     if (attachments.length + files.length > 5) {
-      alert('첨부파일은 최대 5개까지 가능합니다.')
+      alert(t('post.maxAttachments'))
       return
     }
 
@@ -167,12 +169,12 @@ export default function BoardWritePage() {
         if (response.ok && data.file) {
           setAttachments(prev => [...prev, data.file])
         } else {
-          alert(data.error || `${file.name} 업로드에 실패했습니다.`)
+          alert(data.error || t('post.uploadFailed', { name: file.name }))
         }
       }
     } catch (error) {
       console.error('파일 업로드 에러:', error)
-      alert('파일 업로드 중 오류가 발생했습니다.')
+      alert(t('post.uploadError'))
     } finally {
       setUploading(false)
       // input 초기화
@@ -221,12 +223,12 @@ export default function BoardWritePage() {
     e.preventDefault()
 
     if (!title.trim()) {
-      alert('제목을 입력해주세요.')
+      alert(t('post.titleRequired'))
       return
     }
 
     if (!content.trim()) {
-      alert('내용을 입력해주세요.')
+      alert(t('post.contentRequired'))
       return
     }
 
@@ -248,15 +250,15 @@ export default function BoardWritePage() {
 
       if (!response.ok) {
         if (response.status === 401) {
-          alert('로그인이 필요합니다.')
+          alert(t('errors.loginRequiredDot'))
           router.push('/login')
           return
         }
         if (response.status === 403) {
-          alert(data.error || '글을 쓸 권한이 없습니다.')
+          alert(data.error || t('post.writePermDenied'))
           return
         }
-        alert(data.error || '글 작성에 실패했습니다.')
+        alert(data.error || t('post.writeFailed'))
         return
       }
 
@@ -264,7 +266,7 @@ export default function BoardWritePage() {
       router.push(`/boards/${slug}/${data.post.id}`)
     } catch (error) {
       console.error('글 작성 에러:', error)
-      alert('글 작성 중 오류가 발생했습니다.')
+      alert(t('post.writeError'))
     } finally {
       setSubmitting(false)
     }
@@ -287,10 +289,10 @@ export default function BoardWritePage() {
         <div className="flex items-center justify-center py-20">
           <Card className="w-full max-w-md">
             <CardContent className="p-6 text-center">
-              <p className="text-muted-foreground mb-4">{error || '게시판을 찾을 수 없습니다.'}</p>
+              <p className="text-muted-foreground mb-4">{error || t('boardNotFound')}</p>
               <Button variant="outline" onClick={() => router.back()}>
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                돌아가기
+                {t('post.goBack')}
               </Button>
             </CardContent>
           </Card>
@@ -311,7 +313,7 @@ export default function BoardWritePage() {
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div>
-            <h1 className="text-xl font-bold">글쓰기</h1>
+            <h1 className="text-xl font-bold">{t('post.writeTitle')}</h1>
             <p className="text-sm text-muted-foreground">{board.name}</p>
           </div>
         </div>
@@ -321,11 +323,11 @@ export default function BoardWritePage() {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="title">
-                  제목 <span className="text-destructive">*</span>
+                  {t('post.title')} <span className="text-destructive">*</span>
                 </Label>
                 <Input
                   id="title"
-                  placeholder="제목을 입력하세요"
+                  placeholder={t('post.titlePlaceholder')}
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   maxLength={200}
@@ -335,12 +337,12 @@ export default function BoardWritePage() {
 
               <div className="space-y-2">
                 <Label>
-                  내용 <span className="text-destructive">*</span>
+                  {t('post.content')} <span className="text-destructive">*</span>
                 </Label>
                 <TiptapEditor
                   content={content}
                   onChange={setContent}
-                  placeholder="내용을 입력하세요..."
+                  placeholder={t('post.contentPlaceholder')}
                 />
               </div>
 
@@ -349,8 +351,8 @@ export default function BoardWritePage() {
                 <div className="space-y-3">
                   <Label className="flex items-center gap-2">
                     <Paperclip className="h-4 w-4" />
-                    파일 첨부
-                    <span className="text-xs text-muted-foreground">(최대 5개, 각 10MB 이하, 드래그로 순서 변경)</span>
+                    {t('post.fileAttach')}
+                    <span className="text-xs text-muted-foreground">{t('post.fileAttachDesc')}</span>
                   </Label>
 
                   {/* 파일 선택 버튼 */}
@@ -375,10 +377,10 @@ export default function BoardWritePage() {
                       ) : (
                         <Upload className="h-4 w-4 mr-2" />
                       )}
-                      파일 선택
+                      {t('post.fileSelect')}
                     </Button>
                     <span className="text-xs text-muted-foreground">
-                      {attachments.length}/5개
+                      {t('post.filesCount', { count: attachments.length })}
                     </span>
                   </div>
 
@@ -444,7 +446,7 @@ export default function BoardWritePage() {
                   />
                   <Label htmlFor="isSecret" className="flex items-center gap-1 cursor-pointer">
                     <Lock className="h-4 w-4" />
-                    비밀글
+                    {t('post.secret')}
                   </Label>
                 </div>
               )}
@@ -455,11 +457,11 @@ export default function BoardWritePage() {
                   variant="outline"
                   onClick={() => router.back()}
                 >
-                  취소
+                  {t('post.cancel')}
                 </Button>
                 <Button type="submit" disabled={submitting}>
                   {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                  등록
+                  {t('post.publish')}
                 </Button>
               </div>
             </form>

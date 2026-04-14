@@ -15,6 +15,20 @@ function stripLocale(pathname: string): string {
   return pathname
 }
 
+const DISABLED_MESSAGES: Record<string, string> = {
+  en: 'This feature is disabled.',
+  ko: '이 기능은 비활성화되었습니다.',
+}
+
+function disabledMessage(pathname: string): string {
+  for (const locale of ['en', 'ko']) {
+    if (pathname === `/${locale}` || pathname.startsWith(`/${locale}/`)) {
+      return DISABLED_MESSAGES[locale]
+    }
+  }
+  return DISABLED_MESSAGES.en
+}
+
 async function checkPluginBlocked(
   request: NextRequest,
   pathname: string,
@@ -45,8 +59,11 @@ async function checkPluginBlocked(
         const data = await res.json()
         if (data.enabled === false) {
           if (isApi) {
+            const referer = request.headers.get('referer') || ''
+            let refPath = ''
+            try { refPath = new URL(referer).pathname } catch {}
             return NextResponse.json(
-              { error: '이 기능은 비활성화되었습니다.' },
+              { error: disabledMessage(refPath) },
               { status: 404 },
             )
           }

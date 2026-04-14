@@ -24,6 +24,7 @@ import {
   Sparkles,
   Scale,
 } from "lucide-react"
+import { useTranslations } from 'next-intl'
 
 interface Policy {
   id: number
@@ -54,6 +55,7 @@ function PolicyModal({
   policy: Policy | null
   onSave: (data: Partial<Policy>) => void
 }) {
+  const t = useTranslations('policies.admin')
   const [formData, setFormData] = useState({
     slug: '',
     version: '1.0',
@@ -95,7 +97,7 @@ function PolicyModal({
       <div className="relative bg-background rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto m-4">
         <div className="sticky top-0 bg-background border-b px-6 py-4 flex items-center justify-between z-10">
           <h2 className="text-xl font-semibold">
-            {policy ? '약관 수정' : '약관 추가'}
+            {policy ? t('editTitle') : t('createTitle')}
           </h2>
           <button
             onClick={onClose}
@@ -109,7 +111,7 @@ function PolicyModal({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="slug">
-                슬러그 <span className="text-red-500">*</span>
+                {t('slugRequired')} <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="slug"
@@ -121,13 +123,13 @@ function PolicyModal({
                 required
               />
               <p className="text-xs text-muted-foreground">
-                영문 소문자, 숫자, 하이픈
+                {t('slugHint')}
               </p>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="version">
-                버전 <span className="text-red-500">*</span>
+                {t('versionRequired')} <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="version"
@@ -139,17 +141,17 @@ function PolicyModal({
                 required
               />
               <p className="text-xs text-muted-foreground">
-                X.Y 형식 (예: 1.0)
+                {t('versionHint')}
               </p>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="title">
-                제목 <span className="text-red-500">*</span>
+                {t('titleRequired')} <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="title"
-                placeholder="이용약관, 개인정보처리방침..."
+                placeholder={t('titlePlaceholder')}
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 required
@@ -158,27 +160,27 @@ function PolicyModal({
           </div>
 
           <div className="space-y-2">
-            <Label>내용</Label>
+            <Label>{t('content')}</Label>
             <TiptapEditor
               content={formData.content}
               onChange={(value) => setFormData({ ...formData, content: value })}
-              placeholder="약관 내용을 입력하세요..."
+              placeholder={t('contentPlaceholder')}
             />
           </div>
 
           {!policy && (
             <p className="text-sm text-muted-foreground bg-muted p-3 rounded-lg">
-              새 약관은 비활성 상태로 생성됩니다. 저장 후 &quot;활성화&quot; 버튼을 눌러 적용하세요.
+              {t('newPolicyNotice')}
             </p>
           )}
 
           <div className="flex justify-end space-x-3 pt-4">
             <Button type="button" variant="outline" onClick={onClose}>
-              취소
+              {t('cancel')}
             </Button>
             <Button type="submit" disabled={loading}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {policy ? '수정' : '추가'}
+              {policy ? t('editBtn') : t('addBtn')}
             </Button>
           </div>
         </form>
@@ -188,6 +190,7 @@ function PolicyModal({
 }
 
 export default function PoliciesPage() {
+  const t = useTranslations('policies.admin')
   const [policies, setPolicies] = useState<Policy[]>([])
   const [slugGroups, setSlugGroups] = useState<SlugGroup[]>([])
   const [loading, setLoading] = useState(true)
@@ -201,7 +204,7 @@ export default function PoliciesPage() {
 
   // 기본 약관 생성
   const handleSeedPolicies = async () => {
-    if (!confirm('이용약관, 개인정보처리방침, 마케팅 동의 약관을 생성하시겠습니까?')) return
+    if (!confirm(t('seedConfirm'))) return
 
     setSeedingPolicies(true)
     try {
@@ -214,11 +217,11 @@ export default function PoliciesPage() {
         alert(data.message)
         fetchPolicies()
       } else {
-        alert(data.error || '생성에 실패했습니다.')
+        alert(data.error || t('seedFailed'))
       }
     } catch (error) {
       console.error('기본 약관 생성 에러:', error)
-      alert('생성 중 오류가 발생했습니다.')
+      alert(t('seedError'))
     } finally {
       setSeedingPolicies(false)
     }
@@ -272,17 +275,17 @@ export default function PoliciesPage() {
         setEditingPolicy(null)
         fetchPolicies()
       } else {
-        alert(data.error || '저장에 실패했습니다.')
+        alert(data.error || t('saveFailed'))
       }
     } catch (error) {
       console.error('약관 저장 에러:', error)
-      alert('저장 중 오류가 발생했습니다.')
+      alert(t('saveError'))
     }
   }
 
   // 약관 활성화
   const handleActivate = async (policy: Policy) => {
-    if (!confirm(`"${policy.title} (v${policy.version})"을 활성화하시겠습니까?\n같은 슬러그의 다른 버전은 비활성화됩니다.`)) return
+    if (!confirm(t('activateConfirm', { title: policy.title, version: policy.version }))) return
 
     setActivatingId(policy.id)
     try {
@@ -295,11 +298,11 @@ export default function PoliciesPage() {
       if (response.ok) {
         fetchPolicies()
       } else {
-        alert(data.error || '활성화에 실패했습니다.')
+        alert(data.error || t('activateFailed'))
       }
     } catch (error) {
       console.error('약관 활성화 에러:', error)
-      alert('활성화 중 오류가 발생했습니다.')
+      alert(t('activateError'))
     } finally {
       setActivatingId(null)
     }
@@ -307,7 +310,7 @@ export default function PoliciesPage() {
 
   // 약관 삭제
   const handleDelete = async (policy: Policy) => {
-    if (!confirm(`"${policy.title} (v${policy.version})"을 삭제하시겠습니까?`)) return
+    if (!confirm(t('deleteOneConfirm', { title: policy.title, version: policy.version }))) return
 
     try {
       const response = await fetch(`/api/admin/policies/${policy.id}`, {
@@ -318,11 +321,11 @@ export default function PoliciesPage() {
         fetchPolicies()
       } else {
         const data = await response.json()
-        alert(data.error || '삭제에 실패했습니다.')
+        alert(data.error || t('deleteFailed'))
       }
     } catch (error) {
       console.error('약관 삭제 에러:', error)
-      alert('삭제 중 오류가 발생했습니다.')
+      alert(t('deleteError'))
     }
   }
 
@@ -330,11 +333,11 @@ export default function PoliciesPage() {
   const handleBulkDelete = async () => {
     const selectedIds = policies.filter(p => p.selected).map(p => p.id)
     if (selectedIds.length === 0) {
-      alert('삭제할 약관을 선택해주세요.')
+      alert(t('bulkSelectEmpty'))
       return
     }
 
-    if (!confirm(`${selectedIds.length}개의 약관을 삭제하시겠습니까?`)) return
+    if (!confirm(t('bulkDeleteConfirm', { count: selectedIds.length }))) return
 
     try {
       const response = await fetch('/api/admin/policies', {
@@ -348,11 +351,11 @@ export default function PoliciesPage() {
         fetchPolicies()
       } else {
         const data = await response.json()
-        alert(data.error || '삭제에 실패했습니다.')
+        alert(data.error || t('deleteFailed'))
       }
     } catch (error) {
       console.error('일괄 삭제 에러:', error)
-      alert('삭제 중 오류가 발생했습니다.')
+      alert(t('deleteError'))
     }
   }
 
@@ -379,9 +382,9 @@ export default function PoliciesPage() {
           <div className="mb-6">
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <Scale className="h-6 w-6" />
-              약관 관리
+              {t('title')}
             </h1>
-            <p className="text-muted-foreground mt-1">이용약관, 개인정보처리방침 등을 버전별로 관리합니다</p>
+            <p className="text-muted-foreground mt-1">{t('headerDesc')}</p>
           </div>
 
           {/* 슬러그 요약 */}
@@ -393,7 +396,7 @@ export default function PoliciesPage() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm text-muted-foreground">{group.slug}</p>
-                        <p className="text-xl font-bold">{group._count.id}개 버전</p>
+                        <p className="text-xl font-bold">{t('versionsCount', { count: group._count.id })}</p>
                       </div>
                       <History className="h-8 w-8 text-muted-foreground/50" />
                     </div>
@@ -408,19 +411,19 @@ export default function PoliciesPage() {
             <CardContent className="p-4">
               <div className="flex flex-col sm:flex-row gap-4 justify-between">
                 <div className="text-sm text-muted-foreground">
-                  각 약관은 버전별로 관리됩니다. 새 버전을 만들고 활성화하면 이전 버전은 자동으로 비활성화됩니다.
+                  {t('actionNotice')}
                 </div>
 
                 <div className="flex gap-2">
                   {policies.some(p => p.selected) && (
                     <Button variant="destructive" onClick={handleBulkDelete}>
                       <Trash2 className="h-4 w-4 mr-2" />
-                      선택 삭제
+                      {t('bulkDelete')}
                     </Button>
                   )}
                   <Button onClick={() => { setEditingPolicy(null); setModalOpen(true); }}>
                     <Plus className="h-4 w-4 mr-2" />
-                    약관 추가
+                    {t('createBtn')}
                   </Button>
                 </div>
               </div>
@@ -430,7 +433,7 @@ export default function PoliciesPage() {
           {/* 약관 목록 */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg">약관 목록</CardTitle>
+              <CardTitle className="text-lg">{t('listTitle')}</CardTitle>
             </CardHeader>
             <CardContent>
               {loading ? (
@@ -440,7 +443,7 @@ export default function PoliciesPage() {
               ) : policies.length === 0 ? (
                 <div className="text-center py-12">
                   <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground mb-4">약관이 없습니다.</p>
+                  <p className="text-muted-foreground mb-4">{t('empty')}</p>
                   <div className="flex justify-center gap-2">
                     <Button onClick={handleSeedPolicies} disabled={seedingPolicies}>
                       {seedingPolicies ? (
@@ -448,15 +451,15 @@ export default function PoliciesPage() {
                       ) : (
                         <Sparkles className="h-4 w-4 mr-2" />
                       )}
-                      기본 약관 생성
+                      {t('seedCreate')}
                     </Button>
                     <Button variant="outline" onClick={() => { setEditingPolicy(null); setModalOpen(true); }}>
                       <Plus className="h-4 w-4 mr-2" />
-                      직접 추가
+                      {t('addDirectly')}
                     </Button>
                   </div>
                   <p className="text-sm text-muted-foreground mt-2">
-                    이용약관, 개인정보처리방침, 마케팅 동의가 생성됩니다
+                    {t('seedHint')}
                   </p>
                 </div>
               ) : (
@@ -473,12 +476,12 @@ export default function PoliciesPage() {
                               className="rounded border-gray-300"
                             />
                           </th>
-                          <th className="p-3 text-left text-sm font-medium text-muted-foreground">슬러그</th>
-                          <th className="p-3 text-left text-sm font-medium text-muted-foreground">버전</th>
-                          <th className="p-3 text-left text-sm font-medium text-muted-foreground">제목</th>
-                          <th className="p-3 text-center text-sm font-medium text-muted-foreground">상태</th>
-                          <th className="p-3 text-left text-sm font-medium text-muted-foreground">수정일</th>
-                          <th className="p-3 text-center text-sm font-medium text-muted-foreground">관리</th>
+                          <th className="p-3 text-left text-sm font-medium text-muted-foreground">{t('colSlug')}</th>
+                          <th className="p-3 text-left text-sm font-medium text-muted-foreground">{t('colVersion')}</th>
+                          <th className="p-3 text-left text-sm font-medium text-muted-foreground">{t('colTitle')}</th>
+                          <th className="p-3 text-center text-sm font-medium text-muted-foreground">{t('colStatus')}</th>
+                          <th className="p-3 text-left text-sm font-medium text-muted-foreground">{t('colUpdatedAt')}</th>
+                          <th className="p-3 text-center text-sm font-medium text-muted-foreground">{t('colActions')}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -513,10 +516,10 @@ export default function PoliciesPage() {
                               {policy.isActive ? (
                                 <Badge className="bg-green-500/10 text-green-700 hover:bg-green-500/10 dark:bg-green-500/20 dark:text-green-400">
                                   <Check className="h-3 w-3 mr-1" />
-                                  활성
+                                  {t('statusActive')}
                                 </Badge>
                               ) : (
-                                <Badge variant="secondary">비활성</Badge>
+                                <Badge variant="secondary">{t('statusInactive')}</Badge>
                               )}
                             </td>
                             <td className="p-3 text-sm text-muted-foreground">
@@ -531,7 +534,7 @@ export default function PoliciesPage() {
                                     onClick={() => handleActivate(policy)}
                                     disabled={activatingId === policy.id}
                                     className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                                    title="활성화"
+                                    title={t('tooltipActivate')}
                                   >
                                     {activatingId === policy.id ? (
                                       <Loader2 className="h-4 w-4 animate-spin" />

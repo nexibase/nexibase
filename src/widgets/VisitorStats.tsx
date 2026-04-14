@@ -4,10 +4,12 @@ import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Users, Activity } from "lucide-react"
 import type { VisitorStatsData } from "@/lib/gaTypes"
+import { useTranslations } from 'next-intl'
 
 const POLL_INTERVAL_MS = 120_000 // 120초
 
 export default function VisitorStats() {
+  const t = useTranslations('widgets')
   // null = 아직 첫 fetch 완료 전 (스켈레톤 UI 표시)
   const [stats, setStats] = useState<VisitorStatsData | null>(null)
 
@@ -40,7 +42,7 @@ export default function VisitorStats() {
     return null
   }
 
-  const formatNumber = (n: number) => n.toLocaleString('ko-KR')
+  const formatNumber = (n: number) => n.toLocaleString()
 
   const Skeleton = () => (
     <div className="h-4 w-12 bg-muted animate-pulse rounded inline-block align-middle" />
@@ -51,7 +53,7 @@ export default function VisitorStats() {
       <CardContent className="p-4 h-full flex flex-col">
         <div className="flex items-center gap-2 mb-3">
           <Activity className="h-4 w-4 text-primary" />
-          <h3 className="font-semibold text-sm">방문자 통계</h3>
+          <h3 className="font-semibold text-sm">{t('visitorStats')}</h3>
         </div>
 
         <div className="flex items-center gap-2 mb-3 px-3 py-2 bg-green-50 dark:bg-green-950/30 rounded-md border border-green-200 dark:border-green-900">
@@ -59,7 +61,7 @@ export default function VisitorStats() {
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
           </div>
-          <span className="text-sm text-muted-foreground">현재 접속</span>
+          <span className="text-sm text-muted-foreground">{t('now')}</span>
           <span className="ml-auto text-base font-bold text-green-700 dark:text-green-400">
             {stats ? formatNumber(stats.online) : <Skeleton />}
           </span>
@@ -69,7 +71,7 @@ export default function VisitorStats() {
           <div className="flex items-center justify-between py-1 border-b">
             <span className="text-muted-foreground flex items-center gap-1.5">
               <Users className="h-3.5 w-3.5" />
-              오늘
+              {t('today')}
             </span>
             <span className="font-semibold">
               {stats ? formatNumber(stats.today) : <Skeleton />}
@@ -78,7 +80,7 @@ export default function VisitorStats() {
           <div className="flex items-center justify-between py-1 border-b">
             <span className="text-muted-foreground flex items-center gap-1.5">
               <Users className="h-3.5 w-3.5" />
-              어제
+              {t('yesterday')}
             </span>
             <span className="font-semibold">
               {stats ? formatNumber(stats.yesterday) : <Skeleton />}
@@ -87,7 +89,7 @@ export default function VisitorStats() {
           <div className="flex items-center justify-between py-1">
             <span className="text-muted-foreground flex items-center gap-1.5">
               <Users className="h-3.5 w-3.5" />
-              지난 7일
+              {t('last7days')}
             </span>
             <span className="font-semibold">
               {stats ? formatNumber(stats.sevenDays) : <Skeleton />}

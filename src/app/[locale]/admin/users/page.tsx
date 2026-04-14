@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { Sidebar } from "@/components/admin/Sidebar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -90,6 +91,7 @@ function UserModal({
   user: User | null
   onSave: (data: Partial<User> & { password?: string }) => void
 }) {
+  const t = useTranslations('admin')
   const [formData, setFormData] = useState({
     email: '',
     nickname: '',
@@ -145,21 +147,21 @@ function UserModal({
           <CardHeader className="space-y-1">
             <div className="flex items-center justify-between">
               <CardTitle className="text-xl">
-                {user ? '사용자 수정' : '새 사용자'}
+                {user ? t('editUser') : t('newUser')}
               </CardTitle>
               <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8">
                 <X className="h-4 w-4" />
               </Button>
             </div>
             <CardDescription>
-              {user ? '사용자 정보를 수정합니다.' : '새로운 사용자를 추가합니다.'}
+              {user ? t('editUserDesc') : t('newUserDesc')}
             </CardDescription>
           </CardHeader>
 
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">이메일</Label>
+                <Label htmlFor="email">{t('emailLabel')}</Label>
                 <Input
                   id="email"
                   type="email"
@@ -173,21 +175,21 @@ function UserModal({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="nickname">닉네임 *</Label>
+                <Label htmlFor="nickname">{t('nicknameRequired')}</Label>
                 <Input
                   id="nickname"
                   type="text"
-                  placeholder="닉네임"
+                  placeholder={t('nicknamePlaceholder')}
                   value={formData.nickname}
                   onChange={(e) => setFormData({ ...formData, nickname: e.target.value })}
                   required
                 />
-                <p className="text-xs text-muted-foreground">게시판, 리뷰 등에 표시되는 이름입니다.</p>
+                <p className="text-xs text-muted-foreground">{t('nicknameDesc')}</p>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="password">
-                  비밀번호 {user && <span className="text-muted-foreground font-normal">(변경 시에만)</span>}
+                  {t('passwordLabel')} {user && <span className="text-muted-foreground font-normal">{t('passwordChangeOnly')}</span>}
                 </Label>
                 <Input
                   id="password"
@@ -201,7 +203,7 @@ function UserModal({
 
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="role">권한</Label>
+                  <Label htmlFor="role">{t('roleLabel')}</Label>
                   <Select
                     key={`role-${user?.id || 'new'}-${formData.role}`}
                     value={formData.role}
@@ -211,14 +213,14 @@ function UserModal({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="user">일반 사용자</SelectItem>
-                      <SelectItem value="manager">부관리자</SelectItem>
-                      <SelectItem value="admin">관리자</SelectItem>
+                      <SelectItem value="user">{t('normalUser')}</SelectItem>
+                      <SelectItem value="manager">{t('roleSubAdmin')}</SelectItem>
+                      <SelectItem value="admin">{t('roleAdmin')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="level">레벨</Label>
+                  <Label htmlFor="level">{t('levelLabel')}</Label>
                   <Input
                     id="level"
                     type="number"
@@ -228,7 +230,7 @@ function UserModal({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="status">상태</Label>
+                  <Label htmlFor="status">{t('statusLabel')}</Label>
                   <Select
                     key={`status-${user?.id || 'new'}-${formData.status}`}
                     value={formData.status}
@@ -238,19 +240,19 @@ function UserModal({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="active">활성</SelectItem>
-                      <SelectItem value="inactive">비활성</SelectItem>
-                      <SelectItem value="banned">차단</SelectItem>
+                      <SelectItem value="active">{t('statusActive')}</SelectItem>
+                      <SelectItem value="inactive">{t('statusInactive')}</SelectItem>
+                      <SelectItem value="banned">{t('statusBanned')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="adminNote">관리자 메모</Label>
+                <Label htmlFor="adminNote">{t('adminNote')}</Label>
                 <Textarea
                   id="adminNote"
-                  placeholder="관리자만 볼 수 있는 메모입니다."
+                  placeholder={t('adminNotePlaceholder')}
                   value={formData.adminNote}
                   onChange={(e) => setFormData({ ...formData, adminNote: e.target.value })}
                   rows={3}
@@ -263,11 +265,11 @@ function UserModal({
 
             <div className="flex justify-end gap-3 p-6">
               <Button type="button" variant="outline" onClick={onClose}>
-                취소
+                {t('cancelBtn')}
               </Button>
               <Button type="submit" disabled={loading}>
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {user ? '저장' : '추가'}
+                {user ? t('saveBtn') : t('addBtn')}
               </Button>
             </div>
           </form>
@@ -312,6 +314,7 @@ function StatCard({
 }
 
 function UsersPageContent() {
+  const t = useTranslations('admin')
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -426,7 +429,7 @@ function UsersPageContent() {
         setIsModalOpen(false)
         fetchUsers()
       } else {
-        alert(result.message || '저장 실패')
+        alert(result.message || t('saveFailed'))
       }
     } catch (error) {
       console.error('사용자 저장 실패:', error)
@@ -434,7 +437,7 @@ function UsersPageContent() {
   }
 
   const handleDeleteUser = async (id: string) => {
-    if (!confirm('정말 삭제하시겠습니까?')) return
+    if (!confirm(t('confirmDelete'))) return
 
     try {
       const response = await fetch(`/api/admin/users/${id}`, { method: 'DELETE' })
@@ -442,7 +445,7 @@ function UsersPageContent() {
       if (result.success) {
         fetchUsers()
       } else {
-        alert(result.message || '삭제 실패')
+        alert(result.message || t('deleteFailed'))
       }
     } catch (error) {
       console.error('사용자 삭제 실패:', error)
@@ -450,7 +453,7 @@ function UsersPageContent() {
   }
 
   const handleRestoreUser = async (id: string) => {
-    if (!confirm('이 사용자를 복원하시겠습니까?')) return
+    if (!confirm(t('confirmRestore'))) return
 
     try {
       const response = await fetch(`/api/admin/users/${id}`, {
@@ -463,7 +466,7 @@ function UsersPageContent() {
       if (result.success) {
         fetchUsers()
       } else {
-        alert(result.message || '복원 실패')
+        alert(result.message || t('restoreFailed'))
       }
     } catch (error) {
       console.error('사용자 복원 실패:', error)
@@ -471,7 +474,7 @@ function UsersPageContent() {
   }
 
   const handlePermanentDelete = async (id: string) => {
-    if (!confirm('이 사용자를 영구 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.')) return
+    if (!confirm(t('confirmPermanentDelete'))) return
 
     try {
       const response = await fetch(`/api/admin/users/${id}`, {
@@ -484,7 +487,7 @@ function UsersPageContent() {
       if (result.success) {
         fetchUsers()
       } else {
-        alert(result.message || '영구 삭제 실패')
+        alert(result.message || t('permanentDeleteFailed'))
       }
     } catch (error) {
       console.error('사용자 영구 삭제 실패:', error)
@@ -502,10 +505,10 @@ function UsersPageContent() {
 
   const getStatusBadge = (status: string) => {
     const config: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; label: string }> = {
-      active: { variant: 'default', label: '활성' },
-      inactive: { variant: 'secondary', label: '비활성' },
-      banned: { variant: 'destructive', label: '차단' },
-      withdrawn: { variant: 'outline', label: '탈퇴' },
+      active: { variant: 'default', label: t('statusActive') },
+      inactive: { variant: 'secondary', label: t('statusInactive') },
+      banned: { variant: 'destructive', label: t('statusBanned') },
+      withdrawn: { variant: 'outline', label: t('statusWithdrawn') },
     }
     const { variant, label } = config[status] || { variant: 'outline' as const, label: status }
     return <Badge variant={variant}>{label}</Badge>
@@ -513,9 +516,9 @@ function UsersPageContent() {
 
   const getRoleBadge = (role: string) => {
     const config: Record<string, { label: string; className: string }> = {
-      admin: { label: '관리자', className: 'bg-red-100 text-red-700 border-red-200' },
-      manager: { label: '부관리자', className: 'bg-blue-100 text-blue-700 border-blue-200' },
-      user: { label: '사용자', className: 'text-xs text-muted-foreground' },
+      admin: { label: t('roleAdmin'), className: 'bg-red-100 text-red-700 border-red-200' },
+      manager: { label: t('roleSubAdmin'), className: 'bg-blue-100 text-blue-700 border-blue-200' },
+      user: { label: t('roleUser'), className: 'text-xs text-muted-foreground' },
     }
     const { label, className } = config[role] || { label: role, className: 'text-xs text-muted-foreground' }
     if (role === 'user') return <span className={className}>{label}</span>
@@ -537,57 +540,57 @@ function UsersPageContent() {
             <div>
               <h1 className="text-2xl font-bold flex items-center gap-2">
                 <UsersRound className="h-6 w-6" />
-                사용자 관리
+                {t('userManagement')}
               </h1>
               <p className="text-muted-foreground mt-1">
-                사용자 계정을 관리하고 권한을 설정합니다.
+                {t('usersDescription')}
               </p>
             </div>
             <Button onClick={() => { setEditingUser(null); setIsModalOpen(true) }}>
               <Plus className="mr-2 h-4 w-4" />
-              새 사용자
+              {t('newUser')}
             </Button>
           </div>
 
           {/* Stats */}
           <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6 mb-6">
             <StatCard
-              title="전체 사용자"
+              title={t('allUsers')}
               value={stats.totalUsers}
               icon={Users}
               active={statusFilter === ''}
               onClick={() => { setStatusFilter(''); setCurrentPage(1); updateURL('', roleFilter, 1) }}
             />
             <StatCard
-              title="활성 사용자"
+              title={t('activeUsers')}
               value={stats.activeUsers}
               icon={UserCheck}
               active={statusFilter === 'active'}
               onClick={() => { setStatusFilter('active'); setCurrentPage(1); updateURL('active', roleFilter, 1) }}
             />
             <StatCard
-              title="비활성 사용자"
+              title={t('inactiveUsers')}
               value={stats.inactiveUsers}
               icon={UserCog}
               active={statusFilter === 'inactive'}
               onClick={() => { setStatusFilter('inactive'); setCurrentPage(1); updateURL('inactive', roleFilter, 1) }}
             />
             <StatCard
-              title="차단된 사용자"
+              title={t('bannedUsers')}
               value={stats.bannedUsers}
               icon={UserX}
               active={statusFilter === 'banned'}
               onClick={() => { setStatusFilter('banned'); setCurrentPage(1); updateURL('banned', roleFilter, 1) }}
             />
             <StatCard
-              title="탈퇴 회원"
+              title={t('withdrawnUsers')}
               value={stats.withdrawnUsers}
               icon={UserMinus}
               active={statusFilter === 'withdrawn'}
               onClick={() => { setStatusFilter('withdrawn'); setCurrentPage(1); updateURL('withdrawn', roleFilter, 1) }}
             />
             <StatCard
-              title="삭제된 사용자"
+              title={t('deletedUsers')}
               value={stats.deletedUsers}
               icon={Trash2}
               active={statusFilter === 'deleted'}
@@ -604,7 +607,7 @@ function UsersPageContent() {
                   <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
-                      placeholder="이름, 이메일, 닉네임 검색..."
+                      placeholder={t('userSearchPlaceholder')}
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && fetchUsers()}
@@ -616,10 +619,10 @@ function UsersPageContent() {
                     onChange={(e) => { setRoleFilter(e.target.value); setCurrentPage(1); updateURL(statusFilter, e.target.value, 1) }}
                     className="flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                   >
-                    <option value="">전체 권한</option>
-                    <option value="admin">관리자</option>
-                    <option value="manager">부관리자</option>
-                    <option value="user">사용자</option>
+                    <option value="">{t('allRoles')}</option>
+                    <option value="admin">{t('roleAdmin')}</option>
+                    <option value="manager">{t('roleSubAdmin')}</option>
+                    <option value="user">{t('roleUser')}</option>
                   </select>
                 </div>
 
@@ -632,25 +635,25 @@ function UsersPageContent() {
                   <thead>
                     <tr className="border-y bg-muted/50">
                       <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                        사용자
+                        {t('userColUser')}
                       </th>
                       <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                        연동
+                        {t('userColProvider')}
                       </th>
                       <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                        권한
+                        {t('role')}
                       </th>
                       <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                        레벨
+                        {t('userColLevel')}
                       </th>
                       <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                        상태
+                        {t('status')}
                       </th>
                       <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                        가입일
+                        {t('createdAt')}
                       </th>
                       <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                        {statusFilter === 'withdrawn' || statusFilter === 'deleted' ? '삭제일' : '최근 로그인'}
+                        {statusFilter === 'withdrawn' || statusFilter === 'deleted' ? t('userColDeletedAt') : t('userColLastLogin')}
                       </th>
                       <th className="h-12 px-4 text-right align-middle font-medium text-muted-foreground">
                         <span className="sr-only">Actions</span>
@@ -667,7 +670,7 @@ function UsersPageContent() {
                     ) : users.length === 0 ? (
                       <tr>
                         <td colSpan={8} className="h-32 text-center text-muted-foreground">
-                          사용자가 없습니다.
+                          {t('noUsers')}
                         </td>
                       </tr>
                     ) : (
@@ -702,7 +705,7 @@ function UsersPageContent() {
                                   <ProviderBadge key={provider} provider={provider} />
                                 ))
                               ) : (
-                                <span className="text-sm text-muted-foreground">이메일</span>
+                                <span className="text-sm text-muted-foreground">{t('providerEmail')}</span>
                               )}
                             </div>
                           </td>
@@ -732,7 +735,7 @@ function UsersPageContent() {
                                 size="icon"
                                 className="h-8 w-8 text-green-600 hover:text-green-700"
                                 onClick={() => handleRestoreUser(user.id)}
-                                title="복원"
+                                title={t('restore')}
                               >
                                 <RotateCcw className="h-4 w-4" />
                               </Button>
@@ -768,7 +771,7 @@ function UsersPageContent() {
               {totalPages > 1 && (
                 <div className="flex items-center justify-between px-4 py-4 border-t">
                   <p className="text-sm text-muted-foreground">
-                    총 {stats.totalUsers}명 중 {(currentPage - 1) * 10 + 1}-{Math.min(currentPage * 10, stats.totalUsers)}
+                    {t('totalOfCount', { total: stats.totalUsers, from: (currentPage - 1) * 10 + 1, to: Math.min(currentPage * 10, stats.totalUsers) })}
                   </p>
                   <div className="flex items-center gap-1">
                     <Button

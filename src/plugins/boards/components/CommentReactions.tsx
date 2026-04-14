@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { useTranslations } from 'next-intl'
 import { Button } from "@/components/ui/button"
 import {
   Popover,
@@ -12,11 +13,11 @@ import { SmilePlus } from "lucide-react"
 
 // 리액션 타입 정의
 const REACTIONS = [
-  { type: 'like', emoji: '👍', label: '좋아요' },
-  { type: 'haha', emoji: '😂', label: '웃겨요' },
-  { type: 'agree', emoji: '👌', label: '동의해요' },
-  { type: 'thanks', emoji: '🙏', label: '감사해요' },
-  { type: 'wow', emoji: '😮', label: '놀라워요' },
+  { type: 'like', emoji: '👍' },
+  { type: 'haha', emoji: '😂' },
+  { type: 'agree', emoji: '👌' },
+  { type: 'thanks', emoji: '🙏' },
+  { type: 'wow', emoji: '😮' },
 ] as const
 
 interface CommentReactionsProps {
@@ -27,6 +28,7 @@ interface CommentReactionsProps {
 }
 
 export function CommentReactions({ slug, postId, commentId, isLoggedIn }: CommentReactionsProps) {
+  const t = useTranslations('boards')
   const [reactions, setReactions] = useState<Record<string, number>>({})
   const [userReactions, setUserReactions] = useState<string[]>([])
   const [isOpen, setIsOpen] = useState(false)
@@ -52,7 +54,7 @@ export function CommentReactions({ slug, postId, commentId, isLoggedIn }: Commen
   // 리액션 토글
   const handleReaction = async (type: string) => {
     if (!isLoggedIn) {
-      alert('로그인이 필요합니다.')
+      alert(t('errors.loginRequiredDot'))
       return
     }
 
@@ -120,18 +122,18 @@ export function CommentReactions({ slug, postId, commentId, isLoggedIn }: Commen
             )}
           >
             <SmilePlus className="h-3.5 w-3.5" />
-            {totalReactions === 0 && <span>반응</span>}
+            {totalReactions === 0 && <span>{t('reactions.react')}</span>}
           </button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-2" align="start">
           <div className="flex gap-1">
-            {REACTIONS.map(({ type, emoji, label }) => {
+            {REACTIONS.map(({ type, emoji }) => {
               const isActive = userReactions.includes(type)
               return (
                 <button
                   key={type}
                   onClick={() => handleReaction(type)}
-                  title={label}
+                  title={t(`reactions.${type}`)}
                   className={cn(
                     "p-2 rounded-lg text-xl hover:bg-muted transition-colors",
                     isActive && "bg-primary/20"

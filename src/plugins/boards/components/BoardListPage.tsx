@@ -111,11 +111,11 @@ export default function BoardListPage() {
 
       if (!response.ok) {
         if (response.status === 403) {
-          setError(data.requireLogin ? '이 게시판을 보려면 로그인이 필요합니다.' : (data.error || '권한이 없습니다.'))
+          setError(data.requireLogin ? t('listRequiresLogin') : (data.error || t('noPermission')))
         } else if (response.status === 404) {
-          setError('게시판을 찾을 수 없습니다.')
+          setError(t('boardNotFound'))
         } else {
-          setError(data.error || '게시판을 불러올 수 없습니다.')
+          setError(data.error || t('loadUnavailable'))
         }
         return
       }
@@ -128,11 +128,11 @@ export default function BoardListPage() {
       }
     } catch (error) {
       console.error('게시글 목록 조회 에러:', error)
-      setError('게시판을 불러오는 중 오류가 발생했습니다.')
+      setError(t('loadError'))
     } finally {
       setLoading(false)
     }
-  }, [slug, page])
+  }, [slug, page, t])
 
   useEffect(() => {
     fetchUser()
@@ -150,11 +150,11 @@ export default function BoardListPage() {
     const diffDays = Math.floor(diff / (1000 * 60 * 60 * 24))
 
     if (diffDays === 0) {
-      return date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+      return date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
     } else if (diffDays < 7) {
-      return `${diffDays}일 전`
+      return t('daysAgo', { days: diffDays })
     } else {
-      return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })
+      return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
     }
   }
 
@@ -162,7 +162,7 @@ export default function BoardListPage() {
   const handlePostClick = (post: Post, e?: React.MouseEvent) => {
     if (e && (e.target as HTMLElement).closest('[data-user-nickname]')) return
     if (post.isSecret && post.author.id !== user?.id && !isAdmin) {
-      alert('비밀글입니다.')
+      alert(t('secretPostAlert'))
       return
     }
     router.push(`/boards/${slug}/${post.id}`)
@@ -188,11 +188,11 @@ export default function BoardListPage() {
               <div className="flex gap-2 justify-center">
                 <Button variant="outline" onClick={() => router.push('/')}>
                   <Home className="h-4 w-4 mr-2" />
-                  홈으로
+                  {t('home')}
                 </Button>
                 {!user && (
                   <Button onClick={() => router.push('/login')}>
-                    로그인
+                    {t('login')}
                   </Button>
                 )}
               </div>
@@ -220,7 +220,7 @@ export default function BoardListPage() {
               <div className="flex items-center gap-2">
                 <h1 className="text-2xl font-bold">{board.name}</h1>
                 {isAdmin && (
-                  <Link href={`/admin/boards/${board.id}`} title="게시판 설정">
+                  <Link href={`/admin/boards/${board.id}`} title={t('boardSettingsTitle')}>
                     <Settings className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
                   </Link>
                 )}
@@ -251,7 +251,7 @@ export default function BoardListPage() {
                   >
                     <Badge variant="destructive" className="shrink-0">
                       <Pin className="h-3 w-3 mr-1" />
-                      공지
+                      {t('noticeBadge')}
                     </Badge>
                     <span className="font-medium truncate flex-1">
                       {post.title}
@@ -267,7 +267,7 @@ export default function BoardListPage() {
             {/* 게시글 목록 */}
             {posts.length === 0 ? (
               <div className="py-12 text-center text-muted-foreground">
-                게시글이 없습니다.
+                {t('noPosts')}
               </div>
             ) : board.displayType === 'gallery' ? (
               /* 갤러리 뷰 */
@@ -332,11 +332,11 @@ export default function BoardListPage() {
               <div>
                 {/* 데스크톱 헤더 */}
                 <div className="hidden md:flex items-center px-4 py-2 border-b text-xs text-muted-foreground font-medium">
-                  <div className="flex-1">제목</div>
+                  <div className="flex-1">{t('post.title')}</div>
                   <div className="w-28 text-left pl-2">{t('author')}</div>
                   <div className="w-24 text-center">{t('createdAt')}</div>
                   <div className="w-16 text-center">{t('viewCount')}</div>
-                  {board.useReaction && <div className="w-16 text-center">추천</div>}
+                  {board.useReaction && <div className="w-16 text-center">{t('recommend')}</div>}
                 </div>
                 {posts.map((post) => {
                   const postUrl = post.isSecret && post.author.id !== user?.id && !isAdmin ? '#' : `/boards/${slug}/${post.id}`
@@ -367,7 +367,7 @@ export default function BoardListPage() {
                     {/* 데스크톱: 테이블 레이아웃 */}
                     <div className="hidden md:flex md:items-center md:flex-1 md:min-w-0">
                       <div className="flex-1 min-w-0 flex items-center gap-2">
-                        {post.isNotice && <Badge variant="outline" className="shrink-0 text-xs px-1.5 py-0 text-orange-500 border-orange-500">공지</Badge>}
+                        {post.isNotice && <Badge variant="outline" className="shrink-0 text-xs px-1.5 py-0 text-orange-500 border-orange-500">{t('noticeBadge')}</Badge>}
                         {post.isSecret && <Lock className="h-3.5 w-3.5 text-yellow-500 shrink-0" />}
                         <Link href={postUrl} className="font-medium text-sm truncate hover:text-primary">{post.title}</Link>
                         {post.commentCount > 0 && board.useComment && (

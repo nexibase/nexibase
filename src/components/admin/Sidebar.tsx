@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { useTheme } from "next-themes"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import {
   LayoutDashboard,
@@ -91,16 +92,16 @@ function getIcon(iconName: string): LucideIcon {
   return iconMap[iconName] || FileText
 }
 
-// Core menu items that are always shown
+// Core menu items that are always shown (labels are translation keys)
 const coreMenuItems = [
-  { id: "dashboard", label: "대시보드", icon: LayoutDashboard, path: "/admin" },
-  { id: "users", label: "사용자관리", icon: Users, path: "/admin/users" },
-  { id: "login-logs", label: "로그인기록", icon: ClipboardList, path: "/admin/login-logs" },
-  { id: "settings", label: "환경설정", icon: Settings, path: "/admin/settings" },
-  { id: "plugins", label: "플러그인관리", icon: Puzzle, path: "/admin/plugins" },
-  { id: "menus", label: "메뉴관리", icon: MenuIcon, path: "/admin/menus" },
-  { id: "home-widgets", label: "홈화면관리", icon: LayoutGrid, path: "/admin/home-widgets" },
-]
+  { id: "dashboard", labelKey: "dashboard", icon: LayoutDashboard, path: "/admin" },
+  { id: "users", labelKey: "users", icon: Users, path: "/admin/users" },
+  { id: "login-logs", labelKey: "loginLogs", icon: ClipboardList, path: "/admin/login-logs" },
+  { id: "settings", labelKey: "settings", icon: Settings, path: "/admin/settings" },
+  { id: "plugins", labelKey: "plugins", icon: Puzzle, path: "/admin/plugins" },
+  { id: "menus", labelKey: "menus", icon: MenuIcon, path: "/admin/menus" },
+  { id: "home-widgets", labelKey: "homeWidgets", icon: LayoutGrid, path: "/admin/home-widgets" },
+] as const
 
 // 캐시된 사용자 정보를 가져오는 함수
 const getCachedUser = (): UserInfo | null => {
@@ -127,6 +128,7 @@ const getCachedPlugins = (): PluginInfo[] => {
 const CURRENT_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || ''
 
 export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
+  const t = useTranslations('admin')
   const [isOpen, setIsOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({})
@@ -314,8 +316,8 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
   }
 
   const getThemeLabel = () => {
-    if (!mounted) return '라이트'
-    return theme === 'dark' ? '다크' : '라이트'
+    if (!mounted) return t('light')
+    return theme === 'dark' ? t('dark') : t('light')
   }
 
   // 홈으로 이동 (shift 클릭 시 새창)
@@ -360,7 +362,7 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
         <div className="flex flex-col h-full">
           {/* 로고 */}
           <div className="p-6 border-b border-border">
-            <h1 className="text-xl font-bold text-foreground">관리자 패널</h1>
+            <h1 className="text-xl font-bold text-foreground">{t('panel')}</h1>
           </div>
 
           {/* 메뉴 */}
@@ -372,17 +374,17 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
                 size="sm"
                 className="flex-1 justify-start"
                 onClick={handleHomeClick}
-                title="Shift+클릭으로 새창 열기"
+                title={t('openInNewWindow')}
               >
                 <Home className="mr-2 h-4 w-4" />
-                홈으로
+                {t('goHome')}
               </Button>
               <Button
                 variant="outline"
                 size="icon"
                 className="h-9 w-9"
                 onClick={toggleTheme}
-                title={`${getThemeLabel()} 모드`}
+                title={t('themeMode', { mode: getThemeLabel() })}
               >
                 {getThemeIcon()}
               </Button>
@@ -399,7 +401,7 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
                   onClick={() => handleMenuClick(item)}
                 >
                   <Icon className="mr-2 h-4 w-4" />
-                  {item.label}
+                  {t(item.labelKey)}
                 </Button>
               )
             })}
@@ -475,9 +477,9 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
                   <User className="h-4 w-4 text-primary" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{user?.name || user?.nickname || '관리자'}</p>
+                  <p className="text-sm font-medium truncate">{user?.name || user?.nickname || t('roleAdmin')}</p>
                   <p className="text-xs text-muted-foreground truncate">
-                    {user?.role === 'admin' ? '관리자' : user?.role === 'manager' ? '부관리자' : user?.role || ''}
+                    {user?.role === 'admin' ? t('roleAdmin') : user?.role === 'manager' ? t('roleSubAdmin') : user?.role || ''}
                   </p>
                 </div>
               </div>
@@ -490,7 +492,7 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
                   <div className="flex items-center justify-between text-xs">
                     <span className="flex items-center gap-1.5 text-muted-foreground">
                       <Package className="h-3 w-3" />
-                      여기 버전
+                      {t('version')}
                     </span>
                     <span className="font-mono font-medium">v{CURRENT_VERSION}</span>
                   </div>
@@ -498,7 +500,7 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
                     <div className="flex items-center justify-between text-xs">
                       <span className="flex items-center gap-1.5 text-muted-foreground">
                         <GitBranch className="h-3 w-3" />
-                        최신 버전
+                        {t('latestVersion')}
                       </span>
                       <a
                         href="https://github.com/nexibase/nexibase/tags"
@@ -509,7 +511,7 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
                             ? 'text-amber-600 dark:text-amber-400 underline'
                             : 'text-green-600 dark:text-green-400'
                         }`}
-                        title={latestVersion !== CURRENT_VERSION ? '업데이트가 있습니다 — 태그 목록 열기' : '최신 버전을 사용 중입니다'}
+                        title={latestVersion !== CURRENT_VERSION ? t('updateAvailable') : t('latestVersion')}
                       >
                         v{latestVersion}
                       </a>

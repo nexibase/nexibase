@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useTranslations } from 'next-intl'
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Clock, ArrowRight, Eye, MessageSquare } from "lucide-react"
@@ -18,6 +19,7 @@ interface LatestPost {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function LatestPosts({ settings }: { settings?: Record<string, any> }) {
+  const t = useTranslations('boards')
   const [posts, setPosts] = useState<LatestPost[]>([])
   const limit = settings?.limit || 6
 
@@ -43,11 +45,11 @@ export default function LatestPosts({ settings }: { settings?: Record<string, an
     const diffMins = Math.floor(diffMs / 60000)
     const diffHours = Math.floor(diffMs / 3600000)
     const diffDays = Math.floor(diffMs / 86400000)
-    if (diffMins < 1) return '방금 전'
-    if (diffMins < 60) return `${diffMins}분 전`
-    if (diffHours < 24) return `${diffHours}시간 전`
-    if (diffDays < 7) return `${diffDays}일 전`
-    return date.toLocaleDateString('ko-KR')
+    if (diffMins < 1) return t('justNow')
+    if (diffMins < 60) return t('minutesAgo', { minutes: diffMins })
+    if (diffHours < 24) return t('hoursAgo', { hours: diffHours })
+    if (diffDays < 7) return t('daysAgo', { days: diffDays })
+    return date.toLocaleDateString()
   }
 
   return (
@@ -55,10 +57,10 @@ export default function LatestPosts({ settings }: { settings?: Record<string, an
       <div className="border-b px-4 py-3 flex items-center justify-between">
         <h2 className="font-semibold flex items-center gap-2">
           <Clock className="h-4 w-4 text-primary" />
-          최근 게시글
+          {t('widgets.latestPosts')}
         </h2>
         <Link href="/posts/latest" className="text-sm text-primary hover:underline flex items-center gap-1">
-          더보기 <ArrowRight className="h-3 w-3" />
+          {t('widgets.more')} <ArrowRight className="h-3 w-3" />
         </Link>
       </div>
       <CardContent className="p-0">
@@ -103,7 +105,7 @@ export default function LatestPosts({ settings }: { settings?: Record<string, an
           </div>
         ) : (
           <div className="py-12 text-center text-muted-foreground">
-            아직 게시글이 없습니다.
+            {t('widgets.noPosts')}
           </div>
         )}
       </CardContent>

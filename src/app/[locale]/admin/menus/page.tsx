@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { useTranslations } from "next-intl"
 import { Sidebar } from "@/components/admin/Sidebar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -54,6 +55,7 @@ const emptyForm = (position: string): MenuForm => ({
 })
 
 export default function MenusAdminPage() {
+  const t = useTranslations('admin')
   const [activeTab, setActiveTab] = useState<'header' | 'footer'>('header')
   const [headerMenus, setHeaderMenus] = useState<MenuItem[]>([])
   const [footerMenus, setFooterMenus] = useState<MenuItem[]>([])
@@ -96,15 +98,15 @@ export default function MenusAdminPage() {
         body: JSON.stringify(editingForm),
       })
       if (res.ok) {
-        showMessage('메뉴가 생성되었습니다.')
+        showMessage(t('menuCreated'))
         setEditingForm(null)
         setIsCreating(false)
         await fetchMenus()
       } else {
-        showMessage('생성 실패')
+        showMessage(t('createFailed'))
       }
     } catch {
-      showMessage('서버 오류')
+      showMessage(t('serverError'))
     } finally {
       setSaving(false)
     }
@@ -120,29 +122,29 @@ export default function MenusAdminPage() {
         body: JSON.stringify(editingForm),
       })
       if (res.ok) {
-        showMessage('메뉴가 수정되었습니다.')
+        showMessage(t('menuUpdated'))
         setEditingForm(null)
         await fetchMenus()
       } else {
-        showMessage('수정 실패')
+        showMessage(t('updateFailed'))
       }
     } catch {
-      showMessage('서버 오류')
+      showMessage(t('serverError'))
     } finally {
       setSaving(false)
     }
   }
 
   const handleDelete = async (id: number) => {
-    if (!confirm('이 메뉴를 삭제하시겠습니까? 하위 메뉴도 함께 삭제됩니다.')) return
+    if (!confirm(t('confirmDeleteMenu'))) return
     try {
       const res = await fetch(`/api/admin/menus/${id}`, { method: 'DELETE' })
       if (res.ok) {
-        showMessage('메뉴가 삭제되었습니다.')
+        showMessage(t('menuDeleted'))
         await fetchMenus()
       }
     } catch {
-      showMessage('삭제 실패')
+      showMessage(t('deleteFailed'))
     }
   }
 
@@ -155,7 +157,7 @@ export default function MenusAdminPage() {
       })
       await fetchMenus()
     } catch {
-      showMessage('변경 실패')
+      showMessage(t('changeFailed'))
     }
   }
 
@@ -216,14 +218,14 @@ export default function MenusAdminPage() {
   }
 
   const handleSeed = async () => {
-    if (!confirm('초기 메뉴 데이터를 생성하시겠습니까? 이미 데이터가 있으면 무시됩니다.')) return
+    if (!confirm(t('confirmSeedMenu'))) return
     try {
       const res = await fetch('/api/admin/menus/seed', { method: 'POST' })
       const data = await res.json()
-      showMessage(data.message || '시드 완료')
+      showMessage(data.message || t('seedDoneMsg'))
       await fetchMenus()
     } catch {
-      showMessage('시드 실패')
+      showMessage(t('seedFailedMsg'))
     }
   }
 
@@ -245,13 +247,13 @@ export default function MenusAdminPage() {
               {menu.groupName && <Badge variant="outline" className="text-xs">{menu.groupName}</Badge>}
               {isPluginDisabled && (
                 <Badge variant="destructive" className="text-xs">
-                  {menu.pluginName} 플러그인 비활성
+                  {t('pluginDisabled', { name: menu.pluginName ?? '' })}
                 </Badge>
               )}
-              {!menu.isActive && !isPluginDisabled && <Badge variant="secondary" className="text-xs">비활성</Badge>}
+              {!menu.isActive && !isPluginDisabled && <Badge variant="secondary" className="text-xs">{t('inactive')}</Badge>}
               {menu.visibility !== 'all' && (
                 <Badge variant="secondary" className="text-xs">
-                  {menu.visibility === 'member' ? '회원' : '관리자'}
+                  {menu.visibility === 'member' ? t('memberOnly') : t('roleAdmin')}
                 </Badge>
               )}
               {menu.target === '_blank' && <ExternalLink className="h-3 w-3 text-muted-foreground" />}
@@ -259,19 +261,19 @@ export default function MenusAdminPage() {
           </div>
           {!isPluginDisabled && (
             <div className="flex items-center gap-1">
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleMoveUp(menu, list)} title="위로">
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleMoveUp(menu, list)} title={t('moveUp')}>
                 <ChevronUp className="h-4 w-4" />
               </Button>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleMoveDown(menu, list)} title="아래로">
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleMoveDown(menu, list)} title={t('moveDown')}>
                 <ChevronDown className="h-4 w-4" />
               </Button>
               {depth === 0 && (
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleIndent(menu, list)} title="하위 메뉴로">
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleIndent(menu, list)} title={t('moveToChild')}>
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               )}
               {depth > 0 && (
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleOutdent(menu)} title="상위로">
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleOutdent(menu)} title={t('moveToParent')}>
                   <ChevronRight className="h-4 w-4 rotate-180" />
                 </Button>
               )}
@@ -297,7 +299,7 @@ export default function MenusAdminPage() {
               >
                 <Pencil className="h-4 w-4" />
               </Button>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleToggleActive(menu)} title={menu.isActive ? '숨기기' : '보이기'}>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleToggleActive(menu)} title={menu.isActive ? t('hide') : t('show')}>
                 {menu.isActive ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4 text-muted-foreground" />}
               </Button>
               <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500" onClick={() => handleDelete(menu.id)}>
@@ -322,10 +324,10 @@ export default function MenusAdminPage() {
       <div className="flex-1 overflow-y-auto p-6">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-bold">메뉴관리</h1>
+            <h1 className="text-2xl font-bold">{t('menusTitle')}</h1>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={handleSeed}>
-                초기 데이터 생성
+                {t('seedInitData')}
               </Button>
               <Button
                 size="sm"
@@ -335,7 +337,7 @@ export default function MenusAdminPage() {
                 }}
               >
                 <Plus className="h-4 w-4 mr-1" />
-                메뉴 추가
+                {t('menuAdd')}
               </Button>
             </div>
           </div>
@@ -353,14 +355,14 @@ export default function MenusAdminPage() {
               size="sm"
               onClick={() => { setActiveTab('header'); setEditingForm(null); setIsCreating(false) }}
             >
-              Header 메뉴
+              {t('headerMenu')}
             </Button>
             <Button
               variant={activeTab === 'footer' ? 'default' : 'outline'}
               size="sm"
               onClick={() => { setActiveTab('footer'); setEditingForm(null); setIsCreating(false) }}
             >
-              Footer 메뉴
+              {t('footerMenu')}
             </Button>
           </div>
 
@@ -369,7 +371,7 @@ export default function MenusAdminPage() {
             <Card className="mb-4">
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg flex items-center justify-between">
-                  {isCreating ? '새 메뉴 추가' : '메뉴 수정'}
+                  {isCreating ? t('newMenu') : t('editMenu')}
                   <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditingForm(null); setIsCreating(false) }}>
                     <X className="h-4 w-4" />
                   </Button>
@@ -378,15 +380,15 @@ export default function MenusAdminPage() {
               <CardContent>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-sm font-medium">라벨 *</label>
+                    <label className="text-sm font-medium">{t('menuLabel')}</label>
                     <Input
                       value={editingForm.label}
                       onChange={(e) => setEditingForm({ ...editingForm, label: e.target.value })}
-                      placeholder="메뉴 이름"
+                      placeholder={t('menuName')}
                     />
                   </div>
                   <div>
-                    <label className="text-sm font-medium">URL *</label>
+                    <label className="text-sm font-medium">{t('menuUrl')}</label>
                     <Input
                       value={editingForm.url}
                       onChange={(e) => setEditingForm({ ...editingForm, url: e.target.value })}
@@ -394,44 +396,44 @@ export default function MenusAdminPage() {
                     />
                   </div>
                   <div>
-                    <label className="text-sm font-medium">아이콘</label>
+                    <label className="text-sm font-medium">{t('menuIcon')}</label>
                     <Input
                       value={editingForm.icon}
                       onChange={(e) => setEditingForm({ ...editingForm, icon: e.target.value })}
-                      placeholder="이모지 또는 아이콘명"
+                      placeholder={t('menuIconPlaceholder')}
                     />
                   </div>
                   {activeTab === 'footer' && (
                     <div>
-                      <label className="text-sm font-medium">그룹명</label>
+                      <label className="text-sm font-medium">{t('groupName')}</label>
                       <Input
                         value={editingForm.groupName}
                         onChange={(e) => setEditingForm({ ...editingForm, groupName: e.target.value })}
-                        placeholder="커뮤니티, 정보, 정책"
+                        placeholder={t('groupNamePlaceholder')}
                       />
                     </div>
                   )}
                   <div>
-                    <label className="text-sm font-medium">타겟</label>
+                    <label className="text-sm font-medium">{t('menuTarget')}</label>
                     <select
                       className="w-full h-10 px-3 border rounded-md bg-background text-sm"
                       value={editingForm.target}
                       onChange={(e) => setEditingForm({ ...editingForm, target: e.target.value })}
                     >
-                      <option value="_self">현재 창</option>
-                      <option value="_blank">새 창</option>
+                      <option value="_self">{t('currentWindow')}</option>
+                      <option value="_blank">{t('newWindow')}</option>
                     </select>
                   </div>
                   <div>
-                    <label className="text-sm font-medium">공개 범위</label>
+                    <label className="text-sm font-medium">{t('visibility')}</label>
                     <select
                       className="w-full h-10 px-3 border rounded-md bg-background text-sm"
                       value={editingForm.visibility}
                       onChange={(e) => setEditingForm({ ...editingForm, visibility: e.target.value })}
                     >
-                      <option value="all">전체</option>
-                      <option value="member">회원만</option>
-                      <option value="admin">관리자만</option>
+                      <option value="all">{t('all')}</option>
+                      <option value="member">{t('visibilityMemberOnly')}</option>
+                      <option value="admin">{t('visibilityAdminOnly')}</option>
                     </select>
                   </div>
                   <div className="flex items-center gap-2 col-span-2">
@@ -442,7 +444,7 @@ export default function MenusAdminPage() {
                         onChange={(e) => setEditingForm({ ...editingForm, isActive: e.target.checked })}
                         className="rounded"
                       />
-                      <span className="text-sm">활성화</span>
+                      <span className="text-sm">{t('activate')}</span>
                     </label>
                   </div>
                 </div>
@@ -453,10 +455,10 @@ export default function MenusAdminPage() {
                     disabled={saving || !editingForm.label || !editingForm.url}
                   >
                     <Save className="h-4 w-4 mr-1" />
-                    {saving ? '저장 중...' : isCreating ? '추가' : '저장'}
+                    {saving ? t('savingText') : isCreating ? t('addBtn') : t('saveBtn')}
                   </Button>
                   <Button variant="outline" size="sm" onClick={() => { setEditingForm(null); setIsCreating(false) }}>
-                    취소
+                    {t('cancelBtn')}
                   </Button>
                 </div>
               </CardContent>
@@ -472,8 +474,8 @@ export default function MenusAdminPage() {
                 </div>
               ) : (
                 <div className="py-12 text-center text-muted-foreground">
-                  <p>등록된 메뉴가 없습니다.</p>
-                  <p className="text-sm mt-1">&quot;초기 데이터 생성&quot; 버튼을 클릭하여 기본 메뉴를 생성하세요.</p>
+                  <p>{t('noMenus')}</p>
+                  <p className="text-sm mt-1">{t('noMenusHint')}</p>
                 </div>
               )}
             </CardContent>

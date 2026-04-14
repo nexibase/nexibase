@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { MyPageLayout } from "@/components/layout/MyPageLayout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -15,6 +16,7 @@ interface LoginLog {
 }
 
 export default function LoginHistoryPage() {
+  const t = useTranslations('mypage')
   const router = useRouter()
   const [logs, setLogs] = useState<LoginLog[]>([])
   const [loading, setLoading] = useState(true)
@@ -51,7 +53,7 @@ export default function LoginHistoryPage() {
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             <Monitor className="h-4 w-4" />
-            로그인 기록
+            {t('loginHistory')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -60,7 +62,7 @@ export default function LoginHistoryPage() {
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           ) : logs.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-8 text-center">로그인 기록이 없습니다.</p>
+            <p className="text-sm text-muted-foreground py-8 text-center">{t('noLoginHistory')}</p>
           ) : (
             <>
               <div className="space-y-2">
@@ -69,12 +71,12 @@ export default function LoginHistoryPage() {
                     <div className="flex items-center gap-3">
                       <span className={`inline-block w-2 h-2 rounded-full ${log.success ? 'bg-green-500' : 'bg-red-500'}`} />
                       <span className={log.success ? 'text-foreground' : 'text-red-500'}>
-                        {log.success ? '로그인 성공' : '로그인 실패'}
+                        {log.success ? t('loginSuccess') : t('loginFailure')}
                       </span>
                       <span className="text-muted-foreground">{log.ip}</span>
                     </div>
                     <span className="text-xs text-muted-foreground">
-                      {new Date(log.createdAt).toLocaleString('ko-KR')}
+                      {new Date(log.createdAt).toLocaleString()}
                     </span>
                   </div>
                 ))}
@@ -82,7 +84,7 @@ export default function LoginHistoryPage() {
 
               {totalPages > 1 && (
                 <div className="flex items-center justify-between mt-4 pt-4 border-t">
-                  <p className="text-sm text-muted-foreground">총 {total}건</p>
+                  <p className="text-sm text-muted-foreground">{t('totalCount', { count: total })}</p>
                   <div className="flex items-center gap-1">
                     <Button
                       variant="outline"

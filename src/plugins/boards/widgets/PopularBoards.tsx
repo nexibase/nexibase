@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useTranslations } from 'next-intl'
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Flame } from "lucide-react"
@@ -15,6 +16,7 @@ interface Board {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function PopularBoards({ settings }: { settings?: Record<string, any> }) {
+  const t = useTranslations('boards')
   const [boards, setBoards] = useState<Board[]>([])
   const limit = settings?.limit || 5
 
@@ -40,7 +42,7 @@ export default function PopularBoards({ settings }: { settings?: Record<string, 
       <div className="border-b px-4 py-3">
         <h2 className="font-semibold flex items-center gap-2">
           <Flame className="h-4 w-4 text-orange-500" />
-          인기 게시판
+          {t('widgets.popularBoards')}
         </h2>
       </div>
       <CardContent className="p-0">

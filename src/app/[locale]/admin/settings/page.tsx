@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
+import { useTranslations } from "next-intl"
 import { Sidebar } from "@/components/admin/Sidebar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -87,6 +88,7 @@ const DEFAULT_SETTINGS: SettingsData = {
 }
 
 export default function SettingsPage() {
+  const t = useTranslations('admin')
   const [settings, setSettings] = useState<SettingsData>(DEFAULT_SETTINGS)
   const [footerLinks, setFooterLinks] = useState<FooterLink[]>([])
   const [loading, setLoading] = useState(true)
@@ -137,7 +139,7 @@ export default function SettingsPage() {
       if (data.ok) {
         setGaTestResult({ status: 'success', propertyId: data.propertyId, todayUsers: data.todayUsers })
       } else {
-        setGaTestResult({ status: 'error', message: data.error || '알 수 없는 오류' })
+        setGaTestResult({ status: 'error', message: data.error || t('gaUnknownError') })
       }
     } catch (err) {
       setGaTestResult({ status: 'error', message: err instanceof Error ? err.message : String(err) })
@@ -221,11 +223,11 @@ export default function SettingsPage() {
         setHasSettings(true)
         setGaTestResult({ status: 'idle' })
       } else {
-        alert(data.error || '저장에 실패했습니다.')
+        alert(data.error || t('settingsSaveFailed'))
       }
     } catch (error) {
       console.error('설정 저장 에러:', error)
-      alert('저장 중 오류가 발생했습니다.')
+      alert(t('settingsSaveError'))
     } finally {
       setSaving(false)
     }
@@ -233,7 +235,7 @@ export default function SettingsPage() {
 
   // 기본 설정 생성
   const handleSeed = async () => {
-    if (!confirm('기본 설정을 생성하시겠습니까?')) return
+    if (!confirm(t('confirmSeedSettings'))) return
 
     setSeeding(true)
     try {
@@ -246,11 +248,11 @@ export default function SettingsPage() {
         alert(data.message)
         fetchSettings()
       } else {
-        alert(data.error || '생성에 실패했습니다.')
+        alert(data.error || t('settingsSeedFailed'))
       }
     } catch (error) {
       console.error('기본 설정 생성 에러:', error)
-      alert('생성 중 오류가 발생했습니다.')
+      alert(t('settingsSeedError'))
     } finally {
       setSeeding(false)
     }
@@ -306,10 +308,10 @@ export default function SettingsPage() {
             <div>
               <h1 className="text-2xl font-bold flex items-center gap-2">
                 <Settings className="h-6 w-6" />
-                환경설정
+                {t('settingsTitle')}
               </h1>
               <p className="text-muted-foreground mt-1">
-                사이트 기본 설정을 관리합니다
+                {t('settingsDesc')}
               </p>
             </div>
             <div className="flex gap-2">
@@ -320,7 +322,7 @@ export default function SettingsPage() {
                   ) : (
                     <Sparkles className="h-4 w-4 mr-2" />
                   )}
-                  기본 설정 생성
+                  {t('seedDefault')}
                 </Button>
               )}
               <Button onClick={handleSave} disabled={saving}>
@@ -329,7 +331,7 @@ export default function SettingsPage() {
                 ) : (
                   <Save className="h-4 w-4 mr-2" />
                 )}
-                저장
+                {t('saveBtn')}
               </Button>
             </div>
           </div>
@@ -340,15 +342,15 @@ export default function SettingsPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Globe className="h-5 w-5" />
-                  사이트 기본 설정
+                  {t('siteBasicSettings')}
                 </CardTitle>
                 <CardDescription>
-                  사이트의 기본 정보를 설정합니다
+                  {t('siteBasicDesc')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="site_name">사이트명</Label>
+                  <Label htmlFor="site_name">{t('siteName')}</Label>
                   <Input
                     id="site_name"
                     value={settings.site_name}
@@ -358,25 +360,25 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="grid gap-2">
-                  <Label htmlFor="site_description">사이트 설명</Label>
+                  <Label htmlFor="site_description">{t('siteDescription')}</Label>
                   <Textarea
                     id="site_description"
                     value={settings.site_description}
                     onChange={(e) => handleChange('site_description', e.target.value)}
-                    placeholder="사이트에 대한 간단한 설명을 입력하세요"
+                    placeholder={t('siteDescriptionPlaceholder')}
                     rows={3}
                   />
                   <p className="text-sm text-muted-foreground">
-                    SEO 메타 태그에 사용됩니다
+                    {t('seoMetaDesc')}
                   </p>
                 </div>
 
                 <div className="grid gap-2">
-                  <Label>사이트 로고</Label>
+                  <Label>{t('siteLogo')}</Label>
                   <div className="flex items-center gap-4">
                     {settings.site_logo ? (
                       <div className="relative w-20 h-10 border rounded overflow-hidden bg-muted flex items-center justify-center">
-                        <img src={settings.site_logo} alt="로고" className="max-w-full max-h-full object-contain" />
+                        <img src={settings.site_logo} alt={t('logoAlt')} className="max-w-full max-h-full object-contain" />
                       </div>
                     ) : (
                       <div className="w-20 h-10 border rounded bg-muted flex items-center justify-center">
@@ -401,18 +403,18 @@ export default function SettingsPage() {
                               const data = await res.json()
                               if (res.ok && data.imageUrl) {
                                 handleChange('site_logo', data.imageUrl)
-                                alert('로고가 업로드되었습니다.')
+                                alert(t('logoUploaded'))
                               } else {
-                                alert(data.error || '로고 업로드 실패')
+                                alert(data.error || t('logoUploadFailed'))
                               }
                             } catch {
-                              alert('로고 업로드 중 오류가 발생했습니다.')
+                              alert(t('logoUploadError'))
                             }
                           }
                           input.click()
                         }}
                       >
-                        <Upload className="h-3.5 w-3.5 mr-1" /> 업로드
+                        <Upload className="h-3.5 w-3.5 mr-1" /> {t('upload')}
                       </Button>
                       {settings.site_logo && (
                         <Button
@@ -424,20 +426,20 @@ export default function SettingsPage() {
                               const res = await fetch('/api/admin/logo', { method: 'DELETE' })
                               if (res.ok) {
                                 handleChange('site_logo', '')
-                                alert('로고가 삭제되었습니다.')
+                                alert(t('logoDeleted'))
                               }
                             } catch {
-                              alert('로고 삭제 중 오류가 발생했습니다.')
+                              alert(t('logoDeleteError'))
                             }
                           }}
                         >
-                          <Trash2 className="h-3.5 w-3.5 mr-1" /> 삭제
+                          <Trash2 className="h-3.5 w-3.5 mr-1" /> {t('delete')}
                         </Button>
                       )}
                     </div>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    JPG, PNG, GIF, WebP, SVG (2MB 이하). 높이 80px 기준으로 자동 리사이징됩니다.
+                    {t('logoHint')}
                   </p>
                 </div>
 
@@ -452,19 +454,19 @@ export default function SettingsPage() {
                   Google Analytics
                 </CardTitle>
                 <CardDescription>
-                  방문자 통계 위젯에 사용되는 GA4 연동 설정입니다
+                  {t('gaDesc')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="rounded-md border border-blue-200 bg-blue-50 dark:bg-blue-950/30 dark:border-blue-900 p-3 text-sm">
-                  <p className="font-medium mb-1">💡 Google Analytics 연동</p>
+                  <p className="font-medium mb-1">{t('gaIntegrationTitle')}</p>
                   <p className="text-muted-foreground">
-                    방문자 통계 위젯을 사용하려면 GA4 Data API 연동이 필요합니다.{' '}
+                    {t('gaIntegrationDesc')}{' '}
                     <Link
                       href="/admin/settings/ga-guide"
                       className="underline text-blue-700 dark:text-blue-400 font-medium"
                     >
-                      설정 가이드 (단계별 안내)
+                      {t('gaGuideLink')}
                     </Link>
                   </p>
                 </div>
@@ -478,7 +480,7 @@ export default function SettingsPage() {
                     placeholder="G-XXXXXXXXXX"
                   />
                   <p className="text-sm text-muted-foreground">
-                    방문자 추적 스크립트에 사용됩니다 (1단계에서 발급)
+                    {t('measurementIdDesc')}
                   </p>
                 </div>
 
@@ -491,21 +493,21 @@ export default function SettingsPage() {
                     placeholder="412345678"
                   />
                   <p className="text-sm text-muted-foreground">
-                    데이터 조회 API에 사용됩니다 (GA4 관리 → 속성 설정에서 확인)
+                    {t('propertyIdDesc')}
                   </p>
                 </div>
 
                 <div className="grid gap-2">
-                  <Label htmlFor="ga4_service_account_json">Service Account JSON</Label>
+                  <Label htmlFor="ga4_service_account_json">{t('serviceAccountJson')}</Label>
                   {!gaJsonEditing ? (
                     <div className="flex items-center gap-2 rounded-md border px-3 py-2">
                       {settings.ga4_service_account_json ? (
                         <span className="text-sm text-green-700 dark:text-green-400">
-                          ✓ 입력됨 (Service Account 키)
+                          ✓ {t('keyEntered')}
                         </span>
                       ) : (
                         <span className="text-sm text-muted-foreground">
-                          저장된 키가 없습니다
+                          {t('noKeySaved')}
                         </span>
                       )}
                       <Button
@@ -515,7 +517,7 @@ export default function SettingsPage() {
                         className="ml-auto"
                         onClick={handleGaJsonEdit}
                       >
-                        {settings.ga4_service_account_json ? '변경' : '입력'}
+                        {settings.ga4_service_account_json ? t('changeBtn') : t('inputBtn')}
                       </Button>
                     </div>
                   ) : (
@@ -530,16 +532,16 @@ export default function SettingsPage() {
                       />
                       <div className="flex gap-2">
                         <Button type="button" size="sm" onClick={handleGaJsonApply}>
-                          적용
+                          {t('applyBtn')}
                         </Button>
                         <Button type="button" variant="outline" size="sm" onClick={handleGaJsonCancel}>
-                          취소
+                          {t('cancelBtn')}
                         </Button>
                       </div>
                     </div>
                   )}
                   <p className="text-sm text-muted-foreground">
-                    Google Cloud에서 다운로드한 JSON 키 전체 내용 (2단계에서 발급)
+                    {t('serviceAccountDesc')}
                   </p>
                 </div>
 
@@ -554,11 +556,11 @@ export default function SettingsPage() {
                       !settings.ga4_service_account_json
                     }
                   >
-                    {gaTestResult.status === 'loading' ? '테스트 중...' : '연결 테스트'}
+                    {gaTestResult.status === 'loading' ? t('testing') : t('connectionTest')}
                   </Button>
                   {gaTestResult.status === 'success' && (
                     <span className="text-sm text-green-700 dark:text-green-400">
-                      ✓ 연결됨 — Property {gaTestResult.propertyId} (오늘 {gaTestResult.todayUsers.toLocaleString('ko-KR')}명)
+                      ✓ {t('gaConnected', { propertyId: gaTestResult.propertyId, todayUsers: gaTestResult.todayUsers.toLocaleString() })}
                     </span>
                   )}
                   {gaTestResult.status === 'error' && (
@@ -568,7 +570,7 @@ export default function SettingsPage() {
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  ⚠ 연결 테스트는 현재 입력값이 아닌 <strong>저장된</strong> 설정을 검증합니다. 먼저 저장 버튼을 눌러주세요.
+                  {t('gaTestSavedWarning')}
                 </p>
               </CardContent>
             </Card>
@@ -578,18 +580,18 @@ export default function SettingsPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Users className="h-5 w-5" />
-                  회원 설정
+                  {t('memberSettings')}
                 </CardTitle>
                 <CardDescription>
-                  회원가입 및 인증 관련 설정입니다
+                  {t('memberSettingsDesc')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <Label>회원가입 허용</Label>
+                    <Label>{t('allowSignup')}</Label>
                     <p className="text-sm text-muted-foreground">
-                      새로운 사용자의 회원가입을 허용합니다
+                      {t('allowSignupDesc')}
                     </p>
                   </div>
                   <Switch
@@ -602,9 +604,9 @@ export default function SettingsPage() {
 
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <Label>이메일 인증 필수</Label>
+                    <Label>{t('requireEmailVerify')}</Label>
                     <p className="text-sm text-muted-foreground">
-                      회원가입 시 이메일 인증을 필수로 합니다
+                      {t('requireEmailVerifyDesc')}
                     </p>
                   </div>
                   <Switch
@@ -620,15 +622,15 @@ export default function SettingsPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <FileText className="h-5 w-5" />
-                  푸터 설정
+                  {t('footerSettings')}
                 </CardTitle>
                 <CardDescription>
-                  사이트 하단에 표시되는 정보를 설정합니다
+                  {t('footerSettingsDesc')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="footer_copyright">Copyright 문구</Label>
+                  <Label htmlFor="footer_copyright">{t('copyrightText')}</Label>
                   <Input
                     id="footer_copyright"
                     value={settings.footer_copyright}
@@ -641,7 +643,7 @@ export default function SettingsPage() {
 
                 <div className="grid gap-2">
                   <div className="flex items-center justify-between">
-                    <Label>푸터 링크</Label>
+                    <Label>{t('footerLinks')}</Label>
                     <Button
                       type="button"
                       variant="outline"
@@ -649,13 +651,13 @@ export default function SettingsPage() {
                       onClick={addFooterLink}
                     >
                       <Plus className="h-4 w-4 mr-1" />
-                      링크 추가
+                      {t('addLink')}
                     </Button>
                   </div>
 
                   {footerLinks.length === 0 ? (
                     <p className="text-sm text-muted-foreground py-4 text-center">
-                      푸터에 표시할 링크가 없습니다. 링크를 추가해 주세요.
+                      {t('noFooterLinks')}
                     </p>
                   ) : (
                     <div className="space-y-3">
@@ -665,12 +667,12 @@ export default function SettingsPage() {
                             <Input
                               value={link.label}
                               onChange={(e) => updateFooterLink(index, 'label', e.target.value)}
-                              placeholder="링크명 (예: 이용약관)"
+                              placeholder={t('linkNamePlaceholder')}
                             />
                             <Input
                               value={link.url}
                               onChange={(e) => updateFooterLink(index, 'url', e.target.value)}
-                              placeholder="URL (예: /policy/terms)"
+                              placeholder={t('urlPlaceholder')}
                             />
                           </div>
                           <Button
@@ -695,15 +697,15 @@ export default function SettingsPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Globe className="h-5 w-5" />
-                  레이아웃 설정
+                  {t('layoutSettings')}
                 </CardTitle>
                 <CardDescription>
-                  사이트 레이아웃(Header, 홈페이지, Footer)을 선택합니다
+                  {t('layoutSettingsDesc')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="layout_folder">레이아웃 선택</Label>
+                  <Label htmlFor="layout_folder">{t('layoutSelect')}</Label>
                   <select
                     id="layout_folder"
                     className="w-full h-10 px-3 border rounded-md bg-background text-sm"
@@ -712,7 +714,7 @@ export default function SettingsPage() {
                   >
                     {layouts.map((layout) => (
                       <option key={layout.folder} value={layout.folder}>
-                        {layout.folder === 'default' ? '기본 레이아웃' : layout.name}
+                        {layout.folder === 'default' ? t('defaultLayout') : layout.name}
                       </option>
                     ))}
                   </select>
@@ -721,30 +723,30 @@ export default function SettingsPage() {
                 {/* 파일 존재 여부 표시 */}
                 {layouts.length > 0 && (
                   <div className="space-y-3">
-                    <Label>레이아웃별 파일 구성</Label>
+                    <Label>{t('layoutFileStructure')}</Label>
                     <div className="border rounded-md divide-y">
                       {layouts.map((layout) => (
                         <div key={layout.folder} className={`px-4 py-3 ${settings.layout_folder === layout.folder ? 'bg-primary/5' : ''}`}>
                           <div className="flex items-center justify-between">
                             <span className="text-sm font-medium">
-                              {layout.folder === 'default' ? '기본 레이아웃' : layout.name}
+                              {layout.folder === 'default' ? t('defaultLayout') : layout.name}
                               {settings.layout_folder === layout.folder && (
-                                <span className="ml-2 text-xs text-primary">(사용중)</span>
+                                <span className="ml-2 text-xs text-primary">{t('inUse')}</span>
                               )}
                             </span>
                             <div className="flex gap-3 text-xs">
                               <span>Header {layout.files.Header ? '✅' : '❌'}</span>
-                              <span>홈페이지 {layout.files.HomePage ? '✅' : '❌'}</span>
+                              <span>{t('homePage')} {layout.files.HomePage ? '✅' : '❌'}</span>
                               <span>Footer {layout.files.Footer ? '✅' : '❌'}</span>
                             </div>
                           </div>
                           {layout.folder !== 'default' && (
                             <p className="text-xs text-muted-foreground mt-1">
                               {!layout.files.Header && !layout.files.Footer && layout.files.HomePage
-                                ? '홈페이지만 커스텀, Header/Footer는 기본 사용'
+                                ? t('customOnlyHome')
                                 : Object.entries(layout.files).filter(([, v]) => !v).length > 0
-                                ? `${Object.entries(layout.files).filter(([, v]) => !v).map(([k]) => k === 'HomePage' ? '홈페이지' : k).join(', ')}는 기본 레이아웃 사용`
-                                : '전체 커스텀'}
+                                ? t('defaultLayoutUsed', { items: Object.entries(layout.files).filter(([, v]) => !v).map(([k]) => k === 'HomePage' ? t('homePage') : k).join(', ') })
+                                : t('fullCustom')}
                             </p>
                           )}
                         </div>
@@ -760,15 +762,15 @@ export default function SettingsPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Palette className="h-5 w-5" />
-                  테마 설정
+                  {t('themeSettings')}
                 </CardTitle>
                 <CardDescription>
-                  사이트 색상 테마를 선택합니다
+                  {t('themeSettingsDesc')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="theme_folder">테마 선택</Label>
+                  <Label htmlFor="theme_folder">{t('themeSelect')}</Label>
                   <select
                     id="theme_folder"
                     className="w-full h-10 px-3 border rounded-md bg-background text-sm"
@@ -785,7 +787,7 @@ export default function SettingsPage() {
 
                 {themes.length > 0 && (
                   <div className="space-y-3">
-                    <Label>사용 가능한 테마</Label>
+                    <Label>{t('availableThemes')}</Label>
                     <div className="border rounded-md divide-y">
                       {themes.map((theme) => (
                         <div key={theme.folder} className={`px-4 py-3 ${settings.theme_folder === theme.folder ? 'bg-primary/5' : ''}`}>
@@ -793,11 +795,11 @@ export default function SettingsPage() {
                             <span className="text-sm font-medium">
                               {theme.name}
                               {settings.theme_folder === theme.folder && (
-                                <span className="ml-2 text-xs text-primary">(사용중)</span>
+                                <span className="ml-2 text-xs text-primary">{t('inUse')}</span>
                               )}
                             </span>
                             {theme.author && (
-                              <span className="text-xs text-muted-foreground">by {theme.author}</span>
+                              <span className="text-xs text-muted-foreground">{t('byAuthor', { author: theme.author })}</span>
                             )}
                           </div>
                           {theme.description && (

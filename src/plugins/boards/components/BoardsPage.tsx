@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useTranslations } from 'next-intl'
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Loader2, LayoutGrid, FileText, ArrowRight } from "lucide-react"
@@ -15,6 +16,7 @@ interface Board {
 }
 
 export default function BoardsPage() {
+  const t = useTranslations('boards')
   const [boards, setBoards] = useState<Board[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
@@ -42,10 +44,10 @@ export default function BoardsPage() {
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-2">
           <LayoutGrid className="h-6 w-6 text-primary" />
-          <h1 className="text-2xl font-bold">전체 게시판</h1>
+          <h1 className="text-2xl font-bold">{t('allBoards')}</h1>
         </div>
         <p className="text-muted-foreground">
-          다양한 주제의 게시판을 둘러보세요
+          {t('exploreBoards')}
         </p>
       </div>
 
@@ -75,11 +77,11 @@ export default function BoardsPage() {
                       )}
                     </div>
                     <Badge variant="secondary" className="flex-shrink-0">
-                      {board.postCount}개
+                      {board.postCount}
                     </Badge>
                   </div>
                   <div className="flex items-center text-xs text-primary mt-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <span>게시판 가기</span>
+                    <span>{t('goToBoard')}</span>
                     <ArrowRight className="h-3 w-3 ml-1" />
                   </div>
                 </CardContent>
@@ -90,7 +92,7 @@ export default function BoardsPage() {
       ) : (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
-            아직 게시판이 없습니다.
+            {t('noBoardsYet')}
           </CardContent>
         </Card>
       )}

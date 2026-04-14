@@ -2,11 +2,13 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 
 function EmailCertifyContent() {
+  const t = useTranslations('auth');
   const [verificationStatus, setVerificationStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('');
   const router = useRouter();
@@ -19,7 +21,7 @@ function EmailCertifyContent() {
       
       if (!mb_id || !mb_md5) {
         setVerificationStatus('error');
-        setMessage('인증 정보가 올바르지 않습니다.');
+        setMessage(t('invalidVerification'));
         return;
       }
 
@@ -37,7 +39,7 @@ function EmailCertifyContent() {
       } catch (error) {
         console.error('이메일 인증 에러:', error);
         setVerificationStatus('error');
-        setMessage('네트워크 오류가 발생했습니다.');
+        setMessage(t('networkError'));
       }
     };
 
@@ -58,11 +60,11 @@ function EmailCertifyContent() {
   const getStatusTitle = () => {
     switch (verificationStatus) {
       case 'loading':
-        return '이메일 인증 중...';
+        return t('verifying');
       case 'success':
-        return '인증 완료!';
+        return t('emailVerified');
       case 'error':
-        return '인증 실패';
+        return t('emailVerificationFailed');
     }
   };
 
@@ -87,7 +89,7 @@ function EmailCertifyContent() {
                 onClick={() => router.push('/login')}
                 className="w-full bg-blue-600 hover:bg-blue-700"
               >
-                로그인하기
+                {t('loginButton')}
               </Button>
             )}
             {verificationStatus === 'error' && (
@@ -96,14 +98,14 @@ function EmailCertifyContent() {
                   onClick={() => router.push('/signup')}
                   className="w-full"
                 >
-                  회원가입 다시하기
+                  {t('signupButton')}
                 </Button>
-                <Button 
+                <Button
                   onClick={() => router.push('/login')}
                   variant="outline"
                   className="w-full"
                 >
-                  로그인으로 돌아가기
+                  {t('loginButton')}
                 </Button>
               </div>
             )}
