@@ -27,10 +27,10 @@ function MembersContent() {
   // URL 파라미터에서 초기값 가져오기
   const [activeMenu, setActiveMenu] = useState("members")
   const [selectedFilter, setSelectedFilter] = useState<MemberSearchFilter['filter']>(
-    (searchParams.get("filter") as MemberSearchFilter['filter']) || "전체목록"
+    (searchParams.get("filter") as MemberSearchFilter['filter']) || "all"
   )
   const [searchType, setSearchType] = useState<MemberSearchFilter['searchType']>(
-    (searchParams.get("searchType") as MemberSearchFilter['searchType']) || "회원아이디"
+    (searchParams.get("searchType") as MemberSearchFilter['searchType']) || "userId"
   )
   const [searchValue, setSearchValue] = useState(searchParams.get("searchValue") || "")
   const [members, setMembers] = useState<MemberListItem[]>([])
@@ -103,10 +103,10 @@ function MembersContent() {
   }, [searchParams])
 
   const filters = [
-    { id: "전체목록", label: t('membersFilterAll'), count: `${stats.totalMembers}` },
-    { id: "총회원수", label: `${t('membersFilterTotal')} ${stats.totalMembers}`, count: "" },
-    { id: "차단", label: `${t('membersFilterBlocked')} ${stats.blockedMembers}`, count: "" },
-    { id: "탈퇴", label: `${t('membersFilterWithdrawn')} ${stats.withdrawnMembers}`, count: "" }
+    { id: "all", label: t('membersFilterAll'), count: `${stats.totalMembers}` },
+    { id: "total", label: `${t('membersFilterTotal')} ${stats.totalMembers}`, count: "" },
+    { id: "blocked", label: `${t('membersFilterBlocked')} ${stats.blockedMembers}`, count: "" },
+    { id: "withdrawn", label: `${t('membersFilterWithdrawn')} ${stats.withdrawnMembers}`, count: "" }
   ]
 
   const handleSelectAll = (checked: boolean) => {
@@ -284,10 +284,10 @@ function MembersContent() {
                   onChange={(e) => handleSearchTypeChange(e.target.value)}
                   className="border border-gray-300 rounded px-2 py-1 text-xs"
                 >
-                  <option value="회원아이디">{t('searchById')}</option>
-                  <option value="이름">{t('searchByName')}</option>
-                  <option value="닉네임">{t('searchByNick')}</option>
-                  <option value="이메일">{t('searchByEmail')}</option>
+                  <option value="userId">{t('searchById')}</option>
+                  <option value="name">{t('searchByName')}</option>
+                  <option value="nickname">{t('searchByNick')}</option>
+                  <option value="email">{t('searchByEmail')}</option>
                 </select>
                 <Input
                   type="text"

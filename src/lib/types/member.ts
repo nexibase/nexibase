@@ -112,9 +112,9 @@ export interface MemberApiResponse {
 
 // 검색 필터 타입
 export interface MemberSearchFilter {
-  searchType: '회원아이디' | '이름' | '닉네임' | '이메일'
+  searchType: 'userId' | 'name' | 'nickname' | 'email'
   searchValue: string
-  filter: '전체목록' | '차단회원' | '탈퇴회원'
+  filter: 'all' | 'total' | 'blocked' | 'withdrawn'
 }
 
 // 중복 검사 상태 타입
