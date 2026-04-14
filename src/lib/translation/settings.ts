@@ -1,6 +1,17 @@
 import { prisma } from '@/lib/prisma'
 import { translateMany, getSubLocales } from './translate'
 import { routing } from '@/i18n/routing'
+import { TRANSLATION_SETTING_KEYS } from './google-client'
+
+/**
+ * 공개 API 응답에 절대 포함되면 안 되는 민감 설정 키.
+ * Google Translate 서비스 계정 JSON 등.
+ */
+export const SENSITIVE_SETTING_KEYS: readonly string[] = [...TRANSLATION_SETTING_KEYS]
+
+export function isSensitiveSettingKey(key: string): boolean {
+  return SENSITIVE_SETTING_KEYS.includes(key)
+}
 
 /**
  * 번역 대상 setting key 화이트리스트.
@@ -53,6 +64,7 @@ export async function getLocalizedSettings(
   const translationMap = new Map(translations.map(t => [t.key, t.value]))
   const result: Record<string, string> = {}
   for (const s of baseSettings) {
+    if (isSensitiveSettingKey(s.key)) continue  // 공개 응답에서 제외
     if (locale !== routing.defaultLocale && isTranslatableSettingKey(s.key)) {
       result[s.key] = translationMap.get(s.key) ?? s.value
     } else {
