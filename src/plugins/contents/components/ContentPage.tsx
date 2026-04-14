@@ -7,6 +7,7 @@ import { Loader2, FileText, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { sanitizeHtml } from "@/lib/sanitize"
+import { useTranslations } from 'next-intl'
 
 interface Content {
   id: number
@@ -17,6 +18,7 @@ interface Content {
 }
 
 export default function ContentPage() {
+  const t = useTranslations('contents')
   const params = useParams()
   const slug = params.slug as string
 
@@ -33,11 +35,11 @@ export default function ContentPage() {
         if (response.ok) {
           setContent(data.content)
         } else {
-          setError(data.error || '콘텐츠를 불러올 수 없습니다.')
+          setError(data.error || t('loadFailed'))
         }
       } catch (err) {
         console.error('콘텐츠 조회 에러:', err)
-        setError('콘텐츠를 불러오는 중 오류가 발생했습니다.')
+        setError(t('loadError'))
       } finally {
         setLoading(false)
       }
@@ -46,7 +48,7 @@ export default function ContentPage() {
     if (slug) {
       fetchContent()
     }
-  }, [slug])
+  }, [slug, t])
 
   if (loading) {
     return (
@@ -66,7 +68,7 @@ export default function ContentPage() {
             <Button asChild variant="outline">
               <Link href="/">
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                홈으로 돌아가기
+                {t('backHome')}
               </Link>
             </Button>
           </CardContent>
@@ -85,7 +87,7 @@ export default function ContentPage() {
         <CardHeader>
           <CardTitle className="text-2xl">{content.title}</CardTitle>
           <p className="text-sm text-muted-foreground">
-            마지막 수정: {new Date(content.updatedAt).toLocaleDateString('ko-KR')}
+            {t('lastModified')}: {new Date(content.updatedAt).toLocaleDateString()}
           </p>
         </CardHeader>
         <CardContent>
@@ -100,7 +102,7 @@ export default function ContentPage() {
         <Button asChild variant="outline">
           <Link href="/">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            홈으로 돌아가기
+            {t('backHome')}
           </Link>
         </Button>
       </div>

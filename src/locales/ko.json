@@ -689,6 +689,17 @@
     "now": "현재 접속",
     "today": "오늘",
     "yesterday": "어제",
-    "last7days": "지난 7일"
+    "last7days": "지난 7일",
+    "welcomeUser": "{nickname}님, 환영합니다!",
+    "welcomeSite": "{siteName}에 오신 것을 환영합니다",
+    "defaultDesc": "함께 성장하는 커뮤니티에서 다양한 이야기를 나눠보세요.",
+    "startBtn": "시작하기",
+    "learnMore": "더 알아보기",
+    "defaultNickname": "사용자",
+    "memberCount": "회원",
+    "postCount": "게시글",
+    "commentCount": "댓글",
+    "boardCount": "게시판",
+    "last7daysLabel": "지난 7일"
   }
 }
