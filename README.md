@@ -158,7 +158,46 @@ npx prisma db push
 npm run dev
 ```
 
-http://localhost:3000 접속 — **첫 번째 가입자가 자동으로 관리자가 됩니다.**
+http://localhost:3000 접속 → 설치 마법사가 자동으로 열립니다.
+
+### 6. 설치 마법사
+
+첫 실행 시 브라우저가 자동으로 `/install`로 이동합니다.
+
+1. **언어 선택** — English 또는 한국어
+2. **관리자 계정 + 사이트 정보**
+   - 관리자 이메일 · 비밀번호 · 닉네임
+   - 사이트 이름 · 사이트 설명 (선택)
+3. **설치** 버튼 클릭 → 자동으로 seed 데이터(기본 게시판·메뉴·정책 등) 생성 → `/login`으로 이동
+
+### 새 언어 추가하기
+
+Nexibase는 드롭인 방식으로 언어를 확장할 수 있습니다. 파일 2개만 추가하면 됩니다:
+
+```bash
+# 1. src/locales/{locale}.json — en.json을 복사 후 번역
+cp src/locales/en.json src/locales/ja.json
+# 파일을 열어 모든 value를 일본어로 번역 (키 구조는 유지)
+
+# 2. src/lib/install/seed-{locale}.ts — seed-en.ts를 복사 후 번역
+cp src/lib/install/seed-en.ts src/lib/install/seed-ja.ts
+# displayName과 모든 문자열 번역
+
+# 3. 재시작 (scan-plugins가 자동으로 새 언어 등록)
+npm run dev
+```
+
+이후 `/install` 페이지에 새 언어 버튼이 자동으로 등장합니다. 코드 수정 0줄.
+
+### 설치 재설정 (개발 환경 전용)
+
+테스트 목적으로 DB를 초기화하고 설치 마법사를 다시 실행하려면:
+
+```bash
+npm run reset-install -- --confirm
+```
+
+⚠️ 이 명령은 모든 users·boards·menus·widgets·contents·policies·settings와 shop 주문 데이터를 삭제합니다. `NODE_ENV=production`에서는 실행 거부됩니다. 리셋 후 dev 서버를 **재시작**해야 캐시가 초기화됩니다.
 
 ---
 
