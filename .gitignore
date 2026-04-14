@@ -64,6 +64,10 @@ next-env.d.ts
 /src/lib/widgets/_generated-metadata.ts
 /src/lib/widgets/_generated-header-widgets.ts
 
+# scan-plugins가 자동 생성하는 install locale 파일
+/src/i18n/_generated-locales.ts
+/src/lib/install/_generated-registry.ts
+
 # scan-plugins가 생성하는 머지된 로케일 파일
 /src/messages/ko.json
 /src/messages/en.json
