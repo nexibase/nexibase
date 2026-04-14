@@ -25,7 +25,7 @@ interface Notification {
 }
 
 export default function Header() {
-  const { user, setUser, settings, boards, headerMenus, isLoading } = useSite()
+  const { user, setUser, settings, headerMenus, isLoading } = useSite()
   const t = useTranslations('header')
   const [mounted, setMounted] = useState(false)
   const [moreMenuOpen, setMoreMenuOpen] = useState(false)
@@ -140,9 +140,6 @@ export default function Header() {
       setSearchQuery("")
     }
   }
-
-  // 현재 경로가 해당 게시판인지 확인
-  const isActiveBoard = (slug: string) => pathname?.startsWith(`/boards/${slug}`)
 
   // 로그인 시 알림 개수 조회
   useEffect(() => {
@@ -519,18 +516,7 @@ export default function Header() {
                   </div>
                 )}
               </>
-            ) : (
-              <>
-                {/* 폴백: DB 메뉴가 없을 때 기존 하드코딩 유지 */}
-                <Link href="/" className={`px-4 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${pathname === '/' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>홈</Link>
-                <Link href="/posts/popular" className={`px-4 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${pathname === '/posts/popular' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>인기</Link>
-                <Link href="/shop" className={`px-4 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${pathname?.startsWith('/shop') ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>쇼핑</Link>
-                <div className="w-px h-5 bg-border mx-1" />
-                {boards.slice(0, 5).map((board) => (
-                  <Link key={board.id} href={`/boards/${board.slug}`} className={`px-4 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${isActiveBoard(board.slug) ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>{board.name}</Link>
-                ))}
-              </>
-            )}
+            ) : null /* DB 메뉴 로드 전엔 빈 nav (하드코딩 한국어 fallback 제거) */}
           </nav>
 
           {/* 모바일 네비게이션 */}
@@ -612,17 +598,7 @@ export default function Header() {
                     </div>
                   ))}
                 </>
-              ) : (
-                <>
-                  {/* 폴백: 하드코딩 메뉴 */}
-                  <Link href="/" className="block px-3 py-2 text-sm font-medium rounded-md hover:bg-muted" onClick={() => setMobileMenuOpen(false)}>홈</Link>
-                  <Link href="/posts/popular" className="block px-3 py-2 text-sm font-medium rounded-md hover:bg-muted" onClick={() => setMobileMenuOpen(false)}>인기</Link>
-                  <div className="border-t my-2" />
-                  {boards.map((board) => (
-                    <Link key={board.id} href={`/boards/${board.slug}`} className={`block px-3 py-2 text-sm rounded-md ${isActiveBoard(board.slug) ? 'bg-primary/10 text-primary' : 'hover:bg-muted'}`} onClick={() => setMobileMenuOpen(false)}>{board.name}</Link>
-                  ))}
-                </>
-              )}
+              ) : null /* DB 메뉴 로드 전엔 빈 상태 (하드코딩 한국어 fallback 제거) */}
               <div className="border-t my-2" />
               {/* 플러그인 헤더 위젯 (모바일) */}
               {headerWidgets.map(({ folder, component: Widget }) => (

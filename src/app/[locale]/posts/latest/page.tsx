@@ -2,11 +2,12 @@
 
 import { useState, useEffect, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
+import { useTranslations, useLocale } from "next-intl"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { UserNickname } from "@/components/UserNickname"
-import { FileText, Eye, MessageSquare, ThumbsUp, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
+import { FileText, Eye, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
 
 interface Post {
   id: number
@@ -24,6 +25,8 @@ export default function Page() {
 }
 
 function NewPostsPage() {
+  const t = useTranslations('lists')
+  const locale = useLocale()
   const searchParams = useSearchParams()
   const uuid = searchParams.get('uuid')
   const [posts, setPosts] = useState<Post[]>([])
@@ -50,9 +53,10 @@ function NewPostsPage() {
     const date = new Date(d)
     const now = new Date()
     const isToday = date.toDateString() === now.toDateString()
+    const intlLocale = locale === 'ko' ? 'ko-KR' : 'en-US'
     return isToday
-      ? date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
-      : date.toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })
+      ? date.toLocaleTimeString(intlLocale, { hour: '2-digit', minute: '2-digit' })
+      : date.toLocaleDateString(intlLocale, { month: 'numeric', day: 'numeric' })
   }
 
   return (
@@ -61,12 +65,12 @@ function NewPostsPage() {
         <div className="flex items-center gap-2">
           <FileText className="h-5 w-5 text-primary" />
           <h1 className="text-lg font-bold">
-            {member ? `${member.nickname}님의 작성글` : '최신 작성글'}
+            {member ? t('userPostsTitle', { nickname: member.nickname }) : t('newPosts')}
           </h1>
         </div>
         {uuid && (
           <Link href="/posts/latest">
-            <Button variant="outline" size="sm">전체글 보기</Button>
+            <Button variant="outline" size="sm">{t('viewAllPostsBtn')}</Button>
           </Link>
         )}
       </div>
@@ -77,12 +81,12 @@ function NewPostsPage() {
         <Card className="rounded-none sm:rounded-lg">
           <CardContent className="p-0">
             <div className="hidden sm:flex items-center px-4 py-2 border-b text-xs text-muted-foreground font-medium">
-              <div className="w-20">게시판</div>
-              <div className="flex-1">제목</div>
-              {!uuid && <div className="w-24 text-left">작성자</div>}
-              <div className="w-20 text-center">날짜</div>
-              <div className="w-12 text-center">조회</div>
-              <div className="w-12 text-center">추천</div>
+              <div className="w-20">{t('colBoard')}</div>
+              <div className="flex-1">{t('colTitle')}</div>
+              {!uuid && <div className="w-24 text-left">{t('colAuthor')}</div>}
+              <div className="w-20 text-center">{t('colDate')}</div>
+              <div className="w-12 text-center">{t('colViews')}</div>
+              <div className="w-12 text-center">{t('colLikes')}</div>
             </div>
             {posts.map(post => (
               <div key={post.id} className="flex items-center px-4 py-3 border-b last:border-b-0 hover:bg-muted/30">
@@ -120,7 +124,7 @@ function NewPostsPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="py-12 text-center text-muted-foreground">작성글이 없습니다.</div>
+        <div className="py-12 text-center text-muted-foreground">{t('noPosts')}</div>
       )}
 
       {totalPages > 1 && (

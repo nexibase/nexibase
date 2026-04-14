@@ -288,7 +288,7 @@
   "lists": {
     "latest": "Latest",
     "popular": "Popular",
-    "newPosts": "New posts",
+    "newPosts": "Latest posts",
     "newComments": "New comments",
     "viewAll": "View all",
     "viewAllPosts": "View all posts",
@@ -307,7 +307,15 @@
     "periodMonth": "This month",
     "periodAll": "All time",
     "prev": "Previous",
-    "next": "Next"
+    "next": "Next",
+    "userPostsTitle": "{nickname}'s posts",
+    "viewAllPostsBtn": "View all",
+    "colBoard": "Board",
+    "colTitle": "Title",
+    "colAuthor": "Author",
+    "colDate": "Date",
+    "colViews": "Views",
+    "colLikes": "Likes"
   },
   "admin": {
     "panel": "Admin panel",
