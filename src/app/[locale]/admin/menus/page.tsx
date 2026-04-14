@@ -10,6 +10,15 @@ import { Badge } from "@/components/ui/badge"
 import {
   ChevronUp, ChevronDown, ChevronRight, Plus, Trash2, Save, Eye, EyeOff, ExternalLink, Pencil, X, GripVertical
 } from "lucide-react"
+import { LocaleTabs } from "@/components/admin/LocaleTabs"
+import { LocaleField } from "@/components/admin/LocaleField"
+import { routing } from "@/i18n/routing"
+
+interface MenuTranslationRow {
+  locale: string
+  label: string
+  source: 'auto' | 'manual'
+}
 
 interface MenuItem {
   id: number
@@ -27,6 +36,7 @@ interface MenuItem {
   pluginFolder: string | null
   pluginEnabled: boolean
   pluginName: string | null
+  translations?: MenuTranslationRow[]
 }
 
 interface MenuForm {
@@ -60,6 +70,7 @@ export default function MenusAdminPage() {
   const [headerMenus, setHeaderMenus] = useState<MenuItem[]>([])
   const [footerMenus, setFooterMenus] = useState<MenuItem[]>([])
   const [editingForm, setEditingForm] = useState<MenuForm | null>(null)
+  const [translations, setTranslations] = useState<Record<string, { label: string; source: 'auto' | 'manual' | 'missing' }>>({})
   const [isCreating, setIsCreating] = useState(false)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
@@ -92,15 +103,24 @@ export default function MenusAdminPage() {
     if (!editingForm || !editingForm.label || !editingForm.url) return
     setSaving(true)
     try {
+      const manualTranslations = Object.fromEntries(
+        Object.entries(translations)
+          .filter(([, v]) => v.source === 'manual' && v.label)
+          .map(([loc, v]) => [loc, { label: v.label }])
+      )
       const res = await fetch('/api/admin/menus', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editingForm),
+        body: JSON.stringify({
+          ...editingForm,
+          translations: Object.keys(manualTranslations).length > 0 ? manualTranslations : undefined,
+        }),
       })
       if (res.ok) {
         showMessage(t('menuCreated'))
         setEditingForm(null)
         setIsCreating(false)
+        setTranslations({})
         await fetchMenus()
       } else {
         showMessage(t('createFailed'))
@@ -116,14 +136,23 @@ export default function MenusAdminPage() {
     if (!editingForm?.id || !editingForm.label || !editingForm.url) return
     setSaving(true)
     try {
+      const manualTranslations = Object.fromEntries(
+        Object.entries(translations)
+          .filter(([, v]) => v.source === 'manual' && v.label)
+          .map(([loc, v]) => [loc, { label: v.label }])
+      )
       const res = await fetch(`/api/admin/menus/${editingForm.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editingForm),
+        body: JSON.stringify({
+          ...editingForm,
+          translations: Object.keys(manualTranslations).length > 0 ? manualTranslations : undefined,
+        }),
       })
       if (res.ok) {
         showMessage(t('menuUpdated'))
         setEditingForm(null)
+        setTranslations({})
         await fetchMenus()
       } else {
         showMessage(t('updateFailed'))
@@ -295,6 +324,14 @@ export default function MenusAdminPage() {
                     visibility: menu.visibility,
                     isActive: menu.isActive,
                   })
+                  // Populate translations from existing data
+                  const trMap: Record<string, { label: string; source: 'auto' | 'manual' | 'missing' }> = {}
+                  if (Array.isArray(menu.translations)) {
+                    for (const row of menu.translations) {
+                      trMap[row.locale] = { label: row.label, source: row.source }
+                    }
+                  }
+                  setTranslations(trMap)
                 }}
               >
                 <Pencil className="h-4 w-4" />
@@ -334,6 +371,7 @@ export default function MenusAdminPage() {
                 onClick={() => {
                   setIsCreating(true)
                   setEditingForm(emptyForm(activeTab))
+                  setTranslations({})
                 }}
               >
                 <Plus className="h-4 w-4 mr-1" />
@@ -353,14 +391,14 @@ export default function MenusAdminPage() {
             <Button
               variant={activeTab === 'header' ? 'default' : 'outline'}
               size="sm"
-              onClick={() => { setActiveTab('header'); setEditingForm(null); setIsCreating(false) }}
+              onClick={() => { setActiveTab('header'); setEditingForm(null); setIsCreating(false); setTranslations({}) }}
             >
               {t('headerMenu')}
             </Button>
             <Button
               variant={activeTab === 'footer' ? 'default' : 'outline'}
               size="sm"
-              onClick={() => { setActiveTab('footer'); setEditingForm(null); setIsCreating(false) }}
+              onClick={() => { setActiveTab('footer'); setEditingForm(null); setIsCreating(false); setTranslations({}) }}
             >
               {t('footerMenu')}
             </Button>
@@ -372,19 +410,46 @@ export default function MenusAdminPage() {
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg flex items-center justify-between">
                   {isCreating ? t('newMenu') : t('editMenu')}
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditingForm(null); setIsCreating(false) }}>
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditingForm(null); setIsCreating(false); setTranslations({}) }}>
                     <X className="h-4 w-4" />
                   </Button>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-sm font-medium">{t('menuLabel')}</label>
-                    <Input
-                      value={editingForm.label}
-                      onChange={(e) => setEditingForm({ ...editingForm, label: e.target.value })}
-                      placeholder={t('menuName')}
+                  <div className="col-span-2">
+                    <LocaleTabs
+                      getStatus={(locale) => locale === routing.defaultLocale ? undefined : translations[locale]?.source ?? 'missing'}
+                      renderTab={(locale, isDefault) => {
+                        if (isDefault) {
+                          return (
+                            <LocaleField label={t('menuLabel')} isDefaultLocale>
+                              <Input
+                                value={editingForm.label}
+                                onChange={(e) => setEditingForm({ ...editingForm, label: e.target.value })}
+                                placeholder={t('menuName')}
+                              />
+                            </LocaleField>
+                          )
+                        }
+                        const tr = translations[locale] ?? { label: '', source: 'missing' as const }
+                        return (
+                          <LocaleField
+                            label={t('menuLabel')}
+                            isDefaultLocale={false}
+                            subLocaleHint="비워두면 영문 원본이 노출됩니다. 수정하면 수동 번역으로 전환됩니다."
+                          >
+                            <Input
+                              value={tr.label}
+                              onChange={(e) => setTranslations({
+                                ...translations,
+                                [locale]: { label: e.target.value, source: 'manual' },
+                              })}
+                              placeholder={t('menuName')}
+                            />
+                          </LocaleField>
+                        )
+                      }}
                     />
                   </div>
                   <div>
@@ -457,7 +522,7 @@ export default function MenusAdminPage() {
                     <Save className="h-4 w-4 mr-1" />
                     {saving ? t('savingText') : isCreating ? t('addBtn') : t('saveBtn')}
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => { setEditingForm(null); setIsCreating(false) }}>
+                  <Button variant="outline" size="sm" onClick={() => { setEditingForm(null); setIsCreating(false); setTranslations({}) }}>
                     {t('cancelBtn')}
                   </Button>
                 </div>

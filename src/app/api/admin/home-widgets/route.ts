@@ -35,6 +35,7 @@ export async function GET() {
 
     const widgets = await prisma.homeWidget.findMany({
       orderBy: [{ zone: 'asc' }, { sortOrder: 'asc' }],
+      include: { translations: true },
     })
 
     // 각 위젯에 플러그인 활성 상태 추가

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getLocaleFromRequest, flattenTranslation } from '@/lib/translation/resolver'
 
 export async function GET(
   request: NextRequest,
@@ -7,9 +8,11 @@ export async function GET(
 ) {
   try {
     const { slug } = await params
+    const locale = getLocaleFromRequest(request)
 
     const content = await prisma.content.findUnique({
-      where: { slug }
+      where: { slug },
+      include: { translations: { where: { locale } } }
     })
 
     if (!content) {
@@ -26,9 +29,11 @@ export async function GET(
       )
     }
 
+    const localized = flattenTranslation(content as any, locale, ['title', 'content'])
+
     return NextResponse.json({
       success: true,
-      content
+      content: localized
     })
   } catch (error) {
     console.error('콘텐츠 조회 에러:', error)

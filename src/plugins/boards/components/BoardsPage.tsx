@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Loader2, LayoutGrid, FileText, ArrowRight } from "lucide-react"
@@ -17,13 +17,14 @@ interface Board {
 
 export default function BoardsPage() {
   const t = useTranslations('boards')
+  const locale = useLocale()
   const [boards, setBoards] = useState<Board[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     const fetchBoards = async () => {
       try {
-        const res = await fetch('/api/boards?limit=100')
+        const res = await fetch(`/api/boards?limit=100&locale=${locale}`)
         if (res.ok) {
           const data = await res.json()
           setBoards(data.boards || [])
@@ -36,7 +37,7 @@ export default function BoardsPage() {
     }
 
     fetchBoards()
-  }, [])
+  }, [locale])
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">

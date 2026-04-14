@@ -1,0 +1,120 @@
+{
+  "boards": [
+    {
+      "id": 4,
+      "nameEn": "Free Board",
+      "descriptionEn": "A space for free conversation and discussion.",
+      "nameKo": "자유게시판",
+      "descriptionKo": "자유롭게 이야기를 나누는 공간입니다."
+    },
+    {
+      "id": 5,
+      "nameEn": "Notices",
+      "descriptionEn": "Check out important announcements.",
+      "nameKo": "공지사항",
+      "descriptionKo": "중요한 공지사항을 확인하세요."
+    },
+    {
+      "id": 6,
+      "nameEn": "Q&A",
+      "descriptionEn": "Ask us anything you're curious about.",
+      "nameKo": "문의게시판",
+      "descriptionKo": "궁금한 점을 문의해주세요."
+    },
+    {
+      "id": 9,
+      "nameEn": "Gallery",
+      "descriptionEn": "Photo and image gallery.",
+      "nameKo": "갤러리",
+      "descriptionKo": "사진과 이미지를 공유하는 공간입니다."
+    }
+  ],
+  "menus": [
+    { "id": 4, "labelEn": "Home", "labelKo": "홈" },
+    { "id": 5, "labelEn": "Popular", "labelKo": "인기" },
+    { "id": 6, "labelEn": "Shop", "labelKo": "쇼핑" },
+    { "id": 8, "labelEn": "Free Board", "labelKo": "자유게시판" },
+    { "id": 9, "labelEn": "Notices", "labelKo": "공지사항" },
+    { "id": 10, "labelEn": "Q&A", "labelKo": "문의게시판" },
+    { "id": 11, "labelEn": "Gallery", "labelKo": "갤러리" },
+    { "id": 12, "labelEn": "Home", "labelKo": "홈" },
+    { "id": 13, "labelEn": "Popular Posts", "labelKo": "인기글" },
+    { "id": 14, "labelEn": "All Boards", "labelKo": "전체게시판" },
+    { "id": 15, "labelEn": "About Us", "labelKo": "회사소개" },
+    { "id": 16, "labelEn": "FAQ", "labelKo": "자주 묻는 질문" },
+    { "id": 17, "labelEn": "Contact", "labelKo": "문의하기" },
+    { "id": 18, "labelEn": "Terms of Service", "labelKo": "이용약관" },
+    { "id": 19, "labelEn": "Privacy Policy", "labelKo": "개인정보처리방침" },
+    { "id": 20, "labelEn": "Cancellation & Return Policy", "labelKo": "취소/반품 정책" },
+    { "id": 21, "labelEn": "Boards", "labelKo": "게시판" }
+  ],
+  "widgets": [
+    { "id": 72, "titleEn": "Welcome Banner", "titleKo": "환영 배너" },
+    { "id": 73, "titleEn": "Site Stats", "titleKo": "사이트 통계" },
+    { "id": 74, "titleEn": "Latest Posts", "titleKo": "최근 게시글" },
+    { "id": 75, "titleEn": "Popular Boards", "titleKo": "인기 게시판" },
+    { "id": 76, "titleEn": "Community Guide", "titleKo": "커뮤니티 가이드" },
+    { "id": 77, "titleEn": "Board Cards", "titleKo": "게시판 카드" },
+    { "id": 78, "titleEn": "Shop Shortcut", "titleKo": "쇼핑몰 바로가기" },
+    { "id": 79, "titleEn": "Live Auctions", "titleKo": "진행중 경매" },
+    { "id": 80, "titleEn": "Recent Photos", "titleKo": "최근 사진" }
+  ],
+  "contents": [
+    {
+      "id": 2,
+      "titleEn": "About Us",
+      "titleKo": "회사소개",
+      "contentEn": "<h2>Welcome to NexiBase</h2><p>NexiBase is a next-generation web service platform built on Next.js.</p><h3>Our Vision</h3><p>Our goal is to help developers build web services faster and more easily.</p><h3>Core Values</h3><ul><li><strong>Innovation</strong> - We actively adopt the latest technologies</li><li><strong>Trust</strong> - We provide stable and reliable services</li><li><strong>Growth</strong> - We build a community that grows together</li></ul>",
+      "contentKo": "<h2>NexiBase에 오신 것을 환영합니다</h2><p>NexiBase는 Next.js를 기반으로 한 차세대 웹 서비스 플랫폼입니다.</p><h3>우리의 비전</h3><p>개발자들이 더 쉽고 빠르게 웹 서비스를 구축할 수 있도록 돕는 것이 우리의 목표입니다.</p><h3>핵심 가치</h3><ul><li><strong>혁신</strong> - 최신 기술을 적극적으로 도입합니다</li><li><strong>신뢰</strong> - 안정적인 서비스를 제공합니다</li><li><strong>성장</strong> - 함께 성장하는 커뮤니티를 만듭니다</li></ul>"
+    },
+    {
+      "id": 3,
+      "titleEn": "Contact",
+      "titleKo": "문의하기",
+      "contentEn": "<h2>How to Contact Us</h2><p>If you have any questions while using our service, feel free to reach out.</p><h3>Contact Information</h3><ul><li><strong>Email</strong>: support@nexibase.com</li><li><strong>Hours</strong>: Weekdays 09:00 - 18:00</li></ul><h3>FAQ</h3><p>Before contacting us, please check our <a href=\"/content/faq\">FAQ</a>.</p>",
+      "contentKo": "<h2>문의 안내</h2><p>서비스 이용 중 궁금한 점이 있으시면 언제든지 문의해 주세요.</p><h3>연락처</h3><ul><li><strong>이메일</strong>: support@nexibase.com</li><li><strong>운영시간</strong>: 평일 09:00 - 18:00</li></ul><h3>자주 묻는 질문</h3><p>문의 전에 <a href=\"/content/faq\">자주 묻는 질문</a>을 확인해 주세요.</p>"
+    },
+    {
+      "id": 4,
+      "titleEn": "Frequently Asked Questions",
+      "titleKo": "자주 묻는 질문",
+      "contentEn": "<h2>Frequently Asked Questions (FAQ)</h2><h3>Q. How do I sign up?</h3><p>A. Click the 'Sign Up' button at the top right of the homepage to create an account.</p><h3>Q. I forgot my password.</h3><p>A. You can reset it via 'Forgot Password' on the login page.</p><h3>Q. How do I write a post?</h3><p>A. After logging in, click the 'Write' button on the board you want to post in.</p>",
+      "contentKo": "<h2>자주 묻는 질문 (FAQ)</h2><h3>Q. 회원가입은 어떻게 하나요?</h3><p>A. 홈페이지 우측 상단의 '회원가입' 버튼을 클릭하여 가입할 수 있습니다.</p><h3>Q. 비밀번호를 잊어버렸어요.</h3><p>A. 로그인 페이지에서 '비밀번호 찾기'를 통해 재설정할 수 있습니다.</p><h3>Q. 게시글 작성은 어떻게 하나요?</h3><p>A. 로그인 후 원하는 게시판에서 '글쓰기' 버튼을 클릭하세요.</p>"
+    }
+  ],
+  "policies": [
+    {
+      "id": 3,
+      "titleEn": "Terms of Service",
+      "titleKo": "이용약관",
+      "contentEn": "<h2>Terms of Service</h2><p>These terms govern the rights, obligations, and responsibilities between NexiBase (hereinafter \"Company\") and its members regarding the use of the services provided.</p><h3>Article 1 (Purpose)</h3><p>These terms aim to define the conditions, procedures, rights, obligations, and other necessary matters between the Company and members regarding the use of the website and related services (hereinafter \"Services\") operated by the Company.</p><h3>Article 2 (Definitions)</h3><ol><li>\"Services\" means all online services provided by the Company.</li><li>\"Member\" means a person who has agreed to these terms and entered into a service agreement with the Company.</li><li>\"ID\" means the email address set by the member and approved by the Company for member identification and service use.</li></ol><h3>Article 3 (Effect and Amendment of Terms)</h3><ol><li>These terms take effect when posted on the service screen or otherwise notified to members.</li><li>The Company may amend these terms when necessary, within the limits of applicable laws.</li></ol><h3>Article 4 (Provision of Services)</h3><p>The Company provides the following services:</p><ul><li>Board services</li><li>Community services</li><li>Other services determined by the Company</li></ul>",
+      "contentKo": "<h2>서비스 이용약관</h2><p>본 약관은 NexiBase(이하 \"회사\")가 제공하는 서비스의 이용과 관련하여 회사와 회원 간의 권리, 의무 및 책임사항을 규정함을 목적으로 합니다.</p><h3>제1조 (목적)</h3><p>본 약관은 회사가 운영하는 웹사이트 및 관련 서비스(이하 \"서비스\")의 이용에 관한 조건 및 절차, 회사와 회원 간의 권리, 의무 및 기타 필요한 사항을 규정함을 목적으로 합니다.</p><h3>제2조 (정의)</h3><ol><li>\"서비스\"란 회사가 제공하는 모든 온라인 서비스를 의미합니다.</li><li>\"회원\"이란 본 약관에 동의하고 회사와 서비스 이용계약을 체결한 자를 의미합니다.</li><li>\"아이디(ID)\"란 회원 식별과 서비스 이용을 위하여 회원이 설정하고 회사가 승인한 이메일 주소를 의미합니다.</li></ol><h3>제3조 (약관의 효력 및 변경)</h3><ol><li>본 약관은 서비스 화면에 게시하거나 기타의 방법으로 회원에게 공지함으로써 효력이 발생합니다.</li><li>회사는 필요한 경우 관련 법령을 위배하지 않는 범위에서 본 약관을 변경할 수 있습니다.</li></ol><h3>제4조 (서비스의 제공)</h3><p>회사는 다음과 같은 서비스를 제공합니다:</p><ul><li>게시판 서비스</li><li>커뮤니티 서비스</li><li>기타 회사가 정하는 서비스</li></ul>"
+    },
+    {
+      "id": 4,
+      "titleEn": "Privacy Policy",
+      "titleKo": "개인정보처리방침",
+      "contentEn": "<h2>Privacy Policy</h2><p>NexiBase (hereinafter \"Company\") values members' personal information and complies with the Personal Information Protection Act.</p><h3>Article 1 (Personal Information Collected)</h3><p>The Company collects the following personal information to provide its services:</p><ul><li><strong>Required</strong>: Email address, password</li><li><strong>Optional</strong>: Nickname, profile image, contact information</li><li><strong>Automatically collected</strong>: IP address, access logs, service usage records</li></ul><h3>Article 2 (Purpose of Collection and Use)</h3><p>The collected personal information is used for the following purposes:</p><ul><li>Member identification and service provision</li><li>Service improvement and new service development</li><li>Prevention of illegal use and unauthorized access</li></ul><h3>Article 3 (Retention and Use Period)</h3><p>Members' personal information is retained until the member withdraws, and is destroyed immediately upon withdrawal. However, if retention is required by relevant laws, it will be kept for the required period.</p><h3>Article 4 (Destruction of Personal Information)</h3><p>The Company destroys personal information without delay when the retention period has elapsed or when the information is no longer necessary for its purpose.</p>",
+      "contentKo": "<h2>개인정보처리방침</h2><p>NexiBase(이하 \"회사\")는 회원의 개인정보를 중요시하며, 「개인정보 보호법」을 준수하고 있습니다.</p><h3>제1조 (수집하는 개인정보 항목)</h3><p>회사는 서비스 제공을 위해 다음과 같은 개인정보를 수집합니다:</p><ul><li><strong>필수항목</strong>: 이메일 주소, 비밀번호</li><li><strong>선택항목</strong>: 닉네임, 프로필 이미지, 연락처</li><li><strong>자동수집</strong>: IP 주소, 접속 로그, 서비스 이용 기록</li></ul><h3>제2조 (개인정보의 수집 및 이용 목적)</h3><p>수집한 개인정보는 다음의 목적을 위해 활용합니다:</p><ul><li>회원 식별 및 서비스 제공</li><li>서비스 개선 및 신규 서비스 개발</li><li>불법 이용 방지 및 비인가 사용 방지</li></ul><h3>제3조 (개인정보의 보유 및 이용 기간)</h3><p>회원의 개인정보는 회원 탈퇴 시까지 보유하며, 탈퇴 즉시 파기합니다. 단, 관련 법령에 따라 일정 기간 보관이 필요한 경우 해당 기간 동안 보관합니다.</p><h3>제4조 (개인정보의 파기)</h3><p>회사는 개인정보 보유기간의 경과, 처리목적 달성 등 개인정보가 불필요하게 되었을 때에는 지체없이 해당 개인정보를 파기합니다.</p>"
+    },
+    {
+      "id": 5,
+      "titleEn": "Marketing Communications Consent",
+      "titleKo": "마케팅 정보 수신 동의",
+      "contentEn": "<h2>Marketing Communications Consent</h2><h3>Purpose of Collection and Use</h3><p>The Company sends marketing information to provide members with various benefits and updates.</p><h3>Items Collected</h3><ul><li>Email address</li><li>Mobile phone number (optional)</li></ul><h3>Use and Retention Period</h3><p>From the date of consent until consent is withdrawn.</p><h3>Right to Refuse and Consequences</h3><p>Consent to receive marketing information is optional, and declining does not restrict use of the service. However, benefits and event notifications may be limited.</p><h3>Withdrawing Consent</h3><p>You can withdraw consent at any time in My Page > Settings.</p>",
+      "contentKo": "<h2>마케팅 정보 수신 동의</h2><h3>수집 및 이용 목적</h3><p>회사는 회원에게 다양한 혜택과 정보를 제공하기 위해 마케팅 정보를 발송합니다.</p><h3>수집 항목</h3><ul><li>이메일 주소</li><li>휴대전화 번호 (선택)</li></ul><h3>이용 및 보유 기간</h3><p>마케팅 정보 수신 동의일로부터 동의 철회 시까지</p><h3>동의 거부권 및 불이익</h3><p>마케팅 정보 수신 동의는 선택사항이며, 동의하지 않아도 서비스 이용에 제한이 없습니다. 다만, 각종 혜택 및 이벤트 정보 수신이 제한될 수 있습니다.</p><h3>수신 동의 철회</h3><p>마이페이지 > 설정에서 언제든지 수신 동의를 철회할 수 있습니다.</p>"
+    }
+  ],
+  "settings": [
+    {
+      "key": "site_name",
+      "valueEn": "NexiBase",
+      "valueKo": "NexiBase"
+    },
+    {
+      "key": "site_description",
+      "valueEn": "A scalable web service platform built on Next.js",
+      "valueKo": "Next.js 기반의 확장 가능한 웹 서비스 플랫폼"
+    }
+  ]
+}

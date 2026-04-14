@@ -1,6 +1,7 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react"
+import { useLocale } from "next-intl"
 
 interface UserInfo {
   id: string
@@ -79,6 +80,7 @@ export function useSite() {
 }
 
 export function SiteProvider({ children }: { children: ReactNode }) {
+  const locale = useLocale()
   const [user, setUser] = useState<UserInfo | null>(null)
   const [settings, setSettings] = useState<SiteSettings>(defaultSettings)
   const [boards, setBoards] = useState<Board[]>([])
@@ -105,10 +107,10 @@ export function SiteProvider({ children }: { children: ReactNode }) {
       try {
         const [userRes, settingsRes, boardsRes, menusRes, widgetsRes] = await Promise.all([
           fetch('/api/me'),
-          fetch('/api/settings'),
-          fetch('/api/boards?limit=10'),
-          fetch('/api/menus?position=header'),
-          fetch('/api/home-widgets'),
+          fetch(`/api/settings?locale=${locale}`),
+          fetch(`/api/boards?limit=10&locale=${locale}`),
+          fetch(`/api/menus?position=header&locale=${locale}`),
+          fetch(`/api/home-widgets?locale=${locale}`),
         ])
 
         if (userRes.ok) {
@@ -153,7 +155,7 @@ export function SiteProvider({ children }: { children: ReactNode }) {
     }
 
     fetchAll()
-  }, [])
+  }, [locale])
 
   return (
     <SiteContext.Provider value={{ user, settings, boards, headerMenus, sidebarWidgets, isLoading, setUser, refreshUser }}>

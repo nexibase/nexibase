@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminUser } from '@/lib/auth'
+import { autoTranslateEntity } from '@/lib/translation/auto-translate'
 
 // 약관 목록 조회 (슬러그별 그룹핑)
 export async function GET(request: NextRequest) {
@@ -21,7 +22,8 @@ export async function GET(request: NextRequest) {
     if (slug) {
       const policies = await prisma.policy.findMany({
         where: { slug },
-        orderBy: { createdAt: 'desc' }
+        orderBy: { createdAt: 'desc' },
+        include: { translations: true }
       })
 
       return NextResponse.json({
@@ -39,7 +41,8 @@ export async function GET(request: NextRequest) {
           { slug: 'asc' },
           { isActive: 'desc' },
           { createdAt: 'desc' }
-        ]
+        ],
+        include: { translations: true }
       }),
       prisma.policy.count()
     ])
@@ -130,6 +133,16 @@ export async function POST(request: NextRequest) {
         isActive: false
       }
     })
+
+    // 저장 후 자동 번역 트리거 (실패해도 생성 응답에 영향 없음)
+    try {
+      await autoTranslateEntity('policy', newPolicy.id, {
+        title: newPolicy.title,
+        content: newPolicy.content,
+      })
+    } catch (translateError) {
+      console.error('[auto-translate] policy 생성 번역 실패:', translateError)
+    }
 
     return NextResponse.json({
       success: true,

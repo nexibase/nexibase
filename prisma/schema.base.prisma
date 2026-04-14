@@ -62,10 +62,11 @@ model Account {
 }
 
 model Setting {
-  id        Int      @id @default(autoincrement())
-  key       String   @unique @db.VarChar(100)
-  value     String   @db.Text
-  updatedAt DateTime @updatedAt
+  id           Int                  @id @default(autoincrement())
+  key          String               @unique @db.VarChar(100)
+  value        String               @db.Text
+  updatedAt    DateTime             @updatedAt
+  translations SettingTranslation[]
 
   @@map("settings")
 }
@@ -122,8 +123,9 @@ model Menu {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  parent     Menu?    @relation("MenuTree", fields: [parentId], references: [id], onDelete: Cascade)
-  children   Menu[]   @relation("MenuTree")
+  parent       Menu?             @relation("MenuTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children     Menu[]            @relation("MenuTree")
+  translations MenuTranslation[]
 
   @@index([position, sortOrder])
   @@index([parentId])
@@ -143,6 +145,8 @@ model HomeWidget {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
+  translations HomeWidgetTranslation[]
+
   @@index([zone, sortOrder])
   @@map("home_widgets")
 }
@@ -158,4 +162,46 @@ model LoginAttempt {
   @@index([email, createdAt])
   @@index([ip, createdAt])
   @@map("login_attempts")
+}
+
+model MenuTranslation {
+  id        Int      @id @default(autoincrement())
+  menuId    Int
+  locale    String   @db.VarChar(10)
+  label     String   @db.VarChar(100)
+  source    String   @default("auto") @db.VarChar(10)
+  updatedAt DateTime @updatedAt
+  menu      Menu     @relation(fields: [menuId], references: [id], onDelete: Cascade)
+
+  @@unique([menuId, locale])
+  @@index([menuId])
+  @@map("menu_translations")
+}
+
+model HomeWidgetTranslation {
+  id        Int        @id @default(autoincrement())
+  widgetId  Int
+  locale    String     @db.VarChar(10)
+  title     String     @db.VarChar(100)
+  source    String     @default("auto") @db.VarChar(10)
+  updatedAt DateTime   @updatedAt
+  widget    HomeWidget @relation(fields: [widgetId], references: [id], onDelete: Cascade)
+
+  @@unique([widgetId, locale])
+  @@index([widgetId])
+  @@map("home_widget_translations")
+}
+
+model SettingTranslation {
+  id        Int      @id @default(autoincrement())
+  key       String   @db.VarChar(100)
+  locale    String   @db.VarChar(10)
+  value     String   @db.Text
+  source    String   @default("auto") @db.VarChar(10)
+  updatedAt DateTime @updatedAt
+  setting   Setting  @relation(fields: [key], references: [key], onDelete: Cascade)
+
+  @@unique([key, locale])
+  @@index([key])
+  @@map("setting_translations")
 }

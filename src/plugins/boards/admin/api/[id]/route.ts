@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminUser } from '@/lib/auth'
+import { autoTranslateEntity, invalidateAutoTranslations } from '@/lib/translation/auto-translate'
 
 // 게시판 상세 조회
 export async function GET(
@@ -21,7 +22,8 @@ export async function GET(
       include: {
         _count: {
           select: { posts: true }
-        }
+        },
+        translations: true,
       }
     })
 
@@ -75,7 +77,8 @@ export async function PUT(
       postsPerPage,
       sortOrder,
       displayType,
-      isActive
+      isActive,
+      translations,
     } = body
 
     // 게시판 존재 확인
@@ -112,14 +115,20 @@ export async function PUT(
       }
     }
 
+    // name / description 변경 여부 사전 확인
+    const newName = name || existingBoard.name
+    const newDescription = description !== undefined ? description : existingBoard.description
+    const nameChanged = existingBoard.name !== newName
+    const descChanged = existingBoard.description !== newDescription
+
     // 게시판 업데이트
     // 글쓰기/댓글쓰기는 항상 회원만 가능 (비회원 글쓰기는 이름/비번 필드가 필요하므로 지원하지 않음)
     const updatedBoard = await prisma.board.update({
       where: { id: boardId },
       data: {
         slug: slug || existingBoard.slug,
-        name: name || existingBoard.name,
-        description: description !== undefined ? description : existingBoard.description,
+        name: newName,
+        description: newDescription,
         category: category !== undefined ? category : existingBoard.category,
         listMemberOnly: listMemberOnly ?? existingBoard.listMemberOnly,
         readMemberOnly: readMemberOnly ?? existingBoard.readMemberOnly,
@@ -135,6 +144,34 @@ export async function PUT(
         isActive: isActive ?? existingBoard.isActive
       }
     })
+
+    // name / description 변경 시 자동 번역 재실행
+    if (nameChanged || descChanged) {
+      try {
+        await invalidateAutoTranslations('board', boardId)
+        await autoTranslateEntity('board', boardId, {
+          name: updatedBoard.name,
+          description: updatedBoard.description,
+        })
+      } catch (translateError) {
+        console.error('[auto-translate] board 수정 번역 실패:', translateError)
+      }
+    }
+
+    // 수동 번역 저장 (source='manual')
+    if (translations && typeof translations === 'object') {
+      for (const [locale, fields] of Object.entries(translations)) {
+        try {
+          await prisma.boardTranslation.upsert({
+            where: { boardId_locale: { boardId, locale } },
+            create: { boardId, locale, ...(fields as object), source: 'manual' },
+            update: { ...(fields as object), source: 'manual' },
+          })
+        } catch (upsertError) {
+          console.error(`[manual-translate] board locale=${locale} 저장 실패:`, upsertError)
+        }
+      }
+    }
 
     return NextResponse.json({
       success: true,

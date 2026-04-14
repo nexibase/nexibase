@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useLocale } from "next-intl"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ArrowRight } from "lucide-react"
@@ -16,13 +17,14 @@ interface Board {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function BoardCards({ settings }: { settings?: Record<string, any> }) {
+  const locale = useLocale()
   const [boards, setBoards] = useState<Board[]>([])
   const limit = settings?.limit || 4
 
   useEffect(() => {
     const fetchBoards = async () => {
       try {
-        const res = await fetch(`/api/boards?limit=${limit}`)
+        const res = await fetch(`/api/boards?limit=${limit}&locale=${locale}`)
         if (res.ok) {
           const data = await res.json()
           setBoards(data.boards || [])
@@ -32,7 +34,7 @@ export default function BoardCards({ settings }: { settings?: Record<string, any
       }
     }
     fetchBoards()
-  }, [limit])
+  }, [limit, locale])
 
   if (boards.length === 0) return null
 

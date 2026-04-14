@@ -11,6 +11,15 @@ import { Badge } from "@/components/ui/badge"
 import {
   Save, Eye, EyeOff, ChevronUp, ChevronDown, Plus, Trash2
 } from "lucide-react"
+import { LocaleTabs } from "@/components/admin/LocaleTabs"
+import { LocaleField } from "@/components/admin/LocaleField"
+import { routing } from "@/i18n/routing"
+
+interface WidgetTranslationRow {
+  locale: string
+  title: string
+  source: 'auto' | 'manual'
+}
 
 interface WidgetData {
   id: number
@@ -25,6 +34,7 @@ interface WidgetData {
   pluginFolder: string | null
   pluginEnabled: boolean
   pluginName: string | null
+  translations?: WidgetTranslationRow[]
 }
 
 interface WidgetMetadata {
@@ -62,6 +72,7 @@ export default function HomeWidgetsAdminPage() {
   const [widgetMeta, setWidgetMeta] = useState<Record<string, WidgetMetadata>>({})
   const [selectedWidget, setSelectedWidget] = useState<WidgetData | null>(null)
   const [editSettings, setEditSettings] = useState<Record<string, unknown>>({})
+  const [widgetTranslations, setWidgetTranslations] = useState<Record<string, { title: string; source: 'auto' | 'manual' | 'missing' }>>({})
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
 
@@ -163,23 +174,39 @@ export default function HomeWidgetsAdminPage() {
     } catch {
       setEditSettings({})
     }
+    // Populate translations from existing data
+    const trMap: Record<string, { title: string; source: 'auto' | 'manual' | 'missing' }> = {}
+    if (Array.isArray(widget.translations)) {
+      for (const row of widget.translations) {
+        trMap[row.locale] = { title: row.title, source: row.source }
+      }
+    }
+    setWidgetTranslations(trMap)
   }
 
   const handleSaveSettings = async () => {
     if (!selectedWidget) return
     setSaving(true)
     try {
+      const manualTranslations = Object.fromEntries(
+        Object.entries(widgetTranslations)
+          .filter(([, v]) => v.source === 'manual' && v.title)
+          .map(([loc, v]) => [loc, { title: v.title }])
+      )
       await fetch(`/api/admin/home-widgets/${selectedWidget.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          title: selectedWidget.title,
           settings: JSON.stringify(editSettings),
           colSpan: selectedWidget.colSpan,
           rowSpan: selectedWidget.rowSpan,
+          translations: Object.keys(manualTranslations).length > 0 ? manualTranslations : undefined,
         }),
       })
       showMessage(t('widgetSaved'))
       setSelectedWidget(null)
+      setWidgetTranslations({})
       await fetchWidgets()
     } catch {
       showMessage(t('saveFailed'))
@@ -291,13 +318,44 @@ export default function HomeWidgetsAdminPage() {
           )}
 
           {/* 위젯 설정 모달 */}
-          <Dialog open={!!selectedWidget} onOpenChange={(open) => !open && setSelectedWidget(null)}>
+          <Dialog open={!!selectedWidget} onOpenChange={(open) => { if (!open) { setSelectedWidget(null); setWidgetTranslations({}) } }}>
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
                 <DialogTitle>{t('widgetSettings', { title: selectedWidget?.title ?? '' })}</DialogTitle>
               </DialogHeader>
               {selectedWidget && (
                 <div className="space-y-4">
+                  <LocaleTabs
+                    getStatus={(locale) => locale === routing.defaultLocale ? undefined : widgetTranslations[locale]?.source ?? 'missing'}
+                    renderTab={(locale, isDefault) => {
+                      if (isDefault) {
+                        return (
+                          <LocaleField label={t('widgetTitleLabel')} isDefaultLocale>
+                            <Input
+                              value={selectedWidget.title}
+                              onChange={(e) => setSelectedWidget({ ...selectedWidget, title: e.target.value })}
+                            />
+                          </LocaleField>
+                        )
+                      }
+                      const tr = widgetTranslations[locale] ?? { title: '', source: 'missing' as const }
+                      return (
+                        <LocaleField
+                          label={t('widgetTitleLabel')}
+                          isDefaultLocale={false}
+                          subLocaleHint="비워두면 기본 언어 제목이 노출됩니다. 수정하면 수동 번역으로 전환됩니다."
+                        >
+                          <Input
+                            value={tr.title}
+                            onChange={(e) => setWidgetTranslations({
+                              ...widgetTranslations,
+                              [locale]: { title: e.target.value, source: 'manual' },
+                            })}
+                          />
+                        </LocaleField>
+                      )
+                    }}
+                  />
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="text-sm font-medium">{t('colSpanLabel')}</label>

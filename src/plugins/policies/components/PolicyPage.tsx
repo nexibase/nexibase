@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { sanitizeHtml } from "@/lib/sanitize"
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 
 interface Policy {
   id: number
@@ -29,6 +29,7 @@ interface VersionInfo {
 
 export default function PolicyPage() {
   const t = useTranslations('policies')
+  const locale = useLocale()
   const params = useParams()
   const searchParams = useSearchParams()
   const slug = params.slug as string
@@ -44,8 +45,8 @@ export default function PolicyPage() {
     const fetchPolicy = async () => {
       try {
         const url = version
-          ? `/api/policies/${slug}?v=${version}`
-          : `/api/policies/${slug}`
+          ? `/api/policies/${slug}?v=${version}&locale=${locale}`
+          : `/api/policies/${slug}?locale=${locale}`
 
         const response = await fetch(url)
         const data = await response.json()
@@ -67,7 +68,7 @@ export default function PolicyPage() {
     if (slug) {
       fetchPolicy()
     }
-  }, [slug, version, t])
+  }, [slug, version, t, locale])
 
   if (loading) {
     return (

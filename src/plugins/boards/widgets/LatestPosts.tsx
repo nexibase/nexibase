@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Clock, ArrowRight, Eye, MessageSquare } from "lucide-react"
@@ -20,13 +20,14 @@ interface LatestPost {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function LatestPosts({ settings }: { settings?: Record<string, any> }) {
   const t = useTranslations('boards')
+  const locale = useLocale()
   const [posts, setPosts] = useState<LatestPost[]>([])
   const limit = settings?.limit || 6
 
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        const res = await fetch(`/api/posts/latest?limit=${limit + 2}`)
+        const res = await fetch(`/api/posts/latest?limit=${limit + 2}&locale=${locale}`)
         if (res.ok) {
           const data = await res.json()
           setPosts(data.posts || [])
@@ -36,7 +37,7 @@ export default function LatestPosts({ settings }: { settings?: Record<string, an
       }
     }
     fetchPosts()
-  }, [limit])
+  }, [limit, locale])
 
   const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString)
