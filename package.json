@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "node scripts/scan-plugins.js && node scripts/scan-layouts.js && node scripts/scan-themes.js && next dev --turbopack",
+    "reset-install": "node scripts/reset-install.js",
     "dev:clean": "rm -rf .next && next dev --turbopack",
     "build": "node scripts/scan-plugins.js && node scripts/scan-layouts.js && node scripts/scan-themes.js && next build",
     "start": "next start",
