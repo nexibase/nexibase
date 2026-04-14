@@ -18,10 +18,17 @@ export function markInstalled() {
 async function isInstalled(): Promise<boolean> {
   if (cachedInitialized === true) return true
   try {
-    const setting = await prisma.setting.findUnique({
-      where: { key: 'site_initialized' },
-    })
-    const installed = setting?.value === 'true'
+    // 스펙 Section 3: 다음 두 조건이 모두 참일 때만 "미설치"
+    //   1. users 테이블이 비어있음
+    //   2. site_initialized 설정이 없거나 'true'가 아님
+    // 둘 중 하나라도 거짓이면 "설치됨"으로 간주 (기존 데이터 있는 환경 보호)
+    const [setting, userCount] = await Promise.all([
+      prisma.setting.findUnique({ where: { key: 'site_initialized' } }),
+      prisma.user.count(),
+    ])
+    const flagSet = setting?.value === 'true'
+    const usersExist = userCount > 0
+    const installed = flagSet || usersExist
     if (installed) cachedInitialized = true
     return installed
   } catch {
