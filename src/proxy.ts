@@ -2,10 +2,45 @@ import { NextRequest, NextResponse } from 'next/server'
 import createMiddleware from 'next-intl/middleware'
 import { pluginManifest } from '@/plugins/_generated'
 import { routing } from '@/i18n/routing'
+import { prisma } from '@/lib/prisma'
 
 const intlMiddleware = createMiddleware(routing)
 const allPluginSlugs = Object.values(pluginManifest).map(p => p.slug)
 const LOCALE_SEGMENTS = routing.locales.map(l => `/${l}`)
+
+// In-memory 캐시 — 한 번 true가 되면 프로세스 수명동안 재조회 없음
+let cachedInitialized: boolean | null = null
+
+export function markInstalled() {
+  cachedInitialized = true
+}
+
+async function isInstalled(): Promise<boolean> {
+  if (cachedInitialized === true) return true
+  try {
+    const setting = await prisma.setting.findUnique({
+      where: { key: 'site_initialized' },
+    })
+    const installed = setting?.value === 'true'
+    if (installed) cachedInitialized = true
+    return installed
+  } catch {
+    return false
+  }
+}
+
+const ALLOWED_WHEN_NOT_INSTALLED = [
+  '/install',
+  '/api/install',
+  '/_next/',
+  '/favicon.ico',
+]
+
+function isAllowedWhenNotInstalled(pathname: string): boolean {
+  return ALLOWED_WHEN_NOT_INSTALLED.some(
+    prefix => pathname === prefix || pathname.startsWith(prefix + '/'),
+  )
+}
 
 function stripLocale(pathname: string): string {
   for (const seg of LOCALE_SEGMENTS) {
@@ -84,6 +119,21 @@ function attachSessionCookie(response: NextResponse, request: NextRequest): Next
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
+
+  // 1. Install 상태 체크 (최우선)
+  const installed = await isInstalled()
+  if (!installed) {
+    // 미설치: install 관련 경로와 정적 리소스 외엔 모두 /install로 리다이렉트
+    if (!isAllowedWhenNotInstalled(pathname)) {
+      return NextResponse.redirect(new URL('/install', request.url))
+    }
+    // install 관련 경로는 통과 (next-intl/플러그인 체크 건너뜀)
+    return NextResponse.next()
+  }
+  // 설치됨: /install 접근 시 /admin으로 리다이렉트
+  if (pathname === '/install' || pathname.startsWith('/install/')) {
+    return NextResponse.redirect(new URL('/admin', request.url))
+  }
 
   // API는 locale 처리 없이 플러그인 체크 + 세션 쿠키만
   if (pathname.startsWith('/api/')) {
