@@ -307,7 +307,15 @@
     "periodMonth": "이번 달",
     "periodAll": "전체 기간",
     "prev": "이전",
-    "next": "다음"
+    "next": "다음",
+    "userPostsTitle": "{nickname}님의 작성글",
+    "viewAllPostsBtn": "전체글 보기",
+    "colBoard": "게시판",
+    "colTitle": "제목",
+    "colAuthor": "작성자",
+    "colDate": "날짜",
+    "colViews": "조회",
+    "colLikes": "추천"
   },
   "admin": {
     "panel": "관리자 패널",

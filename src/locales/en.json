@@ -307,7 +307,15 @@
     "periodMonth": "This month",
     "periodAll": "All time",
     "prev": "Previous",
-    "next": "Next"
+    "next": "Next",
+    "userPostsTitle": "{nickname}'s posts",
+    "viewAllPostsBtn": "View all",
+    "colBoard": "Board",
+    "colTitle": "Title",
+    "colAuthor": "Author",
+    "colDate": "Date",
+    "colViews": "Views",
+    "colLikes": "Likes"
   },
   "admin": {
     "panel": "Admin panel",
