@@ -127,8 +127,23 @@ const getCachedPlugins = (): PluginInfo[] => {
 
 const CURRENT_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || ''
 
+// Resolve a plugin menu label: if it looks like a dotted i18n key (no spaces,
+// contains a dot), attempt to translate it with the given translator; otherwise
+// return it unchanged.  The translator should be scoped to the plugin namespace.
+function resolvePluginLabel(label: string, translate: (key: string) => string): string {
+  if (!label.includes(' ') && label.includes('.')) {
+    try {
+      return translate(label)
+    } catch {
+      return label
+    }
+  }
+  return label
+}
+
 export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
   const t = useTranslations('admin')
+  const ts = useTranslations('shop')
   const [isOpen, setIsOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({})
@@ -239,6 +254,14 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
     }
   }, [pathname, plugins])
 
+  // Map of plugin folder → label translator (add entries for each i18n-enabled plugin)
+  const pluginTranslators: Record<string, (key: string) => string> = {
+    shop: ts as unknown as (key: string) => string,
+  }
+
+  const translatePluginLabel = (folder: string, label: string) =>
+    resolvePluginLabel(label, pluginTranslators[folder] ?? ((k: string) => k))
+
   // Build dynamic menu items from enabled plugins
   const enabledPlugins = plugins.filter(p => p.enabled && p.hasAdmin && p.adminMenus?.length > 0)
 
@@ -248,7 +271,7 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
       .filter(m => !m.isGroup && m.path)
       .map(m => ({
         id: `plugin-${p.folder}-${m.path}`,
-        label: m.label,
+        label: translatePluginLabel(p.folder, m.label),
         icon: getIcon(m.icon),
         path: m.path!,
       }))
@@ -260,11 +283,11 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
       .filter(m => m.isGroup && m.children)
       .map(m => ({
         folder: p.folder,
-        label: m.label,
+        label: translatePluginLabel(p.folder, m.label),
         icon: getIcon(m.icon),
         children: (m.children || []).map(c => ({
           id: `plugin-${p.folder}-${c.path}`,
-          label: c.label,
+          label: translatePluginLabel(p.folder, c.label),
           icon: getIcon(c.icon),
           path: c.path!,
         })),

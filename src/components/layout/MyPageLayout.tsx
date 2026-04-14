@@ -42,10 +42,30 @@ interface PluginWithMenus {
   myPageMenus: { label: string, icon: string, subPath: string }[]
 }
 
+// Resolve a plugin nav label: if it looks like an i18n key (contains a dot,
+// no spaces), translate it; otherwise return as-is.
+function resolveNavLabel(label: string, translate: (key: string) => string): string {
+  if (!label.includes(' ') && label.includes('.')) {
+    try {
+      return translate(label)
+    } catch {
+      return label
+    }
+  }
+  return label
+}
+
+// Map of plugin folder → translator factory result (populated per-component)
+type PluginNavTranslators = Record<string, (key: string) => string>
+
 export function MyPageLayout({ children }: { children: React.ReactNode }) {
   const t = useTranslations('mypage')
   const tc = useTranslations('common')
   const ta = useTranslations('admin')
+  const tShop = useTranslations('shop')
+  const pluginNavTranslators: PluginNavTranslators = {
+    shop: tShop as unknown as (key: string) => string,
+  }
   const router = useRouter()
   const pathname = usePathname()
   const [user, setUser] = useState<UserInfo | null>(null)
@@ -74,8 +94,9 @@ export function MyPageLayout({ children }: { children: React.ReactNode }) {
         for (const p of pluginsData.plugins as PluginWithMenus[]) {
           if (p.enabled && p.myPageMenus?.length > 0) {
             for (const m of p.myPageMenus) {
+              const pluginT = pluginNavTranslators[p.folder] ?? ((k: string) => k)
               items.push({
-                label: m.label,
+                label: resolveNavLabel(m.label, pluginT),
                 icon: m.icon,
                 path: `/${p.currentSlug}${m.subPath}`,
               })
