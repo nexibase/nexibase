@@ -33,17 +33,11 @@ export function setCachedLocale(_locale: string) {
   // no-op
 }
 
-export default getRequestConfig(async ({ requestLocale }) => {
-  // 1. request에서 명시적 locale (install Step 2의 ?locale 쿼리 등) 우선
-  const requested = await requestLocale
-  if (requested && hasLocale(routing.locales, requested)) {
-    return {
-      locale: requested,
-      messages: (await import(`../messages/${requested}.json`)).default,
-    }
-  }
-
-  // 2. DB 설정 기반
+export default getRequestConfig(async () => {
+  // Nexibase는 단일 언어 사이트 — DB의 site_locale이 authoritative.
+  // 브라우저 Accept-Language 헤더나 URL locale 힌트는 무시한다.
+  // (Install Step 2 페이지는 next-intl을 쓰지 않고 자체 LABELS를 사용하므로
+  //  별도 분기 불필요)
   const locale = await getSiteLocale()
   return {
     locale,
