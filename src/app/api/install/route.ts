@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
     markInstalled()
     const { setCachedLocale } = await import('@/i18n/request')
     setCachedLocale(validation.params!.locale)
-    return NextResponse.json({ success: true, redirectTo: '/admin/login' })
+    return NextResponse.json({ success: true, redirectTo: '/login' })
   } catch (err) {
     if (err instanceof InstallError) {
       if (err.code === 'ALREADY_INSTALLED') {
