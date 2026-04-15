@@ -13,6 +13,7 @@
     "versionHistory": "버전 이력",
     "current": "현재",
     "admin": {
+      "menu": "약관관리",
       "title": "정책 관리",
       "headerDesc": "이용약관, 개인정보처리방침 등의 정책을 버전별로 관리합니다",
       "create": "정책 추가",

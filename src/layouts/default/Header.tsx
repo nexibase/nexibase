@@ -417,6 +417,7 @@ export default function Header() {
                 {headerMenus.filter(m => {
                   if (m.visibility === 'member' && !user) return false
                   if (m.visibility === 'admin' && user?.role !== 'admin') return false
+                  if (user && (m.url === '/login' || m.url === '/signup')) return false
                   return true
                 }).slice(0, 7).map((menu, idx) => {
                   const isActive = menu.url === '/'
@@ -446,6 +447,7 @@ export default function Header() {
                               {menu.children.filter(c => {
                                 if (c.visibility === 'member' && !user) return false
                                 if (c.visibility === 'admin' && user?.role !== 'admin') return false
+                                if (user && (c.url === '/login' || c.url === '/signup')) return false
                                 return true
                               }).map((child) => (
                                 <Link
@@ -482,6 +484,7 @@ export default function Header() {
                 {headerMenus.filter(m => {
                   if (m.visibility === 'member' && !user) return false
                   if (m.visibility === 'admin' && user?.role !== 'admin') return false
+                  if (user && (m.url === '/login' || m.url === '/signup')) return false
                   return true
                 }).length > 7 && (
                   <div className="relative" ref={moreMenuRef}>
@@ -499,6 +502,7 @@ export default function Header() {
                         {headerMenus.filter(m => {
                           if (m.visibility === 'member' && !user) return false
                           if (m.visibility === 'admin' && user?.role !== 'admin') return false
+                          if (user && (m.url === '/login' || m.url === '/signup')) return false
                           return true
                         }).slice(7).map((menu) => (
                           <Link
@@ -560,6 +564,7 @@ export default function Header() {
                   {headerMenus.filter(m => {
                     if (m.visibility === 'member' && !user) return false
                     if (m.visibility === 'admin' && user?.role !== 'admin') return false
+                    if (user && (m.url === '/login' || m.url === '/signup')) return false
                     return true
                   }).map((menu) => (
                     <div key={menu.id}>
@@ -581,6 +586,7 @@ export default function Header() {
                           {menu.children.filter(c => {
                             if (c.visibility === 'member' && !user) return false
                             if (c.visibility === 'admin' && user?.role !== 'admin') return false
+                            if (user && (c.url === '/login' || c.url === '/signup')) return false
                             return true
                           }).map((child) => (
                             <Link

@@ -7,6 +7,7 @@
     "backHome": "홈으로 돌아가기",
     "lastModified": "최종 수정",
     "admin": {
+      "menu": "콘텐츠관리",
       "title": "콘텐츠 관리",
       "headerDesc": "소개 페이지 등 일반 콘텐츠를 관리합니다",
       "create": "콘텐츠 추가",

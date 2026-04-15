@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { useTranslations } from "next-intl"
+import { useTranslations, useLocale } from "next-intl"
 import Link from "next/link"
 import { MyPageLayout } from "@/components/layout/MyPageLayout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -55,6 +55,7 @@ interface LoginLog {
 
 export default function MyPage() {
   const t = useTranslations('mypage')
+  const locale = useLocale()
   const tc = useTranslations('common')
   const router = useRouter()
   const [user, setUser] = useState<UserInfo | null>(null)
@@ -91,7 +92,7 @@ export default function MyPage() {
     if (hours < 24) return t('hoursAgo', { hours })
     const days = Math.floor(hours / 24)
     if (days < 7) return t('daysAgo', { days })
-    return new Date(dateStr).toLocaleDateString()
+    return new Date(dateStr).toLocaleDateString(locale)
   }
 
   return (
@@ -134,7 +135,7 @@ export default function MyPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <span>{t('joinedPrefix')} {new Date(user.createdAt).toLocaleDateString()}</span>
+                      <span>{t('joinedPrefix')} {new Date(user.createdAt).toLocaleDateString(locale)}</span>
                     </div>
                     {user.lastLoginAt && (
                       <div className="flex items-center gap-2">
@@ -172,7 +173,7 @@ export default function MyPage() {
                           <span className="text-muted-foreground">{log.ip}</span>
                         </div>
                         <span className="text-xs text-muted-foreground">
-                          {new Date(log.createdAt).toLocaleString()}
+                          {new Date(log.createdAt).toLocaleString(locale)}
                         </span>
                       </div>
                     ))}

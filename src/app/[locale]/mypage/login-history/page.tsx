@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { useTranslations } from "next-intl"
+import { useTranslations, useLocale } from "next-intl"
 import { MyPageLayout } from "@/components/layout/MyPageLayout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -17,6 +17,7 @@ interface LoginLog {
 
 export default function LoginHistoryPage() {
   const t = useTranslations('mypage')
+  const locale = useLocale()
   const router = useRouter()
   const [logs, setLogs] = useState<LoginLog[]>([])
   const [loading, setLoading] = useState(true)
@@ -76,7 +77,7 @@ export default function LoginHistoryPage() {
                       <span className="text-muted-foreground">{log.ip}</span>
                     </div>
                     <span className="text-xs text-muted-foreground">
-                      {new Date(log.createdAt).toLocaleString()}
+                      {new Date(log.createdAt).toLocaleString(locale)}
                     </span>
                   </div>
                 ))}

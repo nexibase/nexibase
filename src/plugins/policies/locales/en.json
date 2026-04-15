@@ -13,6 +13,7 @@
     "versionHistory": "Version history",
     "current": "Current",
     "admin": {
+      "menu": "Policies",
       "title": "Policy management",
       "headerDesc": "Manage policies such as Terms of Service and Privacy by version",
       "create": "Create policy",

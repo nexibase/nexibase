@@ -124,6 +124,7 @@
       "loadFailed": "Failed to load"
     },
     "admin": {
+      "menu": "Boards",
       "title": "Board management",
       "subtitle": "Create and manage boards",
       "create": "Create board",

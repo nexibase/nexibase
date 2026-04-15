@@ -1,12 +1,12 @@
-// 모든 타입을 한 곳에서 export하는 배럴 파일
+// Barrel file re-exporting all domain types from one place
 
-// 공통 타입
+// Shared types
 export * from './common'
 
-// 도메인별 타입
+// Domain-specific types
 export * from './member'
 // export * from './board'
 // export * from './product'
 
-// // 열거형
-// export * from './enums' 
+// // Enums
+// export * from './enums'

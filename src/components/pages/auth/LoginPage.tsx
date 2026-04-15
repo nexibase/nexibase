@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 import { GoogleReCaptchaProvider, useGoogleReCaptcha } from "react-google-recaptcha-v3";
@@ -60,6 +60,13 @@ function LoginForm() {
   const { refreshUser } = useSite();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { status } = useSession();
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      router.replace(searchParams.get("callbackUrl") || "/");
+    }
+  }, [status, router, searchParams]);
 
   // URL 에러 파라미터 처리
   useEffect(() => {
@@ -132,7 +139,7 @@ function LoginForm() {
           setCaptchaToken(null);
           turnstileRef.current?.reset();
         }
-        setErrorMessage(data.message || t("loginFailed"));
+        setErrorMessage(t("invalidCredentials"));
       }
     } catch (error) {
       console.error("로그인 에러:", error);

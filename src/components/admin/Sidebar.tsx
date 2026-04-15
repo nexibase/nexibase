@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { useTheme } from "next-themes"
-import { useTranslations } from "next-intl"
+import { useTranslations, useLocale } from "next-intl"
 import { Button } from "@/components/ui/button"
 import {
   LayoutDashboard,
@@ -32,6 +32,7 @@ import {
   Puzzle,
   Gavel,
   GitBranch,
+  Globe,
   type LucideIcon,
 } from "lucide-react"
 
@@ -118,7 +119,7 @@ const getCachedUser = (): UserInfo | null => {
 const getCachedPlugins = (): PluginInfo[] => {
   if (typeof window === 'undefined') return []
   try {
-    const cached = sessionStorage.getItem('admin_plugins')
+    const cached = sessionStorage.getItem('admin_plugins_v2')
     return cached ? JSON.parse(cached) : []
   } catch {
     return []
@@ -144,6 +145,10 @@ function resolvePluginLabel(label: string, translate: (key: string) => string): 
 export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
   const t = useTranslations('admin')
   const ts = useTranslations('shop')
+  const tb = useTranslations('boards')
+  const tcon = useTranslations('contents')
+  const tpol = useTranslations('policies')
+  const locale = useLocale()
   const [isOpen, setIsOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({})
@@ -161,7 +166,7 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
         const data = await res.json()
         const pluginList = (data.plugins || []) as PluginInfo[]
         setPlugins(pluginList)
-        sessionStorage.setItem('admin_plugins', JSON.stringify(pluginList))
+        sessionStorage.setItem('admin_plugins_v2', JSON.stringify(pluginList))
       }
     } catch {
       // Use cached data
@@ -230,7 +235,7 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
 
     // 플러그인 상태 변경 이벤트 리스너
     const handlePluginChange = () => {
-      sessionStorage.removeItem('admin_plugins')
+      sessionStorage.removeItem('admin_plugins_v2')
       fetchPlugins()
     }
     window.addEventListener('pluginStatusChanged', handlePluginChange)
@@ -257,6 +262,9 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
   // Map of plugin folder → label translator (add entries for each i18n-enabled plugin)
   const pluginTranslators: Record<string, (key: string) => string> = {
     shop: ts as unknown as (key: string) => string,
+    boards: tb as unknown as (key: string) => string,
+    contents: tcon as unknown as (key: string) => string,
+    policies: tpol as unknown as (key: string) => string,
   }
 
   const translatePluginLabel = (folder: string, label: string) =>
@@ -518,6 +526,13 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
                       {t('version')}
                     </span>
                     <span className="font-mono font-medium">v{CURRENT_VERSION}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="flex items-center gap-1.5 text-muted-foreground">
+                      <Globe className="h-3 w-3" />
+                      {t('language')}
+                    </span>
+                    <span className="font-mono font-medium uppercase">{locale}</span>
                   </div>
                   {latestVersion && (
                     <div className="flex items-center justify-between text-xs">

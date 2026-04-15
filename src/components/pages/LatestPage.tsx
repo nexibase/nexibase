@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useTranslations } from "next-intl"
+import { useTranslations, useLocale } from "next-intl"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -36,6 +36,7 @@ interface Pagination {
 export default function LatestPage() {
   const t = useTranslations('lists')
   const tc = useTranslations('common')
+  const locale = useLocale()
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -89,7 +90,7 @@ export default function LatestPage() {
     if (diffMins < 60) return t('minutesAgo', { mins: diffMins })
     if (diffHours < 24) return t('hoursAgo', { hours: diffHours })
     if (diffDays < 7) return t('daysAgo', { days: diffDays })
-    return date.toLocaleDateString()
+    return date.toLocaleDateString(locale)
   }
 
   return (

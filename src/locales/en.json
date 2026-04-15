@@ -152,7 +152,11 @@
     "passwordTooShort": "Password must be at least 8 characters",
     "nicknameRequired": "Nickname is required",
     "nicknameTaken": "This nickname is already taken",
+    "nicknameAvailable": "This nickname is available",
+    "nicknameInvalidChars": "Nickname can only contain Korean, English, and numbers",
     "emailTaken": "This email is already registered",
+    "emailAvailable": "This email is available",
+    "invalidCredentials": "Invalid email or password",
     "checkingError": "Error during validation",
     "networkError": "Network error",
     "adminAutoSet": "First user becomes admin automatically",
@@ -320,6 +324,36 @@
     "colLikes": "Likes"
   },
   "admin": {
+    "themeMeta": {
+      "default-name": "Default theme",
+      "default-description": "Default light/dark theme",
+      "ocean-blue-name": "Ocean Blue",
+      "ocean-blue-description": "Blue-toned theme"
+    },
+    "pluginMeta": {
+      "boardsName": "Boards",
+      "boardsDescription": "Community board system",
+      "contentsName": "Contents",
+      "contentsDescription": "Manage intro pages (About, FAQ, Contact, etc.)",
+      "policiesName": "Policies",
+      "policiesDescription": "Manage policy pages (Terms, Privacy, etc.)",
+      "shopName": "Shop",
+      "shopDescription": "Product sales, orders, and payment system"
+    },
+    "widgetMeta": {
+      "community-guide-title": "Community Guide",
+      "community-guide-description": "Guide to using the community",
+      "site-stats-title": "Site Stats",
+      "site-stats-description": "Members, posts, comments, and board stats cards",
+      "visitor-stats-title": "Visitor Stats",
+      "visitor-stats-description": "Current visitors and today/yesterday/7-day counts (Google Analytics)",
+      "welcome-banner-title": "Welcome Banner",
+      "welcome-banner-description": "Welcome message and CTA for logged-in users",
+      "board-cards-title": "Board Cards",
+      "latest-posts-title": "Latest Posts",
+      "popular-boards-title": "Popular Boards",
+      "shop-shortcut-title": "Shop Shortcut"
+    },
     "panel": "Admin panel",
     "dashboard": "Dashboard",
     "users": "Users",
@@ -339,6 +373,7 @@
     "dark": "Dark",
     "version": "Version",
     "latestVersion": "Latest version",
+    "language": "Language",
     "updateAvailable": "Update available",
     "all": "All",
     "filter": "Filter",
@@ -562,6 +597,13 @@
     "logStatus": "Status",
     "logIp": "IP",
     "logReason": "Reason",
+    "loginReason": {
+      "unknown_email": "Email not registered",
+      "social_only": "Social login only account",
+      "inactive_account": "Account inactive",
+      "withdrawn_account": "Withdrawn account",
+      "password_mismatch": "Password mismatch"
+    },
     "logDate": "Date",
     "totalOfLogs": "{from}-{to} of {total}",
     "userTrendsTitle": "User trends",

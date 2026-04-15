@@ -1,19 +1,19 @@
 import DOMPurify from "isomorphic-dompurify";
 
 const ALLOWED_TAGS = [
-  // 텍스트 서식
+  // Text formatting
   "p", "br", "b", "i", "u", "s", "em", "strong", "sub", "sup", "mark",
-  // 제목
+  // Headings
   "h1", "h2", "h3", "h4", "h5", "h6",
-  // 목록
+  // Lists
   "ul", "ol", "li",
-  // 링크 & 이미지
+  // Links & images
   "a", "img",
-  // 테이블
+  // Tables
   "table", "thead", "tbody", "tr", "th", "td",
-  // 블록
+  // Block
   "blockquote", "pre", "code", "hr", "div", "span",
-  // 미디어 (에디터 임베드)
+  // Media (editor embeds)
   "iframe", "video", "source",
 ];
 
@@ -27,7 +27,7 @@ const ALLOWED_ATTR = [
 ];
 
 /**
- * HTML 콘텐츠를 sanitize합니다 (서버/클라이언트 모두 사용 가능)
+ * Sanitize HTML content (safe for both server and client usage).
  */
 export function sanitizeHtml(dirty: string): string {
   return DOMPurify.sanitize(dirty, {
@@ -41,7 +41,7 @@ export function sanitizeHtml(dirty: string): string {
 }
 
 /**
- * 일반 텍스트를 HTML 이스케이프합니다 (검색어 등)
+ * HTML-escape plain text (e.g., search query strings).
  */
 export function escapeHtml(text: string): string {
   return text

@@ -1,14 +1,14 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useTranslations } from "next-intl"
+import { useTranslations, useLocale } from "next-intl"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   BarChart3, Users, MessageSquare, TrendingUp, Loader2, LayoutDashboard,
   Eye, ThumbsUp, CheckCircle2, XCircle
 } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
-import { ko } from "date-fns/locale"
+import { ko, enUS } from "date-fns/locale"
 import Image from "next/image"
 import Link from "next/link"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
@@ -69,6 +69,8 @@ interface LoginLog {
 
 export function DashboardContent() {
   const t = useTranslations('admin')
+  const locale = useLocale()
+  const dateLocale = locale === 'ko' ? ko : enUS
   const [data, setData] = useState<DashboardData | null>(null)
   const [loginLogs, setLoginLogs] = useState<LoginLog[]>([])
   const [loading, setLoading] = useState(true)
@@ -121,7 +123,7 @@ export function DashboardContent() {
   }
 
   const formatTimeAgo = (dateStr: string) => {
-    return formatDistanceToNow(new Date(dateStr), { addSuffix: true, locale: ko })
+    return formatDistanceToNow(new Date(dateStr), { addSuffix: true, locale: dateLocale })
   }
 
   return (
@@ -214,7 +216,7 @@ export function DashboardContent() {
             <CardContent>
               <ResponsiveContainer width="100%" height={250}>
                 <LineChart data={data.trends.users?.map(item => ({
-                  date: new Date(item.date).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' }),
+                  date: new Date(item.date).toLocaleDateString(locale, { month: 'short', day: 'numeric' }),
                   count: item.count,
                 }))}>
                   <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.3} />

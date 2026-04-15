@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Clock, ArrowRight, Eye, MessageSquare } from "lucide-react"
@@ -20,6 +20,7 @@ interface LatestPost {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function LatestPosts({ settings }: { settings?: Record<string, any> }) {
   const t = useTranslations('boards')
+  const locale = useLocale()
   const [posts, setPosts] = useState<LatestPost[]>([])
   const limit = settings?.limit || 6
 
@@ -49,7 +50,7 @@ export default function LatestPosts({ settings }: { settings?: Record<string, an
     if (diffMins < 60) return t('minutesAgo', { minutes: diffMins })
     if (diffHours < 24) return t('hoursAgo', { hours: diffHours })
     if (diffDays < 7) return t('daysAgo', { days: diffDays })
-    return date.toLocaleDateString()
+    return date.toLocaleDateString(locale)
   }
 
   return (

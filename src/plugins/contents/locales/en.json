@@ -7,6 +7,7 @@
     "backHome": "Back to home",
     "lastModified": "Last modified",
     "admin": {
+      "menu": "Contents",
       "title": "Content management",
       "headerDesc": "Manage general contents such as About pages",
       "create": "Create content",

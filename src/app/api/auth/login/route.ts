@@ -98,7 +98,7 @@ export async function POST(req: NextRequest) {
 
     if (!user) {
       await prisma.loginAttempt.create({
-        data: { email, ip, success: false, reason: "존재하지 않는 이메일" },
+        data: { email, ip, success: false, reason: "unknown_email" },
       })
       return NextResponse.json(
         {
@@ -111,7 +111,7 @@ export async function POST(req: NextRequest) {
 
     if (!user.password) {
       await prisma.loginAttempt.create({
-        data: { email, ip, success: false, reason: "소셜 전용 계정" },
+        data: { email, ip, success: false, reason: "social_only" },
       })
       return NextResponse.json(
         {
@@ -129,7 +129,7 @@ export async function POST(req: NextRequest) {
       user.status === "inactive"
     ) {
       await prisma.loginAttempt.create({
-        data: { email, ip, success: false, reason: "계정 비활성 상태" },
+        data: { email, ip, success: false, reason: "inactive_account" },
       })
       return NextResponse.json(
         {
@@ -142,7 +142,7 @@ export async function POST(req: NextRequest) {
 
     if (user.status === "withdrawn") {
       await prisma.loginAttempt.create({
-        data: { email, ip, success: false, reason: "탈퇴한 계정" },
+        data: { email, ip, success: false, reason: "withdrawn_account" },
       })
       return NextResponse.json(
         { success: false, message: "탈퇴한 계정입니다." },
@@ -155,7 +155,7 @@ export async function POST(req: NextRequest) {
 
     if (!isPasswordValid) {
       await prisma.loginAttempt.create({
-        data: { email, ip, success: false, reason: "비밀번호 불일치" },
+        data: { email, ip, success: false, reason: "password_mismatch" },
       })
       return NextResponse.json(
         {

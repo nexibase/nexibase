@@ -1,5 +1,5 @@
 export default {
-  title: '최근 게시글',
+  title: 'Latest Posts',
   defaultZone: 'center',
   defaultColSpan: 2,
   defaultRowSpan: 2,

@@ -4,7 +4,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { prisma } from '@/lib/prisma';
 
 /**
- * NextAuth 세션에서 현재 로그인한 사용자 정보 가져오기
+ * Returns the currently logged-in user from the NextAuth session.
  */
 export const getSession = async () => {
   try {
@@ -28,7 +28,7 @@ export const getSession = async () => {
 };
 
 /**
- * NextAuth 세션에서 사용자 정보 가져오기 (API 라우트용)
+ * Returns the user from the NextAuth session (for API routes).
  */
 export const getAuthUser = async () => {
   try {
@@ -46,7 +46,7 @@ export const getAuthUser = async () => {
 };
 
 /**
- * 관리자 권한 확인
+ * Checks admin privileges.
  */
 export const getAdminUser = async () => {
   const user = await getAuthUser();
@@ -56,34 +56,34 @@ export const getAdminUser = async () => {
 };
 
 /**
- * 그누보드5 PBKDF2 형식으로 비밀번호 해시 생성
- * @param password 원본 비밀번호
- * @returns 해시된 비밀번호 (sha256:반복횟수:솔트:해시 형식)
+ * Produces a password hash using the Gnuboard 5 PBKDF2 format.
+ * @param password plain-text password
+ * @returns hashed password (format: sha256:iterations:salt:hash)
  */
 export const generatePBKDF2Hash = (password: string): string => {
-  // 32바이트 랜덤 솔트 생성
+  // Generate a 32-byte random salt
   const salt = crypto.randomBytes(24);
   const iterations = 12000;
-  
-  // PBKDF2-HMAC-SHA256으로 해시 생성 (32바이트)
+
+  // Derive the hash with PBKDF2-HMAC-SHA256 (32 bytes)
   const hash = crypto.pbkdf2Sync(password, salt, iterations, 32, 'sha256');
-  
-  // 그누보드5 형식: sha256:반복횟수:솔트(base64):해시(base64)
+
+  // Gnuboard 5 format: sha256:iterations:salt(base64):hash(base64)
   const saltBase64 = salt.toString('base64');
   const hashBase64 = hash.toString('base64');
-  
+
   return `sha256:${iterations}:${saltBase64}:${hashBase64}`;
 };
 
 /**
- * 입력된 비밀번호와 저장된 해시를 비교하여 검증
- * @param password 입력된 비밀번호
- * @param storedHash DB에 저장된 해시
- * @returns 비밀번호 일치 여부
+ * Verifies a plain-text password against a stored hash.
+ * @param password plain-text password
+ * @param storedHash hash value stored in the DB
+ * @returns true if the password matches
  */
 export const verifyPassword = (password: string, storedHash: string): boolean => {
   try {
-    // 해시 형식 파싱: sha256:반복횟수:솔트:해시
+    // Parse the stored hash format: sha256:iterations:salt:hash
     const parts = storedHash.split(':');
     if (parts.length !== 4 || parts[0] !== 'sha256') {
       return false;
@@ -93,27 +93,27 @@ export const verifyPassword = (password: string, storedHash: string): boolean =>
     const saltBase64 = parts[2];
     const hashBase64 = parts[3];
 
-    // Base64에서 솔트와 해시 복원
+    // Restore salt and hash from base64
     const salt = Buffer.from(saltBase64, 'base64');
     const storedHashBuffer = Buffer.from(hashBase64, 'base64');
 
-    // 입력된 비밀번호로 같은 방식으로 해시 생성
+    // Re-hash the input with the same parameters
     const computedHash = crypto.pbkdf2Sync(password, salt, iterations, 32, 'sha256');
 
-    // 타이밍 공격 방지를 위한 상수 시간 비교
+    // Constant-time comparison to prevent timing attacks
     return crypto.timingSafeEqual(storedHashBuffer, computedHash);
   } catch (error) {
-    console.error('비밀번호 검증 중 오류:', error);
+    console.error('password verification failed:', error);
     return false;
   }
 };
 
 /**
- * 이메일을 이용해서 20글자 unique ID 생성
- * @param email 이메일 주소
- * @returns 20글자 unique ID
+ * Derives a 20-character unique ID from an email address.
+ * @param email email address
+ * @returns 20-character unique ID
  */
 export const generateUniqueId = (email: string): string => {
   const hash = crypto.createHash('sha256').update(email.toLowerCase()).digest('hex');
   return hash.substring(0, 20);
-}; 
+};

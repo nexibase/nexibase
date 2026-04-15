@@ -8,7 +8,7 @@ const intlMiddleware = createMiddleware(routing)
 const allPluginSlugs = Object.values(pluginManifest).map(p => p.slug)
 const LOCALE_SEGMENTS = routing.locales.map(l => `/${l}`)
 
-// In-memory 캐시 — 한 번 'ready'가 되면 프로세스 수명동안 재조회 없음
+// In-memory cache — once 'ready', no re-check for the process lifetime
 type InstallState = 'ready' | 'install-required' | 'setup-required'
 let cachedState: InstallState | null = null
 
@@ -19,10 +19,10 @@ export function markInstalled() {
 async function getInstallState(): Promise<InstallState> {
   if (cachedState === 'ready') return 'ready'
   try {
-    // 스펙 Section 3: 다음 두 조건이 모두 참일 때만 "미설치"
-    //   1. users 테이블이 비어있음
-    //   2. site_initialized 설정이 없거나 'true'가 아님
-    // 둘 중 하나라도 거짓이면 "설치됨"으로 간주 (기존 데이터 있는 환경 보호)
+    // Spec Section 3: considered "not installed" only when BOTH conditions hold
+    //   1. users table is empty
+    //   2. site_initialized setting is missing or not 'true'
+    // If either is false, treat as "installed" (protects environments with existing data)
     const [setting, userCount] = await Promise.all([
       prisma.setting.findUnique({ where: { key: 'site_initialized' } }),
       prisma.user.count(),
@@ -33,15 +33,16 @@ async function getInstallState(): Promise<InstallState> {
     if (state === 'ready') cachedState = 'ready'
     return state
   } catch (err) {
-    // DB 연결 실패 또는 테이블 없음 → 사전 설정 필요
+    // DB connection failure or missing tables → setup required
     console.error('[install] DB check failed, entering setup-required mode:', err)
     return 'setup-required'
   }
 }
 
 /**
- * DB에서 site_locale 설정을 읽는다. next-intl 미들웨어가 올바른 locale로
- * 페이지를 rewrite하도록 요청 쿠키에 NEXT_LOCALE을 강제로 덮어쓰는 데 사용.
+ * Reads the site_locale setting from DB. Used to force-overwrite the NEXT_LOCALE
+ * cookie on the request so the next-intl middleware rewrites the page with the
+ * correct locale.
  */
 async function getSiteLocaleForMiddleware(): Promise<string | null> {
   try {
@@ -55,7 +56,7 @@ async function getSiteLocaleForMiddleware(): Promise<string | null> {
 const ALLOWED_WHEN_NOT_INSTALLED = [
   '/install',
   '/api/install',
-  '/api/auth',  // next-auth 세션 체크 등 (SessionProvider 동작 유지)
+  '/api/auth',  // next-auth session checks etc. (keeps SessionProvider working)
   '/_next/',
   '/favicon.ico',
 ]
@@ -127,7 +128,7 @@ async function checkPluginBlocked(
         }
       }
     } catch {
-      // 체크 실패 시 통과 (서버 시작 중일 수 있음)
+      // Pass through on check failure (server may still be starting)
     }
   }
   return null
@@ -151,24 +152,24 @@ function attachSessionCookie(response: NextResponse, request: NextRequest): Next
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // 1. Install 상태 체크 (최우선)
+  // 1. Install state check (highest priority)
   const state = await getInstallState()
   if (state === 'setup-required') {
-    // DB 미연결/테이블 없음: setup 안내 페이지로 리다이렉트
+    // DB unreachable / tables missing: redirect to setup guide page
     if (!isAllowedPath(pathname, ALLOWED_WHEN_SETUP_REQUIRED)) {
       return NextResponse.redirect(new URL('/setup-required', request.url))
     }
     return NextResponse.next()
   }
   if (state === 'install-required') {
-    // 미설치: install 관련 경로와 정적 리소스 외엔 모두 /install로 리다이렉트
+    // Not installed: redirect everything to /install except install paths and static assets
     if (!isAllowedPath(pathname, ALLOWED_WHEN_NOT_INSTALLED)) {
       return NextResponse.redirect(new URL('/install', request.url))
     }
-    // install 관련 경로는 통과 (next-intl/플러그인 체크 건너뜀)
+    // Install-related paths pass through (skip next-intl/plugin checks)
     return NextResponse.next()
   }
-  // 'ready' 상태: /install 또는 /setup-required 접근 시 /admin으로 리다이렉트
+  // 'ready' state: /install or /setup-required redirects to /admin
   if (
     pathname === '/install' || pathname.startsWith('/install/') ||
     pathname === '/setup-required' || pathname.startsWith('/setup-required/')
@@ -176,29 +177,29 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/admin', request.url))
   }
 
-  // API는 locale 처리 없이 플러그인 체크 + 세션 쿠키만
+  // API: no locale handling, only plugin check + session cookie
   if (pathname.startsWith('/api/')) {
     const blocked = await checkPluginBlocked(request, pathname, true)
     if (blocked) return blocked
     return attachSessionCookie(NextResponse.next(), request)
   }
 
-  // next-intl 미들웨어가 브라우저 Accept-Language 또는 stale 쿠키로
-  // locale을 결정하지 않도록, 요청 쿠키에 DB의 site_locale을 강제 주입.
+  // Force-inject DB site_locale into the request cookie so next-intl middleware
+  // does not resolve the locale from browser Accept-Language or a stale cookie.
   const dbLocale = await getSiteLocaleForMiddleware()
   if (dbLocale) {
     request.cookies.set('NEXT_LOCALE', dbLocale)
   }
 
-  // 페이지 라우트: next-intl 실행
+  // Page route: run next-intl
   const intlResponse = intlMiddleware(request)
 
-  // intl 응답 쿠키도 DB 값으로 강제 설정 (클라이언트 브라우저 동기화)
+  // Force the intl response cookie to the DB value as well (sync client browser)
   if (dbLocale) {
     intlResponse.cookies.set('NEXT_LOCALE', dbLocale)
   }
 
-  // intl이 리다이렉트/리라이트를 수행한 경우 그대로 반환 (세션 쿠키만 붙여서)
+  // If intl performed a redirect/rewrite, return it as-is (with session cookie attached)
   const isIntlRedirect = intlResponse.status === 307 || intlResponse.status === 308
   const isIntlRewrite = intlResponse.headers.get('x-middleware-rewrite') !== null
 
@@ -206,7 +207,7 @@ export async function proxy(request: NextRequest) {
     return attachSessionCookie(intlResponse, request)
   }
 
-  // intl이 통과시킨 경우: locale 제거한 경로로 플러그인 체크
+  // When intl passes through: run plugin check against the locale-stripped path
   const pagePath = stripLocale(pathname)
   const blocked = await checkPluginBlocked(request, pagePath, false)
   if (blocked) return blocked

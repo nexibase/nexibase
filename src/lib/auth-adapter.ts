@@ -1,14 +1,14 @@
 import { Adapter, AdapterUser, AdapterAccount } from "next-auth/adapters"
 import { prisma } from "./prisma"
 
-// User ID를 Int로 사용하는 커스텀 Prisma Adapter
+// Custom Prisma adapter that uses Int user IDs
 export function CustomPrismaAdapter(): Adapter {
   return {
-    // 사용자 생성 (소셜 로그인 시 새 사용자)
+    // Create user (new user from social login)
     async createUser(user: Omit<AdapterUser, "id">): Promise<AdapterUser> {
       const nickname = user.name || `user_${Date.now()}`
 
-      // 닉네임 중복 확인
+      // Ensure nickname uniqueness
       let finalNickname = nickname
       let counter = 1
       while (await prisma.user.findFirst({ where: { nickname: finalNickname } })) {
@@ -35,7 +35,7 @@ export function CustomPrismaAdapter(): Adapter {
       }
     },
 
-    // 사용자 조회 (ID로)
+    // Lookup user by ID
     async getUser(id: string): Promise<AdapterUser | null> {
       const user = await prisma.user.findUnique({
         where: { id: parseInt(id) },
@@ -52,7 +52,7 @@ export function CustomPrismaAdapter(): Adapter {
       }
     },
 
-    // 사용자 조회 (이메일로)
+    // Lookup user by email
     async getUserByEmail(email: string): Promise<AdapterUser | null> {
       const user = await prisma.user.findUnique({
         where: { email },
@@ -69,7 +69,7 @@ export function CustomPrismaAdapter(): Adapter {
       }
     },
 
-    // 사용자 조회 (Account로)
+    // Lookup user by Account
     async getUserByAccount({ providerAccountId, provider }: Pick<AdapterAccount, "provider" | "providerAccountId">): Promise<AdapterUser | null> {
       const account = await prisma.account.findUnique({
         where: {
@@ -93,7 +93,7 @@ export function CustomPrismaAdapter(): Adapter {
       }
     },
 
-    // 사용자 업데이트
+    // Update user
     async updateUser(user: Partial<AdapterUser> & Pick<AdapterUser, "id">): Promise<AdapterUser> {
       const updated = await prisma.user.update({
         where: { id: parseInt(user.id) },
@@ -114,14 +114,14 @@ export function CustomPrismaAdapter(): Adapter {
       }
     },
 
-    // 사용자 삭제
+    // Delete user
     async deleteUser(userId: string): Promise<void> {
       await prisma.user.delete({
         where: { id: parseInt(userId) },
       })
     },
 
-    // Account 연결 (소셜 로그인 연동)
+    // Link an Account (social login integration)
     async linkAccount(account: AdapterAccount): Promise<void> {
       await prisma.account.create({
         data: {
@@ -140,7 +140,7 @@ export function CustomPrismaAdapter(): Adapter {
       })
     },
 
-    // Account 연결 해제
+    // Unlink Account
     async unlinkAccount({ providerAccountId, provider }: Pick<AdapterAccount, "provider" | "providerAccountId">): Promise<void> {
       await prisma.account.delete({
         where: {
@@ -152,8 +152,8 @@ export function CustomPrismaAdapter(): Adapter {
       })
     },
 
-    // JWT 전략 사용으로 세션 관련 함수는 사용하지 않음
-    // 하지만 Adapter 인터페이스 호환성을 위해 빈 구현 유지
+    // Session-related functions are unused because we use the JWT strategy,
+    // but we keep empty implementations to satisfy the Adapter interface.
     async createSession() {
       return { sessionToken: "", userId: "", expires: new Date() }
     },
@@ -168,7 +168,7 @@ export function CustomPrismaAdapter(): Adapter {
 
     async deleteSession() {},
 
-    // 이메일 인증 토큰 (사용 안함)
+    // Email verification token (unused)
     async createVerificationToken(token: { identifier: string; token: string; expires: Date }) {
       return token
     },

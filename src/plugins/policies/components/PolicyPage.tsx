@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { sanitizeHtml } from "@/lib/sanitize"
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 
 interface Policy {
   id: number
@@ -29,6 +29,7 @@ interface VersionInfo {
 
 export default function PolicyPage() {
   const t = useTranslations('policies')
+  const locale = useLocale()
   const params = useParams()
   const searchParams = useSearchParams()
   const slug = params.slug as string
@@ -118,7 +119,7 @@ export default function PolicyPage() {
                 )}
               </div>
               <p className="text-sm text-muted-foreground mt-2">
-                {t('effectiveDate')}: {new Date(policy.createdAt).toLocaleDateString()}
+                {t('effectiveDate')}: {new Date(policy.createdAt).toLocaleDateString(locale)}
               </p>
             </div>
 
@@ -157,7 +158,7 @@ export default function PolicyPage() {
                         )}
                       </div>
                       <span className="text-xs text-muted-foreground">
-                        {new Date(v.createdAt).toLocaleDateString()}
+                        {new Date(v.createdAt).toLocaleDateString(locale)}
                       </span>
                     </div>
                   </Link>

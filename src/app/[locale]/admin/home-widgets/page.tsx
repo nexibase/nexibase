@@ -48,6 +48,13 @@ const LAYOUT_ZONES = ['left', 'right'] as const
 
 export default function HomeWidgetsAdminPage() {
   const t = useTranslations('admin')
+  const translateMeta = (key: string, fallback: string) => {
+    return t.has(key) ? t(key) : fallback
+  }
+  const wTitle = (key: string, fallback: string) =>
+    translateMeta(`widgetMeta.${key}-title`, fallback)
+  const wDesc = (key: string, fallback: string) =>
+    translateMeta(`widgetMeta.${key}-description`, fallback)
   const ZONE_LABELS: Record<string, string> = {
     top: t('zoneTop'),
     center: t('zoneCenter'),
@@ -233,7 +240,7 @@ export default function HomeWidgetsAdminPage() {
         onClick={() => !isPluginDisabled && handleSelectWidget(widget)}
       >
         <div className="flex items-center justify-between">
-          <span className="text-sm font-medium truncate">{widget.title}</span>
+          <span className="text-sm font-medium truncate">{wTitle(widget.widgetKey, widget.title)}</span>
           {isPluginDisabled ? (
             <Badge variant="destructive" className="text-xs shrink-0">{t('inactive')}</Badge>
           ) : (
@@ -294,7 +301,7 @@ export default function HomeWidgetsAdminPage() {
           <Dialog open={!!selectedWidget} onOpenChange={(open) => !open && setSelectedWidget(null)}>
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
-                <DialogTitle>{t('widgetSettings', { title: selectedWidget?.title ?? '' })}</DialogTitle>
+                <DialogTitle>{t('widgetSettings', { title: selectedWidget ? wTitle(selectedWidget.widgetKey, selectedWidget.title) : '' })}</DialogTitle>
               </DialogHeader>
               {selectedWidget && (
                 <div className="space-y-4">
@@ -416,8 +423,8 @@ export default function HomeWidgetsAdminPage() {
                       return (
                         <div key={key} className="flex items-center justify-between px-3 py-2 border rounded-md">
                           <div>
-                            <span className="text-sm font-medium">{meta?.label || key}</span>
-                            <span className="text-xs text-muted-foreground ml-2">{meta?.description}</span>
+                            <span className="text-sm font-medium">{wTitle(key, meta?.label || key)}</span>
+                            <span className="text-xs text-muted-foreground ml-2">{wDesc(key, meta?.description || '')}</span>
                           </div>
                           <div className="flex items-center gap-1">
                             <select

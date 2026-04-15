@@ -7,7 +7,7 @@ import { Loader2, FileText, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { sanitizeHtml } from "@/lib/sanitize"
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 
 interface Content {
   id: number
@@ -19,6 +19,7 @@ interface Content {
 
 export default function ContentPage() {
   const t = useTranslations('contents')
+  const locale = useLocale()
   const params = useParams()
   const slug = params.slug as string
 
@@ -87,7 +88,7 @@ export default function ContentPage() {
         <CardHeader>
           <CardTitle className="text-2xl">{content.title}</CardTitle>
           <p className="text-sm text-muted-foreground">
-            {t('lastModified')}: {new Date(content.updatedAt).toLocaleDateString()}
+            {t('lastModified')}: {new Date(content.updatedAt).toLocaleDateString(locale)}
           </p>
         </CardHeader>
         <CardContent>

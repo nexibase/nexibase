@@ -1,6 +1,6 @@
 export default {
-  name: '게시판',
-  description: '커뮤니티 게시판 시스템',
+  name: 'Boards',
+  description: 'Community board system',
   version: '1.0.0',
   author: 'nexibase',
   authorDomain: 'https://nexibase.com',

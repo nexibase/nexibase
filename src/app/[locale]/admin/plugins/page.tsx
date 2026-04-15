@@ -109,13 +109,17 @@ export default function PluginsAdminPage() {
     }
   }
 
+  const translateMeta = (key: string, fallback: string) => {
+    return t.has(key) ? t(key) : fallback
+  }
+
   const renderPluginCard = (plugin: PluginInfo) => (
     <Card key={plugin.folder}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="text-lg flex items-center gap-2">
-              {plugin.name}
+              {translateMeta(`pluginMeta.${plugin.slug}Name`, plugin.name)}
               <Badge variant="outline" className="text-xs">v{plugin.version}</Badge>
               {plugin.enabled ? (
                 <Badge className="text-xs bg-green-500">{t('statusActive')}</Badge>
@@ -123,7 +127,7 @@ export default function PluginsAdminPage() {
                 <Badge variant="secondary" className="text-xs">{t('inactive')}</Badge>
               )}
             </CardTitle>
-            <CardDescription className="mt-1">{plugin.description}</CardDescription>
+            <CardDescription className="mt-1">{translateMeta(`pluginMeta.${plugin.slug}Description`, plugin.description)}</CardDescription>
           </div>
           <Switch
             checked={plugin.enabled}

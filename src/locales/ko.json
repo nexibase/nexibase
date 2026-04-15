@@ -152,7 +152,11 @@
     "passwordTooShort": "비밀번호는 8자 이상이어야 합니다",
     "nicknameRequired": "닉네임을 입력해 주세요",
     "nicknameTaken": "이미 사용 중인 닉네임입니다",
+    "nicknameAvailable": "사용 가능한 닉네임입니다",
+    "nicknameInvalidChars": "닉네임은 한글, 영문, 숫자만 사용할 수 있습니다",
     "emailTaken": "이미 등록된 이메일입니다",
+    "emailAvailable": "사용 가능한 이메일입니다",
+    "invalidCredentials": "이메일 또는 비밀번호가 올바르지 않습니다",
     "checkingError": "확인 중 오류가 발생했습니다",
     "networkError": "네트워크 오류",
     "adminAutoSet": "첫 번째 가입자는 자동으로 관리자가 됩니다",
@@ -320,6 +324,36 @@
     "colLikes": "추천"
   },
   "admin": {
+    "themeMeta": {
+      "default-name": "기본 테마",
+      "default-description": "기본 라이트/다크 테마",
+      "ocean-blue-name": "오션 블루",
+      "ocean-blue-description": "파란색 계열 테마"
+    },
+    "pluginMeta": {
+      "boardsName": "게시판",
+      "boardsDescription": "커뮤니티 게시판 시스템",
+      "contentsName": "콘텐츠",
+      "contentsDescription": "소개 페이지 관리 (회사소개, FAQ, 문의하기 등)",
+      "policiesName": "약관",
+      "policiesDescription": "이용약관, 개인정보처리방침 등 정책 페이지 관리",
+      "shopName": "쇼핑몰",
+      "shopDescription": "상품 판매, 주문, 결제 시스템"
+    },
+    "widgetMeta": {
+      "community-guide-title": "커뮤니티 가이드",
+      "community-guide-description": "커뮤니티 이용 가이드",
+      "site-stats-title": "사이트 통계",
+      "site-stats-description": "회원, 게시글, 댓글, 게시판 통계 카드",
+      "visitor-stats-title": "방문자 통계",
+      "visitor-stats-description": "현재 접속자, 오늘/어제/7일간 방문자 수 (Google Analytics)",
+      "welcome-banner-title": "환영 배너",
+      "welcome-banner-description": "로그인 사용자 환영 메시지와 CTA 버튼",
+      "board-cards-title": "게시판 카드",
+      "latest-posts-title": "최근 게시글",
+      "popular-boards-title": "인기 게시판",
+      "shop-shortcut-title": "쇼핑몰 바로가기"
+    },
     "panel": "관리자 패널",
     "dashboard": "대시보드",
     "users": "사용자",
@@ -339,6 +373,7 @@
     "dark": "다크",
     "version": "버전",
     "latestVersion": "최신 버전",
+    "language": "언어",
     "updateAvailable": "업데이트 가능",
     "all": "전체",
     "filter": "필터",
@@ -562,6 +597,13 @@
     "logStatus": "상태",
     "logIp": "IP",
     "logReason": "사유",
+    "loginReason": {
+      "unknown_email": "존재하지 않는 이메일",
+      "social_only": "소셜 전용 계정",
+      "inactive_account": "계정 비활성 상태",
+      "withdrawn_account": "탈퇴한 계정",
+      "password_mismatch": "비밀번호 불일치"
+    },
     "logDate": "날짜",
     "totalOfLogs": "{total}건 중 {from}-{to}",
     "userTrendsTitle": "사용자 추이",

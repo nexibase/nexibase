@@ -1,4 +1,4 @@
-// 인증 관련 타입 정의
+// Auth-related type definitions
 
 export interface JWTPayload {
   id: string;

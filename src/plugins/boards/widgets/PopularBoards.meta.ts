@@ -1,5 +1,5 @@
 export default {
-  title: '인기 게시판',
+  title: 'Popular Boards',
   defaultZone: 'right',
   defaultColSpan: 1,
   defaultRowSpan: 2,

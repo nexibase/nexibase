@@ -89,6 +89,9 @@ const DEFAULT_SETTINGS: SettingsData = {
 
 export default function SettingsPage() {
   const t = useTranslations('admin')
+  const tMeta = (key: string, fallback: string) => (t.has(key) ? t(key) : fallback)
+  const themeName = (folder: string, fallback: string) => tMeta(`themeMeta.${folder}-name`, fallback)
+  const themeDesc = (folder: string, fallback: string) => tMeta(`themeMeta.${folder}-description`, fallback)
   const [settings, setSettings] = useState<SettingsData>(DEFAULT_SETTINGS)
   const [footerLinks, setFooterLinks] = useState<FooterLink[]>([])
   const [loading, setLoading] = useState(true)
@@ -779,7 +782,7 @@ export default function SettingsPage() {
                   >
                     {themes.map((theme) => (
                       <option key={theme.folder} value={theme.folder}>
-                        {theme.name}
+                        {themeName(theme.folder, theme.name)}
                       </option>
                     ))}
                   </select>
@@ -793,7 +796,7 @@ export default function SettingsPage() {
                         <div key={theme.folder} className={`px-4 py-3 ${settings.theme_folder === theme.folder ? 'bg-primary/5' : ''}`}>
                           <div className="flex items-center justify-between">
                             <span className="text-sm font-medium">
-                              {theme.name}
+                              {themeName(theme.folder, theme.name)}
                               {settings.theme_folder === theme.folder && (
                                 <span className="ml-2 text-xs text-primary">{t('inUse')}</span>
                               )}
@@ -804,7 +807,7 @@ export default function SettingsPage() {
                           </div>
                           {theme.description && (
                             <p className="text-xs text-muted-foreground mt-1">
-                              {theme.description}
+                              {themeDesc(theme.folder, theme.description)}
                             </p>
                           )}
                         </div>

@@ -35,6 +35,11 @@ interface Pagination {
 
 function LoginLogsContent() {
   const t = useTranslations('admin')
+  const reasonLabel = (reason: string | null) => {
+    if (!reason) return "-"
+    const key = `loginReason.${reason}`
+    return t.has(key) ? t(key) : reason
+  }
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -244,7 +249,7 @@ function LoginLogsContent() {
                             {log.ip}
                           </td>
                           <td className="p-4 align-middle text-sm text-muted-foreground">
-                            {log.reason || "-"}
+                            {reasonLabel(log.reason)}
                           </td>
                           <td className="p-4 align-middle text-sm text-muted-foreground">
                             {formatDate(log.createdAt)}

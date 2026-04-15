@@ -28,13 +28,13 @@ export async function runInstall(params: InstallParams): Promise<void> {
   const hashedPw = await bcrypt.hash(params.adminPassword, 10)
 
   await prisma.$transaction(async (tx) => {
-    // 0. 경쟁 상태 재확인
+    // 0. Re-check for race condition
     const existing = await tx.setting.findUnique({ where: { key: 'site_initialized' } })
     if (existing?.value === 'true') {
       throw new InstallError('ALREADY_INSTALLED', 'Site is already initialized')
     }
 
-    // 1. Admin 계정
+    // 1. Admin account
     await tx.user.create({
       data: {
         email: params.adminEmail,
@@ -46,7 +46,7 @@ export async function runInstall(params: InstallParams): Promise<void> {
       },
     })
 
-    // 2. 핵심 설정
+    // 2. Core settings
     await tx.setting.createMany({
       data: [
         { key: 'site_name', value: params.siteName },
@@ -56,7 +56,7 @@ export async function runInstall(params: InstallParams): Promise<void> {
       ],
     })
 
-    // 3. Seed 데이터 삽입
+    // 3. Insert seed data
     for (const b of seed.boards) {
       await tx.board.create({
         data: {
@@ -120,7 +120,7 @@ export async function runInstall(params: InstallParams): Promise<void> {
       })
     }
 
-    // 4. 마지막에 완료 플래그 (중간 실패 시 재시도 가능)
+    // 4. Completion flag is set last (so partial failures can be retried)
     await tx.setting.create({ data: { key: 'site_initialized', value: 'true' } })
   })
 }

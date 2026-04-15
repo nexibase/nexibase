@@ -1,6 +1,6 @@
 export default {
-  name: '콘텐츠',
-  description: '소개 페이지 관리 (회사소개, FAQ, 문의하기 등)',
+  name: 'Contents',
+  description: 'Manage intro pages (About, FAQ, Contact, etc.)',
   version: '1.0.0',
   author: 'nexibase',
   authorDomain: 'https://nexibase.com',

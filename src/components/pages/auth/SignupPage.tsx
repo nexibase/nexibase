@@ -124,13 +124,13 @@ export default function SignupPage() {
       if (response.ok) {
         setEmailStatus({
           available: data.available,
-          message: data.message,
+          message: data.available ? t("emailAvailable") : t("emailTaken"),
           checking: false
         });
       } else {
         setEmailStatus({
           available: false,
-          message: data.error || t("checkingError"),
+          message: t("checkingError"),
           checking: false
         });
       }
@@ -167,13 +167,13 @@ export default function SignupPage() {
       if (response.ok) {
         setNicknameStatus({
           available: data.available,
-          message: data.message,
+          message: data.available ? t("nicknameAvailable") : t("nicknameTaken"),
           checking: false
         });
       } else {
         setNicknameStatus({
           available: false,
-          message: data.error || t("checkingError"),
+          message: t("checkingError"),
           checking: false
         });
       }
@@ -272,7 +272,12 @@ export default function SignupPage() {
       alert(t("nicknameMinLength"));
       return;
     }
-    
+
+    if (!/^[가-힣a-zA-Z0-9]+$/.test(nickname.trim())) {
+      alert(t("nicknameInvalidChars"));
+      return;
+    }
+
     if (nicknameStatus.available !== true) {
       alert(t("nicknameCheckRequired"));
       return;

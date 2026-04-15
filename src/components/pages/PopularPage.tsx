@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useTranslations } from "next-intl"
+import { useTranslations, useLocale } from "next-intl"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -37,6 +37,7 @@ type Period = 'day' | 'week' | 'month' | 'all'
 
 export default function PopularPage() {
   const t = useTranslations('lists')
+  const locale = useLocale()
   const tc = useTranslations('common')
   const periodOptions: { value: Period; label: string; icon: React.ReactNode }[] = [
     { value: 'day', label: t('periodDay'), icon: <Clock className="h-4 w-4" /> },
@@ -109,7 +110,7 @@ export default function PopularPage() {
     if (diffMins < 60) return t('minutesAgo', { mins: diffMins })
     if (diffHours < 24) return t('hoursAgo', { hours: diffHours })
     if (diffDays < 7) return t('daysAgo', { days: diffDays })
-    return date.toLocaleDateString()
+    return date.toLocaleDateString(locale)
   }
 
   const getContentPreview = (content: string) => {

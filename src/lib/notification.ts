@@ -12,7 +12,7 @@ interface CreateNotificationParams {
 }
 
 /**
- * 알림 생성
+ * Create a notification record.
  */
 export async function createNotification(params: CreateNotificationParams) {
   try {
@@ -32,7 +32,7 @@ export async function createNotification(params: CreateNotificationParams) {
 }
 
 /**
- * 주문 상태 변경 알림 생성 (+ 이메일 발송)
+ * Create an order-status-change notification (also sends an email).
  */
 export async function createOrderStatusNotification(
   userId: number,
@@ -65,7 +65,7 @@ export async function createOrderStatusNotification(
   const title = `주문 상태 변경: ${statusLabels[newStatus] || newStatus}`
   const message = statusMessages[newStatus] || `주문 상태가 "${statusLabels[newStatus] || newStatus}"(으)로 변경되었습니다.`
 
-  // 이메일 발송 (비동기로 처리)
+  // Send email (fire-and-forget)
   try {
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -88,7 +88,7 @@ export async function createOrderStatusNotification(
 }
 
 /**
- * 주문 완료 알림을 주문자에게 전송 (+ 이메일 발송)
+ * Notify the customer that an order has been completed (also sends email).
  */
 export async function createOrderCompletedNotification(
   userId: number,
@@ -96,7 +96,7 @@ export async function createOrderCompletedNotification(
   totalAmount: number,
   items?: { name: string; quantity: number; price: number }[]
 ) {
-  // 이메일 발송 (비동기로 처리)
+  // Send email (fire-and-forget)
   try {
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -125,7 +125,7 @@ export async function createOrderCompletedNotification(
 }
 
 /**
- * 새 주문 알림을 관리자/부관리자에게 전송
+ * Notify admins / sub-admins about a new order.
  */
 export async function createNewOrderNotificationForAdmins(
   orderId: number,
@@ -134,19 +134,19 @@ export async function createNewOrderNotificationForAdmins(
   customerName: string
 ) {
   try {
-    // 쇼핑몰 설정에서 알림 수신 대상 조회
+    // Look up notification recipients from shop settings
     const shopSetting = await prisma.shopSetting.findUnique({
       where: { key: 'order_notification_target' }
     })
 
     const notificationTarget = shopSetting?.value || 'admin'
 
-    // 알림을 안 받는 설정이면 종료
+    // Stop early when notifications are disabled
     if (notificationTarget === 'none') {
       return []
     }
 
-    // 알림 대상 역할 결정
+    // Decide which role(s) to notify
     let targetRoles: string[] = []
     switch (notificationTarget) {
       case 'admin':
@@ -160,7 +160,7 @@ export async function createNewOrderNotificationForAdmins(
         break
     }
 
-    // 대상 관리자 조회
+    // Fetch target admins
     const admins = await prisma.user.findMany({
       where: {
         role: { in: targetRoles }
@@ -168,10 +168,10 @@ export async function createNewOrderNotificationForAdmins(
       select: { id: true, email: true }
     })
 
-    // 각 관리자에게 알림 생성 및 이메일 발송
+    // Create a notification and send email for each admin
     const notifications = await Promise.all(
       admins.map(async admin => {
-        // 이메일 발송 (비동기)
+        // Send email (async)
         if (admin.email) {
           sendNewOrderEmailToAdmin(admin.email, orderNo, customerName, totalAmount)
         }
@@ -194,7 +194,7 @@ export async function createNewOrderNotificationForAdmins(
 }
 
 /**
- * 주문 취소 알림을 주문자에게 전송 (+ 이메일 발송)
+ * Notify the customer that an order has been cancelled (also sends email).
  */
 export async function createOrderCancelledNotification(
   userId: number,
@@ -202,7 +202,7 @@ export async function createOrderCancelledNotification(
   refundAmount: number,
   cancelReason?: string
 ) {
-  // 이메일 발송 (비동기로 처리)
+  // Send email (fire-and-forget)
   try {
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -231,7 +231,7 @@ export async function createOrderCancelledNotification(
 }
 
 /**
- * 관리자에 의한 주문 취소 알림을 주문자에게 전송 (취소 사유 포함)
+ * Notify the customer of an admin-initiated order cancellation (with reason).
  */
 export async function createOrderCancelledByAdminNotification(
   userId: number,
@@ -249,7 +249,7 @@ export async function createOrderCancelledByAdminNotification(
 }
 
 /**
- * 주문 취소 완료 알림을 관리자에게 전송 (+ 이메일 발송)
+ * Notify admins that an order cancellation is complete (also sends email).
  */
 export async function createOrderCancelledNotificationForAdmins(
   orderNo: string,
@@ -258,19 +258,19 @@ export async function createOrderCancelledNotificationForAdmins(
   cancelReason?: string
 ) {
   try {
-    // 쇼핑몰 설정에서 알림 수신 대상 조회
+    // Look up notification recipients from shop settings
     const shopSetting = await prisma.shopSetting.findUnique({
       where: { key: 'order_notification_target' }
     })
 
     const notificationTarget = shopSetting?.value || 'admin'
 
-    // 알림을 안 받는 설정이면 종료
+    // Stop early when notifications are disabled
     if (notificationTarget === 'none') {
       return []
     }
 
-    // 알림 대상 역할 결정
+    // Decide which role(s) to notify
     let targetRoles: string[] = []
     switch (notificationTarget) {
       case 'admin':
@@ -284,7 +284,7 @@ export async function createOrderCancelledNotificationForAdmins(
         break
     }
 
-    // 대상 관리자 조회
+    // Fetch target admins
     const admins = await prisma.user.findMany({
       where: {
         role: { in: targetRoles }
@@ -292,10 +292,10 @@ export async function createOrderCancelledNotificationForAdmins(
       select: { id: true, email: true }
     })
 
-    // 각 관리자에게 알림 생성 및 이메일 발송
+    // Create a notification and send email for each admin
     const notifications = await Promise.all(
       admins.map(async admin => {
-        // 이메일 발송 (비동기)
+        // Send email (async)
         if (admin.email && cancelReason) {
           sendOrderCancelledEmailToAdmin(admin.email, orderNo, customerName, refundAmount, cancelReason)
         }
@@ -318,7 +318,7 @@ export async function createOrderCancelledNotificationForAdmins(
 }
 
 /**
- * 취소/환불 요청 알림을 관리자에게 전송
+ * Notify admins of a cancellation / refund request.
  */
 export async function createCancelRequestNotificationForAdmins(
   orderNo: string,
@@ -326,19 +326,19 @@ export async function createCancelRequestNotificationForAdmins(
   requestType: 'cancel' | 'refund'
 ) {
   try {
-    // 쇼핑몰 설정에서 알림 수신 대상 조회
+    // Look up notification recipients from shop settings
     const shopSetting = await prisma.shopSetting.findUnique({
       where: { key: 'order_notification_target' }
     })
 
     const notificationTarget = shopSetting?.value || 'admin'
 
-    // 알림을 안 받는 설정이면 종료
+    // Stop early when notifications are disabled
     if (notificationTarget === 'none') {
       return []
     }
 
-    // 알림 대상 역할 결정
+    // Decide which role(s) to notify
     let targetRoles: string[] = []
     switch (notificationTarget) {
       case 'admin':
@@ -352,7 +352,7 @@ export async function createCancelRequestNotificationForAdmins(
         break
     }
 
-    // 대상 관리자 조회
+    // Fetch target admins
     const admins = await prisma.user.findMany({
       where: {
         role: { in: targetRoles }
@@ -368,7 +368,7 @@ export async function createCancelRequestNotificationForAdmins(
       ? `[주문번호: ${orderNo}] ${customerName}님이 주문 취소를 요청했습니다. 확인이 필요합니다.`
       : `[주문번호: ${orderNo}] ${customerName}님이 환불을 요청했습니다. 확인이 필요합니다.`
 
-    // 각 관리자에게 알림 생성
+    // Create a notification for each admin
     const notifications = await Promise.all(
       admins.map(admin =>
         createNotification({

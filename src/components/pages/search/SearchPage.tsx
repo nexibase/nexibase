@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
-import { useTranslations } from "next-intl"
+import { useTranslations, useLocale } from "next-intl"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -124,6 +124,7 @@ export default function SearchPage() {
 function SearchContent() {
   const t = useTranslations('search')
   const tl = useTranslations('lists')
+  const locale = useLocale()
   const searchParams = useSearchParams()
   const router = useRouter()
 
@@ -256,7 +257,7 @@ function SearchContent() {
     if (diffMins < 60) return tl('minutesAgo', { mins: diffMins })
     if (diffHours < 24) return tl('hoursAgo', { hours: diffHours })
     if (diffDays < 7) return tl('daysAgo', { days: diffDays })
-    return date.toLocaleDateString()
+    return date.toLocaleDateString(locale)
   }
 
   const highlightText = (text: string, searchQuery: string) => {
