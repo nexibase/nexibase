@@ -5,17 +5,17 @@ import path from 'path'
 import sharp from 'sharp'
 import { getAuthUser } from '@/lib/auth'
 
-// 허용 이미지 타입
+// Allowed image types
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
-const MAX_SIZE = 10 * 1024 * 1024 // 10MB (리사이징 전)
-const MAX_WIDTH = 1200 // 최대 너비
-const THUMB_WIDTH = 200 // 썸네일 너비
-const QUALITY = 80 // 압축 품질
-const THUMB_QUALITY = 70 // 썸네일 압축 품질
+const MAX_SIZE = 10 * 1024 * 1024 // 10MB (before resizing)
+const MAX_WIDTH = 1200 // max width
+const THUMB_WIDTH = 200 // thumbnail width
+const QUALITY = 80 // compression quality
+const THUMB_QUALITY = 70 // thumbnail compression quality
 
 export async function POST(request: NextRequest) {
   try {
-    // 로그인 확인
+    // Login check
     const user = await getAuthUser()
     if (!user) {
       return NextResponse.json(
@@ -25,11 +25,11 @@ export async function POST(request: NextRequest) {
     }
 
     const formData = await request.formData()
-    // 'file' 또는 'image' 필드명 지원
+    // Accept both 'file' and 'image' field names
     const file = (formData.get('file') || formData.get('image')) as File | null
-    // 폴더 지정 (기본값: 년/월 기반)
+    // Optional folder override (default: year/month)
     const folder = formData.get('folder') as string | null
-    // 상품 ID (folder가 'products'일 때 사용)
+    // Product ID (used when folder is 'products')
     const productId = formData.get('productId') as string | null
 
     if (!file) {
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 파일 타입 검증
+    // Validate file type
     if (!ALLOWED_TYPES.includes(file.type)) {
       return NextResponse.json(
         { error: 'JPG, PNG, GIF, WebP 파일만 업로드 가능합니다.' },
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 파일 크기 검증
+    // Validate file size
     if (file.size > MAX_SIZE) {
       return NextResponse.json(
         { error: '파일 크기는 10MB 이하여야 합니다.' },
@@ -55,25 +55,25 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 파일명 생성 (타임스탬프 + 랜덤, webp로 변환)
+    // Build filename (timestamp + random, converted to webp)
     const timestamp = Date.now()
     const random = Math.random().toString(36).substring(2, 8)
     const filename = `${timestamp}-${random}.webp`
 
-    // 폴더 구조 결정
+    // Pick folder layout
     let uploadDir: string
     let urlPath: string
 
     if (folder === 'products' && productId) {
-      // 상품 이미지: /uploads/shop/products/{productId}/
+      // Product image: /uploads/shop/products/{productId}/
       uploadDir = path.join(process.cwd(), 'public', 'uploads', 'shop', 'products', productId)
       urlPath = `/uploads/shop/products/${productId}`
     } else if (folder === 'products') {
-      // 상품 이미지 (ID 없음): /uploads/shop/products/
+      // Product image (no ID): /uploads/shop/products/
       uploadDir = path.join(process.cwd(), 'public', 'uploads', 'shop', 'products')
       urlPath = '/uploads/shop/products'
     } else {
-      // 기본: 년/월 폴더 구조
+      // Default: year/month layout
       const now = new Date()
       const year = now.getFullYear()
       const month = String(now.getMonth() + 1).padStart(2, '0')
@@ -81,16 +81,16 @@ export async function POST(request: NextRequest) {
       urlPath = `/uploads/${year}/${month}`
     }
 
-    // 디렉토리 생성
+    // Ensure the directory exists
     if (!existsSync(uploadDir)) {
       await mkdir(uploadDir, { recursive: true })
     }
 
-    // 이미지 리사이징 및 WebP 변환
+    // Resize and convert to WebP
     const bytes = await file.arrayBuffer()
     const inputBuffer = Buffer.from(bytes)
 
-    // GIF는 애니메이션 유지를 위해 그대로 저장
+    // GIFs are kept as GIF to preserve animation
     let outputBuffer: Buffer
     let thumbBuffer: Buffer
     let outputFilename = filename
@@ -98,35 +98,35 @@ export async function POST(request: NextRequest) {
     const isProductImage = folder === 'products'
 
     if (file.type === 'image/gif') {
-      // GIF는 리사이징만 (애니메이션 유지)
+      // GIFs: resize only, keep animation
       outputBuffer = await sharp(inputBuffer, { animated: true })
         .resize({ width: MAX_WIDTH, withoutEnlargement: true })
         .gif()
         .toBuffer()
       outputFilename = `${timestamp}-${random}.gif`
-      // GIF 썸네일은 첫 프레임만 추출해서 WebP로 변환
+      // GIF thumbnail: extract the first frame and convert to WebP
       thumbBuffer = await sharp(inputBuffer, { animated: false })
         .resize({ width: THUMB_WIDTH, height: THUMB_WIDTH, fit: 'cover' })
         .webp({ quality: THUMB_QUALITY })
         .toBuffer()
     } else {
-      // 나머지는 WebP로 변환 + 리사이징
+      // Everything else: convert to WebP + resize
       outputBuffer = await sharp(inputBuffer)
         .resize({ width: MAX_WIDTH, withoutEnlargement: true })
         .webp({ quality: QUALITY })
         .toBuffer()
-      // 썸네일 생성 (정사각형, 중앙 크롭)
+      // Thumbnail (square, center-cropped)
       thumbBuffer = await sharp(inputBuffer)
         .resize({ width: THUMB_WIDTH, height: THUMB_WIDTH, fit: 'cover' })
         .webp({ quality: THUMB_QUALITY })
         .toBuffer()
     }
 
-    // 원본 파일 저장
+    // Write the main file
     const filePath = path.join(uploadDir, outputFilename)
     await sharp(outputBuffer).toFile(filePath)
 
-    // 썸네일 파일 저장 (상품 이미지인 경우에만)
+    // Write the thumbnail (only for product images)
     let thumbnailUrl: string | undefined
     if (isProductImage) {
       const thumbPath = path.join(uploadDir, thumbFilename)
@@ -134,11 +134,11 @@ export async function POST(request: NextRequest) {
       thumbnailUrl = `${urlPath}/${thumbFilename}`
     }
 
-    // URL 반환
+    // Return the URL
     const url = `${urlPath}/${outputFilename}`
 
-    // 원본 크기와 변환 후 크기 로깅
-    console.log(`이미지 업로드: ${file.name} (${(file.size / 1024).toFixed(1)}KB) → ${outputFilename} (${(outputBuffer.length / 1024).toFixed(1)}KB)${isProductImage ? `, 썸네일: ${thumbFilename}` : ''}`)
+    // Log original and compressed sizes
+    console.log(`image upload: ${file.name} (${(file.size / 1024).toFixed(1)}KB) → ${outputFilename} (${(outputBuffer.length / 1024).toFixed(1)}KB)${isProductImage ? `, thumb: ${thumbFilename}` : ''}`)
 
     return NextResponse.json({
       success: true,
@@ -149,7 +149,7 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('이미지 업로드 에러:', error)
+    console.error('image upload failed:', error)
     return NextResponse.json(
       { error: '이미지 업로드에 실패했습니다.' },
       { status: 500 }

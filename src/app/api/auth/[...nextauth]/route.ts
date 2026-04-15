@@ -11,7 +11,7 @@ export const authOptions: NextAuthOptions = {
   adapter: CustomPrismaAdapter(),
 
   providers: [
-    // 이메일/비밀번호 로그인
+    // Email/password login
     CredentialsProvider({
       name: "credentials",
       credentials: {
@@ -45,7 +45,7 @@ export const authOptions: NextAuthOptions = {
           throw new Error("이메일 또는 비밀번호가 올바르지 않습니다.")
         }
 
-        // 마지막 로그인 시간 업데이트
+        // Update the last login timestamp
         await prisma.user.update({
           where: { id: user.id },
           data: { lastLoginAt: new Date() }
@@ -60,21 +60,21 @@ export const authOptions: NextAuthOptions = {
       }
     }),
 
-    // Google 로그인
+    // Google login
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       allowDangerousEmailAccountLinking: true,
     }),
 
-    // Naver 로그인
+    // Naver login
     NaverProvider({
       clientId: process.env.NAVER_CLIENT_ID!,
       clientSecret: process.env.NAVER_CLIENT_SECRET!,
       allowDangerousEmailAccountLinking: true,
     }),
 
-    // Kakao 로그인
+    // Kakao login
     KakaoProvider({
       clientId: process.env.KAKAO_CLIENT_ID!,
       clientSecret: process.env.KAKAO_CLIENT_SECRET!,
@@ -84,17 +84,17 @@ export const authOptions: NextAuthOptions = {
 
   callbacks: {
     async signIn({ user, account }) {
-      // 소셜 로그인인 경우
+      // Social login path
       if (account?.provider !== "credentials") {
         try {
           const email = user.email
 
           if (!email) {
-            console.error("소셜 로그인 에러: 이메일 정보 없음")
+            console.error("social login error: missing email")
             return false
           }
 
-          // providerAccountId로 탈퇴한 계정인지 확인
+          // Check whether the providerAccountId belongs to a withdrawn account
           const existingAccount = await prisma.account.findUnique({
             where: {
               provider_providerAccountId: {
@@ -112,7 +112,7 @@ export const authOptions: NextAuthOptions = {
             return "/login?error=WithdrawnAccount"
           }
 
-          // 이메일로 기존 사용자 확인
+          // Look up an existing user by email
           const existingUser = await prisma.user.findUnique({
             where: { email }
           })
@@ -131,7 +131,7 @@ export const authOptions: NextAuthOptions = {
               return "/login?error=InactiveAccount"
             }
 
-            // provider 정보 업데이트
+            // Update provider info
             await prisma.user.update({
               where: { email },
               data: {
@@ -145,7 +145,7 @@ export const authOptions: NextAuthOptions = {
 
           return true
         } catch (error) {
-          console.error("소셜 로그인 처리 에러:", error)
+          console.error("social login handler failed:", error)
           return false
         }
       }
@@ -158,7 +158,7 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id
       }
 
-      // 소셜 로그인 시 DB에서 사용자 ID 조회
+      // On social login, look up the user ID in the DB
       if (account && account.provider !== "credentials" && token.email) {
         const dbUser = await prisma.user.findUnique({
           where: { email: token.email as string },
@@ -176,14 +176,14 @@ export const authOptions: NextAuthOptions = {
       if (session.user && token.id) {
         session.user.id = token.id as string
 
-        // DB에서 추가 정보 가져오기
+        // Fetch additional info from the DB
         const dbUser = await prisma.user.findUnique({
           where: { id: parseInt(token.id as string) },
           select: { level: true, role: true, nickname: true, image: true, status: true, deletedAt: true }
         })
 
         if (dbUser) {
-          // 삭제/탈퇴/정지/비활성 사용자는 세션 무효화
+          // Invalidate sessions for deleted/withdrawn/banned/inactive users
           if (dbUser.deletedAt || dbUser.status === 'withdrawn' || dbUser.status === 'banned' || dbUser.status === 'inactive') {
             return { ...session, user: undefined }
           }
@@ -205,7 +205,7 @@ export const authOptions: NextAuthOptions = {
 
   session: {
     strategy: "jwt",
-    maxAge: 24 * 60 * 60, // 24시간
+    maxAge: 24 * 60 * 60, // 24 hours
   },
 
   cookies: {
@@ -216,7 +216,7 @@ export const authOptions: NextAuthOptions = {
         sameSite: "lax",
         path: "/",
         secure: process.env.NODE_ENV === "production",
-        // maxAge 생략 - 프록시에서 세션 쿠키로 변환
+        // maxAge omitted — proxy converts to session cookie
       },
     },
   },

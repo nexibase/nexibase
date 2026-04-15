@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-// 사이트 통계 조회
+// Fetch site stats
 export async function GET() {
   try {
     const [memberCount, boardCount, postCount, commentCount] = await Promise.all([
@@ -21,7 +21,7 @@ export async function GET() {
       }
     })
   } catch (error) {
-    console.error('통계 조회 에러:', error)
+    console.error('failed to fetch stats:', error)
     return NextResponse.json(
       { error: '통계를 불러오는데 실패했습니다.' },
       { status: 500 }
