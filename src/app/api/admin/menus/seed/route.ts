@@ -101,7 +101,7 @@ export async function POST() {
       message: '메뉴와 위젯 시드 데이터가 생성되었습니다.',
     })
   } catch (error) {
-    console.error('메뉴 시드 에러:', error)
+    console.error('failed to seed menus:', error)
     return NextResponse.json({ error: '서버 오류' }, { status: 500 })
   }
 }

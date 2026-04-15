@@ -13,13 +13,13 @@ export const themeManifest: Record<string, ThemeMeta> = {
     author: 'nexibase',
   },
   'default': {
-    name: '기본 테마',
-    description: '기본 라이트/다크 테마',
+    name: 'Default theme',
+    description: 'Default light/dark theme',
     author: 'kagla',
   },
   'ocean-blue': {
-    name: '오션 블루',
-    description: '파란색 계열 테마',
+    name: 'Ocean Blue',
+    description: 'Blue-toned theme',
     author: 'kagla',
   }
 }

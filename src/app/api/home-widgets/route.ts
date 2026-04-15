@@ -39,7 +39,7 @@ export async function GET() {
 
     return NextResponse.json({ widgets: grouped })
   } catch (error) {
-    console.error('위젯 조회 에러:', error)
+    console.error('failed to fetch widgets:', error)
     return NextResponse.json({ widgets: {} })
   }
 }

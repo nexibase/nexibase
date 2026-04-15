@@ -6,6 +6,7 @@ import Link from '@tiptap/extension-link'
 import Underline from '@tiptap/extension-underline'
 import Placeholder from '@tiptap/extension-placeholder'
 import { useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 import {
   Bold,
   Italic,
@@ -25,9 +26,11 @@ interface MiniEditorProps {
 export function MiniEditor({
   content,
   onChange,
-  placeholder = '댓글을 입력하세요...',
+  placeholder,
   className,
 }: MiniEditorProps) {
+  const t = useTranslations('editor')
+  const effectivePlaceholder = placeholder ?? t('placeholder')
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
@@ -45,7 +48,7 @@ export function MiniEditor({
         openOnClick: false,
         HTMLAttributes: { class: 'text-primary underline' },
       }),
-      Placeholder.configure({ placeholder }),
+      Placeholder.configure({ placeholder: effectivePlaceholder }),
     ],
     content,
     onUpdate: ({ editor }) => {
@@ -71,15 +74,16 @@ export function MiniEditor({
       editor.chain().focus().unsetLink().run()
       return
     }
-    const url = window.prompt('URL을 입력하세요')
+    const url = window.prompt(t('linkPlaceholder'))
     if (url) {
       editor.chain().focus().setLink({ href: url }).run()
     }
   }
 
-  const ToolButton = ({ active, onClick, children }: { active?: boolean; onClick: () => void; children: React.ReactNode }) => (
+  const ToolButton = ({ active, onClick, title, children }: { active?: boolean; onClick: () => void; title?: string; children: React.ReactNode }) => (
     <button
       type="button"
+      title={title}
       onMouseDown={e => e.preventDefault()}
       onClick={onClick}
       className={cn(
@@ -94,20 +98,20 @@ export function MiniEditor({
   return (
     <div className={cn("border rounded-md bg-background", className)}>
       <div className="flex items-center gap-0.5 px-2 py-1 border-b">
-        <ToolButton active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()}>
+        <ToolButton title={t('bold')} active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()}>
           <Bold className="h-3.5 w-3.5" />
         </ToolButton>
-        <ToolButton active={editor.isActive('italic')} onClick={() => editor.chain().focus().toggleItalic().run()}>
+        <ToolButton title={t('italic')} active={editor.isActive('italic')} onClick={() => editor.chain().focus().toggleItalic().run()}>
           <Italic className="h-3.5 w-3.5" />
         </ToolButton>
-        <ToolButton active={editor.isActive('underline')} onClick={() => editor.chain().focus().toggleUnderline().run()}>
+        <ToolButton title={t('underline')} active={editor.isActive('underline')} onClick={() => editor.chain().focus().toggleUnderline().run()}>
           <UnderlineIcon className="h-3.5 w-3.5" />
         </ToolButton>
-        <ToolButton active={editor.isActive('strike')} onClick={() => editor.chain().focus().toggleStrike().run()}>
+        <ToolButton title={t('strike')} active={editor.isActive('strike')} onClick={() => editor.chain().focus().toggleStrike().run()}>
           <Strikethrough className="h-3.5 w-3.5" />
         </ToolButton>
         <div className="w-px h-4 bg-border mx-1" />
-        <ToolButton active={editor.isActive('link')} onClick={toggleLink}>
+        <ToolButton title={t('link')} active={editor.isActive('link')} onClick={toggleLink}>
           <LinkIcon className="h-3.5 w-3.5" />
         </ToolButton>
       </div>

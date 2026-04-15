@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
 
   const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000)
 
-  // 최근 1시간 내 마지막 성공 로그인 시점 조회
+  // Look up the most recent successful login within the last hour
   const lastSuccess = await prisma.loginAttempt.findFirst({
     where: {
       email,
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     select: { createdAt: true },
   })
 
-  // 마지막 성공 이후 (또는 1시간 내) 실패 횟수
+  // Count failures since the last success (or within the past hour)
   const failCount = await prisma.loginAttempt.count({
     where: {
       email,

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminUser } from '@/lib/auth'
 
-// 약관 상세 조회
+// Fetch policy detail
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -39,7 +39,7 @@ export async function GET(
       policy
     })
   } catch (error) {
-    console.error('약관 조회 에러:', error)
+    console.error('failed to fetch policy:', error)
     return NextResponse.json(
       { error: '서버 오류가 발생했습니다.' },
       { status: 500 }
@@ -47,7 +47,7 @@ export async function GET(
   }
 }
 
-// 약관 수정
+// Edit policy
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -104,7 +104,7 @@ export async function PUT(
     })
 
   } catch (error) {
-    console.error('약관 수정 에러:', error)
+    console.error('failed to update policy:', error)
     return NextResponse.json(
       { error: '서버 오류가 발생했습니다.' },
       { status: 500 }
@@ -112,7 +112,7 @@ export async function PUT(
   }
 }
 
-// 약관 삭제
+// Delete policy
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -154,7 +154,7 @@ export async function DELETE(
     })
 
   } catch (error) {
-    console.error('약관 삭제 에러:', error)
+    console.error('failed to delete policy:', error)
     return NextResponse.json(
       { error: '서버 오류가 발생했습니다.' },
       { status: 500 }

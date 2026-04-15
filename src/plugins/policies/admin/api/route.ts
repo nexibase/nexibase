@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminUser } from '@/lib/auth'
 
-// 약관 목록 조회 (슬러그별 그룹핑)
+// Fetch policy list (grouped by slug)
 export async function GET(request: NextRequest) {
   try {
     const admin = await getAdminUser()
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
 
     const skip = (page - 1) * limit
 
-    // 특정 슬러그의 버전 목록 조회
+    // Fetch the version list for a specific slug
     if (slug) {
       const policies = await prisma.policy.findMany({
         where: { slug },
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    // 전체 목록 (슬러그별 최신 활성 버전 우선)
+    // Full list (the most recent active version per slug comes first)
     const [policies, total] = await Promise.all([
       prisma.policy.findMany({
         skip,
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
       prisma.policy.count()
     ])
 
-    // 슬러그별 그룹핑 정보
+    // Per-slug grouping info
     const slugGroups = await prisma.policy.groupBy({
       by: ['slug'],
       _count: { id: true }
@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
       }
     })
   } catch (error) {
-    console.error('약관 목록 조회 에러:', error)
+    console.error('failed to fetch policies:', error)
     return NextResponse.json(
       { error: '서버 오류가 발생했습니다.' },
       { status: 500 }
@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// 약관 생성 (새 버전)
+// Create policy (new version)
 export async function POST(request: NextRequest) {
   try {
     const admin = await getAdminUser()
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 슬러그 형식 검증
+    // Validate slug format
     const slugRegex = /^[a-z0-9-]+$/
     if (!slugRegex.test(slug)) {
       return NextResponse.json(
@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 버전 형식 검증 (예: 1.0, 1.1, 2.0)
+    // Validate version format (e.g., 1.0, 1.1, 2.0)
     const versionRegex = /^\d+\.\d+$/
     if (!versionRegex.test(version)) {
       return NextResponse.json(
@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 동일 슬러그+버전 중복 확인
+    // Check for a duplicate slug+version pair
     const existing = await prisma.policy.findUnique({
       where: {
         slug_version: { slug, version }
@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 약관 생성 (기본 비활성 상태)
+    // Create policy (inactive by default)
     const newPolicy = await prisma.policy.create({
       data: {
         slug,
@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
     }, { status: 201 })
 
   } catch (error) {
-    console.error('약관 생성 에러:', error)
+    console.error('failed to create policy:', error)
     return NextResponse.json(
       { error: '서버 오류가 발생했습니다.' },
       { status: 500 }
@@ -146,7 +146,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// 약관 일괄 삭제
+// Bulk delete policies
 export async function DELETE(request: NextRequest) {
   try {
     const admin = await getAdminUser()
@@ -174,7 +174,7 @@ export async function DELETE(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('약관 삭제 에러:', error)
+    console.error('failed to delete policy:', error)
     return NextResponse.json(
       { error: '서버 오류가 발생했습니다.' },
       { status: 500 }

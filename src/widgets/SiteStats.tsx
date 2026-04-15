@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Users, FileText, MessageSquare, TrendingUp } from "lucide-react"
+import { useTranslations } from 'next-intl'
 
 interface Stats {
   memberCount: number
@@ -12,6 +13,7 @@ interface Stats {
 }
 
 export default function SiteStats() {
+  const t = useTranslations('widgets')
   const [stats, setStats] = useState<Stats | null>(null)
 
   useEffect(() => {
@@ -23,7 +25,7 @@ export default function SiteStats() {
           setStats(data.stats)
         }
       } catch (error) {
-        console.error('SiteStats 데이터 조회 에러:', error)
+        console.error('SiteStats fetch failed:', error)
       }
     }
     fetchStats()
@@ -40,7 +42,7 @@ export default function SiteStats() {
           </div>
           <div>
             <div className="text-2xl font-bold">{stats.memberCount.toLocaleString()}</div>
-            <div className="text-sm text-muted-foreground">회원</div>
+            <div className="text-sm text-muted-foreground">{t('memberCount')}</div>
           </div>
         </CardContent>
       </Card>
@@ -51,7 +53,7 @@ export default function SiteStats() {
           </div>
           <div>
             <div className="text-2xl font-bold">{stats.postCount.toLocaleString()}</div>
-            <div className="text-sm text-muted-foreground">게시글</div>
+            <div className="text-sm text-muted-foreground">{t('postCount')}</div>
           </div>
         </CardContent>
       </Card>
@@ -62,7 +64,7 @@ export default function SiteStats() {
           </div>
           <div>
             <div className="text-2xl font-bold">{stats.commentCount.toLocaleString()}</div>
-            <div className="text-sm text-muted-foreground">댓글</div>
+            <div className="text-sm text-muted-foreground">{t('commentCount')}</div>
           </div>
         </CardContent>
       </Card>
@@ -73,7 +75,7 @@ export default function SiteStats() {
           </div>
           <div>
             <div className="text-2xl font-bold">{stats.boardCount.toLocaleString()}</div>
-            <div className="text-sm text-muted-foreground">게시판</div>
+            <div className="text-sm text-muted-foreground">{t('boardCount')}</div>
           </div>
         </CardContent>
       </Card>

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminUser } from '@/lib/auth'
 
-// 기본 콘텐츠 데이터
+// Default content data
 const DEFAULT_CONTENTS = [
   {
     slug: 'about',
@@ -47,7 +47,7 @@ const DEFAULT_CONTENTS = [
   },
 ]
 
-// 기본 콘텐츠 생성
+// Create default contents
 export async function POST() {
   try {
     const admin = await getAdminUser()
@@ -55,7 +55,7 @@ export async function POST() {
       return NextResponse.json({ error: '관리자 권한이 필요합니다.' }, { status: 401 })
     }
 
-    // 이미 존재하는 콘텐츠 slug 확인
+    // Check for an existing content slug
     const existingSlugs = await prisma.content.findMany({
       where: {
         slug: { in: DEFAULT_CONTENTS.map(c => c.slug) }
@@ -65,7 +65,7 @@ export async function POST() {
 
     const existingSlugSet = new Set(existingSlugs.map(c => c.slug))
 
-    // 존재하지 않는 콘텐츠만 생성
+    // Only create contents that do not already exist
     const contentsToCreate = DEFAULT_CONTENTS.filter(c => !existingSlugSet.has(c.slug))
 
     if (contentsToCreate.length === 0) {
@@ -76,7 +76,7 @@ export async function POST() {
       })
     }
 
-    // 콘텐츠 생성
+    // Create content
     const result = await prisma.content.createMany({
       data: contentsToCreate
     })
@@ -89,7 +89,7 @@ export async function POST() {
     })
 
   } catch (error) {
-    console.error('기본 콘텐츠 생성 에러:', error)
+    console.error('failed to create default contents:', error)
     return NextResponse.json(
       { error: '기본 콘텐츠 생성에 실패했습니다.' },
       { status: 500 }

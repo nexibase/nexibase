@@ -5,12 +5,14 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Sparkles, ArrowRight } from "lucide-react"
 import Link from "next/link"
+import { useTranslations } from 'next-intl'
 
 interface UserInfo {
   nickname: string | null
 }
 
 export default function WelcomeBanner() {
+  const t = useTranslations('widgets')
   const [user, setUser] = useState<UserInfo | null>(null)
   const [siteName, setSiteName] = useState('NexiBase')
   const [siteDescription, setSiteDescription] = useState('')
@@ -41,14 +43,14 @@ export default function WelcomeBanner() {
         }
       }
     } catch (error) {
-      console.error('WelcomeBanner 데이터 조회 에러:', error)
+      console.error('WelcomeBanner fetch failed:', error)
     }
   }, [])
 
   useEffect(() => {
     fetchData()
 
-    // 페이지 포커스 시 세션 상태 갱신 (로그인/로그아웃 반영)
+    // Refresh session state on page focus (reflect login/logout)
     const handleFocus = () => fetchData()
     window.addEventListener('focus', handleFocus)
     return () => window.removeEventListener('focus', handleFocus)
@@ -64,25 +66,25 @@ export default function WelcomeBanner() {
           </div>
           <h1 className="text-xl md:text-2xl font-bold mb-2">
             {user
-              ? `${user.nickname || '사용자'}님, 환영합니다!`
-              : `${siteName}에 오신 것을 환영합니다`
+              ? t('welcomeUser', { nickname: user.nickname || t('defaultNickname') })
+              : t('welcomeSite', { siteName })
             }
           </h1>
           <p className="text-sm text-muted-foreground">
-            {siteDescription || '함께 성장하는 커뮤니티에서 다양한 이야기를 나눠보세요.'}
+            {siteDescription || t('defaultDesc')}
           </p>
         </div>
         <div className="flex gap-2 mt-4">
           {firstBoardSlug && (
             <Link href={`/boards/${firstBoardSlug}`}>
               <Button>
-                시작하기
+                {t('startBtn')}
                 <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
             </Link>
           )}
           <Link href="/contents/about">
-            <Button variant="outline">더 알아보기</Button>
+            <Button variant="outline">{t('learnMore')}</Button>
           </Link>
         </div>
       </CardContent>

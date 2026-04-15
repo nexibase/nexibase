@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-// 인기 게시글 조회 (좋아요 + 조회수 + 댓글수 기반)
+// Fetch popular posts (ranked by likes + views + comment count)
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1')
     const period = searchParams.get('period') || 'week' // day, week, month, all
 
-    // 기간 필터
+    // Date range filter
     let dateFilter: Date | undefined
     const now = new Date()
     switch (period) {
@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
       }
     })
   } catch (error) {
-    console.error('인기 게시글 조회 에러:', error)
+    console.error('failed to fetch popular posts:', error)
     return NextResponse.json(
       { error: '게시글을 불러오는데 실패했습니다.' },
       { status: 500 }

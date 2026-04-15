@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-// 게시판 정보 조회
+// Fetch board info
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
@@ -52,7 +52,7 @@ export async function GET(
       board
     })
   } catch (error) {
-    console.error('게시판 조회 에러:', error)
+    console.error('failed to fetch board:', error)
     return NextResponse.json(
       { error: '서버 오류가 발생했습니다.' },
       { status: 500 }

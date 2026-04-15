@@ -1,6 +1,6 @@
 export default {
-  title: '사이트 통계',
-  description: '회원, 게시글, 댓글, 게시판 통계 카드',
+  title: 'Site Stats',
+  description: 'Members, posts, comments, and board stats cards',
   defaultZone: 'top',
   defaultColSpan: 2,
   defaultRowSpan: 1,

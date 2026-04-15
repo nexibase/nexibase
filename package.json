@@ -1,9 +1,10 @@
 {
   "name": "nexibase",
-  "version": "0.8.0",
+  "version": "0.15.0",
   "private": true,
   "scripts": {
     "dev": "node scripts/scan-plugins.js && node scripts/scan-layouts.js && node scripts/scan-themes.js && next dev --turbopack",
+    "reset-install": "node scripts/reset-install.js",
     "dev:clean": "rm -rf .next && next dev --turbopack",
     "build": "node scripts/scan-plugins.js && node scripts/scan-layouts.js && node scripts/scan-themes.js && next build",
     "start": "next start",
@@ -50,6 +51,7 @@
     "mysql2": "^3.14.2",
     "next": "^16.2.3",
     "next-auth": "^4.24.13",
+    "next-intl": "^4.9.1",
     "next-themes": "^0.4.6",
     "nodemailer": "^7.0.5",
     "react": "^19.2.5",

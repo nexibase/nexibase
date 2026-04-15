@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-// 통합 검색 API (게시글, 콘텐츠, 정책)
+// Unified search API (posts, content, policies)
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // 각 타입별 검색 결과
+    // Search results per type
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const results: {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -37,41 +37,41 @@ export async function GET(request: NextRequest) {
       products: { items: [], total: 0 }
     }
 
-    // 게시글 검색
+    // Search posts
     if (type === 'all' || type === 'posts') {
       const postsResult = await searchPosts(query, page, limit, sort, boardSlug)
       results.posts = postsResult
     }
 
-    // 콘텐츠 검색
+    // Content search
     if (type === 'all' || type === 'contents') {
       const contentsResult = await searchContents(query, type === 'contents' ? page : 1, type === 'contents' ? limit : 5)
       results.contents = contentsResult
     }
 
-    // 정책 검색
+    // Policy search
     if (type === 'all' || type === 'policies') {
       const policiesResult = await searchPolicies(query, type === 'policies' ? page : 1, type === 'policies' ? limit : 5)
       results.policies = policiesResult
     }
 
-    // 상품 검색
+    // Product search
     if (type === 'all' || type === 'products') {
       const productsResult = await searchProducts(query, type === 'products' ? page : 1, type === 'products' ? limit : 5)
       results.products = productsResult
     }
 
-    // 전체 결과 수
+    // Total result count
     const totalAll = results.posts.total + results.contents.total + results.policies.total + results.products.total
 
-    // 게시판 목록 (필터용)
+    // Board list (for filters)
     const boards = await prisma.board.findMany({
       where: { isActive: true },
       select: { slug: true, name: true },
       orderBy: { name: 'asc' }
     })
 
-    // 현재 타입에 따른 페이지네이션
+    // Pagination for the current type
     let currentTotal = totalAll
     let currentTotalPages = 1
     if (type === 'posts') {
@@ -109,13 +109,13 @@ export async function GET(request: NextRequest) {
       boards
     })
   } catch (error) {
-    console.error('검색 에러:', error)
+    console.error('search error:', error)
 
-    // 폴백 검색
+    // Fallback search
     try {
       return await fallbackSearch(request)
     } catch (fallbackError) {
-      console.error('폴백 검색 에러:', fallbackError)
+      console.error('fallback search error:', fallbackError)
       return NextResponse.json(
         { error: '검색 중 오류가 발생했습니다.' },
         { status: 500 }
@@ -124,7 +124,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// 게시글 검색 (FULLTEXT)
+// Post search (FULLTEXT)
 async function searchPosts(
   query: string,
   page: number,
@@ -139,7 +139,7 @@ async function searchPosts(
     ? searchTerms.map(term => `+${term}*`).join(' ')
     : `+${query}*`
 
-  // 게시판 필터
+  // Board filter
   let boardId: number | null = null
   if (boardSlug) {
     const board = await prisma.board.findUnique({
@@ -150,7 +150,7 @@ async function searchPosts(
   }
 
   try {
-    // FULLTEXT 검색 시도
+    // Try FULLTEXT search
     const posts = await prisma.$queryRaw<Array<{
       id: number
       title: string
@@ -235,12 +235,12 @@ async function searchPosts(
 
     return { items, total }
   } catch {
-    // FULLTEXT 실패 시 LIKE 검색
+    // Fall back to LIKE search when FULLTEXT fails
     return searchPostsLike(query, page, limit, sort, boardSlug)
   }
 }
 
-// 게시글 LIKE 검색 (폴백)
+// Post LIKE search (fallback)
 async function searchPostsLike(
   query: string,
   page: number,
@@ -325,7 +325,7 @@ async function searchPostsLike(
   return { items, total }
 }
 
-// 콘텐츠 검색
+// Content search
 async function searchContents(
   query: string,
   page: number,
@@ -384,7 +384,7 @@ async function searchContents(
   return { items, total }
 }
 
-// 정책 검색
+// Policy search
 async function searchPolicies(
   query: string,
   page: number,
@@ -445,7 +445,7 @@ async function searchPolicies(
   return { items, total }
 }
 
-// 상품 검색
+// Product search
 async function searchProducts(
   query: string,
   page: number,
@@ -502,7 +502,7 @@ async function searchProducts(
   ])
 
   const items = products.map(product => {
-    // 이미지 목록에서 첫번째 이미지 추출
+    // Extract the first image from the image list
     let thumbnail = null
     if (product.images) {
       try {
@@ -529,7 +529,7 @@ async function searchProducts(
   return { items, total }
 }
 
-// 폴백 검색 (전체)
+// Fallback search (all types)
 async function fallbackSearch(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const query = searchParams.get('q')?.trim()

@@ -12,6 +12,7 @@ import Image from "next/image"
 import { useRouter, usePathname } from "next/navigation"
 import { headerWidgets } from "@/lib/widgets/_generated-header-widgets"
 import { useSite } from "@/lib/SiteContext"
+import { useTranslations } from 'next-intl'
 
 interface Notification {
   id: number
@@ -24,7 +25,8 @@ interface Notification {
 }
 
 export default function Header() {
-  const { user, setUser, settings, boards, headerMenus, isLoading } = useSite()
+  const { user, setUser, settings, headerMenus, isLoading } = useSite()
+  const t = useTranslations('header')
   const [mounted, setMounted] = useState(false)
   const [moreMenuOpen, setMoreMenuOpen] = useState(false)
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null)
@@ -44,7 +46,7 @@ export default function Header() {
   }, [])
 
 
-  // 알림 개수 조회
+  // Fetch unread notification count
   const fetchUnreadCount = async () => {
     try {
       const res = await fetch('/api/notifications/count')
@@ -53,11 +55,11 @@ export default function Header() {
         setUnreadCount(data.count)
       }
     } catch (error) {
-      console.error('알림 개수 조회 에러:', error)
+      console.error('failed to fetch notification count:', error)
     }
   }
 
-  // 알림 목록 조회
+  // Fetch notification list
   const fetchNotifications = async () => {
     try {
       const res = await fetch('/api/notifications?limit=10')
@@ -67,11 +69,11 @@ export default function Header() {
         setUnreadCount(data.unreadCount)
       }
     } catch (error) {
-      console.error('알림 목록 조회 에러:', error)
+      console.error('failed to fetch notifications:', error)
     }
   }
 
-  // 알림 읽음 처리
+  // Mark notification as read
   const markAsRead = async (notificationId: number) => {
     try {
       await fetch('/api/notifications', {
@@ -80,11 +82,11 @@ export default function Header() {
         body: JSON.stringify({ notificationId }),
       })
     } catch (error) {
-      console.error('알림 읽음 처리 에러:', error)
+      console.error('failed to mark notifications as read:', error)
     }
   }
 
-  // 모든 알림 읽음 처리
+  // Mark all notifications as read
   const markAllAsRead = async () => {
     try {
       await fetch('/api/notifications', {
@@ -95,11 +97,11 @@ export default function Header() {
       setUnreadCount(0)
       setNotifications(notifications.map(n => ({ ...n, isRead: true })))
     } catch (error) {
-      console.error('알림 읽음 처리 에러:', error)
+      console.error('failed to mark notifications as read:', error)
     }
   }
 
-  // 알림 클릭 처리
+  // Handle notification click
   const handleNotificationClick = (notification: Notification) => {
     if (!notification.isRead) {
       markAsRead(notification.id)
@@ -122,7 +124,7 @@ export default function Header() {
       router.push('/')
       router.refresh()
     } catch (error) {
-      console.error('로그아웃 에러:', error)
+      console.error('logout failed:', error)
     }
   }
 
@@ -139,14 +141,11 @@ export default function Header() {
     }
   }
 
-  // 현재 경로가 해당 게시판인지 확인
-  const isActiveBoard = (slug: string) => pathname?.startsWith(`/boards/${slug}`)
-
-  // 로그인 시 알림 개수 조회
+  // Fetch notification count once logged in
   useEffect(() => {
     if (user) {
       fetchUnreadCount()
-      // 1분마다 알림 개수 갱신
+      // Refresh notification count every minute
       const interval = setInterval(fetchUnreadCount, 60000)
       return () => clearInterval(interval)
     }
@@ -157,7 +156,7 @@ export default function Header() {
       if (moreMenuRef.current && !moreMenuRef.current.contains(event.target as Node)) {
         setMoreMenuOpen(false)
       }
-      // 드롭다운 메뉴 닫기
+      // Close dropdown menus
       if (openDropdownId !== null) {
         const target = event.target as HTMLElement
         if (!target.closest('[data-dropdown]')) {
@@ -174,11 +173,11 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 bg-background border-b">
-      {/* 상단 헤더 */}
+      {/* Top header */}
       <div className="border-b bg-muted/30">
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex items-center justify-between h-14">
-            {/* 로고 */}
+            {/* Logo */}
             <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
               {isLoading ? (
                 <div className="w-7 h-7" />
@@ -200,12 +199,12 @@ export default function Header() {
               <span className="text-xl font-bold text-foreground hidden md:block">{isLoading ? '' : settings.site_name}</span>
             </Link>
 
-            {/* 검색 (데스크톱) */}
+            {/* Search (desktop) */}
             <div className="hidden md:flex flex-1 max-w-md mx-8">
               <form onSubmit={handleSearch} className="w-full relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="검색어를 입력하세요..."
+                  placeholder={t('search')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10 bg-background border-muted-foreground/20"
@@ -213,14 +212,14 @@ export default function Header() {
               </form>
             </div>
 
-            {/* 우측 액션 */}
+            {/* Right-side actions */}
             <div className="flex items-center gap-2">
-              {/* 테마 토글 */}
+              {/* Theme toggle */}
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={toggleTheme}
-                title={mounted ? (theme === 'dark' ? '라이트 모드' : '다크 모드') : '테마 변경'}
+                title={mounted ? (theme === 'dark' ? t('lightMode') : t('darkMode')) : t('darkMode')}
               >
                 {mounted ? (
                   theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />
@@ -229,12 +228,12 @@ export default function Header() {
                 )}
               </Button>
 
-              {/* 플러그인 헤더 위젯 */}
+              {/* Plugin header widgets */}
               {headerWidgets.map(({ folder, component: Widget }) => (
                 <Widget key={folder} />
               ))}
 
-              {/* 알림 (로그인 시만 표시) */}
+              {/* Notifications (only shown when logged in) */}
               {user && (
                 <div className="relative" ref={notificationRef}>
                   <Button
@@ -256,24 +255,24 @@ export default function Header() {
                     )}
                   </Button>
 
-                  {/* 알림 드롭다운 */}
+                  {/* Notification dropdown */}
                   {notificationOpen && (
                     <div className="fixed md:absolute left-2 right-2 md:left-auto md:right-0 top-16 md:top-full md:mt-2 md:w-80 bg-background border rounded-lg shadow-lg z-50">
                       <div className="flex items-center justify-between px-4 py-3 border-b">
-                        <span className="font-medium">알림</span>
+                        <span className="font-medium">{t('notifications')}</span>
                         {unreadCount > 0 && (
                           <button
                             onClick={markAllAsRead}
                             className="text-xs text-primary hover:underline"
                           >
-                            모두 읽음
+                            {t('markAllRead')}
                           </button>
                         )}
                       </div>
                       <div className="max-h-[60vh] md:max-h-80 overflow-y-auto">
                         {notifications.length === 0 ? (
                           <div className="px-4 py-8 text-center text-muted-foreground text-sm">
-                            알림이 없습니다
+                            {t('noNotifications')}
                           </div>
                         ) : (
                           notifications.map((notification) => (
@@ -313,7 +312,7 @@ export default function Header() {
                           onClick={() => setNotificationOpen(false)}
                           className="text-xs text-primary hover:underline"
                         >
-                          모든 알림 보기
+                          {t('viewAllNotifications')}
                         </Link>
                       </div>
                     </div>
@@ -321,22 +320,22 @@ export default function Header() {
                 </div>
               )}
 
-              {/* 데스크톱: 모든 액션 표시 */}
+              {/* Desktop: show all actions */}
               <div className="hidden md:flex items-center gap-2">
                 {!isLoading && (
                   <>
                     {user ? (
                       <>
-                        {/* 마이페이지 */}
+                        {/* My page */}
                         <Link href="/mypage">
                           <Button variant="ghost" size="icon" className="relative">
                             <User className="h-5 w-5" />
                           </Button>
                         </Link>
-                        {/* 관리자 바로가기 */}
+                        {/* Admin shortcut */}
                         {user.role === 'admin' && (
                           <Link href="/admin">
-                            <Button variant="ghost" size="icon" title="관리자">
+                            <Button variant="ghost" size="icon" title={t('admin')}>
                               <Settings className="h-5 w-5" />
                             </Button>
                           </Link>
@@ -349,7 +348,7 @@ export default function Header() {
                             </AvatarFallback>
                           </Avatar>
                           <span className="text-sm font-medium max-w-[100px] truncate">
-                            {user.nickname || '사용자'}
+                            {user.nickname || t('defaultUser')}
                           </span>
                           <Button variant="ghost" size="sm" onClick={handleLogout} className="text-muted-foreground">
                             <LogOut className="h-4 w-4" />
@@ -359,11 +358,11 @@ export default function Header() {
                     ) : (
                       <>
                         <Link href={`/login?callbackUrl=${encodeURIComponent(pathname)}`}>
-                          <Button variant="ghost" size="sm">로그인</Button>
+                          <Button variant="ghost" size="sm">{t('login')}</Button>
                         </Link>
                         {settings.signup_enabled === 'true' && (
                           <Link href="/signup">
-                            <Button size="sm">회원가입</Button>
+                            <Button size="sm">{t('signup')}</Button>
                           </Link>
                         )}
                       </>
@@ -372,7 +371,7 @@ export default function Header() {
                 )}
               </div>
 
-              {/* 모바일: 프로필/로그인 + 햄버거 메뉴 */}
+              {/* Mobile: profile/login + hamburger menu */}
               <div className="flex md:hidden items-center gap-1">
                 {!isLoading && (
                   <>
@@ -387,12 +386,12 @@ export default function Header() {
                       </Link>
                     ) : (
                       <Link href={`/login?callbackUrl=${encodeURIComponent(pathname)}`}>
-                        <Button variant="ghost" size="sm" className="text-xs px-2">로그인</Button>
+                        <Button variant="ghost" size="sm" className="text-xs px-2">{t('login')}</Button>
                       </Link>
                     )}
                   </>
                 )}
-                {/* 햄버거 메뉴 버튼 */}
+                {/* Hamburger menu button */}
                 <Button
                   variant="ghost"
                   size="icon"
@@ -407,17 +406,18 @@ export default function Header() {
         </div>
       </div>
 
-      {/* 네비게이션 탭 */}
+      {/* Navigation tabs */}
       <div className="bg-background">
         <div className="max-w-6xl mx-auto px-4">
           <nav className="hidden md:flex items-center gap-1 h-11 overflow-visible">
-            {/* DB 기반 메뉴 렌더링 */}
+            {/* DB-driven menu rendering */}
             {headerMenus.length > 0 ? (
               <>
-                {/* 상위 메뉴 (처음 7개를 탭으로 표시) */}
+                {/* Top-level menus (first 7 shown as tabs) */}
                 {headerMenus.filter(m => {
                   if (m.visibility === 'member' && !user) return false
                   if (m.visibility === 'admin' && user?.role !== 'admin') return false
+                  if (user && (m.url === '/login' || m.url === '/signup')) return false
                   return true
                 }).slice(0, 7).map((menu, idx) => {
                   const isActive = menu.url === '/'
@@ -425,7 +425,7 @@ export default function Header() {
                     : pathname?.startsWith(menu.url)
                   const hasChildren = menu.children && menu.children.length > 0
 
-                  // 구분선: 첫 4개 메뉴(홈, 인기, 쇼핑, 경매) 이후
+                  // Separator placed after the first 4 menus (Home, Popular, Shop, Auction)
                   const showSeparator = idx === 3 && headerMenus.length > 4
 
                   return (
@@ -447,6 +447,7 @@ export default function Header() {
                               {menu.children.filter(c => {
                                 if (c.visibility === 'member' && !user) return false
                                 if (c.visibility === 'admin' && user?.role !== 'admin') return false
+                                if (user && (c.url === '/login' || c.url === '/signup')) return false
                                 return true
                               }).map((child) => (
                                 <Link
@@ -479,10 +480,11 @@ export default function Header() {
                   )
                 })}
 
-                {/* 나머지 메뉴를 더보기로 */}
+                {/* Remaining menus under a "More" dropdown */}
                 {headerMenus.filter(m => {
                   if (m.visibility === 'member' && !user) return false
                   if (m.visibility === 'admin' && user?.role !== 'admin') return false
+                  if (user && (m.url === '/login' || m.url === '/signup')) return false
                   return true
                 }).length > 7 && (
                   <div className="relative" ref={moreMenuRef}>
@@ -492,7 +494,7 @@ export default function Header() {
                         moreMenuOpen ? 'bg-muted text-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                       }`}
                     >
-                      더보기
+                      {t('more')}
                       <ChevronDown className={`h-4 w-4 transition-transform ${moreMenuOpen ? 'rotate-180' : ''}`} />
                     </button>
                     {moreMenuOpen && (
@@ -500,6 +502,7 @@ export default function Header() {
                         {headerMenus.filter(m => {
                           if (m.visibility === 'member' && !user) return false
                           if (m.visibility === 'admin' && user?.role !== 'admin') return false
+                          if (user && (m.url === '/login' || m.url === '/signup')) return false
                           return true
                         }).slice(7).map((menu) => (
                           <Link
@@ -517,29 +520,18 @@ export default function Header() {
                   </div>
                 )}
               </>
-            ) : (
-              <>
-                {/* 폴백: DB 메뉴가 없을 때 기존 하드코딩 유지 */}
-                <Link href="/" className={`px-4 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${pathname === '/' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>홈</Link>
-                <Link href="/posts/popular" className={`px-4 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${pathname === '/posts/popular' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>인기</Link>
-                <Link href="/shop" className={`px-4 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${pathname?.startsWith('/shop') ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>쇼핑</Link>
-                <div className="w-px h-5 bg-border mx-1" />
-                {boards.slice(0, 5).map((board) => (
-                  <Link key={board.id} href={`/boards/${board.slug}`} className={`px-4 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${isActiveBoard(board.slug) ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}>{board.name}</Link>
-                ))}
-              </>
-            )}
+            ) : null /* Empty nav until DB menus load (no hardcoded Korean fallback) */}
           </nav>
 
-          {/* 모바일 네비게이션 */}
+          {/* Mobile navigation */}
           {mobileMenuOpen && (
             <nav className="md:hidden py-3 border-t space-y-1">
-              {/* 검색 */}
+              {/* Search */}
               <div className="px-3 pb-3">
                 <form onSubmit={handleSearch} className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="검색어를 입력하세요..."
+                    placeholder={t('search')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-10"
@@ -547,7 +539,7 @@ export default function Header() {
                 </form>
               </div>
 
-              {/* 사용자 정보 */}
+              {/* User info */}
               {user && (
                 <>
                   <div className="px-3 py-2 flex items-center gap-3 bg-muted/50 rounded-md mx-3">
@@ -558,7 +550,7 @@ export default function Header() {
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{user.nickname || '사용자'}</p>
+                      <p className="text-sm font-medium truncate">{user.nickname || t('defaultUser')}</p>
                       <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                     </div>
                   </div>
@@ -566,12 +558,13 @@ export default function Header() {
                 </>
               )}
 
-              {/* DB 기반 모바일 메뉴 */}
+              {/* DB-driven mobile menu */}
               {headerMenus.length > 0 ? (
                 <>
                   {headerMenus.filter(m => {
                     if (m.visibility === 'member' && !user) return false
                     if (m.visibility === 'admin' && user?.role !== 'admin') return false
+                    if (user && (m.url === '/login' || m.url === '/signup')) return false
                     return true
                   }).map((menu) => (
                     <div key={menu.id}>
@@ -587,12 +580,13 @@ export default function Header() {
                       >
                         {menu.icon ? `${menu.icon} ` : ''}{menu.label}
                       </Link>
-                      {/* 하위 메뉴 */}
+                      {/* Child menus */}
                       {menu.children && menu.children.length > 0 && (
                         <div className="ml-4">
                           {menu.children.filter(c => {
                             if (c.visibility === 'member' && !user) return false
                             if (c.visibility === 'admin' && user?.role !== 'admin') return false
+                            if (user && (c.url === '/login' || c.url === '/signup')) return false
                             return true
                           }).map((child) => (
                             <Link
@@ -610,31 +604,21 @@ export default function Header() {
                     </div>
                   ))}
                 </>
-              ) : (
-                <>
-                  {/* 폴백: 하드코딩 메뉴 */}
-                  <Link href="/" className="block px-3 py-2 text-sm font-medium rounded-md hover:bg-muted" onClick={() => setMobileMenuOpen(false)}>홈</Link>
-                  <Link href="/posts/popular" className="block px-3 py-2 text-sm font-medium rounded-md hover:bg-muted" onClick={() => setMobileMenuOpen(false)}>인기</Link>
-                  <div className="border-t my-2" />
-                  {boards.map((board) => (
-                    <Link key={board.id} href={`/boards/${board.slug}`} className={`block px-3 py-2 text-sm rounded-md ${isActiveBoard(board.slug) ? 'bg-primary/10 text-primary' : 'hover:bg-muted'}`} onClick={() => setMobileMenuOpen(false)}>{board.name}</Link>
-                  ))}
-                </>
-              )}
+              ) : null /* Empty state until DB menus load (no hardcoded Korean fallback) */}
               <div className="border-t my-2" />
-              {/* 플러그인 헤더 위젯 (모바일) */}
+              {/* Plugin header widgets (mobile) */}
               {headerWidgets.map(({ folder, component: Widget }) => (
                 <div key={folder} onClick={() => setMobileMenuOpen(false)}>
                   <Widget />
                 </div>
               ))}
               {user && (
-                <Link href="/mypage" className={`block px-3 py-2 text-sm rounded-md ${pathname?.startsWith('/mypage') ? 'bg-primary/10 text-primary' : 'hover:bg-muted'}`} onClick={() => setMobileMenuOpen(false)}>마이페이지</Link>
+                <Link href="/mypage" className={`block px-3 py-2 text-sm rounded-md ${pathname?.startsWith('/mypage') ? 'bg-primary/10 text-primary' : 'hover:bg-muted'}`} onClick={() => setMobileMenuOpen(false)}>{t('mypage')}</Link>
               )}
               {user?.role === 'admin' && (
                 <>
                   <div className="border-t my-2" />
-                  <Link href="/admin" className="block px-3 py-2 text-sm font-medium text-primary rounded-md hover:bg-muted" onClick={() => setMobileMenuOpen(false)}>관리자</Link>
+                  <Link href="/admin" className="block px-3 py-2 text-sm font-medium text-primary rounded-md hover:bg-muted" onClick={() => setMobileMenuOpen(false)}>{t('admin')}</Link>
                 </>
               )}
               {user && (
@@ -647,7 +631,7 @@ export default function Header() {
                     }}
                     className="w-full text-left px-3 py-2 text-sm text-red-500 rounded-md hover:bg-muted"
                   >
-                    로그아웃
+                    {t('logout')}
                   </button>
                 </>
               )}

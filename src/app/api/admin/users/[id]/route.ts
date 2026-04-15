@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 import { getAdminUser } from '@/lib/auth'
 
-// 사용자 상세 조회
+// Fetch user detail
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -43,7 +43,7 @@ export async function GET(
       user: { ...user, password: undefined }
     })
   } catch (error) {
-    console.error('사용자 조회 실패:', error)
+    console.error('failed to fetch user:', error)
     return NextResponse.json(
       { success: false, message: '사용자 조회 실패' },
       { status: 500 }
@@ -51,7 +51,7 @@ export async function GET(
   }
 }
 
-// 사용자 수정 / 복원
+// Update / restore user
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -67,7 +67,7 @@ export async function PUT(
     const body = await request.json()
     const { action, email, nickname, password, role, level, status, adminNote } = body
 
-    // 삭제된 사용자 복원
+    // Restore deleted user
     if (action === 'restore') {
       const deletedUser = await prisma.user.findFirst({
         where: { id: userId, deletedAt: { not: null } }
@@ -80,7 +80,7 @@ export async function PUT(
         )
       }
 
-      // 이메일 중복 확인 (현재 활성 사용자 중)
+      // Email uniqueness check (against active users)
       const emailExists = await prisma.user.findFirst({
         where: { email: deletedUser.email, deletedAt: null }
       })
@@ -100,7 +100,7 @@ export async function PUT(
       return NextResponse.json({ success: true, message: '사용자가 복원되었습니다.' })
     }
 
-    // 기존 사용자 확인 (삭제되지 않은 사용자)
+    // Look up an existing user (not deleted)
     const existingUser = await prisma.user.findFirst({
       where: { id: userId, deletedAt: null }
     })
@@ -112,7 +112,7 @@ export async function PUT(
       )
     }
 
-    // 관리자 최소 1명 유지 체크
+    // Guard: keep at least one admin
     if (existingUser.role === 'admin' && role !== 'admin') {
       const adminCount = await prisma.user.count({
         where: { role: 'admin', deletedAt: null }
@@ -125,7 +125,7 @@ export async function PUT(
       }
     }
 
-    // 이메일 중복 확인 (다른 삭제되지 않은 사용자)
+    // Email uniqueness check (against other non-deleted users)
     if (email !== existingUser.email) {
       const emailExists = await prisma.user.findFirst({
         where: { email, deletedAt: null }
@@ -138,7 +138,7 @@ export async function PUT(
       }
     }
 
-    // 업데이트 데이터
+    // Update data
     const updateData: Record<string, unknown> = {
       email,
       nickname,
@@ -148,7 +148,7 @@ export async function PUT(
       adminNote: adminNote || null,
     }
 
-    // 비밀번호가 제공된 경우에만 업데이트
+    // Only update when a password is provided
     if (password) {
       updateData.password = await bcrypt.hash(password, 10)
     }
@@ -163,7 +163,7 @@ export async function PUT(
       user: { ...user, password: undefined }
     })
   } catch (error) {
-    console.error('사용자 수정 실패:', error)
+    console.error('failed to update user:', error)
     return NextResponse.json(
       { success: false, message: '사용자 수정 실패', error: error instanceof Error ? error.message : String(error) },
       { status: 500 }
@@ -171,7 +171,7 @@ export async function PUT(
   }
 }
 
-// 사용자 삭제 (소프트 삭제 / 영구 삭제)
+// Delete user (soft / permanent)
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -185,16 +185,16 @@ export async function DELETE(
     const { id } = await params
     const userId = parseInt(id)
 
-    // body가 있는지 확인 (영구 삭제 여부)
+    // Check for a request body (permanent-delete flag)
     let permanent = false
     try {
       const body = await request.json()
       permanent = body.permanent === true
     } catch {
-      // body가 없으면 소프트 삭제
+      // Soft-delete when the body is missing
     }
 
-    // 본인 삭제 방지
+    // Prevent self-deletion
     if (userId === admin.id) {
       return NextResponse.json(
         { success: false, message: '본인 계정은 삭제할 수 없습니다.' },
@@ -202,7 +202,7 @@ export async function DELETE(
       )
     }
 
-    // 영구 삭제
+    // Permanent delete
     if (permanent) {
       const userToDelete = await prisma.user.findUnique({
         where: { id: userId }
@@ -215,7 +215,7 @@ export async function DELETE(
         )
       }
 
-      // 이미 삭제된 사용자만 영구 삭제 가능
+      // Only already-deleted users can be permanently removed
       if (!userToDelete.deletedAt) {
         return NextResponse.json(
           { success: false, message: '활성 사용자는 영구 삭제할 수 없습니다. 먼저 삭제 처리해주세요.' },
@@ -223,20 +223,20 @@ export async function DELETE(
         )
       }
 
-      // 관련 데이터 삭제 후 사용자 삭제
+      // Delete related data, then the user
       await prisma.$transaction(async (tx) => {
-        // 소셜 계정 연결 삭제
+        // Unlink social accounts
         await tx.account.deleteMany({ where: { userId } })
-        // 알림 삭제
+        // Delete notifications
         await tx.notification.deleteMany({ where: { userId } })
-        // 사용자 영구 삭제
+        // Permanently delete user
         await tx.user.delete({ where: { id: userId } })
       })
 
       return NextResponse.json({ success: true, message: '사용자가 영구 삭제되었습니다.' })
     }
 
-    // 소프트 삭제
+    // Soft delete
     const userToDelete = await prisma.user.findUnique({
       where: { id: userId, deletedAt: null }
     })
@@ -248,7 +248,7 @@ export async function DELETE(
       )
     }
 
-    // 관리자 최소 1명 유지 체크
+    // Guard: keep at least one admin
     if (userToDelete.role === 'admin') {
       const adminCount = await prisma.user.count({
         where: { role: 'admin', deletedAt: null }
@@ -261,7 +261,7 @@ export async function DELETE(
       }
     }
 
-    // 소프트 삭제: deletedAt에 현재 시간 설정
+    // Soft delete: set deletedAt to now
     await prisma.user.update({
       where: { id: userId },
       data: { deletedAt: new Date() }
@@ -269,7 +269,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('사용자 삭제 실패:', error)
+    console.error('failed to delete user:', error)
     return NextResponse.json(
       { success: false, message: '사용자 삭제 실패' },
       { status: 500 }

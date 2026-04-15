@@ -6,14 +6,14 @@ export async function GET() {
   try {
     const boardsEnabled = await isPluginEnabled('boards')
 
-    // 날짜 계산
+    // Date math
     const now = new Date()
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
     const yesterdayStart = new Date(todayStart.getTime() - 24 * 60 * 60 * 1000)
     const lastWeekStart = new Date(todayStart.getTime() - 7 * 24 * 60 * 60 * 1000)
     const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate())
 
-    // === 코어 통계 (항상) ===
+    // === Core stats (always) ===
     const [
       totalUsers,
       lastMonthUsers,
@@ -41,7 +41,7 @@ export async function GET() {
       `
     ])
 
-    // === 게시판 통계 (boards 플러그인 활성 시) ===
+    // === Board stats (when the boards plugin is enabled) ===
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let totalPosts = 0, lastWeekPosts = 0, recentPosts: any[] = [], popularPosts: any[] = [], recentComments: any[] = []
 
@@ -86,7 +86,7 @@ export async function GET() {
       })
     }
 
-    // === 증감률 계산 ===
+    // === Growth calculations ===
     const userGrowth = lastMonthUsers > 0
       ? ((totalUsers - lastMonthUsers) / lastMonthUsers * 100).toFixed(1) : "0"
     const postGrowth = lastWeekPosts > 0
@@ -94,7 +94,7 @@ export async function GET() {
     const activeUserGrowth = yesterdayActiveUsers > 0
       ? ((todayActiveUsers - yesterdayActiveUsers) / yesterdayActiveUsers * 100).toFixed(1) : "0"
 
-    // === 7일 추이 ===
+    // === 7-day trend ===
     const last7Days = []
     for (let i = 6; i >= 0; i--) {
       const date = new Date(todayStart.getTime() - i * 24 * 60 * 60 * 1000)

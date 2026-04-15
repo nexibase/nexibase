@@ -37,7 +37,7 @@ export async function PUT(
 
     return NextResponse.json({ success: true, comment: updated })
   } catch (error) {
-    console.error('댓글 수정 에러:', error)
+    console.error('failed to update comment:', error)
     return NextResponse.json({ error: '서버 오류가 발생했습니다.' }, { status: 500 })
   }
 }
@@ -65,7 +65,7 @@ export async function DELETE(
       return NextResponse.json({ error: '삭제 권한이 없습니다.' }, { status: 403 })
     }
 
-    // 답글 수도 함께 카운트해서 차감
+    // Also decrement the reply count
     const replyCount = await prisma.comment.count({ where: { parentId: commentId } })
     await prisma.comment.deleteMany({ where: { parentId: commentId } })
     await prisma.comment.delete({ where: { id: commentId } })
@@ -77,7 +77,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('댓글 삭제 에러:', error)
+    console.error('failed to delete comment:', error)
     return NextResponse.json({ error: '서버 오류가 발생했습니다.' }, { status: 500 })
   }
 }

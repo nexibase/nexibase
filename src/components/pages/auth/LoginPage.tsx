@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 import { GoogleReCaptchaProvider, useGoogleReCaptcha } from "react-google-recaptcha-v3";
 import { Button } from "@/components/ui/button";
@@ -14,14 +15,14 @@ import Link from "next/link";
 import { markBrowserSession, markJustLoggedIn } from "@/components/providers/SessionProvider";
 import { useSite } from "@/lib/SiteContext";
 
-// PasswordCredential 타입 선언
+// PasswordCredential type declaration
 declare global {
   interface Window {
     PasswordCredential?: new (data: { id: string; password: string }) => Credential;
   }
 }
 
-// 소셜 로그인 아이콘 컴포넌트
+// Social login icon components
 const GoogleIcon = () => (
   <svg className="w-5 h-5" viewBox="0 0 24 24">
     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -31,13 +32,13 @@ const GoogleIcon = () => (
   </svg>
 );
 
-// reCAPTCHA 토큰 가져오기 훅 래퍼
+// Hook wrapper for obtaining a reCAPTCHA token
 function useRecaptchaToken() {
   const context = useGoogleReCaptcha();
   return context?.executeRecaptcha || null;
 }
 
-// Turnstile 키 있으면 Turnstile, 없으면 reCAPTCHA 키 확인, 둘 다 없으면 비활성화
+// Use Turnstile if its site key is set, otherwise reCAPTCHA; disabled when neither is configured
 const captchaProvider = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
   ? "turnstile"
   : process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY
@@ -45,6 +46,7 @@ const captchaProvider = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
     : "";
 
 function LoginForm() {
+  const t = useTranslations("auth");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -58,16 +60,23 @@ function LoginForm() {
   const { refreshUser } = useSite();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { status } = useSession();
 
-  // URL 에러 파라미터 처리
+  useEffect(() => {
+    if (status === "authenticated") {
+      router.replace(searchParams.get("callbackUrl") || "/");
+    }
+  }, [status, router, searchParams]);
+
+  // Handle URL error parameters
   useEffect(() => {
     const error = searchParams.get("error");
     if (error === "DeletedAccount" || error === "AccessDenied" || error === "InactiveAccount") {
-      setErrorMessage("로그인에 문제가 있습니다.\n관리자에게 문의해 주세요.");
+      setErrorMessage(t("loginFailed"));
     } else if (error === "WithdrawnAccount") {
-      setErrorMessage("탈퇴한 계정입니다. 동일한 소셜 계정으로는 재가입이 불가능합니다.");
+      setErrorMessage(t("withdrawnAccount"));
     } else if (error) {
-      setErrorMessage("로그인 중 오류가 발생했습니다.");
+      setErrorMessage(t("loginError"));
     }
   }, [searchParams]);
 
@@ -78,7 +87,7 @@ function LoginForm() {
       const data = await res.json();
       setCaptchaRequired(data.failCount > 3);
     } catch {
-      // 조회 실패 시 CAPTCHA 없이 진행
+      // Proceed without CAPTCHA when the lookup fails
     }
   };
 
@@ -88,7 +97,7 @@ function LoginForm() {
     setErrorMessage(null);
 
     try {
-      // reCAPTCHA인 경우 submit 시점에 토큰 발급
+      // For reCAPTCHA, fetch a token at submit time
       let tokenToSend = captchaToken;
       if (captchaRequired && captchaProvider === "recaptcha" && executeRecaptcha) {
         tokenToSend = await executeRecaptcha("login");
@@ -114,11 +123,11 @@ function LoginForm() {
             const cred = new window.PasswordCredential({ id: email, password });
             await navigator.credentials.store(cred);
           } catch {
-            // 자격 증명 저장 실패해도 로그인은 계속 진행
+            // Continue login even if credential storage fails
           }
         }
 
-        // 헤더 등 UI 즉시 갱신
+        // Refresh UI (header etc.) immediately
         await refreshUser();
 
         const callbackUrl = searchParams.get("callbackUrl") || "/";
@@ -130,11 +139,11 @@ function LoginForm() {
           setCaptchaToken(null);
           turnstileRef.current?.reset();
         }
-        setErrorMessage(data.message || "로그인에 실패했습니다.");
+        setErrorMessage(t("invalidCredentials"));
       }
     } catch (error) {
-      console.error("로그인 에러:", error);
-      setErrorMessage("네트워크 오류가 발생했습니다.");
+      console.error("login error:", error);
+      setErrorMessage(t("networkError"));
     } finally {
       setIsLoading(false);
     }
@@ -143,13 +152,13 @@ function LoginForm() {
   const handleSocialLogin = async (provider: string) => {
     setSocialLoading(provider);
     try {
-      // 소셜 로그인은 리다이렉트 방식이므로, 로그인 플래그를 미리 설정
+      // Social login uses redirect flow, so mark the login flag ahead of time
       markJustLoggedIn();
       const callbackUrl = searchParams.get("callbackUrl") || "/";
       await signIn(provider, { callbackUrl });
     } catch (error) {
-      console.error(`${provider} 로그인 에러:`, error);
-      alert('소셜 로그인에 실패했습니다.');
+      console.error(`${provider} login error:`, error);
+      alert(t("socialLoginFailed"));
     } finally {
       setSocialLoading(null);
     }
@@ -160,9 +169,9 @@ function LoginForm() {
       <div className="max-w-md w-full space-y-8">
         <Card className="shadow-lg border-border">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-center">로그인</CardTitle>
+            <CardTitle className="text-2xl font-bold text-center">{t("loginTitle")}</CardTitle>
             <CardDescription className="text-center">
-              계정에 로그인하여 서비스를 이용하세요
+              {t("loginDescription")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -174,7 +183,7 @@ function LoginForm() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <label htmlFor="email" className="text-sm font-medium text-foreground">
-                  이메일
+                  {t("email")}
                 </label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -182,7 +191,7 @@ function LoginForm() {
                     id="email"
                     name="email"
                     type="email"
-                    placeholder="이메일을 입력하세요"
+                    placeholder={t("emailPlaceholder")}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     onBlur={(e) => checkCaptchaRequired(e.target.value)}
@@ -195,7 +204,7 @@ function LoginForm() {
 
               <div className="space-y-2">
                 <label htmlFor="password" className="text-sm font-medium text-foreground">
-                  비밀번호
+                  {t("password")}
                 </label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -203,7 +212,7 @@ function LoginForm() {
                     id="password"
                     name="password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="비밀번호를 입력하세요"
+                    placeholder={t("passwordPlaceholder")}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="pl-10 pr-10"
@@ -222,7 +231,7 @@ function LoginForm() {
 
               <div className="flex items-center justify-end">
                 <Link href="/forgot-password" className="text-sm text-primary hover:underline">
-                  비밀번호를 잊으셨나요?
+                  {t("forgotPassword")}
                 </Link>
               </div>
 
@@ -243,7 +252,7 @@ function LoginForm() {
                 className="w-full"
                 disabled={isLoading || (captchaRequired && captchaProvider === "turnstile" && !captchaToken)}
               >
-                {isLoading ? "로그인 중..." : "로그인"}
+                {isLoading ? t("loggingIn") : t("loginButton")}
               </Button>
             </form>
 
@@ -253,12 +262,12 @@ function LoginForm() {
               </div>
               <div className="relative flex justify-center text-xs uppercase">
                 <span className="bg-card px-2 text-muted-foreground">
-                  또는 소셜 계정으로 로그인
+                  {t("socialLoginDivider")}
                 </span>
               </div>
             </div>
 
-            {/* 소셜 로그인 버튼 */}
+            {/* Social login buttons */}
             <div className="flex flex-col gap-3">
               <Button
                 type="button"
@@ -272,7 +281,7 @@ function LoginForm() {
                 ) : (
                   <>
                     <GoogleIcon />
-                    <span className="ml-2">Google로 계속하기</span>
+                    <span className="ml-2">{t("googleLogin")}</span>
                   </>
                 )}
               </Button>
@@ -290,7 +299,7 @@ function LoginForm() {
                     <svg className="w-5 h-5" viewBox="0 0 24 24">
                       <path fill="#03C75A" d="M16.273 12.845L7.376 0H0v24h7.727V11.155L16.624 24H24V0h-7.727z"/>
                     </svg>
-                    <span className="ml-2">Naver로 계속하기</span>
+                    <span className="ml-2">{t("naverLogin")}</span>
                   </>
                 )}
               </Button>
@@ -308,7 +317,7 @@ function LoginForm() {
                     <svg className="w-5 h-5" viewBox="0 0 24 24">
                       <path fill="#FEE500" d="M12 3c5.799 0 10.5 3.664 10.5 8.185 0 4.52-4.701 8.184-10.5 8.184a13.5 13.5 0 0 1-1.727-.11l-4.408 2.883c-.501.265-.678.236-.472-.413l.892-3.678c-2.88-1.46-4.785-3.99-4.785-6.866C1.5 6.665 6.201 3 12 3z"/>
                     </svg>
-                    <span className="ml-2">Kakao로 계속하기</span>
+                    <span className="ml-2">{t("kakaoLogin")}</span>
                   </>
                 )}
               </Button>
@@ -318,9 +327,9 @@ function LoginForm() {
 
             <div className="text-center">
               <span className="text-sm text-muted-foreground">
-                계정이 없으신가요?{" "}
+                {t("noAccount")}{" "}
                 <Link href="/signup" className="text-primary hover:underline font-medium">
-                  회원가입
+                  {t("signupButton")}
                 </Link>
               </span>
             </div>

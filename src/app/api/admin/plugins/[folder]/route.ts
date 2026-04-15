@@ -64,7 +64,7 @@ export async function PUT(
 
     return NextResponse.json({ success: true, message: '플러그인 설정이 저장되었습니다.' })
   } catch (error) {
-    console.error('플러그인 설정 저장 에러:', error)
+    console.error('failed to save plugin settings:', error)
     return NextResponse.json({ error: '서버 오류' }, { status: 500 })
   }
 }

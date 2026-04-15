@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 import { getAdminUser } from '@/lib/auth'
 
-// 사용자 목록 조회
+// Fetch user list
 export async function GET(request: NextRequest) {
   try {
     const admin = await getAdminUser()
@@ -20,12 +20,12 @@ export async function GET(request: NextRequest) {
 
     const skip = (page - 1) * limit
 
-    // 검색 조건
+    // Search conditions
     const where: Record<string, unknown> = {}
 
-    // 탈퇴 회원(withdrawn): status가 'withdrawn'인 사용자 (직접 탈퇴)
-    // 삭제된 사용자(deleted): deletedAt이 있고 status가 'withdrawn'이 아닌 사용자 (관리자 삭제)
-    // 그 외 상태는 deletedAt이 null인 활성 사용자만
+    // Withdrawn user: status is 'withdrawn' (user-initiated withdrawal)
+    // Deleted user: deletedAt is set but status is not 'withdrawn' (admin-initiated delete)
+    // Otherwise only active users (deletedAt is null) are included
     if (status === 'withdrawn') {
       where.status = 'withdrawn'
     } else if (status === 'deleted') {
@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
       where.role = role
     }
 
-    // 사용자 목록 조회
+    // Fetch user list
     const [users, total] = await Promise.all([
       prisma.user.findMany({
         where,
@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
       prisma.user.count({ where })
     ])
 
-    // 통계 - 상태별 사용자 수
+    // Stats — user counts by status
     const [totalUsers, activeUsers, inactiveUsers, bannedUsers, withdrawnUsers, deletedUsers] = await Promise.all([
       prisma.user.count({ where: { deletedAt: null } }),
       prisma.user.count({ where: { status: 'active', deletedAt: null } }),
@@ -100,7 +100,7 @@ export async function GET(request: NextRequest) {
       }
     })
   } catch (error) {
-    console.error('사용자 목록 조회 실패:', error)
+    console.error('failed to fetch user list:', error)
     return NextResponse.json(
       { success: false, message: '사용자 목록 조회 실패', error: String(error) },
       { status: 500 }
@@ -108,7 +108,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// 사용자 생성
+// Create user
 export async function POST(request: NextRequest) {
   try {
     const admin = await getAdminUser()
@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { email, nickname, password, role, status, adminNote } = body
 
-    // 이메일 중복 확인 (삭제되지 않은 사용자 중)
+    // Email uniqueness check (against non-deleted users)
     const existingUser = await prisma.user.findFirst({
       where: { email, deletedAt: null }
     })
@@ -131,10 +131,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 비밀번호 해시
+    // Hash password
     const hashedPassword = password ? await bcrypt.hash(password, 10) : null
 
-    // 사용자 생성
+    // Create user
     const user = await prisma.user.create({
       data: {
         email,
@@ -151,7 +151,7 @@ export async function POST(request: NextRequest) {
       user: { ...user, password: undefined }
     })
   } catch (error) {
-    console.error('사용자 생성 실패:', error)
+    console.error('failed to create user:', error)
     return NextResponse.json(
       { success: false, message: '사용자 생성 실패' },
       { status: 500 }
@@ -159,7 +159,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// 사용자 일괄 삭제 (소프트 삭제)
+// Bulk delete users (soft delete)
 export async function DELETE(request: NextRequest) {
   try {
     const admin = await getAdminUser()
@@ -178,7 +178,7 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    // 삭제 대상 중 관리자 수 확인 (삭제되지 않은 사용자 중)
+    // Count admins in the delete set (among non-deleted users)
     const adminsToDelete = await prisma.user.count({
       where: {
         id: { in: ids },
@@ -188,12 +188,12 @@ export async function DELETE(request: NextRequest) {
     })
 
     if (adminsToDelete > 0) {
-      // 전체 관리자 수 확인 (삭제되지 않은 사용자 중)
+      // Count total admins (among non-deleted users)
       const totalAdmins = await prisma.user.count({
         where: { role: 'admin', deletedAt: null }
       })
 
-      // 삭제 후 관리자가 0명이 되면 방지
+      // Prevent removing the last admin
       if (totalAdmins - adminsToDelete < 1) {
         return NextResponse.json(
           { success: false, message: '최소 1명의 관리자가 있어야 합니다.' },
@@ -202,7 +202,7 @@ export async function DELETE(request: NextRequest) {
       }
     }
 
-    // 소프트 삭제: deletedAt에 현재 시간 설정
+    // Soft delete: set deletedAt to now
     await prisma.user.updateMany({
       where: {
         id: { in: ids },
@@ -213,7 +213,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('사용자 삭제 실패:', error)
+    console.error('failed to delete user:', error)
     return NextResponse.json(
       { success: false, message: '사용자 삭제 실패' },
       { status: 500 }

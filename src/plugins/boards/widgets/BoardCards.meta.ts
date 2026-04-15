@@ -1,5 +1,5 @@
 export default {
-  title: '게시판 카드',
+  title: 'Board Cards',
   defaultZone: 'bottom',
   defaultColSpan: 4,
   defaultRowSpan: 1,

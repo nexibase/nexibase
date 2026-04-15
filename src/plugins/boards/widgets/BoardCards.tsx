@@ -28,7 +28,7 @@ export default function BoardCards({ settings }: { settings?: Record<string, any
           setBoards(data.boards || [])
         }
       } catch (error) {
-        console.error('BoardCards 데이터 조회 에러:', error)
+        console.error('BoardCards fetch failed:', error)
       }
     }
     fetchBoards()

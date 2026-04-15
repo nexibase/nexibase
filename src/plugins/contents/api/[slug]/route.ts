@@ -31,7 +31,7 @@ export async function GET(
       content
     })
   } catch (error) {
-    console.error('콘텐츠 조회 에러:', error)
+    console.error('failed to fetch content:', error)
     return NextResponse.json(
       { error: '서버 오류가 발생했습니다.' },
       { status: 500 }

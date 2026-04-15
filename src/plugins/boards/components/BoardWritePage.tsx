@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
+import { useTranslations } from 'next-intl'
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -43,14 +44,14 @@ interface AttachmentFile {
   mimeType: string
 }
 
-// 파일 크기 포맷
+// Format file size
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-// 파일 아이콘 선택
+// Pick file icon
 function getFileIcon(mimeType: string): string {
   if (mimeType.startsWith('image/')) return '🖼️'
   if (mimeType.includes('pdf')) return '📕'
@@ -65,6 +66,7 @@ export default function BoardWritePage() {
   const params = useParams()
   const router = useRouter()
   const slug = params.slug as string
+  const t = useTranslations('boards')
 
   const [user, setUser] = useState<User | null>(null)
   const [sessionChecked, setSessionChecked] = useState(false)
@@ -76,16 +78,16 @@ export default function BoardWritePage() {
   const [content, setContent] = useState("")
   const [isSecret, setIsSecret] = useState(false)
 
-  // 파일 첨부 상태
+  // File attachment state
   const [attachments, setAttachments] = useState<AttachmentFile[]>([])
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // 드래그 상태
+  // Drag state
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
 
-  // 로그인 체크 - 글쓰기는 회원만 가능
+  // Login check — writing is member-only
   const checkSession = useCallback(async () => {
     try {
       const response = await fetch('/api/me')
@@ -93,27 +95,27 @@ export default function BoardWritePage() {
       if (data.user) {
         setUser(data.user)
       } else {
-        // 비로그인 시 로그인 페이지로 이동
-        alert('로그인이 필요합니다.')
+        // Redirect to the login page when unauthenticated
+        alert(t('errors.loginRequiredDot'))
         router.push(`/login?callbackUrl=/boards/${slug}/create`)
         return
       }
     } catch (err) {
-      console.error('세션 체크 에러:', err)
-      alert('로그인이 필요합니다.')
+      console.error('session check error:', err)
+      alert(t('errors.loginRequiredDot'))
       router.push(`/login?callbackUrl=/boards/${slug}/create`)
       return
     } finally {
       setSessionChecked(true)
     }
-  }, [router, slug])
+  }, [router, slug, t])
 
   useEffect(() => {
     checkSession()
   }, [checkSession])
 
   useEffect(() => {
-    // 로그인 체크 후에 게시판 정보 로드
+    // Load the board after the login check
     if (!sessionChecked || !user) return
 
     const fetchBoard = async () => {
@@ -122,30 +124,30 @@ export default function BoardWritePage() {
         const data = await response.json()
 
         if (!response.ok) {
-          setError(data.error || '게시판 정보를 불러올 수 없습니다.')
+          setError(data.error || t('loadFailed'))
           return
         }
 
         setBoard(data.board)
       } catch (err) {
-        console.error('게시판 조회 에러:', err)
-        setError('게시판 정보를 불러오는 중 오류가 발생했습니다.')
+        console.error('failed to fetch board:', err)
+        setError(t('loadError'))
       } finally {
         setLoading(false)
       }
     }
 
     fetchBoard()
-  }, [slug, sessionChecked, user])
+  }, [slug, sessionChecked, user, t])
 
-  // 파일 업로드 핸들러
+  // File upload handler
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (!files || files.length === 0) return
 
-    // 최대 5개까지
+    // Up to 5 items
     if (attachments.length + files.length > 5) {
-      alert('첨부파일은 최대 5개까지 가능합니다.')
+      alert(t('post.maxAttachments'))
       return
     }
 
@@ -167,32 +169,32 @@ export default function BoardWritePage() {
         if (response.ok && data.file) {
           setAttachments(prev => [...prev, data.file])
         } else {
-          alert(data.error || `${file.name} 업로드에 실패했습니다.`)
+          alert(data.error || t('post.uploadFailed', { name: file.name }))
         }
       }
     } catch (error) {
-      console.error('파일 업로드 에러:', error)
-      alert('파일 업로드 중 오류가 발생했습니다.')
+      console.error('file upload error:', error)
+      alert(t('post.uploadError'))
     } finally {
       setUploading(false)
-      // input 초기화
+      // Reset input
       if (fileInputRef.current) {
         fileInputRef.current.value = ''
       }
     }
   }
 
-  // 파일 삭제
+  // Delete file
   const handleRemoveFile = (index: number) => {
     setAttachments(prev => prev.filter((_, i) => i !== index))
   }
 
-  // 드래그 시작
+  // Drag start
   const handleDragStart = (index: number) => {
     setDraggedIndex(index)
   }
 
-  // 드래그 오버
+  // Drag over
   const handleDragOver = (e: React.DragEvent, index: number) => {
     e.preventDefault()
     if (draggedIndex !== null && draggedIndex !== index) {
@@ -200,7 +202,7 @@ export default function BoardWritePage() {
     }
   }
 
-  // 드래그 종료
+  // Drag end
   const handleDragEnd = () => {
     if (draggedIndex !== null && dragOverIndex !== null && draggedIndex !== dragOverIndex) {
       const newAttachments = [...attachments]
@@ -212,7 +214,7 @@ export default function BoardWritePage() {
     setDragOverIndex(null)
   }
 
-  // 드래그 이탈
+  // Drag leave
   const handleDragLeave = () => {
     setDragOverIndex(null)
   }
@@ -221,12 +223,12 @@ export default function BoardWritePage() {
     e.preventDefault()
 
     if (!title.trim()) {
-      alert('제목을 입력해주세요.')
+      alert(t('post.titleRequired'))
       return
     }
 
     if (!content.trim()) {
-      alert('내용을 입력해주세요.')
+      alert(t('post.contentRequired'))
       return
     }
 
@@ -248,29 +250,29 @@ export default function BoardWritePage() {
 
       if (!response.ok) {
         if (response.status === 401) {
-          alert('로그인이 필요합니다.')
+          alert(t('errors.loginRequiredDot'))
           router.push('/login')
           return
         }
         if (response.status === 403) {
-          alert(data.error || '글을 쓸 권한이 없습니다.')
+          alert(data.error || t('post.writePermDenied'))
           return
         }
-        alert(data.error || '글 작성에 실패했습니다.')
+        alert(data.error || t('post.writeFailed'))
         return
       }
 
-      // 작성 완료 후 게시글로 이동
+      // After creation, navigate to the post
       router.push(`/boards/${slug}/${data.post.id}`)
     } catch (error) {
-      console.error('글 작성 에러:', error)
-      alert('글 작성 중 오류가 발생했습니다.')
+      console.error('failed to create post:', error)
+      alert(t('post.writeError'))
     } finally {
       setSubmitting(false)
     }
   }
 
-  // 세션 체크 중이거나 비로그인 상태면 로딩 표시 (리다이렉트 중)
+  // Show loading while the session is being checked or while redirecting unauthenticated users
   if (!sessionChecked || !user || loading) {
     return (
       <UserLayout>
@@ -287,10 +289,10 @@ export default function BoardWritePage() {
         <div className="flex items-center justify-center py-20">
           <Card className="w-full max-w-md">
             <CardContent className="p-6 text-center">
-              <p className="text-muted-foreground mb-4">{error || '게시판을 찾을 수 없습니다.'}</p>
+              <p className="text-muted-foreground mb-4">{error || t('boardNotFound')}</p>
               <Button variant="outline" onClick={() => router.back()}>
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                돌아가기
+                {t('post.goBack')}
               </Button>
             </CardContent>
           </Card>
@@ -302,7 +304,7 @@ export default function BoardWritePage() {
   return (
     <UserLayout>
       <div className="max-w-4xl mx-auto sm:px-4 py-2 sm:py-6">
-        {/* 페이지 헤더 */}
+        {/* Page header */}
         <div className="flex items-center gap-3 mb-6">
           <Link
             href={`/boards/${slug}`}
@@ -311,7 +313,7 @@ export default function BoardWritePage() {
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div>
-            <h1 className="text-xl font-bold">글쓰기</h1>
+            <h1 className="text-xl font-bold">{t('post.writeTitle')}</h1>
             <p className="text-sm text-muted-foreground">{board.name}</p>
           </div>
         </div>
@@ -321,11 +323,11 @@ export default function BoardWritePage() {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="title">
-                  제목 <span className="text-destructive">*</span>
+                  {t('post.title')} <span className="text-destructive">*</span>
                 </Label>
                 <Input
                   id="title"
-                  placeholder="제목을 입력하세요"
+                  placeholder={t('post.titlePlaceholder')}
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   maxLength={200}
@@ -335,25 +337,25 @@ export default function BoardWritePage() {
 
               <div className="space-y-2">
                 <Label>
-                  내용 <span className="text-destructive">*</span>
+                  {t('post.content')} <span className="text-destructive">*</span>
                 </Label>
                 <TiptapEditor
                   content={content}
                   onChange={setContent}
-                  placeholder="내용을 입력하세요..."
+                  placeholder={t('post.contentPlaceholder')}
                 />
               </div>
 
-              {/* 파일 첨부 */}
+              {/* File attachment */}
               {board.useFile && (
                 <div className="space-y-3">
                   <Label className="flex items-center gap-2">
                     <Paperclip className="h-4 w-4" />
-                    파일 첨부
-                    <span className="text-xs text-muted-foreground">(최대 5개, 각 10MB 이하, 드래그로 순서 변경)</span>
+                    {t('post.fileAttach')}
+                    <span className="text-xs text-muted-foreground">{t('post.fileAttachDesc')}</span>
                   </Label>
 
-                  {/* 파일 선택 버튼 */}
+                  {/* File picker button */}
                   <div className="flex items-center gap-2">
                     <input
                       ref={fileInputRef}
@@ -375,14 +377,14 @@ export default function BoardWritePage() {
                       ) : (
                         <Upload className="h-4 w-4 mr-2" />
                       )}
-                      파일 선택
+                      {t('post.fileSelect')}
                     </Button>
                     <span className="text-xs text-muted-foreground">
-                      {attachments.length}/5개
+                      {t('post.filesCount', { count: attachments.length })}
                     </span>
                   </div>
 
-                  {/* 첨부된 파일 목록 */}
+                  {/* Attached file list */}
                   {attachments.length > 0 && (
                     <div className="border rounded-lg divide-y">
                       {attachments.map((file, index) => (
@@ -444,7 +446,7 @@ export default function BoardWritePage() {
                   />
                   <Label htmlFor="isSecret" className="flex items-center gap-1 cursor-pointer">
                     <Lock className="h-4 w-4" />
-                    비밀글
+                    {t('post.secret')}
                   </Label>
                 </div>
               )}
@@ -455,11 +457,11 @@ export default function BoardWritePage() {
                   variant="outline"
                   onClick={() => router.back()}
                 >
-                  취소
+                  {t('post.cancel')}
                 </Button>
                 <Button type="submit" disabled={submitting}>
                   {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                  등록
+                  {t('post.publish')}
                 </Button>
               </div>
             </form>

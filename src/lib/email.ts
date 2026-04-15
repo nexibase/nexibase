@@ -1,16 +1,17 @@
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
+import { getTranslations } from 'next-intl/server';
 import { prisma } from '@/lib/prisma';
 
-// 그누보드5 방식의 이메일 인증 토큰 생성 (md5 방식)
+// Build the Gnuboard-5 email verification token (MD5-based)
 export const generateEmailVerificationToken = (): string => {
-  // 그누보드5 방식: pack('V*', rand(), rand(), rand(), rand())를 md5로 해시
+  // Gnuboard 5: md5(pack('V*', rand(), rand(), rand(), rand()))
   const randomBytes = crypto.randomBytes(16); // 4개의 32비트 정수
   const md5Hash = crypto.createHash('md5').update(randomBytes).digest('hex');
   return md5Hash;
 };
 
-// 이메일 발송 설정
+// Email sender settings
 const createTransporter = () => {
   return nodemailer.createTransport({
     host: process.env.SMTP_HOST || 'smtp.gmail.com',
@@ -23,45 +24,51 @@ const createTransporter = () => {
   });
 };
 
-// 이메일 인증 메일 발송 (그누보드5 방식)
-export const sendEmailVerificationEmail = async (email: string, mb_id: string, mb_md5: string) => {
+// Send the email verification message (Gnuboard 5 style)
+export const sendEmailVerificationEmail = async (
+  email: string,
+  mb_id: string,
+  mb_md5: string,
+  locale: string = 'en',
+) => {
+  const t = await getTranslations({ locale, namespace: 'email' });
   const transporter = createTransporter();
   console.log('transporter', transporter);
-  // 연결이 되는지 확인?
+  // Connectivity check
   transporter.verify((error, success) => {
     if (error) {
-      console.error('SMTP 연결 실패:', error);
+      console.error('SMTP connection failed:', error);
     } else {
-      console.log('SMTP 연결 성공:', success);
+      console.log('SMTP connected:', success);
     }
   });
-  
-  // 이메일 인증 페이지 URL로 변경
+
+  // Use the email-verification page URL
   const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/email-certify?mb_id=${mb_id}&mb_md5=${mb_md5}`;
-  
+
   const mailOptions = {
     from: process.env.SMTP_USER,
     to: email,
-    subject: '[회원가입] 이메일 인증을 완료해주세요',
+    subject: t('verifySubject'),
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #333; text-align: center;">이메일 인증</h2>
+        <h2 style="color: #333; text-align: center;">${t('verifySubject')}</h2>
         <p style="color: #666; line-height: 1.6;">
-          안녕하세요! 회원가입을 완료하기 위해 이메일 인증을 진행해주세요.
+          ${t('verifyHello')}<br>${t('verifyMessage')}
         </p>
         <div style="text-align: center; margin: 30px 0;">
-          <a href="${verificationUrl}" 
-             style="background-color: #007bff; color: white; padding: 12px 30px; 
+          <a href="${verificationUrl}"
+             style="background-color: #007bff; color: white; padding: 12px 30px;
                     text-decoration: none; border-radius: 5px; display: inline-block;">
-            이메일 인증하기
+            ${t('verifyButton')}
           </a>
         </div>
         <p style="color: #999; font-size: 14px;">
-          위 버튼이 작동하지 않는 경우, 아래 링크를 복사하여 브라우저에 붙여넣기 해주세요:<br>
           <a href="${verificationUrl}" style="color: #007bff;">${verificationUrl}</a>
         </p>
         <p style="color: #999; font-size: 12px; margin-top: 30px;">
-          이 링크는 24시간 후에 만료됩니다.
+          ${t('verifyExpiresIn24h')}<br>
+          ${t('verifyIgnoreIfNotRequested')}
         </p>
       </div>
     `,
@@ -69,15 +76,15 @@ export const sendEmailVerificationEmail = async (email: string, mb_id: string, m
 
   try {
     await transporter.sendMail(mailOptions);
-    console.log('이메일 인증 메일 발송 완료:', email);
+    console.log('email verification sent:', email);
   } catch (error) {
-    console.error('이메일 발송 실패:', error);
-    throw new Error('이메일 발송에 실패했습니다.');
+    console.error('email send failed:', error);
+    throw new Error(t('sendFailed'));
   }
 };
 
 /**
- * 쇼핑몰 이름 조회
+ * Fetch the shop name
  */
 const getShopName = async (): Promise<string> => {
   try {
@@ -91,7 +98,7 @@ const getShopName = async (): Promise<string> => {
 };
 
 /**
- * 이메일 알림 활성화 여부 확인
+ * Check whether email notifications are enabled
  */
 export const isEmailNotificationEnabled = async (): Promise<boolean> => {
   try {
@@ -105,7 +112,7 @@ export const isEmailNotificationEnabled = async (): Promise<boolean> => {
 };
 
 /**
- * 주문 완료 이메일 발송 (고객용)
+ * Send the order completion email (customer)
  */
 export const sendOrderCompletedEmail = async (
   email: string,
@@ -176,14 +183,14 @@ export const sendOrderCompletedEmail = async (
 
   try {
     await transporter.sendMail(mailOptions);
-    console.log('주문 완료 이메일 발송:', email);
+    console.log('sent order completion email:', email);
   } catch (error) {
-    console.error('주문 완료 이메일 발송 실패:', error);
+    console.error('failed to send order completion email:', error);
   }
 };
 
 /**
- * 주문 상태 변경 이메일 발송 (고객용)
+ * Send the order status update email (customer)
  */
 export const sendOrderStatusEmail = async (
   email: string,
@@ -267,14 +274,14 @@ export const sendOrderStatusEmail = async (
 
   try {
     await transporter.sendMail(mailOptions);
-    console.log('주문 상태 이메일 발송:', email);
+    console.log('sent order status email:', email);
   } catch (error) {
-    console.error('주문 상태 이메일 발송 실패:', error);
+    console.error('failed to send order status email:', error);
   }
 };
 
 /**
- * 새 주문 알림 이메일 발송 (관리자용)
+ * Send the new order email (admin)
  */
 export const sendNewOrderEmailToAdmin = async (
   adminEmail: string,
@@ -322,14 +329,14 @@ export const sendNewOrderEmailToAdmin = async (
 
   try {
     await transporter.sendMail(mailOptions);
-    console.log('관리자 주문 알림 이메일 발송:', adminEmail);
+    console.log('sent new order email to admin:', adminEmail);
   } catch (error) {
-    console.error('관리자 주문 알림 이메일 발송 실패:', error);
+    console.error('failed to send new order email to admin:', error);
   }
 };
 
 /**
- * 주문 취소 이메일 발송 (고객용)
+ * Send the order cancellation email (customer)
  */
 export const sendOrderCancelledEmail = async (
   email: string,
@@ -384,14 +391,14 @@ export const sendOrderCancelledEmail = async (
 
   try {
     await transporter.sendMail(mailOptions);
-    console.log('주문 취소 이메일 발송:', email);
+    console.log('sent order cancellation email:', email);
   } catch (error) {
-    console.error('주문 취소 이메일 발송 실패:', error);
+    console.error('failed to send order cancellation email:', error);
   }
 };
 
 /**
- * 주문 취소 알림 이메일 발송 (관리자용)
+ * Send the order cancellation email (admin)
  */
 export const sendOrderCancelledEmailToAdmin = async (
   adminEmail: string,
@@ -441,8 +448,8 @@ export const sendOrderCancelledEmailToAdmin = async (
 
   try {
     await transporter.sendMail(mailOptions);
-    console.log('관리자 주문 취소 알림 이메일 발송:', adminEmail);
+    console.log('sent order cancellation email to admin:', adminEmail);
   } catch (error) {
-    console.error('관리자 주문 취소 알림 이메일 발송 실패:', error);
+    console.error('failed to send order cancellation email to admin:', error);
   }
 };

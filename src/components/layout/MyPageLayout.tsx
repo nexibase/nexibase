@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import Link from "next/link"
+import { useTranslations } from "next-intl"
 import { UserLayout } from "@/components/layout/UserLayout"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -41,7 +42,30 @@ interface PluginWithMenus {
   myPageMenus: { label: string, icon: string, subPath: string }[]
 }
 
+// Resolve a plugin nav label: if it looks like an i18n key (contains a dot,
+// no spaces), translate it; otherwise return as-is.
+function resolveNavLabel(label: string, translate: (key: string) => string): string {
+  if (!label.includes(' ') && label.includes('.')) {
+    try {
+      return translate(label)
+    } catch {
+      return label
+    }
+  }
+  return label
+}
+
+// Map of plugin folder → translator factory result (populated per-component)
+type PluginNavTranslators = Record<string, (key: string) => string>
+
 export function MyPageLayout({ children }: { children: React.ReactNode }) {
+  const t = useTranslations('mypage')
+  const tc = useTranslations('common')
+  const ta = useTranslations('admin')
+  const tShop = useTranslations('shop')
+  const pluginNavTranslators: PluginNavTranslators = {
+    shop: tShop as unknown as (key: string) => string,
+  }
   const router = useRouter()
   const pathname = usePathname()
   const [user, setUser] = useState<UserInfo | null>(null)
@@ -59,19 +83,20 @@ export function MyPageLayout({ children }: { children: React.ReactNode }) {
         router.push('/login')
       }
 
-      // 네비게이션 구성
+      // Build navigation items
       const items: NavItem[] = [
-        { label: '마이페이지', icon: 'User', path: '/mypage' },
-        { label: '프로필 수정', icon: 'Pencil', path: '/mypage/profile/edit' },
+        { label: t('title'), icon: 'User', path: '/mypage' },
+        { label: t('editProfile'), icon: 'Pencil', path: '/mypage/profile/edit' },
       ]
 
-      // 플러그인 메뉴 추가
+      // Append plugin menus
       if (pluginsData?.plugins) {
         for (const p of pluginsData.plugins as PluginWithMenus[]) {
           if (p.enabled && p.myPageMenus?.length > 0) {
             for (const m of p.myPageMenus) {
+              const pluginT = pluginNavTranslators[p.folder] ?? ((k: string) => k)
               items.push({
-                label: m.label,
+                label: resolveNavLabel(m.label, pluginT),
                 icon: m.icon,
                 path: `/${p.currentSlug}${m.subPath}`,
               })
@@ -80,7 +105,7 @@ export function MyPageLayout({ children }: { children: React.ReactNode }) {
         }
       }
 
-      items.push({ label: '알림', icon: 'Bell', path: '/mypage/notifications' })
+      items.push({ label: t('notifications'), icon: 'Bell', path: '/mypage/notifications' })
       setNavItems(items)
     }).finally(() => setLoading(false))
   }, [router])
@@ -88,14 +113,14 @@ export function MyPageLayout({ children }: { children: React.ReactNode }) {
   if (loading) {
     return (
       <UserLayout>
-        <div className="py-12 text-center text-muted-foreground">로딩 중...</div>
+        <div className="py-12 text-center text-muted-foreground">{tc('loading')}</div>
       </UserLayout>
     )
   }
 
   if (!user) return null
 
-  // 현재 경로에 해당하는 탭 활성화
+  // Activate the tab matching the current path
   const isActive = (path: string) => {
     if (path === '/mypage') return pathname === '/mypage'
     return pathname?.startsWith(path.split('?')[0]) || false
@@ -104,7 +129,7 @@ export function MyPageLayout({ children }: { children: React.ReactNode }) {
   return (
     <UserLayout>
       <div className="max-w-3xl mx-auto">
-        {/* 프로필 헤더 */}
+        {/* Profile header */}
         <div className="flex items-center gap-4 mb-6">
           <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
             {user.image ? (
@@ -116,13 +141,13 @@ export function MyPageLayout({ children }: { children: React.ReactNode }) {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-lg font-bold">{user.nickname}</h1>
-              {user.role === 'admin' && <Badge className="text-xs">관리자</Badge>}
+              {user.role === 'admin' && <Badge className="text-xs">{ta('roleAdmin')}</Badge>}
             </div>
             <p className="text-sm text-muted-foreground">{user.email}</p>
           </div>
         </div>
 
-        {/* 네비게이션 탭 */}
+        {/* Navigation tabs */}
         <div className="flex gap-1 overflow-x-auto mb-6 border-b pb-2">
           {navItems.map((item, idx) => {
             const Icon = iconMap[item.icon] || User
@@ -144,7 +169,7 @@ export function MyPageLayout({ children }: { children: React.ReactNode }) {
           })}
         </div>
 
-        {/* 콘텐츠 */}
+        {/* Content */}
         {children}
       </div>
     </UserLayout>

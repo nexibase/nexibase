@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminUser } from '@/lib/auth'
 
-// 게시판 상세 조회
+// Fetch board detail
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -37,7 +37,7 @@ export async function GET(
       board
     })
   } catch (error) {
-    console.error('게시판 조회 에러:', error)
+    console.error('failed to fetch board:', error)
     return NextResponse.json(
       { error: '서버 오류가 발생했습니다.' },
       { status: 500 }
@@ -45,7 +45,7 @@ export async function GET(
   }
 }
 
-// 게시판 수정
+// Edit board
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -78,7 +78,7 @@ export async function PUT(
       isActive
     } = body
 
-    // 게시판 존재 확인
+    // Check whether the board exists
     const existingBoard = await prisma.board.findUnique({
       where: { id: boardId }
     })
@@ -90,7 +90,7 @@ export async function PUT(
       )
     }
 
-    // 슬러그 변경 시 중복 확인
+    // Check uniqueness when the slug changes
     if (slug && slug !== existingBoard.slug) {
       const slugRegex = /^[a-z0-9-]+$/
       if (!slugRegex.test(slug)) {
@@ -112,8 +112,8 @@ export async function PUT(
       }
     }
 
-    // 게시판 업데이트
-    // 글쓰기/댓글쓰기는 항상 회원만 가능 (비회원 글쓰기는 이름/비번 필드가 필요하므로 지원하지 않음)
+    // Update board
+    // Posting and commenting are member-only (guest posting requires name/password fields and is not supported)
     const updatedBoard = await prisma.board.update({
       where: { id: boardId },
       data: {
@@ -143,7 +143,7 @@ export async function PUT(
     })
 
   } catch (error) {
-    console.error('게시판 수정 에러:', error)
+    console.error('failed to update board:', error)
     return NextResponse.json(
       { error: '서버 오류가 발생했습니다.' },
       { status: 500 }
@@ -151,7 +151,7 @@ export async function PUT(
   }
 }
 
-// 게시판 삭제
+// Delete board
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -165,7 +165,7 @@ export async function DELETE(
     const { id } = await params
     const boardId = parseInt(id)
 
-    // 게시판 존재 확인
+    // Check whether the board exists
     const existingBoard = await prisma.board.findUnique({
       where: { id: boardId }
     })
@@ -177,7 +177,7 @@ export async function DELETE(
       )
     }
 
-    // 게시판 삭제 (연관된 posts, comments, reactions는 CASCADE로 자동 삭제)
+    // Delete the board (related posts, comments, and reactions cascade automatically)
     await prisma.board.delete({
       where: { id: boardId }
     })
@@ -188,7 +188,7 @@ export async function DELETE(
     })
 
   } catch (error) {
-    console.error('게시판 삭제 에러:', error)
+    console.error('failed to delete board:', error)
     return NextResponse.json(
       { error: '서버 오류가 발생했습니다.' },
       { status: 500 }

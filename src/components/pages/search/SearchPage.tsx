@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
+import { useTranslations, useLocale } from "next-intl"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -121,6 +122,9 @@ export default function SearchPage() {
 }
 
 function SearchContent() {
+  const t = useTranslations('search')
+  const tl = useTranslations('lists')
+  const locale = useLocale()
   const searchParams = useSearchParams()
   const router = useRouter()
 
@@ -166,7 +170,7 @@ function SearchContent() {
         setData(null)
       }
     } catch (error) {
-      console.error('검색 에러:', error)
+      console.error('search failed:', error)
       setData(null)
     } finally {
       setLoading(false)
@@ -192,7 +196,7 @@ function SearchContent() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     if (query.trim().length < 2) {
-      alert('검색어는 2자 이상 입력해주세요.')
+      alert(t('minLengthAlert'))
       return
     }
 
@@ -249,11 +253,11 @@ function SearchContent() {
     const diffHours = Math.floor(diffMs / 3600000)
     const diffDays = Math.floor(diffMs / 86400000)
 
-    if (diffMins < 1) return '방금 전'
-    if (diffMins < 60) return `${diffMins}분 전`
-    if (diffHours < 24) return `${diffHours}시간 전`
-    if (diffDays < 7) return `${diffDays}일 전`
-    return date.toLocaleDateString('ko-KR')
+    if (diffMins < 1) return tl('justNow')
+    if (diffMins < 60) return tl('minutesAgo', { mins: diffMins })
+    if (diffHours < 24) return tl('hoursAgo', { hours: diffHours })
+    if (diffDays < 7) return tl('daysAgo', { days: diffDays })
+    return date.toLocaleDateString(locale)
   }
 
   const highlightText = (text: string, searchQuery: string) => {
@@ -267,20 +271,20 @@ function SearchContent() {
   }
 
   const tabs = [
-    { key: 'all' as SearchType, label: '전체', icon: LayoutGrid, count: data?.counts.all || 0 },
-    { key: 'posts' as SearchType, label: '게시글', icon: FileText, count: data?.counts.posts || 0 },
-    { key: 'products' as SearchType, label: '상품', icon: ShoppingBag, count: data?.counts.products || 0 },
-    { key: 'contents' as SearchType, label: '콘텐츠', icon: BookOpen, count: data?.counts.contents || 0 },
-    { key: 'policies' as SearchType, label: '정책/약관', icon: ScrollText, count: data?.counts.policies || 0 },
+    { key: 'all' as SearchType, label: t('tabAll'), icon: LayoutGrid, count: data?.counts.all || 0 },
+    { key: 'posts' as SearchType, label: t('tabPosts'), icon: FileText, count: data?.counts.posts || 0 },
+    { key: 'products' as SearchType, label: t('tabProducts'), icon: ShoppingBag, count: data?.counts.products || 0 },
+    { key: 'contents' as SearchType, label: t('tabContents'), icon: BookOpen, count: data?.counts.contents || 0 },
+    { key: 'policies' as SearchType, label: t('tabPolicies'), icon: ScrollText, count: data?.counts.policies || 0 },
   ]
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      {/* 검색 헤더 */}
+      {/* Search header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold mb-4 flex items-center gap-2">
           <Search className="h-6 w-6" />
-          통합 검색
+          {t('unifiedSearch')}
         </h1>
 
         <form onSubmit={handleSearch} className="space-y-4">
@@ -288,7 +292,7 @@ function SearchContent() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
-                placeholder="검색어를 입력하세요 (2자 이상)"
+                placeholder={t('placeholderMin')}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 className="pl-10 h-12 text-lg"
@@ -296,13 +300,13 @@ function SearchContent() {
               />
             </div>
             <Button type="submit" size="lg" className="h-12 px-8">
-              검색
+              {t('searchButton')}
             </Button>
           </div>
         </form>
       </div>
 
-      {/* 탭 네비게이션 */}
+      {/* Tab navigation */}
       {searched && data && (
         <div className="mb-4">
           <div className="flex gap-1 p-1 bg-muted rounded-lg">
@@ -329,7 +333,7 @@ function SearchContent() {
         </div>
       )}
 
-      {/* 게시글 필터 */}
+      {/* Post filters */}
       {searched && data && selectedType === 'posts' && (
         <div className="flex flex-wrap gap-3 mb-4">
           <Select
@@ -340,10 +344,10 @@ function SearchContent() {
             }}
           >
             <SelectTrigger className="w-[160px]">
-              <SelectValue placeholder="게시판 선택" />
+              <SelectValue placeholder={t('boardSelectPlaceholder')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">전체 게시판</SelectItem>
+              <SelectItem value="all">{t('allBoards')}</SelectItem>
               {data.boards.map((board) => (
                 <SelectItem key={board.slug} value={board.slug}>
                   {board.name}
@@ -360,25 +364,25 @@ function SearchContent() {
             }}
           >
             <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder="정렬" />
+              <SelectValue placeholder={t('sortPlaceholder')} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="relevance">
                 <span className="flex items-center gap-2">
                   <Sparkles className="h-4 w-4" />
-                  정확도순
+                  {t('sortRelevance')}
                 </span>
               </SelectItem>
               <SelectItem value="latest">
                 <span className="flex items-center gap-2">
                   <Clock className="h-4 w-4" />
-                  최신순
+                  {t('sortLatest')}
                 </span>
               </SelectItem>
               <SelectItem value="popular">
                 <span className="flex items-center gap-2">
                   <TrendingUp className="h-4 w-4" />
-                  인기순
+                  {t('sortPopular')}
                 </span>
               </SelectItem>
             </SelectContent>
@@ -386,7 +390,7 @@ function SearchContent() {
         </div>
       )}
 
-      {/* 검색 결과 */}
+      {/* Search results */}
       {loading ? (
         <div className="flex items-center justify-center py-20">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -395,24 +399,24 @@ function SearchContent() {
         <>
           <div className="mb-4 text-sm text-muted-foreground">
             <span className="font-medium text-foreground">&quot;{data.query}&quot;</span>
-            {' '}검색 결과 총 <span className="font-semibold text-primary">{data.counts.all.toLocaleString()}</span>건
+            {' '}{t('resultSummary', { count: data.counts.all.toLocaleString() })}
           </div>
 
-          {/* 전체 탭 */}
+          {/* All tab */}
           {selectedType === 'all' && (
             <div className="space-y-6">
-              {/* 게시글 섹션 */}
+              {/* Posts section */}
               {data.results.posts.total > 0 && (
                 <Card>
                   <div className="border-b px-4 py-3 flex items-center justify-between">
                     <h2 className="font-semibold flex items-center gap-2">
                       <FileText className="h-4 w-4 text-primary" />
-                      게시글
+                      {t('tabPosts')}
                       <Badge variant="secondary">{data.results.posts.total}</Badge>
                     </h2>
                     {data.results.posts.total > 5 && (
                       <button onClick={() => handleTypeChange('posts')} className="text-sm text-primary hover:underline">
-                        더보기 →
+                        {t('viewMore')}
                       </button>
                     )}
                   </div>
@@ -435,18 +439,18 @@ function SearchContent() {
                 </Card>
               )}
 
-              {/* 콘텐츠 섹션 */}
+              {/* Contents section */}
               {data.results.contents.total > 0 && (
                 <Card>
                   <div className="border-b px-4 py-3 flex items-center justify-between">
                     <h2 className="font-semibold flex items-center gap-2">
                       <BookOpen className="h-4 w-4 text-green-600" />
-                      콘텐츠
+                      {t('tabContents')}
                       <Badge variant="secondary">{data.results.contents.total}</Badge>
                     </h2>
                     {data.results.contents.total > 5 && (
                       <button onClick={() => handleTypeChange('contents')} className="text-sm text-primary hover:underline">
-                        더보기 →
+                        {t('viewMore')}
                       </button>
                     )}
                   </div>
@@ -461,18 +465,18 @@ function SearchContent() {
                 </Card>
               )}
 
-              {/* 상품 섹션 */}
+              {/* Products section */}
               {data.results.products.total > 0 && (
                 <Card>
                   <div className="border-b px-4 py-3 flex items-center justify-between">
                     <h2 className="font-semibold flex items-center gap-2">
                       <ShoppingBag className="h-4 w-4 text-orange-600" />
-                      상품
+                      {t('tabProducts')}
                       <Badge variant="secondary">{data.results.products.total}</Badge>
                     </h2>
                     {data.results.products.total > 5 && (
                       <button onClick={() => handleTypeChange('products')} className="text-sm text-primary hover:underline">
-                        더보기 →
+                        {t('viewMore')}
                       </button>
                     )}
                   </div>
@@ -500,13 +504,13 @@ function SearchContent() {
                             )}
                             <h3 className="font-medium text-sm truncate" dangerouslySetInnerHTML={{ __html: highlightText(product.name, data.query) }} />
                             {product.isSoldOut && (
-                              <Badge variant="destructive" className="text-xs shrink-0">품절</Badge>
+                              <Badge variant="destructive" className="text-xs shrink-0">{t('soldOut')}</Badge>
                             )}
                           </div>
                           <div className="flex items-center gap-2 text-sm">
-                            <span className="font-semibold text-primary">{product.price.toLocaleString()}원</span>
+                            <span className="font-semibold text-primary">{product.price.toLocaleString()}{t('won')}</span>
                             {product.originPrice && product.originPrice > product.price && (
-                              <span className="text-muted-foreground line-through text-xs">{product.originPrice.toLocaleString()}원</span>
+                              <span className="text-muted-foreground line-through text-xs">{product.originPrice.toLocaleString()}{t('won')}</span>
                             )}
                           </div>
                         </div>
@@ -516,18 +520,18 @@ function SearchContent() {
                 </Card>
               )}
 
-              {/* 정책 섹션 */}
+              {/* Policies section */}
               {data.results.policies.total > 0 && (
                 <Card>
                   <div className="border-b px-4 py-3 flex items-center justify-between">
                     <h2 className="font-semibold flex items-center gap-2">
                       <ScrollText className="h-4 w-4 text-purple-600" />
-                      정책/약관
+                      {t('tabPolicies')}
                       <Badge variant="secondary">{data.results.policies.total}</Badge>
                     </h2>
                     {data.results.policies.total > 5 && (
                       <button onClick={() => handleTypeChange('policies')} className="text-sm text-primary hover:underline">
-                        더보기 →
+                        {t('viewMore')}
                       </button>
                     )}
                   </div>
@@ -549,15 +553,15 @@ function SearchContent() {
                 <Card>
                   <CardContent className="py-16 text-center">
                     <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">검색 결과가 없습니다</h3>
-                    <p className="text-muted-foreground mb-4">다른 검색어를 시도해 보세요.</p>
+                    <h3 className="text-lg font-semibold mb-2">{t('noResults')}</h3>
+                    <p className="text-muted-foreground mb-4">{t('noResultsDesc')}</p>
                   </CardContent>
                 </Card>
               )}
             </div>
           )}
 
-          {/* 게시글 탭 */}
+          {/* Posts tab */}
           {selectedType === 'posts' && (
             <>
               {data.results.posts.items.length > 0 ? (
@@ -592,12 +596,12 @@ function SearchContent() {
                   )}
                 </>
               ) : (
-                <EmptyResult icon={FileText} message="게시글 검색 결과가 없습니다" />
+                <EmptyResult icon={FileText} message={t('noPostsResults')} />
               )}
             </>
           )}
 
-          {/* 콘텐츠 탭 */}
+          {/* Contents tab */}
           {selectedType === 'contents' && (
             <>
               {data.results.contents.items.length > 0 ? (
@@ -608,7 +612,7 @@ function SearchContent() {
                         <Link key={content.id} href={`/contents/${content.slug}`} className="block px-4 py-4 hover:bg-muted/50 transition-colors">
                           <h3 className="font-medium mb-1" dangerouslySetInnerHTML={{ __html: highlightText(content.title, data.query) }} />
                           <p className="text-sm text-muted-foreground line-clamp-2 mb-2" dangerouslySetInnerHTML={{ __html: highlightText(content.excerpt, data.query) }} />
-                          <div className="text-xs text-muted-foreground">마지막 수정: {formatTimeAgo(content.updatedAt)}</div>
+                          <div className="text-xs text-muted-foreground">{t('lastModified')}: {formatTimeAgo(content.updatedAt)}</div>
                         </Link>
                       ))}
                     </CardContent>
@@ -619,12 +623,12 @@ function SearchContent() {
                   )}
                 </>
               ) : (
-                <EmptyResult icon={BookOpen} message="콘텐츠 검색 결과가 없습니다" />
+                <EmptyResult icon={BookOpen} message={t('noContentsResults')} />
               )}
             </>
           )}
 
-          {/* 정책 탭 */}
+          {/* Policies tab */}
           {selectedType === 'policies' && (
             <>
               {data.results.policies.items.length > 0 ? (
@@ -638,7 +642,7 @@ function SearchContent() {
                             <Badge variant="outline" className="text-xs">v{policy.version}</Badge>
                           </div>
                           <p className="text-sm text-muted-foreground line-clamp-2 mb-2" dangerouslySetInnerHTML={{ __html: highlightText(policy.excerpt, data.query) }} />
-                          <div className="text-xs text-muted-foreground">마지막 수정: {formatTimeAgo(policy.updatedAt)}</div>
+                          <div className="text-xs text-muted-foreground">{t('lastModified')}: {formatTimeAgo(policy.updatedAt)}</div>
                         </Link>
                       ))}
                     </CardContent>
@@ -649,12 +653,12 @@ function SearchContent() {
                   )}
                 </>
               ) : (
-                <EmptyResult icon={ScrollText} message="정책/약관 검색 결과가 없습니다" />
+                <EmptyResult icon={ScrollText} message={t('noPoliciesResults')} />
               )}
             </>
           )}
 
-          {/* 상품 탭 */}
+          {/* Products tab */}
           {selectedType === 'products' && (
             <>
               {data.results.products.items.length > 0 ? (
@@ -678,7 +682,7 @@ function SearchContent() {
                             )}
                             {product.isSoldOut && (
                               <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                                <Badge variant="destructive">품절</Badge>
+                                <Badge variant="destructive">{t('soldOut')}</Badge>
                               </div>
                             )}
                           </div>
@@ -691,9 +695,9 @@ function SearchContent() {
                               <p className="text-xs text-muted-foreground line-clamp-1 mb-2" dangerouslySetInnerHTML={{ __html: highlightText(product.description, data.query) }} />
                             )}
                             <div className="flex items-center gap-2">
-                              <span className="font-bold text-primary">{product.price.toLocaleString()}원</span>
+                              <span className="font-bold text-primary">{product.price.toLocaleString()}{t('won')}</span>
                               {product.originPrice && product.originPrice > product.price && (
-                                <span className="text-muted-foreground line-through text-xs">{product.originPrice.toLocaleString()}원</span>
+                                <span className="text-muted-foreground line-through text-xs">{product.originPrice.toLocaleString()}{t('won')}</span>
                               )}
                             </div>
                           </CardContent>
@@ -707,7 +711,7 @@ function SearchContent() {
                   )}
                 </>
               ) : (
-                <EmptyResult icon={ShoppingBag} message="상품 검색 결과가 없습니다" />
+                <EmptyResult icon={ShoppingBag} message={t('noProductsResults')} />
               )}
             </>
           )}
@@ -716,8 +720,8 @@ function SearchContent() {
         <Card className="bg-muted/30">
           <CardContent className="py-16 text-center">
             <Search className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">검색어를 입력하세요</h3>
-            <p className="text-muted-foreground">게시글, 상품, 콘텐츠, 정책/약관에서 통합 검색합니다.</p>
+            <h3 className="text-lg font-semibold mb-2">{t('enterQuery')}</h3>
+            <p className="text-muted-foreground">{t('enterQueryDesc')}</p>
           </CardContent>
         </Card>
       )}
@@ -725,11 +729,12 @@ function SearchContent() {
   )
 }
 
-// 페이지네이션 컴포넌트
+// Pagination component
 function PaginationNav({ pagination, onPageChange }: {
   pagination: { page: number; totalPages: number }
   onPageChange: (page: number) => void
 }) {
+  const t = useTranslations('search')
   return (
     <div className="flex justify-center items-center gap-2 mt-6">
       <Button
@@ -739,7 +744,7 @@ function PaginationNav({ pagination, onPageChange }: {
         disabled={pagination.page === 1}
       >
         <ChevronLeft className="h-4 w-4" />
-        이전
+        {t('prev')}
       </Button>
       <span className="text-sm text-muted-foreground px-4">
         {pagination.page} / {pagination.totalPages}
@@ -750,14 +755,14 @@ function PaginationNav({ pagination, onPageChange }: {
         onClick={() => onPageChange(pagination.page + 1)}
         disabled={pagination.page === pagination.totalPages}
       >
-        다음
+        {t('next')}
         <ChevronRight className="h-4 w-4" />
       </Button>
     </div>
   )
 }
 
-// 빈 결과 컴포넌트
+// Empty-result component
 function EmptyResult({ icon: Icon, message }: { icon: React.ComponentType<{ className?: string }>; message: string }) {
   return (
     <Card>

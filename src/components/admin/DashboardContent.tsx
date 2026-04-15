@@ -1,13 +1,14 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useTranslations, useLocale } from "next-intl"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   BarChart3, Users, MessageSquare, TrendingUp, Loader2, LayoutDashboard,
   Eye, ThumbsUp, CheckCircle2, XCircle
 } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
-import { ko } from "date-fns/locale"
+import { ko, enUS } from "date-fns/locale"
 import Image from "next/image"
 import Link from "next/link"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
@@ -67,6 +68,9 @@ interface LoginLog {
 }
 
 export function DashboardContent() {
+  const t = useTranslations('admin')
+  const locale = useLocale()
+  const dateLocale = locale === 'ko' ? ko : enUS
   const [data, setData] = useState<DashboardData | null>(null)
   const [loginLogs, setLoginLogs] = useState<LoginLog[]>([])
   const [loading, setLoading] = useState(true)
@@ -88,14 +92,14 @@ export function DashboardContent() {
           setLoginLogs(logsData.logs || [])
         }
       } catch (err) {
-        setError("데이터를 불러오는데 실패했습니다.")
+        setError(t('dataLoadError'))
         console.error(err)
       } finally {
         setLoading(false)
       }
     }
     fetchDashboard()
-  }, [])
+  }, [t])
 
   if (loading) {
     return (
@@ -108,7 +112,7 @@ export function DashboardContent() {
   if (error || !data) {
     return (
       <div className="flex items-center justify-center h-64">
-        <p className="text-muted-foreground">{error || "데이터를 불러올 수 없습니다."}</p>
+        <p className="text-muted-foreground">{error || t('dataLoadFailed')}</p>
       </div>
     )
   }
@@ -119,7 +123,7 @@ export function DashboardContent() {
   }
 
   const formatTimeAgo = (dateStr: string) => {
-    return formatDistanceToNow(new Date(dateStr), { addSuffix: true, locale: ko })
+    return formatDistanceToNow(new Date(dateStr), { addSuffix: true, locale: dateLocale })
   }
 
   return (
@@ -127,17 +131,17 @@ export function DashboardContent() {
       <div>
         <h1 className="text-2xl font-bold flex items-center gap-2">
           <LayoutDashboard className="h-6 w-6" />
-          대시보드
+          {t('dashboard')}
         </h1>
-        <p className="text-muted-foreground mt-1">관리자 패널에 오신 것을 환영합니다.</p>
+        <p className="text-muted-foreground mt-1">{t('welcomeMessage')}</p>
       </div>
 
-      {/* 통계 카드 */}
+      {/* Stats cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Link href="/admin/users">
           <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">총 회원수</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('totalUsers')}</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -145,7 +149,7 @@ export function DashboardContent() {
               <p className="text-xs text-muted-foreground">
                 <span className={data.stats.userGrowth >= 0 ? "text-green-600" : "text-red-600"}>
                   {formatGrowth(data.stats.userGrowth)}
-                </span> 지난달 대비
+                </span> {t('vsLastMonth')}
               </p>
             </CardContent>
           </Card>
@@ -155,7 +159,7 @@ export function DashboardContent() {
           <Link href="/admin/boards">
             <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">총 게시글</CardTitle>
+                <CardTitle className="text-sm font-medium">{t('totalPosts')}</CardTitle>
                 <MessageSquare className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -163,7 +167,7 @@ export function DashboardContent() {
                 <p className="text-xs text-muted-foreground">
                   <span className={data.stats.postGrowth >= 0 ? "text-green-600" : "text-red-600"}>
                     {formatGrowth(data.stats.postGrowth)}
-                  </span> 지난주 대비
+                  </span> {t('vsLastWeek')}
                 </p>
               </CardContent>
             </Card>
@@ -173,7 +177,7 @@ export function DashboardContent() {
         <Link href="/admin/users">
           <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">오늘 활성 사용자</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('activeUsersToday')}</CardTitle>
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -181,7 +185,7 @@ export function DashboardContent() {
               <p className="text-xs text-muted-foreground">
                 <span className={data.stats.activeUserGrowth >= 0 ? "text-green-600" : "text-red-600"}>
                   {formatGrowth(data.stats.activeUserGrowth)}
-                </span> 어제 대비
+                </span> {t('vsYesterday')}
               </p>
             </CardContent>
           </Card>
@@ -189,30 +193,30 @@ export function DashboardContent() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">시스템 상태</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('systemStatus')}</CardTitle>
             <BarChart3 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">정상</div>
-            <p className="text-xs text-muted-foreground">모든 서비스 운영 중</p>
+            <div className="text-2xl font-bold text-green-600">{t('systemOk')}</div>
+            <p className="text-xs text-muted-foreground">{t('allServicesRunning')}</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* 신규 가입자 추이 + 최근 로그인 */}
+      {/* New signup trend + recent logins */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {data.trends && (
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-base">최근 7일 신규 가입자</CardTitle>
+              <CardTitle className="text-base">{t('newUsers7d')}</CardTitle>
               <Link href="/admin/user-trends" className="text-sm text-muted-foreground hover:text-primary">
-                상세보기
+                {t('viewDetails')}
               </Link>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={250}>
                 <LineChart data={data.trends.users?.map(item => ({
-                  date: new Date(item.date).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' }),
+                  date: new Date(item.date).toLocaleDateString(locale, { month: 'short', day: 'numeric' }),
                   count: item.count,
                 }))}>
                   <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.3} />
@@ -221,7 +225,7 @@ export function DashboardContent() {
                   <Tooltip
                     contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border))', backgroundColor: 'hsl(var(--popover))', color: 'hsl(var(--popover-foreground))' }}
                     labelStyle={{ fontWeight: 600 }}
-                    formatter={(value) => [`${value}명`, '가입자']}
+                    formatter={(value) => [`${value}`, t('subscribers')]}
                   />
                   <Line
                     type="linear"
@@ -237,18 +241,18 @@ export function DashboardContent() {
           </Card>
         )}
 
-        {/* 최근 가입 회원 */}
+        {/* Recent signups */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-base">최근 가입 회원</CardTitle>
+            <CardTitle className="text-base">{t('recentUsers')}</CardTitle>
             <Link href="/admin/users" className="text-sm text-muted-foreground hover:text-primary">
-              전체보기
+              {t('viewAll')}
             </Link>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {data.recentUsers.length === 0 ? (
-                <p className="text-sm text-muted-foreground">최근 가입한 회원이 없습니다.</p>
+                <p className="text-sm text-muted-foreground">{t('noRecentUsers')}</p>
               ) : (
                 data.recentUsers.map((user) => (
                   <div key={user.id} className="flex items-center gap-3">
@@ -274,20 +278,20 @@ export function DashboardContent() {
         </Card>
       </div>
 
-      {/* 최근 로그인 + 인기 게시글 */}
+      {/* Recent logins + popular posts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* 최근 로그인 기록 */}
+        {/* Recent login history */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-base">최근 로그인</CardTitle>
+            <CardTitle className="text-base">{t('recentLogins')}</CardTitle>
             <Link href="/admin/login-logs" className="text-sm text-muted-foreground hover:text-primary">
-              전체보기
+              {t('viewAll')}
             </Link>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {loginLogs.length === 0 ? (
-                <p className="text-sm text-muted-foreground">로그인 기록이 없습니다.</p>
+                <p className="text-sm text-muted-foreground">{t('noLoginLogs')}</p>
               ) : (
                 loginLogs.map((log) => (
                   <div key={log.id} className="flex items-center gap-3">
@@ -310,13 +314,13 @@ export function DashboardContent() {
           </CardContent>
         </Card>
 
-        {/* 인기 게시글 */}
+        {/* Popular posts */}
         {data.pluginStatus?.boards && data.popularPosts && data.popularPosts.length > 0 && (
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-base">인기 게시글</CardTitle>
+              <CardTitle className="text-base">{t('popularPosts')}</CardTitle>
               <Link href="/posts/popular" target="_blank" className="text-sm text-muted-foreground hover:text-primary">
-                전체보기
+                {t('viewAll')}
               </Link>
             </CardHeader>
             <CardContent>
@@ -348,21 +352,21 @@ export function DashboardContent() {
         )}
       </div>
 
-      {/* 최근 게시글 + 최근 댓글 */}
+      {/* Recent posts + recent comments */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* 최근 게시글 */}
+        {/* Recent posts */}
         {data.pluginStatus?.boards && data.recentPosts && (
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-base">최근 게시글</CardTitle>
+              <CardTitle className="text-base">{t('recentPosts')}</CardTitle>
               <Link href="/posts/latest" target="_blank" className="text-sm text-muted-foreground hover:text-primary">
-                전체보기
+                {t('viewAll')}
               </Link>
             </CardHeader>
             <CardContent>
               <div className="space-y-1">
                 {data.recentPosts.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">최근 게시글이 없습니다.</p>
+                  <p className="text-sm text-muted-foreground">{t('noRecentPosts')}</p>
                 ) : (
                   data.recentPosts.map((post) => (
                     <Link key={post.id} href={`/boards/${post.board.slug}/${post.id}`} target="_blank" className="flex items-center justify-between hover:bg-muted/50 rounded-lg py-1.5 px-2 -mx-2 transition-colors">
@@ -379,19 +383,19 @@ export function DashboardContent() {
           </Card>
         )}
 
-        {/* 최근 댓글 */}
+        {/* Recent comments */}
         {data.pluginStatus?.boards && data.recentComments && (
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-base">최근 댓글</CardTitle>
+              <CardTitle className="text-base">{t('recentComments')}</CardTitle>
               <Link href="/comments/latest" target="_blank" className="text-sm text-muted-foreground hover:text-primary">
-                전체보기
+                {t('viewAll')}
               </Link>
             </CardHeader>
             <CardContent>
               <div className="space-y-1">
                 {data.recentComments.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">최근 댓글이 없습니다.</p>
+                  <p className="text-sm text-muted-foreground">{t('noRecentComments')}</p>
                 ) : (
                   data.recentComments.map((comment) => (
                     <Link key={comment.id} href={`/boards/${comment.post.board.slug}/${comment.post.id}`} target="_blank" className="flex items-center justify-between hover:bg-muted/50 rounded-lg py-1.5 px-2 -mx-2 transition-colors">

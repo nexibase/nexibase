@@ -24,6 +24,7 @@ import {
   Sparkles,
   FileEdit,
 } from "lucide-react"
+import { useTranslations } from 'next-intl'
 
 interface Content {
   id: number
@@ -36,7 +37,7 @@ interface Content {
   selected?: boolean
 }
 
-// 콘텐츠 모달
+// Content modal
 function ContentModal({
   isOpen,
   onClose,
@@ -48,6 +49,7 @@ function ContentModal({
   content: Content | null
   onSave: (data: Partial<Content>) => void
 }) {
+  const t = useTranslations('contents.admin')
   const [formData, setFormData] = useState({
     slug: '',
     title: '',
@@ -89,7 +91,7 @@ function ContentModal({
       <div className="relative bg-background rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto m-4">
         <div className="sticky top-0 bg-background border-b px-6 py-4 flex items-center justify-between z-10">
           <h2 className="text-xl font-semibold">
-            {content ? '콘텐츠 수정' : '콘텐츠 추가'}
+            {content ? t('editTitle') : t('createTitle')}
           </h2>
           <button
             onClick={onClose}
@@ -103,7 +105,7 @@ function ContentModal({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="slug">
-                슬러그 <span className="text-red-500">*</span>
+                {t('slugRequired')} <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="slug"
@@ -115,17 +117,17 @@ function ContentModal({
                 required
               />
               <p className="text-xs text-muted-foreground">
-                URL에 사용될 영문 소문자, 숫자, 하이픈
+                {t('slugHint')}
               </p>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="title">
-                제목 <span className="text-red-500">*</span>
+                {t('titleRequired')} <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="title"
-                placeholder="회사소개, About Us..."
+                placeholder={t('titlePlaceholder')}
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 required
@@ -134,11 +136,11 @@ function ContentModal({
           </div>
 
           <div className="space-y-2">
-            <Label>내용</Label>
+            <Label>{t('content')}</Label>
             <TiptapEditor
               content={formData.content}
               onChange={(value) => setFormData({ ...formData, content: value })}
-              placeholder="내용을 입력하세요..."
+              placeholder={t('contentPlaceholder')}
             />
           </div>
 
@@ -150,16 +152,16 @@ function ContentModal({
               onChange={(e) => setFormData({ ...formData, isPublic: e.target.checked })}
               className="rounded border-gray-300"
             />
-            <Label htmlFor="isPublic" className="cursor-pointer">공개</Label>
+            <Label htmlFor="isPublic" className="cursor-pointer">{t('isPublic')}</Label>
           </div>
 
           <div className="flex justify-end space-x-3 pt-4">
             <Button type="button" variant="outline" onClick={onClose}>
-              취소
+              {t('cancel')}
             </Button>
             <Button type="submit" disabled={loading}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {content ? '수정' : '추가'}
+              {content ? t('editBtn') : t('addBtn')}
             </Button>
           </div>
         </form>
@@ -169,6 +171,7 @@ function ContentModal({
 }
 
 export default function ContentsPage() {
+  const t = useTranslations('contents.admin')
   const [contents, setContents] = useState<Content[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
@@ -179,9 +182,9 @@ export default function ContentsPage() {
   const [selectedAll, setSelectedAll] = useState(false)
   const [seedingContents, setSeedingContents] = useState(false)
 
-  // 기본 콘텐츠 생성
+  // Create default contents
   const handleSeedContents = async () => {
-    if (!confirm('회사소개, 문의하기, FAQ 콘텐츠를 생성하시겠습니까?')) return
+    if (!confirm(t('seedConfirm'))) return
 
     setSeedingContents(true)
     try {
@@ -194,17 +197,17 @@ export default function ContentsPage() {
         alert(data.message)
         fetchContents()
       } else {
-        alert(data.error || '생성에 실패했습니다.')
+        alert(data.error || t('seedFailed'))
       }
     } catch (error) {
-      console.error('기본 콘텐츠 생성 에러:', error)
-      alert('생성 중 오류가 발생했습니다.')
+      console.error('failed to create default contents:', error)
+      alert(t('seedError'))
     } finally {
       setSeedingContents(false)
     }
   }
 
-  // 콘텐츠 목록 조회
+  // Fetch content list
   const fetchContents = useCallback(async () => {
     setLoading(true)
     try {
@@ -222,7 +225,7 @@ export default function ContentsPage() {
         setTotalPages(data.pagination.totalPages)
       }
     } catch (error) {
-      console.error('콘텐츠 목록 조회 에러:', error)
+      console.error('failed to fetch contents:', error)
     } finally {
       setLoading(false)
     }
@@ -232,7 +235,7 @@ export default function ContentsPage() {
     fetchContents()
   }, [fetchContents])
 
-  // 콘텐츠 저장
+  // Save content
   const handleSaveContent = async (formData: Partial<Content>) => {
     try {
       const url = editingContent
@@ -252,17 +255,17 @@ export default function ContentsPage() {
         setEditingContent(null)
         fetchContents()
       } else {
-        alert(data.error || '저장에 실패했습니다.')
+        alert(data.error || t('saveFailed'))
       }
     } catch (error) {
-      console.error('콘텐츠 저장 에러:', error)
-      alert('저장 중 오류가 발생했습니다.')
+      console.error('failed to save content:', error)
+      alert(t('saveError'))
     }
   }
 
-  // 콘텐츠 삭제
+  // Delete content
   const handleDelete = async (content: Content) => {
-    if (!confirm(`"${content.title}" 콘텐츠를 삭제하시겠습니까?`)) return
+    if (!confirm(t('deleteOneConfirm', { title: content.title }))) return
 
     try {
       const response = await fetch(`/api/admin/contents/${content.id}`, {
@@ -273,23 +276,23 @@ export default function ContentsPage() {
         fetchContents()
       } else {
         const data = await response.json()
-        alert(data.error || '삭제에 실패했습니다.')
+        alert(data.error || t('deleteFailed'))
       }
     } catch (error) {
-      console.error('콘텐츠 삭제 에러:', error)
-      alert('삭제 중 오류가 발생했습니다.')
+      console.error('failed to delete content:', error)
+      alert(t('deleteError'))
     }
   }
 
-  // 선택 삭제
+  // Delete selected
   const handleBulkDelete = async () => {
     const selectedIds = contents.filter(c => c.selected).map(c => c.id)
     if (selectedIds.length === 0) {
-      alert('삭제할 콘텐츠를 선택해주세요.')
+      alert(t('bulkSelectEmpty'))
       return
     }
 
-    if (!confirm(`${selectedIds.length}개의 콘텐츠를 삭제하시겠습니까?`)) return
+    if (!confirm(t('bulkDeleteConfirm', { count: selectedIds.length }))) return
 
     try {
       const response = await fetch('/api/admin/contents', {
@@ -303,29 +306,29 @@ export default function ContentsPage() {
         fetchContents()
       } else {
         const data = await response.json()
-        alert(data.error || '삭제에 실패했습니다.')
+        alert(data.error || t('deleteFailed'))
       }
     } catch (error) {
-      console.error('일괄 삭제 에러:', error)
-      alert('삭제 중 오류가 발생했습니다.')
+      console.error('bulk delete error:', error)
+      alert(t('deleteError'))
     }
   }
 
-  // 전체 선택
+  // Select all
   const handleSelectAll = () => {
     const newSelected = !selectedAll
     setSelectedAll(newSelected)
     setContents(contents.map(c => ({ ...c, selected: newSelected })))
   }
 
-  // 개별 선택
+  // Select one
   const handleSelect = (id: number) => {
     setContents(contents.map(c =>
       c.id === id ? { ...c, selected: !c.selected } : c
     ))
   }
 
-  // 검색
+  // Search
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     setPage(1)
@@ -337,16 +340,16 @@ export default function ContentsPage() {
       <div className="flex">
         <Sidebar activeMenu="contents" />
         <main className="flex-1 lg:ml-0 p-6">
-          {/* 헤더 */}
+          {/* Header */}
           <div className="mb-6">
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <FileEdit className="h-6 w-6" />
-              콘텐츠 관리
+              {t('title')}
             </h1>
-            <p className="text-muted-foreground mt-1">회사소개, About 등 일반 콘텐츠를 관리합니다</p>
+            <p className="text-muted-foreground mt-1">{t('headerDesc')}</p>
           </div>
 
-          {/* 검색 및 액션 */}
+          {/* Search and actions */}
           <Card className="mb-6">
             <CardContent className="p-4">
               <div className="flex flex-col sm:flex-row gap-4 justify-between">
@@ -354,35 +357,35 @@ export default function ContentsPage() {
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
-                      placeholder="콘텐츠 검색..."
+                      placeholder={t('searchPlaceholder')}
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
                       className="pl-10 w-64"
                     />
                   </div>
-                  <Button type="submit" variant="outline">검색</Button>
+                  <Button type="submit" variant="outline">{t('searchBtn')}</Button>
                 </form>
 
                 <div className="flex gap-2">
                   {contents.some(c => c.selected) && (
                     <Button variant="destructive" onClick={handleBulkDelete}>
                       <Trash2 className="h-4 w-4 mr-2" />
-                      선택 삭제
+                      {t('bulkDelete')}
                     </Button>
                   )}
                   <Button onClick={() => { setEditingContent(null); setModalOpen(true); }}>
                     <Plus className="h-4 w-4 mr-2" />
-                    콘텐츠 추가
+                    {t('createBtn')}
                   </Button>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* 콘텐츠 목록 */}
+          {/* Content list */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg">콘텐츠 목록</CardTitle>
+              <CardTitle className="text-lg">{t('listTitle')}</CardTitle>
             </CardHeader>
             <CardContent>
               {loading ? (
@@ -392,7 +395,7 @@ export default function ContentsPage() {
               ) : contents.length === 0 ? (
                 <div className="text-center py-12">
                   <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground mb-4">콘텐츠가 없습니다.</p>
+                  <p className="text-muted-foreground mb-4">{t('empty')}</p>
                   <div className="flex justify-center gap-2">
                     <Button onClick={handleSeedContents} disabled={seedingContents}>
                       {seedingContents ? (
@@ -400,15 +403,15 @@ export default function ContentsPage() {
                       ) : (
                         <Sparkles className="h-4 w-4 mr-2" />
                       )}
-                      기본 콘텐츠 생성
+                      {t('seedCreate')}
                     </Button>
                     <Button variant="outline" onClick={() => { setEditingContent(null); setModalOpen(true); }}>
                       <Plus className="h-4 w-4 mr-2" />
-                      직접 추가
+                      {t('addDirectly')}
                     </Button>
                   </div>
                   <p className="text-sm text-muted-foreground mt-2">
-                    회사소개, 문의하기, FAQ가 생성됩니다
+                    {t('seedHint')}
                   </p>
                 </div>
               ) : (
@@ -425,11 +428,11 @@ export default function ContentsPage() {
                               className="rounded border-gray-300"
                             />
                           </th>
-                          <th className="p-3 text-left text-sm font-medium text-muted-foreground">제목</th>
-                          <th className="p-3 text-left text-sm font-medium text-muted-foreground">슬러그</th>
-                          <th className="p-3 text-center text-sm font-medium text-muted-foreground">상태</th>
-                          <th className="p-3 text-left text-sm font-medium text-muted-foreground">수정일</th>
-                          <th className="p-3 text-center text-sm font-medium text-muted-foreground">관리</th>
+                          <th className="p-3 text-left text-sm font-medium text-muted-foreground">{t('colTitle')}</th>
+                          <th className="p-3 text-left text-sm font-medium text-muted-foreground">{t('colSlug')}</th>
+                          <th className="p-3 text-center text-sm font-medium text-muted-foreground">{t('colStatus')}</th>
+                          <th className="p-3 text-left text-sm font-medium text-muted-foreground">{t('colUpdatedAt')}</th>
+                          <th className="p-3 text-center text-sm font-medium text-muted-foreground">{t('colActions')}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -461,12 +464,12 @@ export default function ContentsPage() {
                               {content.isPublic ? (
                                 <Badge className="bg-green-500/10 text-green-700 hover:bg-green-500/10 dark:bg-green-500/20 dark:text-green-400">
                                   <Eye className="h-3 w-3 mr-1" />
-                                  공개
+                                  {t('statusPublic')}
                                 </Badge>
                               ) : (
                                 <Badge variant="secondary">
                                   <EyeOff className="h-3 w-3 mr-1" />
-                                  비공개
+                                  {t('statusPrivate')}
                                 </Badge>
                               )}
                             </td>
@@ -498,7 +501,7 @@ export default function ContentsPage() {
                     </table>
                   </div>
 
-                  {/* 페이지네이션 */}
+                  {/* Pagination */}
                   {totalPages > 1 && (
                     <div className="flex justify-center items-center gap-2 mt-6">
                       <Button
@@ -529,7 +532,7 @@ export default function ContentsPage() {
         </main>
       </div>
 
-      {/* 모달 */}
+      {/* Modal */}
       <ContentModal
         isOpen={modalOpen}
         onClose={() => { setModalOpen(false); setEditingContent(null); }}

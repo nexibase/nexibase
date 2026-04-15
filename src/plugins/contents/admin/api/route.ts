@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminUser } from '@/lib/auth'
 
-// 콘텐츠 목록 조회
+// Fetch content list
 export async function GET(request: NextRequest) {
   try {
     const admin = await getAdminUser()
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
       }
     })
   } catch (error) {
-    console.error('콘텐츠 목록 조회 에러:', error)
+    console.error('failed to fetch contents:', error)
     return NextResponse.json(
       { error: '서버 오류가 발생했습니다.' },
       { status: 500 }
@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// 콘텐츠 생성
+// Create content
 export async function POST(request: NextRequest) {
   try {
     const admin = await getAdminUser()
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 슬러그 형식 검증
+    // Validate slug format
     const slugRegex = /^[a-z0-9-]+$/
     if (!slugRegex.test(slug)) {
       return NextResponse.json(
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 슬러그 중복 확인
+    // Check slug uniqueness
     const existing = await prisma.content.findUnique({
       where: { slug }
     })
@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
     }, { status: 201 })
 
   } catch (error) {
-    console.error('콘텐츠 생성 에러:', error)
+    console.error('failed to create content:', error)
     return NextResponse.json(
       { error: '서버 오류가 발생했습니다.' },
       { status: 500 }
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// 콘텐츠 일괄 삭제
+// Bulk delete contents
 export async function DELETE(request: NextRequest) {
   try {
     const admin = await getAdminUser()
@@ -145,7 +145,7 @@ export async function DELETE(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('콘텐츠 삭제 에러:', error)
+    console.error('failed to delete content:', error)
     return NextResponse.json(
       { error: '서버 오류가 발생했습니다.' },
       { status: 500 }

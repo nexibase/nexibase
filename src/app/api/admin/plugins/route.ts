@@ -13,7 +13,7 @@ export async function GET() {
 
     return NextResponse.json({ plugins })
   } catch (error) {
-    console.error('플러그인 목록 조회 에러:', error)
+    console.error('failed to fetch plugins:', error)
     return NextResponse.json({ error: '서버 오류' }, { status: 500 })
   }
 }

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { sanitizeHtml } from "@/lib/sanitize"
+import { useTranslations, useLocale } from 'next-intl'
 
 interface Policy {
   id: number
@@ -27,6 +28,8 @@ interface VersionInfo {
 }
 
 export default function PolicyPage() {
+  const t = useTranslations('policies')
+  const locale = useLocale()
   const params = useParams()
   const searchParams = useSearchParams()
   const slug = params.slug as string
@@ -52,11 +55,11 @@ export default function PolicyPage() {
           setPolicy(data.policy)
           setVersions(data.versions || [])
         } else {
-          setError(data.error || '약관을 불러올 수 없습니다.')
+          setError(data.error || t('loadFailed'))
         }
       } catch (err) {
-        console.error('약관 조회 에러:', err)
-        setError('약관을 불러오는 중 오류가 발생했습니다.')
+        console.error('failed to fetch policy:', err)
+        setError(t('loadError'))
       } finally {
         setLoading(false)
       }
@@ -65,7 +68,7 @@ export default function PolicyPage() {
     if (slug) {
       fetchPolicy()
     }
-  }, [slug, version])
+  }, [slug, version, t])
 
   if (loading) {
     return (
@@ -85,7 +88,7 @@ export default function PolicyPage() {
             <Button asChild variant="outline">
               <Link href="/">
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                홈으로 돌아가기
+                {t('backHome')}
               </Link>
             </Button>
           </CardContent>
@@ -109,14 +112,14 @@ export default function PolicyPage() {
                 <Badge variant="outline">v{policy.version}</Badge>
                 {policy.isActive ? (
                   <Badge className="bg-green-500/10 text-green-700 dark:bg-green-500/20 dark:text-green-400">
-                    현재 적용 중
+                    {t('currentlyApplied')}
                   </Badge>
                 ) : (
-                  <Badge variant="secondary">이전 버전</Badge>
+                  <Badge variant="secondary">{t('previousVersion')}</Badge>
                 )}
               </div>
               <p className="text-sm text-muted-foreground mt-2">
-                시행일: {new Date(policy.createdAt).toLocaleDateString('ko-KR')}
+                {t('effectiveDate')}: {new Date(policy.createdAt).toLocaleDateString(locale)}
               </p>
             </div>
 
@@ -127,15 +130,15 @@ export default function PolicyPage() {
                 onClick={() => setShowVersions(!showVersions)}
               >
                 <History className="h-4 w-4 mr-2" />
-                버전 히스토리
+                {t('versionHistory')}
               </Button>
             )}
           </div>
 
-          {/* 버전 히스토리 */}
+          {/* Version history */}
           {showVersions && versions.length > 1 && (
             <div className="mt-4 p-4 bg-muted rounded-lg">
-              <p className="text-sm font-medium mb-2">버전 히스토리</p>
+              <p className="text-sm font-medium mb-2">{t('versionHistory')}</p>
               <div className="space-y-2">
                 {versions.map((v) => (
                   <Link
@@ -150,12 +153,12 @@ export default function PolicyPage() {
                         <span className="font-mono text-sm">v{v.version}</span>
                         {v.isActive && (
                           <Badge className="bg-green-500/10 text-green-700 dark:bg-green-500/20 dark:text-green-400 text-xs">
-                            현재
+                            {t('current')}
                           </Badge>
                         )}
                       </div>
                       <span className="text-xs text-muted-foreground">
-                        {new Date(v.createdAt).toLocaleDateString('ko-KR')}
+                        {new Date(v.createdAt).toLocaleDateString(locale)}
                       </span>
                     </div>
                   </Link>
@@ -176,7 +179,7 @@ export default function PolicyPage() {
         <Button asChild variant="outline">
           <Link href="/">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            홈으로 돌아가기
+            {t('backHome')}
           </Link>
         </Button>
       </div>

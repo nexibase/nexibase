@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ posts })
   } catch (error) {
-    console.error('내 글 조회 에러:', error)
+    console.error('failed to fetch my posts:', error)
     return NextResponse.json({ error: '서버 오류' }, { status: 500 })
   }
 }

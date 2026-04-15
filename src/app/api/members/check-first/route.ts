@@ -9,7 +9,7 @@ export async function GET() {
       isFirst: userCount === 0
     })
   } catch (error) {
-    console.error('첫 회원 확인 에러:', error)
+    console.error('first-user check error:', error)
     return NextResponse.json(
       { error: '서버 오류가 발생했습니다.' },
       { status: 500 }

@@ -6,7 +6,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/route'
 import { existsSync, unlinkSync } from 'fs'
 import path from 'path'
 
-// NextAuth 세션에서 사용자 조회 헬퍼
+// Helper to fetch a user from the NextAuth session
 async function getUserFromSession() {
   const nextAuthSession = await getServerSession(authOptions)
   if (nextAuthSession?.user?.email) {
@@ -62,7 +62,7 @@ export async function GET() {
     })
 
   } catch (error) {
-    console.error('사용자 정보 조회 에러:', error)
+    console.error('failed to fetch user:', error)
     return NextResponse.json(
       { error: '서버 오류가 발생했습니다.' },
       { status: 500 }
@@ -70,7 +70,7 @@ export async function GET() {
   }
 }
 
-// 프로필 수정
+// Edit profile
 export async function PUT(request: NextRequest) {
   try {
     const user = await getUserFromSession()
@@ -84,21 +84,21 @@ export async function PUT(request: NextRequest) {
     const body = await request.json()
     const { nickname, name, phone, currentPassword, newPassword } = body
 
-    // 업데이트할 데이터
+    // Data to update
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updateData: any = {}
 
-    // 이름(실명) 업데이트
+    // Update real name
     if (name !== undefined) {
       updateData.name = name.trim() || null
     }
 
-    // 전화번호 업데이트
+    // Update phone number
     if (phone !== undefined) {
       updateData.phone = phone.trim() || null
     }
 
-    // 닉네임 업데이트
+    // Update nickname
     if (nickname !== undefined) {
       if (nickname.trim().length < 2) {
         return NextResponse.json(
@@ -106,14 +106,14 @@ export async function PUT(request: NextRequest) {
           { status: 400 }
         )
       }
-      // 한글, 영문, 숫자만 허용
+      // Only Korean, English, and digits allowed
       if (!/^[가-힣a-zA-Z0-9]+$/.test(nickname.trim())) {
         return NextResponse.json(
           { error: '닉네임은 한글, 영문, 숫자만 사용할 수 있습니다.' },
           { status: 400 }
         )
       }
-      // 닉네임 중복 체크
+      // Nickname uniqueness check
       const existingUser = await prisma.user.findFirst({
         where: {
           nickname: nickname.trim(),
@@ -129,7 +129,7 @@ export async function PUT(request: NextRequest) {
       updateData.nickname = nickname.trim()
     }
 
-    // 비밀번호 변경
+    // Change password
     if (newPassword) {
       if (!currentPassword) {
         return NextResponse.json(
@@ -138,7 +138,7 @@ export async function PUT(request: NextRequest) {
         )
       }
 
-      // 현재 비밀번호 확인
+      // Verify current password
       if (!user.password) {
         return NextResponse.json(
           { error: '소셜 로그인 계정은 비밀번호를 변경할 수 없습니다.' },
@@ -163,7 +163,7 @@ export async function PUT(request: NextRequest) {
       updateData.password = await bcrypt.hash(newPassword, 10)
     }
 
-    // 업데이트할 내용이 없으면 에러
+    // Error when there is nothing to update
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json(
         { error: '변경할 내용이 없습니다.' },
@@ -171,7 +171,7 @@ export async function PUT(request: NextRequest) {
       )
     }
 
-    // 사용자 정보 업데이트
+    // Update user info
     const updatedUser = await prisma.user.update({
       where: { id: user.id },
       data: updateData,
@@ -196,7 +196,7 @@ export async function PUT(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('프로필 수정 에러:', error)
+    console.error('failed to update profile:', error)
     return NextResponse.json(
       { error: '서버 오류가 발생했습니다.' },
       { status: 500 }
@@ -204,7 +204,7 @@ export async function PUT(request: NextRequest) {
   }
 }
 
-// 회원 탈퇴
+// Withdraw member
 export async function DELETE(request: NextRequest) {
   try {
     const user = await getUserFromSession()
@@ -215,7 +215,7 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    // 관리자는 탈퇴 불가 (body 파싱 전에 체크)
+    // Admins cannot withdraw (checked before parsing the body)
     if (user.role === 'admin') {
       return NextResponse.json(
         { error: '관리자 계정은 탈퇴할 수 없습니다. 다른 관리자에게 권한을 이전한 후 탈퇴해주세요.' },
@@ -226,7 +226,7 @@ export async function DELETE(request: NextRequest) {
     const body = await request.json()
     const { password, confirmText } = body
 
-    // 탈퇴 확인 문구 검증
+    // Validate the withdrawal confirmation phrase
     if (confirmText !== '회원탈퇴') {
       return NextResponse.json(
         { error: '탈퇴 확인 문구를 정확히 입력해주세요.' },
@@ -234,7 +234,7 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    // 소셜 로그인 계정인 경우 비밀번호 확인 생략
+    // Skip the password check for social login accounts
     if (user.password) {
       if (!password) {
         return NextResponse.json(
@@ -252,27 +252,27 @@ export async function DELETE(request: NextRequest) {
       }
     }
 
-    // 프로필 이미지 파일 삭제 (로컬 파일인 경우)
+    // Delete the profile image file (when it is local)
     if (user.image && user.image.startsWith('/uploads/profiles/')) {
       const imagePath = path.join(process.cwd(), 'public', user.image)
       try {
         if (existsSync(imagePath)) {
           unlinkSync(imagePath)
-          console.log(`프로필 이미지 삭제: ${user.image}`)
+          console.log(`profile image deleted: ${user.image}`)
         }
       } catch (e) {
-        console.error('프로필 이미지 삭제 에러:', e)
+        console.error('failed to delete profile image:', e)
       }
     }
 
-    // 트랜잭션으로 처리
+    // Handle within a transaction
     await prisma.$transaction(async (tx) => {
-      // 1. 연결된 소셜 계정 삭제
+      // 1. Unlink social accounts
       await tx.account.deleteMany({
         where: { userId: user.id }
       })
 
-      // 2. 사용자 정보 익명화 + 소프트 삭제
+      // 2. Anonymize user info and soft delete
       await tx.user.update({
         where: { id: user.id },
         data: {
@@ -292,7 +292,7 @@ export async function DELETE(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('회원 탈퇴 에러:', error)
+    console.error('failed to withdraw member:', error)
     return NextResponse.json(
       { error: '서버 오류가 발생했습니다.' },
       { status: 500 }

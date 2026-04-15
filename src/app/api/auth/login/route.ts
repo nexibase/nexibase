@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
       req.headers.get("x-real-ip") ||
       "unknown"
 
-    // --- 로그인 실패 횟수 확인 (최근 1시간, 마지막 성공 이후) ---
+    // --- Count recent login failures (past hour, since the last success) ---
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000)
 
     const lastSuccess = await prisma.loginAttempt.findFirst({
@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    // --- CAPTCHA 검증 ---
+    // --- CAPTCHA verification ---
     if (failCount > 3) {
       if (!captchaToken) {
         return NextResponse.json(
@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
         )
       }
 
-      // Turnstile 키 있으면 Turnstile, 없으면 reCAPTCHA 키 확인
+      // Prefer Turnstile if a key is set, otherwise fall back to reCAPTCHA
       const provider = process.env.TURNSTILE_SECRET_KEY
         ? "turnstile"
         : process.env.RECAPTCHA_SECRET_KEY
@@ -90,15 +90,15 @@ export async function POST(req: NextRequest) {
           )
         }
       }
-      // provider가 없거나 빈 문자열이면 CAPTCHA 검증 건너뜀
+      // When no provider is configured, skip CAPTCHA verification
     }
 
-    // --- 사용자 조회 ---
+    // --- Fetch user ---
     const user = await prisma.user.findUnique({ where: { email } })
 
     if (!user) {
       await prisma.loginAttempt.create({
-        data: { email, ip, success: false, reason: "존재하지 않는 이메일" },
+        data: { email, ip, success: false, reason: "unknown_email" },
       })
       return NextResponse.json(
         {
@@ -111,7 +111,7 @@ export async function POST(req: NextRequest) {
 
     if (!user.password) {
       await prisma.loginAttempt.create({
-        data: { email, ip, success: false, reason: "소셜 전용 계정" },
+        data: { email, ip, success: false, reason: "social_only" },
       })
       return NextResponse.json(
         {
@@ -122,14 +122,14 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // --- 계정 상태 확인 ---
+    // --- Check account status ---
     if (
       user.deletedAt ||
       user.status === "banned" ||
       user.status === "inactive"
     ) {
       await prisma.loginAttempt.create({
-        data: { email, ip, success: false, reason: "계정 비활성 상태" },
+        data: { email, ip, success: false, reason: "inactive_account" },
       })
       return NextResponse.json(
         {
@@ -142,7 +142,7 @@ export async function POST(req: NextRequest) {
 
     if (user.status === "withdrawn") {
       await prisma.loginAttempt.create({
-        data: { email, ip, success: false, reason: "탈퇴한 계정" },
+        data: { email, ip, success: false, reason: "withdrawn_account" },
       })
       return NextResponse.json(
         { success: false, message: "탈퇴한 계정입니다." },
@@ -150,12 +150,12 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // --- 비밀번호 검증 ---
+    // --- Verify password ---
     const isPasswordValid = await bcrypt.compare(password, user.password)
 
     if (!isPasswordValid) {
       await prisma.loginAttempt.create({
-        data: { email, ip, success: false, reason: "비밀번호 불일치" },
+        data: { email, ip, success: false, reason: "password_mismatch" },
       })
       return NextResponse.json(
         {
@@ -167,7 +167,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // --- 로그인 성공 ---
+    // --- Login success ---
     await prisma.loginAttempt.create({
       data: { email, ip, success: true },
     })
@@ -177,7 +177,7 @@ export async function POST(req: NextRequest) {
       data: { lastLoginAt: new Date(), lastLoginIp: ip },
     })
 
-    // --- JWT 토큰 생성 ---
+    // --- Issue JWT token ---
     const maxAge = authOptions.session?.maxAge ?? 24 * 60 * 60
 
     const token = await encode({
@@ -192,7 +192,7 @@ export async function POST(req: NextRequest) {
       maxAge,
     })
 
-    // --- 쿠키 설정 및 응답 ---
+    // --- Set cookie and respond ---
     const response = NextResponse.json({
       success: true,
       user: {
@@ -214,7 +214,7 @@ export async function POST(req: NextRequest) {
 
     return response
   } catch (error) {
-    console.error("로그인 API 에러:", error)
+    console.error("login API error:", error)
     return NextResponse.json(
       { success: false, message: "서버 오류가 발생했습니다." },
       { status: 500 }

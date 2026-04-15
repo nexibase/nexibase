@@ -5,7 +5,7 @@ import { pluginManifest } from '@/plugins/_generated'
 import { isPluginEnabled } from '@/lib/plugins'
 import { widgetMetadata, widgetKeys } from '@/lib/widgets/_generated-metadata'
 
-// widgetKey → plugin folder 매핑
+// widgetKey → plugin folder mapping
 function getWidgetPlugin(widgetKey: string): string | null {
   for (const [folder, meta] of Object.entries(pluginManifest)) {
     if (meta.hasWidgets) {
@@ -16,7 +16,7 @@ function getWidgetPlugin(widgetKey: string): string | null {
       }
     }
   }
-  // widgetKey가 플러그인 폴더명으로 시작하면 해당 플러그인 소속
+  // A widgetKey that starts with a plugin folder name belongs to that plugin
   for (const folder of Object.keys(pluginManifest)) {
     if (widgetKey.startsWith(`${folder}-`)) {
       return folder
@@ -37,7 +37,7 @@ export async function GET() {
       orderBy: [{ zone: 'asc' }, { sortOrder: 'asc' }],
     })
 
-    // 각 위젯에 플러그인 활성 상태 추가
+    // Attach plugin-enabled state to each widget
     const widgetsWithPluginStatus = await Promise.all(
       widgets.map(async (w) => {
         const pluginFolder = getWidgetPlugin(w.widgetKey)
@@ -62,7 +62,7 @@ export async function GET() {
       metadata: widgetMetadata,
     })
   } catch (error) {
-    console.error('관리자 위젯 조회 에러:', error)
+    console.error('failed to fetch admin widgets:', error)
     return NextResponse.json({ error: '서버 오류' }, { status: 500 })
   }
 }

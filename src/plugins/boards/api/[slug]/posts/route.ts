@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getAuthUser } from '@/lib/auth'
 import { sanitizeHtml } from '@/lib/sanitize'
 
-// 게시글 목록 조회
+// Fetch post list
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
@@ -14,7 +14,7 @@ export async function GET(
     const page = parseInt(searchParams.get('page') || '1')
     const search = searchParams.get('search') || ''
 
-    // 게시판 정보 조회
+    // Fetch board info
     const board = await prisma.board.findUnique({
       where: { slug }
     })
@@ -33,7 +33,7 @@ export async function GET(
       )
     }
 
-    // 권한 확인
+    // Authorization check
     const user = await getAuthUser()
     if (board.listMemberOnly && !user) {
       return NextResponse.json(
@@ -45,7 +45,7 @@ export async function GET(
     const limit = board.postsPerPage
     const skip = (page - 1) * limit
 
-    // 검색 조건
+    // Search conditions
     const where: Record<string, unknown> = {
       boardId: board.id,
       status: 'published'
@@ -58,7 +58,7 @@ export async function GET(
       ]
     }
 
-    // 정렬 조건
+    // Sort conditions
     let orderBy: Record<string, string>[] = []
     switch (board.sortOrder) {
       case 'popular':
@@ -71,10 +71,10 @@ export async function GET(
         orderBy = [{ isNotice: 'desc' }, { createdAt: 'desc' }]
     }
 
-    // 갤러리 형식이면 첨부파일 정보도 함께 조회
+    // In gallery mode, also fetch attachment info
     const includeAttachments = board.displayType === 'gallery'
 
-    // 게시글 목록 조회
+    // Fetch post list
     const [posts, total] = await Promise.all([
       prisma.post.findMany({
         where,
@@ -102,7 +102,7 @@ export async function GET(
           _count: {
             select: { attachments: true }
           },
-          // 갤러리 형식이면 첫 번째 이미지를 썸네일로 사용
+          // In gallery mode, use the first image as the thumbnail
           ...(includeAttachments && {
             attachments: {
               where: {
@@ -123,8 +123,8 @@ export async function GET(
       prisma.post.count({ where })
     ])
 
-    // 갤러리 형식일 때 썸네일 정보 추가
-    // thumbnailPath가 있으면 사용, 없으면 원본 filePath 사용
+    // Attach thumbnail info in gallery mode
+    // Use thumbnailPath when available, otherwise fall back to filePath
     const postsWithThumbnail = includeAttachments
       ? posts.map(post => {
           const attachment = (post as { attachments?: { filePath: string; thumbnailPath?: string | null }[] }).attachments?.[0]
@@ -157,7 +157,7 @@ export async function GET(
       }
     })
   } catch (error) {
-    console.error('게시글 목록 조회 에러:', error)
+    console.error('failed to fetch posts:', error)
     return NextResponse.json(
       { error: '서버 오류가 발생했습니다.' },
       { status: 500 }
@@ -165,7 +165,7 @@ export async function GET(
   }
 }
 
-// 첨부파일 인터페이스
+// Attachment interface
 interface AttachmentFile {
   filename: string
   storedName: string
@@ -175,7 +175,7 @@ interface AttachmentFile {
   mimeType: string
 }
 
-// 게시글 작성
+// Write post
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
@@ -185,7 +185,7 @@ export async function POST(
     const body = await request.json()
     const { title, content, isNotice, isSecret, attachments } = body
 
-    // 게시판 정보 조회
+    // Fetch board info
     const board = await prisma.board.findUnique({
       where: { slug }
     })
@@ -204,10 +204,10 @@ export async function POST(
       )
     }
 
-    // 로그인 및 권한 확인
+    // Login and authorization check
     const user = await getAuthUser()
 
-    // 회원전용 게시판에서 비로그인 시
+    // Member-only board: unauthenticated request
     if (board.writeMemberOnly && !user) {
       return NextResponse.json(
         { error: '로그인이 필요합니다.' },
@@ -215,7 +215,7 @@ export async function POST(
       )
     }
 
-    // 비회원 게시판이더라도 글 작성 시에는 로그인 필요
+    // Even on a guest-friendly board, writing requires login
     if (!user) {
       return NextResponse.json(
         { error: '로그인이 필요합니다.' },
@@ -223,7 +223,7 @@ export async function POST(
       )
     }
 
-    // 필수 필드 검증
+    // Validate required fields
     if (!title?.trim()) {
       return NextResponse.json(
         { error: '제목을 입력해주세요.' },
@@ -238,14 +238,14 @@ export async function POST(
       )
     }
 
-    // IP 주소
+    // IP address
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0] ||
                request.headers.get('x-real-ip') ||
                'unknown'
 
-    // 게시글 생성 + 첨부파일을 트랜잭션으로 처리
+    // Create the post and attachments within a transaction
     const post = await prisma.$transaction(async (tx) => {
-      // 게시글 생성
+      // Create post
       const newPost = await tx.post.create({
         data: {
           boardId: board.id,
@@ -263,7 +263,7 @@ export async function POST(
         }
       })
 
-      // 첨부파일이 있으면 저장
+      // Save attachments if any
       if (attachments && Array.isArray(attachments) && attachments.length > 0 && board.useFile) {
         await tx.postAttachment.createMany({
           data: (attachments as AttachmentFile[]).map(file => ({
@@ -278,7 +278,7 @@ export async function POST(
         })
       }
 
-      // 게시판 글 수 업데이트
+      // Update the board's post count
       await tx.board.update({
         where: { id: board.id },
         data: { postCount: { increment: 1 } }
@@ -294,7 +294,7 @@ export async function POST(
     }, { status: 201 })
 
   } catch (error) {
-    console.error('게시글 작성 에러:', error)
+    console.error('failed to create post:', error)
     return NextResponse.json(
       { error: '서버 오류가 발생했습니다.' },
       { status: 500 }

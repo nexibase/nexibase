@@ -35,7 +35,7 @@ export async function PUT(
 
     return NextResponse.json({ menu })
   } catch (error) {
-    console.error('메뉴 수정 에러:', error)
+    console.error('failed to update menu:', error)
     return NextResponse.json({ error: '서버 오류' }, { status: 500 })
   }
 }
@@ -60,7 +60,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('메뉴 삭제 에러:', error)
+    console.error('failed to delete menu:', error)
     return NextResponse.json({ error: '서버 오류' }, { status: 500 })
   }
 }

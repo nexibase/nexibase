@@ -2,7 +2,7 @@ import { prisma } from '@/lib/prisma'
 import { unstable_noStore as noStore } from 'next/cache'
 
 export default async function ThemeLoader() {
-  noStore() // 정적 캐시 방지 — 항상 DB에서 최신 값 읽기
+  noStore() // Disable static caching — always read the current DB value
 
   let themeFolder = 'default'
 

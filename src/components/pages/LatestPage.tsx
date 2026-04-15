@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
+import { useTranslations, useLocale } from "next-intl"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -33,6 +34,9 @@ interface Pagination {
 }
 
 export default function LatestPage() {
+  const t = useTranslations('lists')
+  const tc = useTranslations('common')
+  const locale = useLocale()
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -54,7 +58,7 @@ export default function LatestPage() {
           setPagination(data.pagination)
         }
       } catch (error) {
-        console.error('최신글 조회 에러:', error)
+        console.error('failed to fetch latest posts:', error)
       } finally {
         setIsLoading(false)
       }
@@ -82,27 +86,27 @@ export default function LatestPage() {
     const diffHours = Math.floor(diffMs / 3600000)
     const diffDays = Math.floor(diffMs / 86400000)
 
-    if (diffMins < 1) return '방금 전'
-    if (diffMins < 60) return `${diffMins}분 전`
-    if (diffHours < 24) return `${diffHours}시간 전`
-    if (diffDays < 7) return `${diffDays}일 전`
-    return date.toLocaleDateString('ko-KR')
+    if (diffMins < 1) return t('justNow')
+    if (diffMins < 60) return t('minutesAgo', { mins: diffMins })
+    if (diffHours < 24) return t('hoursAgo', { hours: diffHours })
+    if (diffDays < 7) return t('daysAgo', { days: diffDays })
+    return date.toLocaleDateString(locale)
   }
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
-      {/* 헤더 */}
+      {/* Header */}
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-2">
           <Clock className="h-6 w-6 text-blue-500" />
-          <h1 className="text-2xl font-bold">최근 게시글</h1>
+          <h1 className="text-2xl font-bold">{t('newPosts')}</h1>
         </div>
         <p className="text-muted-foreground">
-          방금 올라온 새로운 게시글을 확인하세요
+          {t('newPostsDescription')}
         </p>
       </div>
 
-      {/* 게시글 목록 */}
+      {/* Post list */}
       {isLoading ? (
         <div className="flex items-center justify-center py-20">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -114,7 +118,7 @@ export default function LatestPage() {
               <Card className="hover:border-primary/50 hover:shadow-md transition-all duration-200 cursor-pointer">
                 <CardContent className="p-4">
                   <div className="flex items-start gap-4">
-                    {/* 내용 */}
+                    {/* Body */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <Badge variant="outline" className="text-xs shrink-0">
@@ -125,7 +129,7 @@ export default function LatestPage() {
                         </h3>
                       </div>
                       <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2">
-                        <span>{post.author.nickname || '익명'}</span>
+                        <span>{post.author.nickname || tc('anonymous')}</span>
                         {post.likeCount !== undefined && (
                           <span className="flex items-center gap-1">
                             <ThumbsUp className="h-3 w-3" />
@@ -145,7 +149,7 @@ export default function LatestPage() {
                       </div>
                     </div>
 
-                    {/* 시간 */}
+                    {/* Timestamp */}
                     <div className="flex-shrink-0 text-xs text-muted-foreground">
                       {formatTimeAgo(post.createdAt)}
                     </div>
@@ -158,12 +162,12 @@ export default function LatestPage() {
       ) : (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
-            아직 게시글이 없습니다.
+            {t('noPosts')}
           </CardContent>
         </Card>
       )}
 
-      {/* 페이지네이션 */}
+      {/* Pagination */}
       {pagination && pagination.totalPages > 1 && (
         <div className="flex justify-center gap-2 mt-6">
           <Button
@@ -172,7 +176,7 @@ export default function LatestPage() {
             disabled={currentPage === 1}
             onClick={() => handlePageChange(currentPage - 1)}
           >
-            이전
+            {t('prev')}
           </Button>
           <div className="flex items-center gap-1">
             {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
@@ -205,7 +209,7 @@ export default function LatestPage() {
             disabled={currentPage === pagination.totalPages}
             onClick={() => handlePageChange(currentPage + 1)}
           >
-            다음
+            {t('next')}
           </Button>
         </div>
       )}

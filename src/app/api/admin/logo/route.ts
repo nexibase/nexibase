@@ -9,7 +9,7 @@ import sharp from 'sharp'
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml']
 const MAX_SIZE = 2 * 1024 * 1024 // 2MB
 
-// 로고 업로드
+// Upload logo
 export async function POST(request: NextRequest) {
   try {
     const admin = await getAdminUser()
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
       await mkdir(uploadDir, { recursive: true })
     }
 
-    // 기존 로고 삭제
+    // Delete the existing logo
     const existing = await prisma.setting.findUnique({ where: { key: 'site_logo' } })
     if (existing?.value && existing.value.startsWith('/uploads/logo/')) {
       const oldPath = path.join(process.cwd(), 'public', existing.value)
@@ -52,14 +52,14 @@ export async function POST(request: NextRequest) {
     let imageUrl: string
 
     if (file.type === 'image/svg+xml') {
-      // SVG는 그대로 저장
+      // Store SVGs verbatim
       filename = `logo-${timestamp}.svg`
       const filePath = path.join(uploadDir, filename)
       const { writeFile } = await import('fs/promises')
       await writeFile(filePath, inputBuffer)
       imageUrl = `/uploads/logo/${filename}`
     } else {
-      // 래스터 이미지는 WebP로 변환 (높이 80px 기준)
+      // Raster images get converted to WebP (80px tall)
       filename = `logo-${timestamp}.webp`
       const outputBuffer = await sharp(inputBuffer)
         .resize({ height: 80, withoutEnlargement: true })
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
       imageUrl = `/uploads/logo/${filename}`
     }
 
-    // DB 설정 저장
+    // Save DB setting
     await prisma.setting.upsert({
       where: { key: 'site_logo' },
       update: { value: imageUrl },
@@ -79,12 +79,12 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, imageUrl })
   } catch (error) {
-    console.error('로고 업로드 에러:', error)
+    console.error('logo upload error:', error)
     return NextResponse.json({ error: '로고 업로드에 실패했습니다.' }, { status: 500 })
   }
 }
 
-// 로고 삭제
+// Delete logo
 export async function DELETE() {
   try {
     const admin = await getAdminUser()
@@ -106,7 +106,7 @@ export async function DELETE() {
 
     return NextResponse.json({ success: true, message: '로고가 삭제되었습니다.' })
   } catch (error) {
-    console.error('로고 삭제 에러:', error)
+    console.error('failed to delete logo:', error)
     return NextResponse.json({ error: '로고 삭제에 실패했습니다.' }, { status: 500 })
   }
 }

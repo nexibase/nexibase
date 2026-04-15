@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { use } from "react"
+import { useTranslations } from 'next-intl'
 import { useRouter } from "next/navigation"
 import { Sidebar } from "@/components/admin/Sidebar"
 import { Button } from "@/components/ui/button"
@@ -36,6 +37,7 @@ interface Board {
 export default function BoardEditPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()
+  const t = useTranslations('boards')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [board, setBoard] = useState<Board | null>(null)
@@ -96,13 +98,13 @@ export default function BoardEditPage({ params }: { params: Promise<{ id: string
       })
       const data = await res.json()
       if (res.ok) {
-        alert('저장되었습니다.')
+        alert(t('admin.savedDot'))
         router.push('/admin/boards')
       } else {
-        alert(data.error || '저장 실패')
+        alert(data.error || t('admin.saveFail'))
       }
     } catch {
-      alert('저장 중 오류가 발생했습니다.')
+      alert(t('admin.saveError'))
     } finally {
       setSaving(false)
     }
@@ -111,10 +113,10 @@ export default function BoardEditPage({ params }: { params: Promise<{ id: string
   const handleDelete = async () => {
     if (!board) return
     const input = window.prompt(
-      `"${board.name}" 게시판을 삭제하시겠습니까?\n게시글, 댓글, 반응이 모두 삭제됩니다.\n\n삭제하려면 게시판 슬러그 "${board.slug}"를 입력하세요:`
+      t('admin.deleteBoardConfirmWithSlug', { name: board.name, slug: board.slug })
     )
     if (input !== board.slug) {
-      if (input !== null) alert('슬러그가 일치하지 않습니다.')
+      if (input !== null) alert(t('admin.slugMismatch'))
       return
     }
     try {
@@ -122,10 +124,10 @@ export default function BoardEditPage({ params }: { params: Promise<{ id: string
       if (res.ok) {
         router.push('/admin/boards')
       } else {
-        alert('삭제 실패')
+        alert(t('admin.deleteFail'))
       }
     } catch {
-      alert('삭제 중 오류가 발생했습니다.')
+      alert(t('admin.deleteError'))
     }
   }
 
@@ -145,7 +147,7 @@ export default function BoardEditPage({ params }: { params: Promise<{ id: string
       <div className="flex min-h-screen bg-background">
         <Sidebar />
         <main className="flex-1 p-6">
-          <p className="text-muted-foreground">게시판을 찾을 수 없습니다.</p>
+          <p className="text-muted-foreground">{t('admin.boardNotFound')}</p>
         </main>
       </div>
     )
@@ -156,18 +158,18 @@ export default function BoardEditPage({ params }: { params: Promise<{ id: string
       <Sidebar />
       <main className="flex-1 p-6">
         <div className="max-w-3xl mx-auto">
-          {/* 헤더 */}
+          {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <Link href="/admin/boards">
                 <Button variant="ghost" size="icon"><ArrowLeft className="h-5 w-5" /></Button>
               </Link>
               <div>
-                <h1 className="text-xl font-bold">게시판 수정</h1>
+                <h1 className="text-xl font-bold">{t('admin.edit')}</h1>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <span>/{board.slug}</span>
                   <span>·</span>
-                  <span>게시글 {board.postCount}개</span>
+                  <span>{t('admin.postsCount', { count: board.postCount })}</span>
                   <Link href={`/boards/${board.slug}`} target="_blank" className="hover:text-primary">
                     <ExternalLink className="h-3.5 w-3.5" />
                   </Link>
@@ -175,132 +177,132 @@ export default function BoardEditPage({ params }: { params: Promise<{ id: string
               </div>
             </div>
             <Button variant="destructive" size="sm" onClick={handleDelete}>
-              <Trash2 className="h-4 w-4 mr-1" /> 삭제
+              <Trash2 className="h-4 w-4 mr-1" /> {t('delete')}
             </Button>
           </div>
 
-          {/* 기본 정보 */}
+          {/* Basic info */}
           <Card className="mb-6">
-            <CardHeader><CardTitle className="text-base">기본 정보</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-base">{t('admin.basicInfo')}</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>슬러그</Label>
+                  <Label>{t('admin.slug')}</Label>
                   <Input value={board.slug} disabled className="bg-muted" />
-                  <p className="text-xs text-muted-foreground">슬러그는 변경할 수 없습니다</p>
+                  <p className="text-xs text-muted-foreground">{t('admin.slugCannotChange')}</p>
                 </div>
                 <div className="space-y-2">
-                  <Label>게시판 이름 <span className="text-red-500">*</span></Label>
+                  <Label>{t('admin.boardName')} <span className="text-red-500">*</span></Label>
                   <Input value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} required />
                 </div>
                 <div className="space-y-2 md:col-span-2">
-                  <Label>설명</Label>
-                  <Input value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} placeholder="게시판 설명" />
+                  <Label>{t('admin.description')}</Label>
+                  <Input value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} placeholder={t('admin.descPlaceholderShort')} />
                 </div>
                 <div className="space-y-2">
-                  <Label>카테고리</Label>
+                  <Label>{t('admin.category')}</Label>
                   <select value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })} className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm">
-                    <option value="">선택 안함</option>
-                    <option value="community">커뮤니티</option>
-                    <option value="support">고객지원</option>
-                    <option value="notice">공지</option>
-                    <option value="gallery">갤러리</option>
+                    <option value="">{t('admin.categoryNone')}</option>
+                    <option value="community">{t('admin.categoryCommunity')}</option>
+                    <option value="support">{t('admin.categorySupport')}</option>
+                    <option value="notice">{t('admin.categoryNotice')}</option>
+                    <option value="gallery">{t('admin.categoryGallery')}</option>
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <Label>페이지당 글 수</Label>
+                  <Label>{t('admin.postsPerPage')}</Label>
                   <Input type="number" min={5} max={100} value={formData.postsPerPage} onChange={e => setFormData({ ...formData, postsPerPage: parseInt(e.target.value) || 20 })} />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* 권한 설정 */}
+          {/* Permission settings */}
           <Card className="mb-6">
-            <CardHeader><CardTitle className="text-base">권한 설정</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-base">{t('admin.permissions')}</CardTitle></CardHeader>
             <CardContent>
-              <p className="text-xs text-muted-foreground mb-4">체크하면 회원만 이용 가능</p>
+              <p className="text-xs text-muted-foreground mb-4">{t('admin.permDescShort')}</p>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <label className="flex items-center space-x-2 cursor-pointer p-3 border rounded-lg hover:bg-muted/50">
                   <input type="checkbox" checked={formData.listMemberOnly} onChange={e => setFormData({ ...formData, listMemberOnly: e.target.checked })} className="rounded border-gray-300" />
-                  <span className="text-sm">목록 보기</span>
+                  <span className="text-sm">{t('admin.listView')}</span>
                 </label>
                 <label className="flex items-center space-x-2 cursor-pointer p-3 border rounded-lg hover:bg-muted/50">
                   <input type="checkbox" checked={formData.readMemberOnly} onChange={e => setFormData({ ...formData, readMemberOnly: e.target.checked })} className="rounded border-gray-300" />
-                  <span className="text-sm">글 읽기</span>
+                  <span className="text-sm">{t('admin.readPost')}</span>
                 </label>
                 <label className="flex items-center space-x-2 p-3 border rounded-lg bg-muted/30 opacity-70">
                   <input type="checkbox" checked={true} disabled className="rounded border-gray-300" />
-                  <span className="text-sm">글 쓰기</span>
+                  <span className="text-sm">{t('admin.writePost')}</span>
                 </label>
                 <label className="flex items-center space-x-2 p-3 border rounded-lg bg-muted/30 opacity-70">
                   <input type="checkbox" checked={true} disabled className="rounded border-gray-300" />
-                  <span className="text-sm">댓글 쓰기</span>
+                  <span className="text-sm">{t('admin.commentWrite')}</span>
                 </label>
               </div>
             </CardContent>
           </Card>
 
-          {/* 기능 설정 */}
+          {/* Feature settings */}
           <Card className="mb-6">
-            <CardHeader><CardTitle className="text-base">기능 설정</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-base">{t('admin.features')}</CardTitle></CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <label className="flex items-center space-x-2 cursor-pointer">
                   <input type="checkbox" checked={formData.useComment} onChange={e => setFormData({ ...formData, useComment: e.target.checked })} className="rounded border-gray-300" />
-                  <span className="text-sm">댓글 사용</span>
+                  <span className="text-sm">{t('admin.useComment')}</span>
                 </label>
                 <label className="flex items-center space-x-2 cursor-pointer">
                   <input type="checkbox" checked={formData.useReaction} onChange={e => setFormData({ ...formData, useReaction: e.target.checked })} className="rounded border-gray-300" />
-                  <span className="text-sm">반응 사용</span>
+                  <span className="text-sm">{t('admin.useReaction')}</span>
                 </label>
                 <label className="flex items-center space-x-2 cursor-pointer">
                   <input type="checkbox" checked={formData.useFile} onChange={e => setFormData({ ...formData, useFile: e.target.checked })} className="rounded border-gray-300" />
-                  <span className="text-sm">파일 첨부</span>
+                  <span className="text-sm">{t('admin.useFile')}</span>
                 </label>
                 <label className="flex items-center space-x-2 cursor-pointer">
                   <input type="checkbox" checked={formData.useSecret} onChange={e => setFormData({ ...formData, useSecret: e.target.checked })} className="rounded border-gray-300" />
-                  <span className="text-sm">비밀글</span>
+                  <span className="text-sm">{t('admin.useSecret')}</span>
                 </label>
               </div>
             </CardContent>
           </Card>
 
-          {/* 표시 설정 */}
+          {/* Display settings */}
           <Card className="mb-6">
-            <CardHeader><CardTitle className="text-base">표시 설정</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-base">{t('admin.displaySettings')}</CardTitle></CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>표시 형식</Label>
+                  <Label>{t('admin.displayType')}</Label>
                   <select value={formData.displayType} onChange={e => setFormData({ ...formData, displayType: e.target.value })} className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm">
-                    <option value="list">목록형</option>
-                    <option value="gallery">갤러리형</option>
+                    <option value="list">{t('admin.displayList')}</option>
+                    <option value="gallery">{t('admin.displayGallery')}</option>
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <Label>정렬 순서</Label>
+                  <Label>{t('admin.sortOrder')}</Label>
                   <select value={formData.sortOrder} onChange={e => setFormData({ ...formData, sortOrder: e.target.value })} className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm">
-                    <option value="latest">최신순</option>
-                    <option value="popular">인기순</option>
-                    <option value="oldest">오래된순</option>
+                    <option value="latest">{t('admin.sortLatest')}</option>
+                    <option value="popular">{t('admin.sortPopular')}</option>
+                    <option value="oldest">{t('admin.sortOldest')}</option>
                   </select>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* 상태 + 저장 */}
+          {/* Status + save */}
           <Card className="mb-6">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <label className="flex items-center space-x-2 cursor-pointer">
                   <input type="checkbox" checked={formData.isActive} onChange={e => setFormData({ ...formData, isActive: e.target.checked })} className="rounded border-gray-300" />
-                  <span className="text-sm font-medium">게시판 활성화</span>
+                  <span className="text-sm font-medium">{t('admin.activate')}</span>
                 </label>
                 <Button onClick={handleSave} disabled={saving || !formData.name.trim()}>
                   {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-                  저장
+                  {t('admin.save')}
                 </Button>
               </div>
             </CardContent>

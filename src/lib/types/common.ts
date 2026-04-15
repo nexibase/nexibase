@@ -1,6 +1,6 @@
-// 공통 타입 정의
+// Shared type definitions
 
-// API 응답 타입 - any 대신 unknown 사용
+// API response type — uses unknown instead of any
 export interface ApiResponse<T = unknown> {
   success: boolean
   message?: string
@@ -8,7 +8,7 @@ export interface ApiResponse<T = unknown> {
   data?: T
 }
 
-// 페이지네이션 타입
+// Pagination type
 export interface PaginationInfo {
   currentPage: number
   totalPages: number
@@ -16,15 +16,15 @@ export interface PaginationInfo {
   itemsPerPage: number
 }
 
-// 기본 CRUD 인터페이스
+// Basic CRUD interface
 export interface BaseEntity {
   id: number
   created_at: string
   updated_at: string
 }
 
-// 정렬 옵션
+// Sort option
 export interface SortOption {
   field: string
   direction: 'asc' | 'desc'
-} 
+}

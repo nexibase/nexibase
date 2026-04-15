@@ -47,7 +47,7 @@ export async function GET(
       versions
     })
   } catch (error) {
-    console.error('약관 조회 에러:', error)
+    console.error('failed to fetch policy:', error)
     return NextResponse.json(
       { error: '서버 오류가 발생했습니다.' },
       { status: 500 }

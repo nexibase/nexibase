@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('닉네임 확인 에러:', error)
+    console.error('nickname check error:', error)
     return NextResponse.json(
       { error: '서버 오류가 발생했습니다.' },
       { status: 500 }

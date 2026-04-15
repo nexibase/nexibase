@@ -1,3 +1,3 @@
 export default [
-  { groupName: '커뮤니티', label: '전체게시판', sortOrder: 2 },
+  { groupName: 'Community', label: 'All Boards', sortOrder: 2 },
 ]

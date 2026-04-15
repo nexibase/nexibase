@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-// 공개 게시판 목록 조회 (활성 게시판만)
+// Fetch the public board list (active boards only)
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ boards })
   } catch (error) {
-    console.error('게시판 목록 조회 에러:', error)
+    console.error('failed to fetch boards:', error)
     return NextResponse.json(
       { error: '게시판 목록을 불러오는데 실패했습니다.' },
       { status: 500 }

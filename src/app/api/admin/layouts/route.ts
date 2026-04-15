@@ -18,7 +18,7 @@ export async function GET() {
 
     return NextResponse.json({ layouts })
   } catch (error) {
-    console.error('레이아웃 목록 조회 에러:', error)
+    console.error('failed to fetch layouts:', error)
     return NextResponse.json({ error: '서버 오류' }, { status: 500 })
   }
 }

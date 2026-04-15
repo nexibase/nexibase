@@ -146,7 +146,7 @@ export function SiteProvider({ children }: { children: ReactNode }) {
           setSidebarWidgets(all.filter(w => w.zone === 'left' || w.zone === 'right' || w.zone === 'sidebar'))
         }
       } catch (error) {
-        console.error('SiteContext 데이터 조회 에러:', error)
+        console.error('SiteContext fetch failed:', error)
       } finally {
         setIsLoading(false)
       }

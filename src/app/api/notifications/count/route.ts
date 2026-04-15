@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
 
-// 읽지 않은 알림 개수만 조회 (Header용 경량 API)
+// Count unread notifications only (lightweight API for the header)
 export async function GET() {
   try {
     const session = await getSession();
@@ -16,7 +16,7 @@ export async function GET() {
 
     return NextResponse.json({ count });
   } catch (error) {
-    console.error('알림 개수 조회 에러:', error);
+    console.error('failed to fetch notification count:', error);
     return NextResponse.json({ count: 0 });
   }
 }

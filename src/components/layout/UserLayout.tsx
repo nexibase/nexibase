@@ -7,7 +7,7 @@ interface UserLayoutProps {
   children: React.ReactNode
 }
 
-// Tailwind은 동적 클래스를 지원하지 않으므로 정적 매핑
+// Tailwind does not support dynamic classes, so use a static mapping
 const colSpanClass: Record<number, string> = {
   3: 'md:col-span-3',
   4: 'md:col-span-4',
@@ -25,7 +25,7 @@ export function UserLayout({ children }: UserLayoutProps) {
   const hasLeft = leftWidgets.length > 0
   const hasRight = rightWidgets.length > 0
 
-  // 12컬럼 자동 비율
+  // Automatic 12-column ratio
   const leftCols = hasLeft ? 3 : 0
   const rightCols = hasRight ? 3 : 0
   const centerCols = 12 - leftCols - rightCols

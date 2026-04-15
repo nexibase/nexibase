@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { Github, Twitter, MessageCircle } from "lucide-react"
 
 interface FooterSettings {
   site_name: string
@@ -44,7 +43,7 @@ export default function Footer() {
           setMenuGroups(data.menus || {})
         }
       } catch (error) {
-        console.error('푸터 데이터 조회 에러:', error)
+        console.error('failed to fetch footer data:', error)
       }
     }
 
@@ -56,9 +55,9 @@ export default function Footer() {
   return (
     <footer className="border-t bg-muted/30">
       <div className="max-w-6xl mx-auto px-4 py-8">
-        {/* 메인 푸터 콘텐츠 */}
+        {/* Main footer content */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
-          {/* 사이트 정보 */}
+          {/* Site info */}
           <div className="col-span-2 md:col-span-1">
             <div className="flex items-center gap-2 mb-3">
               <div className="w-6 h-6 bg-primary rounded flex items-center justify-center">
@@ -70,7 +69,7 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* DB 기반 메뉴 그룹 */}
+          {/* DB-driven menu groups */}
           {groupNames.length > 0 ? (
             groupNames.map((groupName) => (
               <div key={groupName}>
@@ -90,43 +89,14 @@ export default function Footer() {
                 </ul>
               </div>
             ))
-          ) : (
-            <>
-              {/* 폴백: 하드코딩 메뉴 */}
-              <div>
-                <h4 className="font-semibold text-foreground mb-3 text-sm">커뮤니티</h4>
-                <ul className="space-y-2">
-                  <li><Link href="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">홈</Link></li>
-                  <li><Link href="/posts/popular" className="text-sm text-muted-foreground hover:text-foreground transition-colors">인기 게시글</Link></li>
-                  <li><Link href="/boards" className="text-sm text-muted-foreground hover:text-foreground transition-colors">전체 게시판</Link></li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-semibold text-foreground mb-3 text-sm">정보</h4>
-                <ul className="space-y-2">
-                  <li><Link href="/contents/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">회사소개</Link></li>
-                  <li><Link href="/contents/faq" className="text-sm text-muted-foreground hover:text-foreground transition-colors">자주 묻는 질문</Link></li>
-                  <li><Link href="/contents/contact" className="text-sm text-muted-foreground hover:text-foreground transition-colors">문의하기</Link></li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-semibold text-foreground mb-3 text-sm">정책</h4>
-                <ul className="space-y-2">
-                  <li><Link href="/policies/terms" className="text-sm text-muted-foreground hover:text-foreground transition-colors">이용약관</Link></li>
-                  <li><Link href="/policies/privacy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">개인정보처리방침</Link></li>
-                </ul>
-              </div>
-            </>
-          )}
+          ) : null /* Empty state until DB menus load (no hardcoded Korean fallback) */}
         </div>
 
-        {/* 하단 Copyright */}
+        {/* Copyright strip */}
         <div className="border-t pt-6">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-muted-foreground">
-              {settings.footer_copyright || `© ${new Date().getFullYear()} ${settings.site_name}. All rights reserved.`}
-            </p>
-          </div>
+          <p className="text-center text-sm text-muted-foreground">
+            {settings.footer_copyright || `© ${new Date().getFullYear()} ${settings.site_name}. All rights reserved.`}
+          </p>
         </div>
       </div>
     </footer>

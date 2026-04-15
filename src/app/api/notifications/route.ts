@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
 
-// 알림 목록 조회
+// Fetch notification list
 export async function GET(request: Request) {
   try {
     const session = await getSession();
@@ -17,7 +17,7 @@ export async function GET(request: Request) {
 
     const where = {
       userId: session.id,
-      deletedAt: null,  // 소프트 삭제된 알림 제외
+      deletedAt: null,  // Soft delete된 알림 제외
       ...(unreadOnly && { isRead: false }),
     };
 
@@ -47,12 +47,12 @@ export async function GET(request: Request) {
       }
     });
   } catch (error) {
-    console.error('알림 조회 에러:', error);
+    console.error('failed to fetch notifications:', error);
     return NextResponse.json({ error: '알림 조회 중 오류가 발생했습니다.' }, { status: 500 });
   }
 }
 
-// 알림 읽음 처리
+// Mark notification as read
 export async function PUT(request: Request) {
   try {
     const session = await getSession();
@@ -64,7 +64,7 @@ export async function PUT(request: Request) {
     const { notificationId, markAllRead } = body;
 
     if (markAllRead) {
-      // 모든 알림 읽음 처리
+      // Mark all notifications as read
       await prisma.notification.updateMany({
         where: { userId: session.id, isRead: false, deletedAt: null },
         data: { isRead: true },
@@ -73,7 +73,7 @@ export async function PUT(request: Request) {
     }
 
     if (notificationId) {
-      // 특정 알림 읽음 처리
+      // Mark a specific notification as read
       await prisma.notification.updateMany({
         where: { id: notificationId, userId: session.id },
         data: { isRead: true },
@@ -83,12 +83,12 @@ export async function PUT(request: Request) {
 
     return NextResponse.json({ error: '잘못된 요청입니다.' }, { status: 400 });
   } catch (error) {
-    console.error('알림 읽음 처리 에러:', error);
+    console.error('failed to mark notifications as read:', error);
     return NextResponse.json({ error: '알림 처리 중 오류가 발생했습니다.' }, { status: 500 });
   }
 }
 
-// 알림 삭제 (소프트 삭제)
+// Delete notifications (soft delete)
 export async function DELETE(request: Request) {
   try {
     const session = await getSession();
@@ -101,7 +101,7 @@ export async function DELETE(request: Request) {
     const deleteAll = searchParams.get('deleteAll') === 'true';
 
     if (deleteAll) {
-      // 모든 알림 소프트 삭제
+      // Soft delete all notifications
       await prisma.notification.updateMany({
         where: { userId: session.id, deletedAt: null },
         data: { deletedAt: new Date() },
@@ -110,7 +110,7 @@ export async function DELETE(request: Request) {
     }
 
     if (notificationId) {
-      // 특정 알림 소프트 삭제
+      // Soft delete a specific notification
       await prisma.notification.updateMany({
         where: { id: parseInt(notificationId), userId: session.id, deletedAt: null },
         data: { deletedAt: new Date() },
@@ -120,7 +120,7 @@ export async function DELETE(request: Request) {
 
     return NextResponse.json({ error: '잘못된 요청입니다.' }, { status: 400 });
   } catch (error) {
-    console.error('알림 삭제 에러:', error);
+    console.error('failed to delete notifications:', error);
     return NextResponse.json({ error: '알림 삭제 중 오류가 발생했습니다.' }, { status: 500 });
   }
 }

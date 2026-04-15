@@ -17,7 +17,7 @@ export async function GET() {
 
     return NextResponse.json({ themes })
   } catch (error) {
-    console.error('테마 목록 조회 에러:', error)
+    console.error('failed to fetch themes:', error)
     return NextResponse.json({ error: '서버 오류' }, { status: 500 })
   }
 }

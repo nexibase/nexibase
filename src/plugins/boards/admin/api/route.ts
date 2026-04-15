@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminUser } from '@/lib/auth'
 
-// 게시판 목록 조회
+// Fetch board list
 export async function GET(request: NextRequest) {
   try {
     const admin = await getAdminUser()
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
 
     const skip = (page - 1) * limit
 
-    // 검색 조건
+    // Search conditions
     const where: Record<string, unknown> = {}
     if (search) {
       where.OR = [
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
       where.category = category
     }
 
-    // 게시판 목록 조회
+    // Fetch board list
     const [boards, total] = await Promise.all([
       prisma.board.findMany({
         where,
@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
       }
     })
   } catch (error) {
-    console.error('게시판 목록 조회 에러:', error)
+    console.error('failed to fetch boards:', error)
     return NextResponse.json(
       { error: '서버 오류가 발생했습니다.' },
       { status: 500 }
@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// 게시판 생성
+// Create board
 export async function POST(request: NextRequest) {
   try {
     const admin = await getAdminUser()
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
       isActive
     } = body
 
-    // 필수 필드 검증
+    // Validate required fields
     if (!slug || !name) {
       return NextResponse.json(
         { error: '슬러그와 게시판 이름은 필수입니다.' },
@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 슬러그 형식 검증 (영문, 숫자, 하이픈만 허용)
+    // Validate slug format (only letters, digits, and hyphens allowed)
     const slugRegex = /^[a-z0-9-]+$/
     if (!slugRegex.test(slug)) {
       return NextResponse.json(
@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 슬러그 중복 확인
+    // Check slug uniqueness
     const existingBoard = await prisma.board.findUnique({
       where: { slug }
     })
@@ -118,8 +118,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 게시판 생성
-    // 글쓰기/댓글쓰기는 항상 회원만 가능 (비회원 글쓰기는 이름/비번 필드가 필요하므로 지원하지 않음)
+    // Create board
+    // Posting and commenting are member-only (guest posting requires name/password fields and is not supported)
     const newBoard = await prisma.board.create({
       data: {
         slug,
@@ -148,7 +148,7 @@ export async function POST(request: NextRequest) {
     }, { status: 201 })
 
   } catch (error) {
-    console.error('게시판 생성 에러:', error)
+    console.error('failed to create board:', error)
     return NextResponse.json(
       { error: '서버 오류가 발생했습니다.' },
       { status: 500 }
@@ -156,7 +156,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// 게시판 일괄 삭제
+// Bulk delete boards
 export async function DELETE(request: NextRequest) {
   try {
     const admin = await getAdminUser()
@@ -174,7 +174,7 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    // 게시판 삭제 (연관된 posts, comments, reactions는 CASCADE로 자동 삭제)
+    // Delete the board (related posts, comments, and reactions cascade automatically)
     await prisma.board.deleteMany({
       where: { id: { in: ids } }
     })
@@ -185,7 +185,7 @@ export async function DELETE(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('게시판 삭제 에러:', error)
+    console.error('failed to delete board:', error)
     return NextResponse.json(
       { error: '서버 오류가 발생했습니다.' },
       { status: 500 }

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { useTranslations } from 'next-intl'
 import { Button } from "@/components/ui/button"
 import {
   Popover,
@@ -10,13 +11,13 @@ import {
 import { cn } from "@/lib/utils"
 import { SmilePlus } from "lucide-react"
 
-// 리액션 타입 정의
+// Reaction type definitions
 const REACTIONS = [
-  { type: 'like', emoji: '👍', label: '좋아요' },
-  { type: 'haha', emoji: '😂', label: '웃겨요' },
-  { type: 'agree', emoji: '👌', label: '동의해요' },
-  { type: 'thanks', emoji: '🙏', label: '감사해요' },
-  { type: 'wow', emoji: '😮', label: '놀라워요' },
+  { type: 'like', emoji: '👍' },
+  { type: 'haha', emoji: '😂' },
+  { type: 'agree', emoji: '👌' },
+  { type: 'thanks', emoji: '🙏' },
+  { type: 'wow', emoji: '😮' },
 ] as const
 
 interface CommentReactionsProps {
@@ -27,11 +28,12 @@ interface CommentReactionsProps {
 }
 
 export function CommentReactions({ slug, postId, commentId, isLoggedIn }: CommentReactionsProps) {
+  const t = useTranslations('boards')
   const [reactions, setReactions] = useState<Record<string, number>>({})
   const [userReactions, setUserReactions] = useState<string[]>([])
   const [isOpen, setIsOpen] = useState(false)
 
-  // 리액션 조회
+  // Fetch reactions
   const fetchReactions = useCallback(async () => {
     try {
       const response = await fetch(`/api/boards/${slug}/posts/${postId}/comments/${commentId}/reaction`)
@@ -41,7 +43,7 @@ export function CommentReactions({ slug, postId, commentId, isLoggedIn }: Commen
         setUserReactions(data.userReactions || [])
       }
     } catch (error) {
-      console.error('댓글 리액션 조회 에러:', error)
+      console.error('failed to fetch comment reactions:', error)
     }
   }, [slug, postId, commentId])
 
@@ -49,10 +51,10 @@ export function CommentReactions({ slug, postId, commentId, isLoggedIn }: Commen
     fetchReactions()
   }, [fetchReactions])
 
-  // 리액션 토글
+  // Toggle reaction
   const handleReaction = async (type: string) => {
     if (!isLoggedIn) {
-      alert('로그인이 필요합니다.')
+      alert(t('errors.loginRequiredDot'))
       return
     }
 
@@ -70,21 +72,21 @@ export function CommentReactions({ slug, postId, commentId, isLoggedIn }: Commen
         setUserReactions(data.userReactions || [])
       }
     } catch (error) {
-      console.error('댓글 반응 에러:', error)
+      console.error('comment reaction error:', error)
     }
 
     setIsOpen(false)
   }
 
-  // 총 리액션 수
+  // Total reaction count
   const totalReactions = Object.values(reactions).reduce((a, b) => a + b, 0)
 
-  // 활성화된 리액션들 (수가 있는 것)
+  // Active reactions (those with a non-zero count)
   const activeReactions = REACTIONS.filter(r => reactions[r.type] > 0)
 
   return (
     <div className="flex items-center gap-1 mt-2">
-      {/* 기존 리액션 표시 */}
+      {/* Existing reactions */}
       {activeReactions.length > 0 && (
         <div className="flex items-center gap-1">
           {activeReactions.map(({ type, emoji }) => {
@@ -110,7 +112,7 @@ export function CommentReactions({ slug, postId, commentId, isLoggedIn }: Commen
         </div>
       )}
 
-      {/* 리액션 추가 버튼 */}
+      {/* Add reaction button */}
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
           <button
@@ -120,18 +122,18 @@ export function CommentReactions({ slug, postId, commentId, isLoggedIn }: Commen
             )}
           >
             <SmilePlus className="h-3.5 w-3.5" />
-            {totalReactions === 0 && <span>반응</span>}
+            {totalReactions === 0 && <span>{t('reactions.react')}</span>}
           </button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-2" align="start">
           <div className="flex gap-1">
-            {REACTIONS.map(({ type, emoji, label }) => {
+            {REACTIONS.map(({ type, emoji }) => {
               const isActive = userReactions.includes(type)
               return (
                 <button
                   key={type}
                   onClick={() => handleReaction(type)}
-                  title={label}
+                  title={t(`reactions.${type}`)}
                   className={cn(
                     "p-2 rounded-lg text-xl hover:bg-muted transition-colors",
                     isActive && "bg-primary/20"

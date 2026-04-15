@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getAuthUser } from '@/lib/auth'
 import { sanitizeHtml } from '@/lib/sanitize'
 
-// 게시글 상세 조회
+// Fetch post detail
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string; postId: string }> }
@@ -19,7 +19,7 @@ export async function GET(
       )
     }
 
-    // 게시판 정보 조회
+    // Fetch board info
     const board = await prisma.board.findUnique({
       where: { slug }
     })
@@ -31,7 +31,7 @@ export async function GET(
       )
     }
 
-    // 권한 확인
+    // Authorization check
     const user = await getAuthUser()
     if (board.readMemberOnly && !user) {
       return NextResponse.json(
@@ -40,7 +40,7 @@ export async function GET(
       )
     }
 
-    // 게시글 조회
+    // Fetch post
     const post = await prisma.post.findUnique({
       where: { id: postId },
       include: {
@@ -110,7 +110,7 @@ export async function GET(
       )
     }
 
-    // 비밀글 확인
+    // Check for a private post
     if (post.isSecret && post.authorId !== user?.id && user?.role !== 'admin') {
       return NextResponse.json(
         { error: '비밀글입니다.' },
@@ -118,7 +118,7 @@ export async function GET(
       )
     }
 
-    // 조회수 증가 (세션당 1회)
+    // Increment view count (once per session)
     const viewedCookie = request.cookies.get('viewed_posts')?.value || ''
     const viewedPosts = new Set(viewedCookie.split(',').filter(Boolean))
     const viewedKey = `${slug}:${postId}`
@@ -133,7 +133,7 @@ export async function GET(
       viewIncremented = true
     }
 
-    // 현재 사용자의 반응 조회
+    // Fetch the current user's reaction
     let userReaction = null
     if (user && board.useReaction) {
       const reaction = await prisma.reaction.findFirst({
@@ -146,7 +146,7 @@ export async function GET(
       userReaction = reaction ? reaction.type : null
     }
 
-    // 이전 게시글 조회 (현재 글보다 이전에 작성된 글 중 가장 최신)
+    // Fetch the previous post (newest post older than the current one)
     const prevPost = await prisma.post.findFirst({
       where: {
         boardId: board.id,
@@ -157,7 +157,7 @@ export async function GET(
       select: { id: true, title: true }
     })
 
-    // 다음 게시글 조회 (현재 글보다 이후에 작성된 글 중 가장 오래된)
+    // Fetch the next post (oldest post newer than the current one)
     const nextPost = await prisma.post.findFirst({
       where: {
         boardId: board.id,
@@ -190,9 +190,9 @@ export async function GET(
       nextPost
     })
 
-    // 조회한 게시글 목록을 쿠키에 저장 (세션 쿠키, 브라우저 닫으면 초기화)
+    // Store the visited-post list in a session cookie (cleared when the browser closes)
     if (viewIncremented) {
-      // 최대 200개까지 유지 (쿠키 크기 제한)
+      // Keep at most 200 (cookie size limit)
       const viewedArray = Array.from(viewedPosts).slice(-200)
       response.cookies.set('viewed_posts', viewedArray.join(','), {
         path: '/',
@@ -203,7 +203,7 @@ export async function GET(
 
     return response
   } catch (error) {
-    console.error('게시글 조회 에러:', error)
+    console.error('failed to fetch post:', error)
     return NextResponse.json(
       { error: '서버 오류가 발생했습니다.' },
       { status: 500 }
@@ -211,7 +211,7 @@ export async function GET(
   }
 }
 
-// 게시글 수정
+// Edit post
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string; postId: string }> }
@@ -230,7 +230,7 @@ export async function PUT(
     const body = await request.json()
     const { title, content, isNotice, isSecret, attachments, deletedAttachmentIds, attachmentOrder } = body
 
-    // 로그인 확인
+    // Login check
     const user = await getAuthUser()
     if (!user) {
       return NextResponse.json(
@@ -239,7 +239,7 @@ export async function PUT(
       )
     }
 
-    // 게시판 정보 조회
+    // Fetch board info
     const board = await prisma.board.findUnique({
       where: { slug }
     })
@@ -251,7 +251,7 @@ export async function PUT(
       )
     }
 
-    // 게시글 조회
+    // Fetch post
     const post = await prisma.post.findUnique({
       where: { id: postId }
     })
@@ -263,7 +263,7 @@ export async function PUT(
       )
     }
 
-    // 권한 확인 (작성자 또는 관리자)
+    // Authorization check (author or admin)
     if (post.authorId !== user.id && user.role !== 'admin') {
       return NextResponse.json(
         { error: '수정 권한이 없습니다.' },
@@ -271,9 +271,9 @@ export async function PUT(
       )
     }
 
-    // 트랜잭션으로 게시글과 첨부파일 수정
+    // Update the post and attachments within a transaction
     const updatedPost = await prisma.$transaction(async (tx) => {
-      // 게시글 수정
+      // Edit post
       const updated = await tx.post.update({
         where: { id: postId },
         data: {
@@ -284,9 +284,9 @@ export async function PUT(
         }
       })
 
-      // 첨부파일 처리 (게시판이 파일 사용 설정된 경우만)
+      // Handle attachments (only when the board allows files)
       if (board.useFile) {
-        // 삭제할 첨부파일 삭제
+        // Delete attachments flagged for removal
         if (deletedAttachmentIds && Array.isArray(deletedAttachmentIds) && deletedAttachmentIds.length > 0) {
           await tx.postAttachment.deleteMany({
             where: {
@@ -296,7 +296,7 @@ export async function PUT(
           })
         }
 
-        // 새 첨부파일 추가
+        // Add new attachments
         if (attachments && Array.isArray(attachments) && attachments.length > 0) {
           await tx.postAttachment.createMany({
             data: attachments.map((file: { filename: string; storedName: string; filePath: string; thumbnailPath?: string | null; fileSize: number; mimeType: string }) => ({
@@ -311,7 +311,7 @@ export async function PUT(
           })
         }
 
-        // 첨부파일 순서 업데이트 (기존 파일들)
+        // Update the ordering of existing attachments
         if (attachmentOrder && Array.isArray(attachmentOrder) && attachmentOrder.length > 0) {
           for (let i = 0; i < attachmentOrder.length; i++) {
             await tx.postAttachment.updateMany({
@@ -337,7 +337,7 @@ export async function PUT(
     })
 
   } catch (error) {
-    console.error('게시글 수정 에러:', error)
+    console.error('failed to update post:', error)
     return NextResponse.json(
       { error: '서버 오류가 발생했습니다.' },
       { status: 500 }
@@ -345,7 +345,7 @@ export async function PUT(
   }
 }
 
-// 게시글 삭제
+// Delete post
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string; postId: string }> }
@@ -361,7 +361,7 @@ export async function DELETE(
       )
     }
 
-    // 로그인 확인
+    // Login check
     const user = await getAuthUser()
     if (!user) {
       return NextResponse.json(
@@ -370,7 +370,7 @@ export async function DELETE(
       )
     }
 
-    // 게시판 정보 조회
+    // Fetch board info
     const board = await prisma.board.findUnique({
       where: { slug }
     })
@@ -382,7 +382,7 @@ export async function DELETE(
       )
     }
 
-    // 게시글 조회
+    // Fetch post
     const post = await prisma.post.findUnique({
       where: { id: postId }
     })
@@ -394,7 +394,7 @@ export async function DELETE(
       )
     }
 
-    // 권한 확인 (작성자 또는 관리자)
+    // Authorization check (author or admin)
     if (post.authorId !== user.id && user.role !== 'admin') {
       return NextResponse.json(
         { error: '삭제 권한이 없습니다.' },
@@ -402,13 +402,13 @@ export async function DELETE(
       )
     }
 
-    // 게시글 삭제 (soft delete)
+    // Delete post (soft delete)
     await prisma.post.update({
       where: { id: postId },
       data: { status: 'deleted' }
     })
 
-    // 게시판 글 수 감소
+    // Decrement the board's post count
     await prisma.board.update({
       where: { id: board.id },
       data: { postCount: { decrement: 1 } }
@@ -420,7 +420,7 @@ export async function DELETE(
     })
 
   } catch (error) {
-    console.error('게시글 삭제 에러:', error)
+    console.error('failed to delete post:', error)
     return NextResponse.json(
       { error: '서버 오류가 발생했습니다.' },
       { status: 500 }

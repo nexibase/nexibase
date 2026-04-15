@@ -2,18 +2,18 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminUser } from '@/lib/auth'
 
-// 기본 설정 데이터
+// Default settings data
 const DEFAULT_SETTINGS = [
-  // 사이트 기본 설정
+  // Site basic settings
   { key: 'site_name', value: 'NexiBase' },
   { key: 'site_description', value: 'Next.js 기반의 확장 가능한 웹 서비스 플랫폼' },
   { key: 'site_logo', value: '' },
 
-  // 회원 설정
+  // Member settings
   { key: 'signup_enabled', value: 'true' },
   { key: 'email_verification_required', value: 'false' },
 
-  // 푸터 설정
+  // Footer settings
   { key: 'footer_copyright', value: '© 2025 NexiBase. All rights reserved.' },
   { key: 'footer_links', value: JSON.stringify([
     { label: '이용약관', url: '/policy/terms' },
@@ -21,7 +21,7 @@ const DEFAULT_SETTINGS = [
   ])},
 ]
 
-// 기본 설정 생성
+// Create default settings
 export async function POST() {
   try {
     const admin = await getAdminUser()
@@ -29,7 +29,7 @@ export async function POST() {
       return NextResponse.json({ error: '관리자 권한이 필요합니다.' }, { status: 401 })
     }
 
-    // 이미 존재하는 설정 키 확인
+    // Check for existing setting keys
     const existingKeys = await prisma.setting.findMany({
       where: {
         key: { in: DEFAULT_SETTINGS.map(s => s.key) }
@@ -39,7 +39,7 @@ export async function POST() {
 
     const existingKeySet = new Set(existingKeys.map(s => s.key))
 
-    // 존재하지 않는 설정만 생성
+    // Only create missing settings
     const settingsToCreate = DEFAULT_SETTINGS.filter(s => !existingKeySet.has(s.key))
 
     if (settingsToCreate.length === 0) {
@@ -50,7 +50,7 @@ export async function POST() {
       })
     }
 
-    // 설정 생성
+    // Create setting
     const result = await prisma.setting.createMany({
       data: settingsToCreate
     })
@@ -63,7 +63,7 @@ export async function POST() {
     })
 
   } catch (error) {
-    console.error('기본 설정 생성 에러:', error)
+    console.error('failed to create default settings:', error)
     return NextResponse.json(
       { error: '기본 설정 생성에 실패했습니다.' },
       { status: 500 }

@@ -1,10 +1,10 @@
-// 회원 관련 타입 정의
+// Member-related type definitions
 
-// 기본 회원 정보 (데이터베이스에서 가져오는 전체 정보)
+// Complete member record (as returned from the database)
 export interface Member {
   mb_no: number
   mb_id: string
-  mb_password?: string // 보안상 API 응답에서는 제외
+  mb_password?: string // omitted from API responses for security
   mb_name: string
   mb_nick: string
   mb_email: string
@@ -22,7 +22,7 @@ export interface Member {
   mb_leave_date: string
   mb_intercept_date: string
   mb_email_certify: string
-  // 편집 시에만 필요한 추가 필드들
+  // Extra fields required only when editing
   mb_ip?: string
   mb_nick_date?: string
   mb_open_date?: string
@@ -32,11 +32,11 @@ export interface Member {
   mb_profile?: string
 }
 
-// 회원 생성 폼 데이터 (새 회원 추가 시)
+// Form data for creating a member
 export interface MemberCreateForm {
   mb_id: string
   mb_password: string
-  mb_password_confirm?: string // 클라이언트 측 검증용
+  mb_password_confirm?: string // client-side validation only
   mb_name: string
   mb_nick: string
   mb_email: string
@@ -51,7 +51,7 @@ export interface MemberCreateForm {
   mb_point: number
 }
 
-// 회원 수정 폼 데이터 (회원 정보 수정 시)
+// Form data for updating a member
 export interface MemberUpdateForm {
   mb_id: string
   mb_name: string
@@ -66,13 +66,13 @@ export interface MemberUpdateForm {
   mb_sms: number
   mb_open: number
   mb_point: number
-  mb_password?: string // 선택적 비밀번호 변경
+  mb_password?: string // optional password change
   mb_intercept_date: string
   mb_leave_date: string
   mb_email_certify: string
 }
 
-// 회원 목록에서 사용하는 간소화된 회원 정보
+// Slim member representation for list views
 export interface MemberListItem {
   mb_no: number
   mb_id: string
@@ -93,38 +93,38 @@ export interface MemberListItem {
   mb_open: number
   mb_adult: number
   mb_mailling: number
-  selected?: boolean // UI 선택 상태
+  selected?: boolean // UI selection state
 }
 
-// 회원 통계 정보
+// Member statistics
 export interface MemberStats {
   totalMembers: number
   blockedMembers: number
   withdrawnMembers: number
 }
 
-// 회원 API 응답 타입
+// Member API response type
 export interface MemberApiResponse {
   member?: Member
   members?: Member[]
   stats?: MemberStats
 }
 
-// 검색 필터 타입
+// Search filter type
 export interface MemberSearchFilter {
-  searchType: '회원아이디' | '이름' | '닉네임' | '이메일'
+  searchType: 'userId' | 'name' | 'nickname' | 'email'
   searchValue: string
-  filter: '전체목록' | '차단회원' | '탈퇴회원'
+  filter: 'all' | 'total' | 'blocked' | 'withdrawn'
 }
 
-// 중복 검사 상태 타입
+// Duplicate-check status type
 export interface DuplicateCheckStatus {
   available: boolean | null
   message: string
   checking: boolean
 }
 
-// 통합 회원 폼 데이터 (생성/수정 공통)
+// Unified member form data (shared between create and edit)
 export interface MemberFormData {
   mb_id: string
   mb_password: string
@@ -164,13 +164,13 @@ export interface MemberFormData {
   mb_10: string
 }
 
-// 폼 모드 타입
+// Form mode
 export type MemberFormMode = 'create' | 'edit'
 
-// 폼 Props 타입
+// Form component props
 export interface MemberFormProps {
   mode: MemberFormMode
-  memberId?: string // edit 모드일 때만 필요
+  memberId?: string // required only in edit mode
   onCancel: () => void
   onSuccess: () => void
-} 
+}

@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAuthUser } from '@/lib/auth'
 
-// 허용된 리액션 타입 (긍정적인 것만)
+// Allowed reaction types (positive only)
 const REACTION_TYPES = ['like', 'haha', 'agree', 'thanks', 'wow'] as const
 type ReactionType = typeof REACTION_TYPES[number]
 
-// 댓글 리액션 조회 (GET)
+// Fetch comment reactions (GET)
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string; postId: string; commentId: string }> }
@@ -15,17 +15,17 @@ export async function GET(
     const { commentId: commentIdParam } = await params
     const commentId = parseInt(commentIdParam)
 
-    // 사용자 확인
+    // User check
     const user = await getAuthUser()
 
-    // 리액션 집계
+    // Aggregate reactions
     const reactions = await prisma.reaction.groupBy({
       by: ['type'],
       where: { commentId },
       _count: { type: true }
     })
 
-    // 사용자의 리액션 조회
+    // Fetch the user's reaction
     let userReactions: string[] = []
     if (user) {
       const userReactionRecords = await prisma.reaction.findMany({
@@ -35,7 +35,7 @@ export async function GET(
       userReactions = userReactionRecords.map(r => r.type)
     }
 
-    // 결과 포맷팅
+    // Format the result
     const reactionCounts: Record<string, number> = {}
     for (const r of reactions) {
       reactionCounts[r.type] = r._count.type
@@ -49,7 +49,7 @@ export async function GET(
     })
 
   } catch (error) {
-    console.error('댓글 리액션 조회 에러:', error)
+    console.error('failed to fetch comment reactions:', error)
     return NextResponse.json(
       { error: '서버 오류가 발생했습니다.' },
       { status: 500 }
@@ -57,7 +57,7 @@ export async function GET(
   }
 }
 
-// 댓글 리액션 토글 (POST)
+// Toggle comment reaction (POST)
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string; postId: string; commentId: string }> }
@@ -68,7 +68,7 @@ export async function POST(
     const body = await request.json()
     const { type = 'like' } = body
 
-    // 유효한 리액션 타입인지 확인
+    // Ensure the reaction type is valid
     if (!REACTION_TYPES.includes(type as ReactionType)) {
       return NextResponse.json(
         { error: '유효하지 않은 리액션 타입입니다.' },
@@ -76,7 +76,7 @@ export async function POST(
       )
     }
 
-    // 로그인 확인
+    // Login check
     const user = await getAuthUser()
     if (!user) {
       return NextResponse.json(
@@ -85,7 +85,7 @@ export async function POST(
       )
     }
 
-    // 게시판 정보 조회
+    // Fetch board info
     const board = await prisma.board.findUnique({
       where: { slug }
     })
@@ -97,7 +97,7 @@ export async function POST(
       )
     }
 
-    // 반응 기능 확인
+    // Check whether reactions are enabled
     if (!board.useReaction) {
       return NextResponse.json(
         { error: '이 게시판은 반응 기능을 사용하지 않습니다.' },
@@ -105,7 +105,7 @@ export async function POST(
       )
     }
 
-    // 댓글 확인
+    // Comment check
     const comment = await prisma.comment.findUnique({
       where: { id: commentId }
     })
@@ -117,7 +117,7 @@ export async function POST(
       )
     }
 
-    // 기존 반응 확인 (같은 타입)
+    // Check for an existing reaction of the same type
     const existingReaction = await prisma.reaction.findFirst({
       where: {
         userId: user.id,
@@ -129,12 +129,12 @@ export async function POST(
     let reacted = false
 
     if (existingReaction) {
-      // 이미 반응이 있으면 취소
+      // If the reaction already exists, remove it
       await prisma.reaction.delete({
         where: { id: existingReaction.id }
       })
 
-      // likeCount 업데이트 (like 타입만)
+      // Update likeCount (only for the "like" type)
       if (type === 'like') {
         await prisma.comment.update({
           where: { id: commentId },
@@ -142,7 +142,7 @@ export async function POST(
         })
       }
     } else {
-      // 반응 추가
+      // Add reaction
       await prisma.reaction.create({
         data: {
           type,
@@ -151,7 +151,7 @@ export async function POST(
         }
       })
 
-      // likeCount 업데이트 (like 타입만)
+      // Update likeCount (only for the "like" type)
       if (type === 'like') {
         await prisma.comment.update({
           where: { id: commentId },
@@ -162,7 +162,7 @@ export async function POST(
       reacted = true
     }
 
-    // 업데이트된 리액션 정보 조회
+    // Fetch the updated reaction info
     const reactions = await prisma.reaction.groupBy({
       by: ['type'],
       where: { commentId },
@@ -189,7 +189,7 @@ export async function POST(
     })
 
   } catch (error) {
-    console.error('댓글 반응 처리 에러:', error)
+    console.error('failed to process comment reaction:', error)
     return NextResponse.json(
       { error: '서버 오류가 발생했습니다.' },
       { status: 500 }

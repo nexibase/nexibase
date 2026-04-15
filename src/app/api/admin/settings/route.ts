@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminUser } from '@/lib/auth'
 
-// 설정 조회
+// Fetch settings
 export async function GET() {
   try {
     const admin = await getAdminUser()
@@ -12,7 +12,7 @@ export async function GET() {
 
     const settings = await prisma.setting.findMany()
 
-    // key-value 객체로 변환
+    // Convert to a key-value object
     const settingsMap: Record<string, string> = {}
     settings.forEach(s => {
       settingsMap[s.key] = s.value
@@ -20,7 +20,7 @@ export async function GET() {
 
     return NextResponse.json({ settings: settingsMap })
   } catch (error) {
-    console.error('설정 조회 에러:', error)
+    console.error('failed to fetch settings:', error)
     return NextResponse.json(
       { error: '설정을 불러오는데 실패했습니다.' },
       { status: 500 }
@@ -28,7 +28,7 @@ export async function GET() {
   }
 }
 
-// 설정 저장 (upsert)
+// Save settings (upsert)
 export async function POST(request: NextRequest) {
   try {
     const admin = await getAdminUser()
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 각 설정을 upsert
+    // Upsert each setting
     const promises = Object.entries(settings).map(([key, value]) =>
       prisma.setting.upsert({
         where: { key },
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
       message: '설정이 저장되었습니다.'
     })
   } catch (error) {
-    console.error('설정 저장 에러:', error)
+    console.error('failed to save settings:', error)
     return NextResponse.json(
       { error: '설정 저장에 실패했습니다.' },
       { status: 500 }

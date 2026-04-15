@@ -32,12 +32,12 @@ export async function PUT(
 
     return NextResponse.json({ widget })
   } catch (error) {
-    console.error('위젯 수정 에러:', error)
+    console.error('failed to update widget:', error)
     return NextResponse.json({ error: '서버 오류' }, { status: 500 })
   }
 }
 
-// DELETE /api/admin/home-widgets/[id] — 위젯 배치 해제 (DB에서 삭제)
+// DELETE /api/admin/home-widgets/[id] — unplace the widget (deletes the DB row)
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -57,7 +57,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('위젯 삭제 에러:', error)
+    console.error('failed to delete widget:', error)
     return NextResponse.json({ error: '서버 오류' }, { status: 500 })
   }
 }

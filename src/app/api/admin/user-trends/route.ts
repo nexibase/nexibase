@@ -15,17 +15,17 @@ export async function GET(request: NextRequest) {
   startDate.setDate(startDate.getDate() - days)
   startDate.setHours(0, 0, 0, 0)
 
-  // 일별 가입자 수 집계
+  // Aggregate daily signups
   const users = await prisma.user.findMany({
     where: { createdAt: { gte: startDate }, deletedAt: null },
     select: { createdAt: true },
     orderBy: { createdAt: "asc" },
   })
 
-  // 날짜별 집계
+  // Aggregate by date
   const dateMap = new Map<string, number>()
 
-  // 기간 내 모든 날짜 초기화
+  // Initialize every date in the range
   for (let i = 0; i <= days; i++) {
     const d = new Date(startDate)
     d.setDate(d.getDate() + i)
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     dateMap.set(key, 0)
   }
 
-  // 실제 가입자 집계
+  // Aggregate actual signups
   for (const user of users) {
     const key = user.createdAt.toISOString().split("T")[0]
     dateMap.set(key, (dateMap.get(key) || 0) + 1)
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     count,
   }))
 
-  // 총 가입자 수
+  // Total signups
   const totalUsers = await prisma.user.count({ where: { deletedAt: null } })
   const periodUsers = users.length
 

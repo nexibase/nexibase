@@ -28,10 +28,10 @@ export async function POST(
 
     // Footer menu URL mapping per plugin
     const footerUrlMap: Record<string, Record<string, string>> = {
-      contents: { '회사소개': '/contents/about', '자주 묻는 질문': '/contents/faq', '문의하기': '/contents/contact' },
-      policies: { '이용약관': '/policies/terms', '개인정보처리방침': '/policies/privacy' },
-      boards: { '전체게시판': '/boards' },
-      shop: { '취소/반품 정책': '/shop/policy' },
+      contents: { 'About': '/contents/about', 'FAQ': '/contents/faq', 'Contact': '/contents/contact' },
+      policies: { 'Terms of Service': '/policies/terms', 'Privacy Policy': '/policies/privacy' },
+      boards: { 'All Boards': '/boards' },
+      shop: { 'Refund Policy': '/shop/policy' },
     }
 
     let menuCount = 0
@@ -104,7 +104,7 @@ export async function POST(
       message: `메뉴 ${menuCount}개, 위젯 ${widgetCount}개 등록됨`,
     })
   } catch (error) {
-    console.error('플러그인 활성화 에러:', error)
+    console.error('failed to activate plugin:', error)
     return NextResponse.json({ error: '서버 오류' }, { status: 500 })
   }
 }

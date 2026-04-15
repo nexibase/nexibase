@@ -4,7 +4,7 @@ import { getAdminUser } from '@/lib/auth'
 import { pluginManifest } from '@/plugins/_generated'
 import { isPluginEnabled } from '@/lib/plugins'
 
-// Menu URL → plugin folder 매핑
+// Menu URL → plugin folder mapping
 function getMenuPlugin(url: string): string | null {
   for (const [folder, meta] of Object.entries(pluginManifest)) {
     const slug = meta.slug
@@ -34,7 +34,7 @@ export async function GET() {
       orderBy: [{ position: 'asc' }, { sortOrder: 'asc' }],
     })
 
-    // 각 메뉴에 플러그인 활성 상태 추가
+    // Attach plugin-enabled state to each menu
     const menusWithPluginStatus = await Promise.all(
       menus.map(async (m) => {
         const pluginFolder = getMenuPlugin(m.url)
@@ -70,7 +70,7 @@ export async function GET() {
 
     return NextResponse.json({ header, footer })
   } catch (error) {
-    console.error('관리자 메뉴 조회 에러:', error)
+    console.error('failed to fetch admin menus:', error)
     return NextResponse.json({ error: '서버 오류' }, { status: 500 })
   }
 }
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ menu })
   } catch (error) {
-    console.error('메뉴 생성 에러:', error)
+    console.error('failed to create menu:', error)
     return NextResponse.json({ error: '서버 오류' }, { status: 500 })
   }
 }

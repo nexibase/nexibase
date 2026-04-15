@@ -33,7 +33,7 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('메뉴 순서 변경 에러:', error)
+    console.error('failed to reorder menus:', error)
     return NextResponse.json({ error: '서버 오류' }, { status: 500 })
   }
 }

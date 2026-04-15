@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
+import { useTranslations, useLocale } from 'next-intl'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -70,6 +71,8 @@ export default function BoardListPage() {
   const params = useParams()
   const router = useRouter()
   const slug = params.slug as string
+  const t = useTranslations('boards')
+  const locale = useLocale()
 
   const [board, setBoard] = useState<Board | null>(null)
   const [posts, setPosts] = useState<Post[]>([])
@@ -82,7 +85,7 @@ export default function BoardListPage() {
   const isLoggedIn = !!user
   const isAdmin = user?.role === 'admin'
 
-  // 사용자 정보 조회
+  // Fetch user info
   const fetchUser = useCallback(async () => {
     try {
       const response = await fetch('/api/me')
@@ -91,11 +94,11 @@ export default function BoardListPage() {
         setUser(data.user)
       }
     } catch (error) {
-      console.error('사용자 정보 조회 에러:', error)
+      console.error('failed to fetch user:', error)
     }
   }, [])
 
-  // 게시글 목록 조회
+  // Fetch post list
   const fetchPosts = useCallback(async () => {
     setLoading(true)
     setError(null)
@@ -109,11 +112,11 @@ export default function BoardListPage() {
 
       if (!response.ok) {
         if (response.status === 403) {
-          setError(data.requireLogin ? '이 게시판을 보려면 로그인이 필요합니다.' : (data.error || '권한이 없습니다.'))
+          setError(data.requireLogin ? t('listRequiresLogin') : (data.error || t('noPermission')))
         } else if (response.status === 404) {
-          setError('게시판을 찾을 수 없습니다.')
+          setError(t('boardNotFound'))
         } else {
-          setError(data.error || '게시판을 불러올 수 없습니다.')
+          setError(data.error || t('loadUnavailable'))
         }
         return
       }
@@ -125,12 +128,12 @@ export default function BoardListPage() {
         setTotalPages(data.pagination.totalPages)
       }
     } catch (error) {
-      console.error('게시글 목록 조회 에러:', error)
-      setError('게시판을 불러오는 중 오류가 발생했습니다.')
+      console.error('failed to fetch posts:', error)
+      setError(t('loadError'))
     } finally {
       setLoading(false)
     }
-  }, [slug, page])
+  }, [slug, page, t])
 
   useEffect(() => {
     fetchUser()
@@ -140,7 +143,7 @@ export default function BoardListPage() {
     fetchPosts()
   }, [fetchPosts])
 
-  // 날짜 포맷
+  // Date format
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
     const now = new Date()
@@ -148,19 +151,19 @@ export default function BoardListPage() {
     const diffDays = Math.floor(diff / (1000 * 60 * 60 * 24))
 
     if (diffDays === 0) {
-      return date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+      return date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
     } else if (diffDays < 7) {
-      return `${diffDays}일 전`
+      return t('daysAgo', { days: diffDays })
     } else {
-      return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })
+      return date.toLocaleDateString(locale, { month: 'short', day: 'numeric' })
     }
   }
 
-  // 게시글 클릭
+  // Post click
   const handlePostClick = (post: Post, e?: React.MouseEvent) => {
     if (e && (e.target as HTMLElement).closest('[data-user-nickname]')) return
     if (post.isSecret && post.author.id !== user?.id && !isAdmin) {
-      alert('비밀글입니다.')
+      alert(t('secretPostAlert'))
       return
     }
     router.push(`/boards/${slug}/${post.id}`)
@@ -186,11 +189,11 @@ export default function BoardListPage() {
               <div className="flex gap-2 justify-center">
                 <Button variant="outline" onClick={() => router.push('/')}>
                   <Home className="h-4 w-4 mr-2" />
-                  홈으로
+                  {t('home')}
                 </Button>
                 {!user && (
                   <Button onClick={() => router.push('/login')}>
-                    로그인
+                    {t('login')}
                   </Button>
                 )}
               </div>
@@ -205,20 +208,20 @@ export default function BoardListPage() {
     return null
   }
 
-  // 글쓰기 권한: 회원전용이면 로그인 필요, 아니면 누구나 가능
+  // Write permission: login required for member-only boards, otherwise open to anyone
   const canWrite = board.writeMemberOnly ? isLoggedIn : true
 
   return (
     <UserLayout>
       <div className="max-w-4xl mx-auto sm:px-4 py-2 sm:py-6">
-        {/* 게시판 헤더 */}
+        {/* Board header */}
         <div className="mb-6">
           <div className="flex items-center justify-between">
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-2xl font-bold">{board.name}</h1>
                 {isAdmin && (
-                  <Link href={`/admin/boards/${board.id}`} title="게시판 설정">
+                  <Link href={`/admin/boards/${board.id}`} title={t('boardSettingsTitle')}>
                     <Settings className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
                   </Link>
                 )}
@@ -230,7 +233,7 @@ export default function BoardListPage() {
             {canWrite && (
               <Button onClick={() => router.push(`/boards/${slug}/create`)}>
                 <PenSquare className="h-4 w-4 mr-2" />
-                글쓰기
+                {t('write')}
               </Button>
             )}
           </div>
@@ -238,7 +241,7 @@ export default function BoardListPage() {
 
         <Card>
           <CardContent className="p-0">
-            {/* 공지사항 */}
+            {/* Notices */}
             {notices.length > 0 && (
               <div className="border-b bg-muted/30">
                 {notices.map((post) => (
@@ -249,7 +252,7 @@ export default function BoardListPage() {
                   >
                     <Badge variant="destructive" className="shrink-0">
                       <Pin className="h-3 w-3 mr-1" />
-                      공지
+                      {t('noticeBadge')}
                     </Badge>
                     <span className="font-medium truncate flex-1">
                       {post.title}
@@ -262,13 +265,13 @@ export default function BoardListPage() {
               </div>
             )}
 
-            {/* 게시글 목록 */}
+            {/* Post list */}
             {posts.length === 0 ? (
               <div className="py-12 text-center text-muted-foreground">
-                게시글이 없습니다.
+                {t('noPosts')}
               </div>
             ) : board.displayType === 'gallery' ? (
-              /* 갤러리 뷰 */
+              /* Gallery view */
               <div className="p-4">
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   {posts.map((post) => (
@@ -277,7 +280,7 @@ export default function BoardListPage() {
                       onClick={(e) => handlePostClick(post, e)}
                       className="group cursor-pointer"
                     >
-                      {/* 썸네일 */}
+                      {/* Thumbnail */}
                       <div className="aspect-square relative rounded-lg overflow-hidden bg-muted mb-2">
                         {post.thumbnail ? (
                           <img
@@ -296,7 +299,7 @@ export default function BoardListPage() {
                           </div>
                         )}
                       </div>
-                      {/* 정보 */}
+                      {/* Info */}
                       <div className="space-y-1">
                         <h3 className="font-medium text-sm truncate group-hover:text-primary transition-colors">
                           {post.title}
@@ -326,15 +329,15 @@ export default function BoardListPage() {
                 </div>
               </div>
             ) : (
-              /* 목록 뷰 */
+              /* List view */
               <div>
-                {/* 데스크톱 헤더 */}
+                {/* Desktop header */}
                 <div className="hidden md:flex items-center px-4 py-2 border-b text-xs text-muted-foreground font-medium">
-                  <div className="flex-1">제목</div>
-                  <div className="w-28 text-left pl-2">작성자</div>
-                  <div className="w-24 text-center">날짜</div>
-                  <div className="w-16 text-center">조회</div>
-                  {board.useReaction && <div className="w-16 text-center">추천</div>}
+                  <div className="flex-1">{t('post.title')}</div>
+                  <div className="w-28 text-left pl-2">{t('author')}</div>
+                  <div className="w-24 text-center">{t('createdAt')}</div>
+                  <div className="w-16 text-center">{t('viewCount')}</div>
+                  {board.useReaction && <div className="w-16 text-center">{t('recommend')}</div>}
                 </div>
                 {posts.map((post) => {
                   const postUrl = post.isSecret && post.author.id !== user?.id && !isAdmin ? '#' : `/boards/${slug}/${post.id}`
@@ -343,7 +346,7 @@ export default function BoardListPage() {
                     key={post.id}
                     className="flex items-center px-4 py-3 border-b last:border-b-0"
                   >
-                    {/* 모바일: 기존 스택 레이아웃 */}
+                    {/* Mobile: original stacked layout */}
                     <div className="flex-1 min-w-0 md:hidden">
                       <div className="flex items-center gap-2 mb-1">
                         {post.isNotice && <Pin className="h-3.5 w-3.5 text-orange-500 shrink-0" />}
@@ -362,10 +365,10 @@ export default function BoardListPage() {
                         <span className="flex items-center gap-0.5"><Eye className="h-3 w-3" />{post.viewCount}</span>
                       </div>
                     </div>
-                    {/* 데스크톱: 테이블 레이아웃 */}
+                    {/* Desktop: table layout */}
                     <div className="hidden md:flex md:items-center md:flex-1 md:min-w-0">
                       <div className="flex-1 min-w-0 flex items-center gap-2">
-                        {post.isNotice && <Badge variant="outline" className="shrink-0 text-xs px-1.5 py-0 text-orange-500 border-orange-500">공지</Badge>}
+                        {post.isNotice && <Badge variant="outline" className="shrink-0 text-xs px-1.5 py-0 text-orange-500 border-orange-500">{t('noticeBadge')}</Badge>}
                         {post.isSecret && <Lock className="h-3.5 w-3.5 text-yellow-500 shrink-0" />}
                         <Link href={postUrl} className="font-medium text-sm truncate hover:text-primary">{post.title}</Link>
                         {post.commentCount > 0 && board.useComment && (
@@ -388,7 +391,7 @@ export default function BoardListPage() {
               </div>
             )}
 
-            {/* 페이지네이션 */}
+            {/* Pagination */}
             {totalPages > 1 && (
               <div className="flex justify-center items-center gap-2 py-4 border-t">
                 <Button
@@ -415,12 +418,12 @@ export default function BoardListPage() {
           </CardContent>
         </Card>
 
-        {/* 글쓰기 버튼 (하단) */}
+        {/* Write button (bottom) */}
         {canWrite && posts.length > 0 && (
           <div className="flex justify-end mt-4">
             <Button onClick={() => router.push(`/boards/${slug}/create`)}>
               <PenSquare className="h-4 w-4 mr-2" />
-              글쓰기
+              {t('write')}
             </Button>
           </div>
         )}
@@ -428,7 +431,7 @@ export default function BoardListPage() {
         {!canWrite && board.writeMemberOnly && (
           <div className="mt-4 text-center">
             <Link href="/login" className="text-primary hover:underline text-sm">
-              글을 쓰려면 로그인이 필요합니다.
+              {t('writeLoginRequired')}
             </Link>
           </div>
         )}

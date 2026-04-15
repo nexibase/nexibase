@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
       // Group by groupName for footer
       const grouped: Record<string, typeof menus> = {}
       for (const menu of menus) {
-        const group = menu.groupName || '기타'
+        const group = menu.groupName || 'Other'
         if (!grouped[group]) grouped[group] = []
         grouped[group].push(menu)
       }
@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ menus })
   } catch (error) {
-    console.error('메뉴 조회 에러:', error)
+    console.error('failed to fetch menus:', error)
     return NextResponse.json({ menus: [] })
   }
 }

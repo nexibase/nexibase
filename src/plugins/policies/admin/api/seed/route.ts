@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminUser } from '@/lib/auth'
 
-// 기본 약관 데이터
+// Default policy data
 const DEFAULT_POLICIES = [
   {
     slug: 'terms',
@@ -93,7 +93,7 @@ const DEFAULT_POLICIES = [
   },
 ]
 
-// 기본 약관 생성
+// Create default policies
 export async function POST() {
   try {
     const admin = await getAdminUser()
@@ -101,7 +101,7 @@ export async function POST() {
       return NextResponse.json({ error: '관리자 권한이 필요합니다.' }, { status: 401 })
     }
 
-    // 이미 존재하는 약관 확인 (slug + version 조합)
+    // Check for an existing policy (slug + version combination)
     const existingPolicies = await prisma.policy.findMany({
       where: {
         OR: DEFAULT_POLICIES.map(p => ({
@@ -116,7 +116,7 @@ export async function POST() {
       existingPolicies.map(p => `${p.slug}:${p.version}`)
     )
 
-    // 존재하지 않는 약관만 생성
+    // Only create policies that do not already exist
     const policiesToCreate = DEFAULT_POLICIES.filter(
       p => !existingSet.has(`${p.slug}:${p.version}`)
     )
@@ -129,7 +129,7 @@ export async function POST() {
       })
     }
 
-    // 약관 생성
+    // Create policy
     const result = await prisma.policy.createMany({
       data: policiesToCreate
     })
@@ -142,7 +142,7 @@ export async function POST() {
     })
 
   } catch (error) {
-    console.error('기본 약관 생성 에러:', error)
+    console.error('failed to create default policies:', error)
     return NextResponse.json(
       { error: '기본 약관 생성에 실패했습니다.' },
       { status: 500 }

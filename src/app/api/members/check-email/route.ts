@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('이메일 확인 에러:', error)
+    console.error('email check error:', error)
     return NextResponse.json(
       { error: '서버 오류가 발생했습니다.' },
       { status: 500 }

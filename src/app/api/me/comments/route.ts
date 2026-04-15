@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ comments })
   } catch (error) {
-    console.error('내 댓글 조회 에러:', error)
+    console.error('failed to fetch my comments:', error)
     return NextResponse.json({ error: '서버 오류' }, { status: 500 })
   }
 }

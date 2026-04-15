@@ -64,31 +64,39 @@ next-env.d.ts
 /src/lib/widgets/_generated-metadata.ts
 /src/lib/widgets/_generated-header-widgets.ts
 
+# scan-plugins가 자동 생성하는 install locale 파일
+/src/i18n/_generated-locales.ts
+/src/lib/install/_generated-registry.ts
+
+# scan-plugins가 생성하는 머지된 로케일 파일
+/src/messages/ko.json
+/src/messages/en.json
+
 # 플러그인 라우트 래퍼 (scan-plugins가 자동 생성)
-/src/app/boards/
+/src/app/\[locale\]/boards/
 /src/app/api/boards/
-/src/app/admin/boards/
+/src/app/\[locale\]/admin/boards/
 /src/app/api/admin/boards/
-/src/app/shop/
+/src/app/\[locale\]/shop/
 /src/app/api/shop/
-/src/app/admin/shop/
+/src/app/\[locale\]/admin/shop/
 /src/app/api/admin/shop/
-/src/app/contents/
-/src/app/api/content/
-/src/app/admin/contents/
+/src/app/\[locale\]/contents/
+/src/app/api/contents/
+/src/app/\[locale\]/admin/contents/
 /src/app/api/admin/contents/
-/src/app/policies/
-/src/app/api/policy/
-/src/app/admin/policies/
+/src/app/\[locale\]/policies/
+/src/app/api/policies/
+/src/app/\[locale\]/admin/policies/
 /src/app/api/admin/policies/
-/src/app/community/
-/src/app/auction/
+/src/app/\[locale\]/community/
+/src/app/\[locale\]/auction/
 /src/app/api/auction/
-/src/app/admin/auction/
+/src/app/\[locale\]/admin/auction/
 /src/app/api/admin/auction/
-/src/app/photo-gallery/
+/src/app/\[locale\]/photo-gallery/
 /src/app/api/photo-gallery/
-/src/app/admin/photo-gallery/
+/src/app/\[locale\]/admin/photo-gallery/
 /src/app/api/admin/photo-gallery/
 
 # public 디렉토리의 모든 파일 무시. 단, 아래 예외는 포함.

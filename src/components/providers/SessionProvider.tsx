@@ -14,17 +14,17 @@ export function SessionProvider({ children }: SessionProviderProps) {
   );
 }
 
-// 로그인 성공 시 호출할 함수 (현재는 사용하지 않지만 호환성 유지)
+// Called on successful login (currently unused, kept for backwards compatibility)
 export function markBrowserSession() {
-  // 프록시에서 세션 쿠키로 변환하므로 별도 처리 불필요
+  // The proxy converts this to a session cookie, so no extra work is needed
 }
 
-// 소셜 로그인 전 호출 (현재는 사용하지 않지만 호환성 유지)
+// Called before initiating social login (currently unused, kept for backwards compatibility)
 export function markJustLoggedIn() {
-  // 프록시에서 세션 쿠키로 변환하므로 별도 처리 불필요
+  // The proxy converts this to a session cookie, so no extra work is needed
 }
 
-// 로그아웃 시 호출할 함수 (현재는 사용하지 않지만 호환성 유지)
+// Called on logout (currently unused, kept for backwards compatibility)
 export function clearBrowserSession() {
-  // 프록시에서 세션 쿠키로 변환하므로 별도 처리 불필요
+  // The proxy converts this to a session cookie, so no extra work is needed
 }

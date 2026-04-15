@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
       member,
     })
   } catch (error) {
-    console.error('최근 게시글 조회 에러:', error)
+    console.error('failed to fetch latest posts:', error)
     return NextResponse.json({ error: '서버 오류' }, { status: 500 })
   }
 }

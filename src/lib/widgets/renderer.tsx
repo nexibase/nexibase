@@ -26,10 +26,10 @@ export default function WidgetRenderer({ zone, widgets }: WidgetRendererProps) {
 
   if (zoneWidgets.length === 0) return null
 
-  // 사이드바 영역은 항상 세로 스택 (colSpan 무시)
+  // Sidebar zones always stack vertically (colSpan ignored)
   const isSidebar = zone === 'left' || zone === 'right' || zone === 'sidebar'
 
-  // 위젯이 모두 colSpan 12(전체 너비)이거나 사이드바면 단순 스택
+  // Stack simply when every widget is full-width (colSpan 12) or when we are in a sidebar zone
   const allFullWidth = isSidebar || zoneWidgets.every(w => w.colSpan >= 12)
 
   if (allFullWidth) {
@@ -40,7 +40,7 @@ export default function WidgetRenderer({ zone, widgets }: WidgetRendererProps) {
     )
   }
 
-  // 혼합 너비 → 12컬럼 그리드 (모바일: 전부 full-width 스택, md+: 지정된 span 적용)
+  // Mixed widths → 12-column grid (mobile: full-width stack; md+: apply configured span)
   const MD_SPAN_CLASS: Record<number, string> = {
     1: 'md:col-span-1', 2: 'md:col-span-2', 3: 'md:col-span-3',
     4: 'md:col-span-4', 5: 'md:col-span-5', 6: 'md:col-span-6',
@@ -73,7 +73,7 @@ function renderWidget(widget: WidgetData) {
 function renderWidgetContent(widget: WidgetData) {
   const definition = widgetRegistry[widget.widgetKey]
   if (!definition) {
-    console.warn(`위젯 레지스트리에 없는 키: ${widget.widgetKey}`)
+    console.warn(`widget key not in the registry: ${widget.widgetKey}`)
     return null
   }
 

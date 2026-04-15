@@ -27,7 +27,7 @@ export async function PUT(request: NextRequest) {
       }
     }
 
-    // 새 위젯 생성
+    // Create new widget
     if (create) {
       const existing = await prisma.homeWidget.findFirst({
         where: { widgetKey: create.widgetKey }
@@ -69,7 +69,7 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('위젯 레이아웃 저장 에러:', error)
+    console.error('failed to save widget layout:', error)
     return NextResponse.json({ error: '서버 오류' }, { status: 500 })
   }
 }

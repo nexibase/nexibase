@@ -8,7 +8,7 @@ export async function GET(
   try {
     const { id } = await params
 
-    // uuid 또는 숫자 id 모두 지원
+    // Accept both uuid and numeric id
     const isUuid = id.includes('-')
     const user = await prisma.user.findUnique({
       where: isUuid ? { uuid: id } : { id: parseInt(id) },
@@ -45,7 +45,7 @@ export async function GET(
       }
     })
   } catch (error) {
-    console.error('회원 프로필 조회 에러:', error)
+    console.error('failed to fetch member profile:', error)
     return NextResponse.json({ error: '서버 오류' }, { status: 500 })
   }
 }

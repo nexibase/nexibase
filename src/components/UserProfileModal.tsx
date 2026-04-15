@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { useTranslations } from "next-intl"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { User, FileText, MessageSquare, Calendar } from "lucide-react"
 
@@ -20,6 +21,8 @@ interface UserProfileModalProps {
 }
 
 export function UserProfileModal({ userId, onClose }: UserProfileModalProps) {
+  const t = useTranslations('profile')
+  const tc = useTranslations('common')
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -47,13 +50,13 @@ export function UserProfileModal({ userId, onClose }: UserProfileModalProps) {
   }, [userId, fetchProfile])
 
   const formatDate = (d: string) =>
-    new Date(d).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })
+    new Date(d).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })
 
   return (
     <Dialog open={!!userId} onOpenChange={(open) => { if (!open) onClose() }}>
       <DialogContent className="sm:max-w-xs p-0 gap-0">
         {loading ? (
-          <div className="py-12 text-center text-muted-foreground text-sm">로딩 중...</div>
+          <div className="py-12 text-center text-muted-foreground text-sm">{tc('loading')}</div>
         ) : profile ? (
           <div className="p-6">
             <div className="flex flex-col items-center gap-3 mb-4">
@@ -72,20 +75,20 @@ export function UserProfileModal({ userId, onClose }: UserProfileModalProps) {
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <FileText className="h-4 w-4" />
-                <span>게시글 <strong className="text-foreground">{profile.postCount}</strong></span>
+                <span>{t('posts')} <strong className="text-foreground">{profile.postCount}</strong></span>
               </div>
               <div className="flex items-center gap-2 text-muted-foreground">
                 <MessageSquare className="h-4 w-4" />
-                <span>댓글 <strong className="text-foreground">{profile.commentCount}</strong></span>
+                <span>{t('comments')} <strong className="text-foreground">{profile.commentCount}</strong></span>
               </div>
               <div className="flex items-center gap-2 text-muted-foreground col-span-2">
                 <Calendar className="h-4 w-4" />
-                <span>가입일 {formatDate(profile.createdAt)}</span>
+                <span>{t('joinedAt')} {formatDate(profile.createdAt)}</span>
               </div>
             </div>
           </div>
         ) : (
-          <div className="py-12 text-center text-muted-foreground text-sm">회원 정보를 찾을 수 없습니다.</div>
+          <div className="py-12 text-center text-muted-foreground text-sm">{t('notFound')}</div>
         )}
       </DialogContent>
     </Dialog>

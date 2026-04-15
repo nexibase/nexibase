@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     const users = []
 
     for (let i = 0; i < total; i++) {
-      // 랜덤 가입일 (최근으로 갈수록 가중치)
+      // Random signup date (weighted toward more recent dates)
       const ratio = Math.pow(Math.random(), 0.7) // 최근에 더 많이 분포
       const createdAt = new Date(startDate.getTime() + totalMs * ratio)
 
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // 100명씩 배치 삽입
+    // Insert in batches of 100
     let created = 0
     for (let i = 0; i < users.length; i += 100) {
       const batch = users.slice(i, i + 100)
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
       created,
     })
   } catch (error) {
-    console.error("시드 생성 에러:", error)
+    console.error("failed to seed:", error)
     return NextResponse.json(
       { success: false, message: "시드 생성 중 오류가 발생했습니다." },
       { status: 500 }
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// 시드 회원 삭제
+// Delete seed members
 export async function DELETE() {
   const admin = await getAdminUser()
   if (!admin) {
@@ -81,7 +81,7 @@ export async function DELETE() {
       deleted: result.count,
     })
   } catch (error) {
-    console.error("시드 삭제 에러:", error)
+    console.error("failed to delete seed:", error)
     return NextResponse.json(
       { success: false, message: "시드 삭제 중 오류가 발생했습니다." },
       { status: 500 }

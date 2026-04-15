@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useTranslations } from "next-intl"
 import WidgetRenderer from "@/lib/widgets/renderer"
 
 interface WidgetData {
@@ -16,6 +17,7 @@ interface WidgetData {
 }
 
 export default function HomePage() {
+  const tc = useTranslations('common')
   const [allWidgets, setAllWidgets] = useState<WidgetData[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
@@ -34,7 +36,7 @@ export default function HomePage() {
           setAllWidgets(widgets)
         }
       } catch (error) {
-        console.error('위젯 조회 에러:', error)
+        console.error('failed to fetch widgets:', error)
       } finally {
         setIsLoading(false)
       }
@@ -47,7 +49,7 @@ export default function HomePage() {
   const bottomWidgets = allWidgets.filter(w => w.zone === 'bottom')
 
   if (isLoading) {
-    return <div className="py-12 text-center text-muted-foreground">로딩 중...</div>
+    return <div className="py-12 text-center text-muted-foreground">{tc('loading')}</div>
   }
 
   return (
