@@ -2,9 +2,9 @@
 
 # NexiBase
 
-### Next.js 16 기반 오픈소스 풀스택 CMS
+### Open-source full-stack CMS built on Next.js 16
 
-**플러그인 기반 · 테마 시스템 · 커뮤니티 퍼스트**
+**Plugin-based · Theme system · Community-first**
 
 [![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=next.js)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react)](https://react.dev/)
@@ -12,7 +12,7 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-38B2AC?style=flat-square&logo=tailwind-css)](https://tailwindcss.com/)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 
-[라이브 데모](https://nexibase.com) · [빠른 시작](#빠른-시작) · [플러그인](#플러그인-시스템) · [English](#english)
+[Live Demo](https://nexibase.com) · [Quick Start](#quick-start) · [Plugin System](#plugin-system) · [한국어](#korean)
 
 </div>
 
@@ -20,21 +20,302 @@
 
 <div align="center">
 
-| 라이트 모드 | 다크 모드 |
+| Light Mode | Dark Mode |
 |:---:|:---:|
 | ![NexiBase Light](docs/screenshots/homepage-light.png) | ![NexiBase Dark](docs/screenshots/homepage-dark.png) |
 
 </div>
+
+## What is NexiBase?
+
+NexiBase is an open-source, self-hosted CMS platform for building community sites, e-commerce, corporate websites, and more — all from a single codebase.
+
+Drop a plugin folder → auto-detected. Override CSS variables → new theme. Drag widgets → custom homepage. That's the idea.
+
+> **NexiBase** = **Next.js** + **I** + **Base**
+>
+> *I*: Intelligence, Idea, Interface, Individual, Innovation
+
+---
+
+## 🚀 1-Minute Install (Docker)
+
+All you need is Docker. One command starts NexiBase with a bundled MySQL.
+
+```bash
+git clone --recurse-submodules https://github.com/nexibase/nexibase.git
+cd nexibase
+docker compose up -d
+```
+
+Open **http://localhost:3000** — **the first signup becomes admin automatically.**
+
+```bash
+docker compose logs -f app   # tail logs
+docker compose down          # stop
+docker compose down -v       # stop + wipe data
+```
+
+> For production, change `NEXTAUTH_SECRET` and the MySQL password in [`docker-compose.yml`](docker-compose.yml).
+> For SMTP / OAuth / CAPTCHA, create a `.env` file and uncomment the `env_file` section in compose.
+
+---
+
+## Features
+
+### 🧩 Plugin System
+- **Folder-based** — Drop a folder in `src/plugins/`, auto-detected
+- Each plugin gets its own Prisma schema, API routes, admin pages, widgets, and menus
+- Enable/disable from admin dashboard
+- Plugins as git submodules — version and update independently
+
+### 🎨 Theme System
+- CSS variable-based theme switching
+- Server-side loaded (no flash of unstyled content)
+- Custom themes via `custom.css` — no build step needed
+- Dark/light mode with system preference detection
+
+### 📦 Widget System
+- 12-column grid homepage layout
+- Drag & drop widget placement (top / center / bottom zones)
+- Sidebar widgets (left / right, all pages)
+- Plugin widgets auto-registered
+
+### 📋 Board System (Built-in Plugin)
+- Unlimited boards with custom permissions
+- Rich text editor (Tiptap) with image drag & drop
+- Comments, threaded replies, reactions
+- Gallery view, secret posts, pinned notices
+- Full-text search (MySQL FULLTEXT)
+- File attachments with auto image processing (Sharp → WebP)
+
+### 👥 Members
+- Email/password + social login (Google, Naver, Kakao)
+- Email verification
+- Role-based access (user / moderator / admin)
+- Browser session management
+
+### ⚙️ Admin Dashboard
+- Member management
+- Board management
+- Plugin management (enable/disable, slug customization)
+- Menu management (header/footer, tree structure)
+- Homepage widget layout
+- Content pages (about, FAQ, etc.)
+- Site settings (theme, layout, analytics)
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Framework | Next.js 16, React 19 |
+| Styling | Tailwind CSS 4, shadcn/ui |
+| Database | MySQL 8+ via Prisma ORM |
+| Auth | NextAuth.js (JWT + session) |
+| Editor | Tiptap (rich text) |
+| Image | Sharp (resize, WebP) |
+
+---
+
+## Quick Start
+
+### Requirements
+- Node.js 18+
+- MySQL 8.0+
+
+### 1. Clone
+
+```bash
+git clone --recurse-submodules https://github.com/nexibase/nexibase.git
+cd nexibase
+```
+
+### 2. Install
+
+```bash
+npm install
+```
+
+### 3. Configure
+
+```bash
+cp .env.example .env
+# Edit .env with your MySQL credentials
+```
+
+### 4. Database
+
+```sql
+CREATE DATABASE nexibase CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+```bash
+npx prisma db push
+```
+
+### 5. Run
+
+```bash
+npm run dev
+```
+
+Visit http://localhost:3000 — the install wizard opens automatically.
+
+### 6. Install Wizard
+
+On first run, your browser is redirected to `/install`:
+
+1. **Language** — English or 한국어
+2. **Admin account + site info**
+   - Admin email · password · nickname
+   - Site name · description (optional)
+3. Click **Install** → seed data (default boards, menus, policies) is generated → redirected to `/login`
+
+### Adding a New Language
+
+NexiBase supports drop-in language packs. Just add two files:
+
+```bash
+# 1. src/locales/{locale}.json — copy en.json and translate
+cp src/locales/en.json src/locales/ja.json
+# Translate all values (keep the key structure)
+
+# 2. src/lib/install/seed-{locale}.ts — copy seed-en.ts and translate
+cp src/lib/install/seed-en.ts src/lib/install/seed-ja.ts
+# Translate displayName and all strings
+
+# 3. Restart (scan-plugins picks up the new locale automatically)
+npm run dev
+```
+
+The new language button shows up on `/install` automatically. Zero code changes.
+
+### Reset Install (dev only)
+
+To wipe the DB and rerun the install wizard for testing:
+
+```bash
+npm run reset-install -- --confirm
+```
+
+⚠️ This deletes all users, boards, menus, widgets, contents, policies, settings, and shop orders. Rejected when `NODE_ENV=production`. Restart the dev server after reset to clear caches.
+
+---
+
+## Plugin System
+
+Plugins are self-contained folders in `src/plugins/`:
+
+```
+src/plugins/my-feature/
+├── plugin.ts           # Plugin metadata
+├── schema.prisma       # Database models
+├── schema.user.prisma  # User model relations (auto-injected)
+├── routes/             # Page components
+├── api/                # API endpoints
+├── admin/              # Admin pages & API
+├── widgets/            # Homepage widgets
+├── menus/              # Auto-registered menus
+└── header-widget.tsx   # Header icon/widget
+```
+
+**Add a plugin:**
+
+```bash
+# As git submodule
+git submodule add https://github.com/nexibase/plugin-shop.git src/plugins/shop
+
+# Sync database
+npx prisma db push
+
+# Restart → auto-detected → enable in admin
+npm run dev
+```
+
+### Available Plugins
+
+| Plugin | Description | Status |
+|--------|------------|--------|
+| `boards` | Community boards, posts, comments | Built-in |
+| `contents` | Content pages (about, FAQ) | Built-in |
+| `policies` | Terms, privacy policy | Built-in |
+| `shop` | E-commerce (products, cart, orders) | Submodule |
+
+---
+
+## Project Structure
+
+```
+src/
+├── app/              # Core routes + auto-generated wrappers
+├── plugins/          # Plugin system
+│   ├── boards/       # Community (built-in)
+│   ├── contents/     # Content pages (built-in)
+│   ├── policies/     # Policies (built-in)
+│   └── shop/         # E-commerce (submodule)
+├── layouts/          # Layout system (Header, HomePage, Footer)
+├── themes/           # Theme system (CSS variables)
+├── widgets/          # Standalone widgets
+├── components/       # Shared UI components
+└── lib/              # Utilities
+```
+
+---
+
+## Social Login Setup
+
+<details>
+<summary>Google</summary>
+
+1. [Google Cloud Console](https://console.cloud.google.com/) → Create project
+2. APIs & Services → Credentials → OAuth 2.0 Client ID
+3. Redirect URI: `http://localhost:3000/api/auth/callback/google`
+4. Set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in `.env`
+</details>
+
+<details>
+<summary>Naver</summary>
+
+1. [Naver Developers](https://developers.naver.com/) → Register app
+2. Service URL: `http://localhost:3000`
+3. Callback URL: `http://localhost:3000/api/auth/callback/naver`
+4. Set `NAVER_CLIENT_ID` and `NAVER_CLIENT_SECRET` in `.env`
+</details>
+
+<details>
+<summary>Kakao</summary>
+
+1. [Kakao Developers](https://developers.kakao.com/) → Add app
+2. Enable Kakao Login → Redirect URI: `http://localhost:3000/api/auth/callback/kakao`
+3. Set email as required in consent items
+4. Set `KAKAO_CLIENT_ID` (REST API key) and `KAKAO_CLIENT_SECRET` in `.env`
+</details>
+
+---
+
+## Contributing
+
+Contributions welcome! Open an issue, submit a PR, or just say hi.
+
+---
+
+## License
+
+[MIT](LICENSE)
+
+---
+
+<a id="korean"></a>
+
+# 한국어
 
 ## NexiBase란?
 
 NexiBase는 커뮤니티, 쇼핑몰, 기업 사이트 등 무엇이든 만들 수 있는 오픈소스 셀프호스팅 CMS 플랫폼입니다.
 
 플러그인 폴더를 넣으면 자동 인식. CSS 변수를 바꾸면 새 테마. 위젯을 드래그하면 홈페이지 완성.
-
-> **NexiBase** = **Next.js** + **I** + **Base**
->
-> *I*: Intelligence, Idea, Interface, Individual, Innovation
 
 ---
 
@@ -298,251 +579,7 @@ src/
 
 ---
 
-<a id="english"></a>
-
-# English
-
-## What is NexiBase?
-
-NexiBase is an open-source, self-hosted CMS platform for building community sites, e-commerce, corporate websites, and more — all from a single codebase.
-
-Drop a plugin folder → auto-detected. Override CSS variables → new theme. Drag widgets → custom homepage. That's the idea.
-
----
-
-## 🚀 1-Minute Install (Docker)
-
-All you need is Docker. One command starts NexiBase with a bundled MySQL.
-
-```bash
-git clone --recurse-submodules https://github.com/nexibase/nexibase.git
-cd nexibase
-docker compose up -d
-```
-
-Open **http://localhost:3000** — **the first signup becomes admin automatically.**
-
-```bash
-docker compose logs -f app   # tail logs
-docker compose down          # stop
-docker compose down -v       # stop + wipe data
-```
-
-> For production, change `NEXTAUTH_SECRET` and the MySQL password in [`docker-compose.yml`](docker-compose.yml).
-> For SMTP / OAuth / CAPTCHA, create a `.env` file and uncomment the `env_file` section in compose.
-
----
-
-## Features
-
-### 🧩 Plugin System
-- **Folder-based** — Drop a folder in `src/plugins/`, auto-detected
-- Each plugin gets its own Prisma schema, API routes, admin pages, widgets, and menus
-- Enable/disable from admin dashboard
-- Plugins as git submodules — version and update independently
-
-### 🎨 Theme System
-- CSS variable-based theme switching
-- Server-side loaded (no flash of unstyled content)
-- Custom themes via `custom.css` — no build step needed
-- Dark/light mode with system preference detection
-
-### 📦 Widget System
-- 12-column grid homepage layout
-- Drag & drop widget placement (top / center / bottom zones)
-- Sidebar widgets (left / right, all pages)
-- Plugin widgets auto-registered
-
-### 📋 Board System (Built-in Plugin)
-- Unlimited boards with custom permissions
-- Rich text editor (Tiptap) with image drag & drop
-- Comments, threaded replies, reactions
-- Gallery view, secret posts, pinned notices
-- Full-text search (MySQL FULLTEXT)
-- File attachments with auto image processing (Sharp → WebP)
-
-### 👥 Members
-- Email/password + social login (Google, Naver, Kakao)
-- Email verification
-- Role-based access (user / moderator / admin)
-- Browser session management
-
-### ⚙️ Admin Dashboard
-- Member management
-- Board management
-- Plugin management (enable/disable, slug customization)
-- Menu management (header/footer, tree structure)
-- Homepage widget layout
-- Content pages (about, FAQ, etc.)
-- Site settings (theme, layout, analytics)
-
----
-
-## Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| Framework | Next.js 16, React 19 |
-| Styling | Tailwind CSS 4, shadcn/ui |
-| Database | MySQL 8+ via Prisma ORM |
-| Auth | NextAuth.js (JWT + session) |
-| Editor | Tiptap (rich text) |
-| Image | Sharp (resize, WebP) |
-
----
-
-## Quick Start
-
-### Requirements
-- Node.js 18+
-- MySQL 8.0+
-
-### 1. Clone
-
-```bash
-git clone --recurse-submodules https://github.com/nexibase/nexibase.git
-cd nexibase
-```
-
-### 2. Install
-
-```bash
-npm install
-```
-
-### 3. Configure
-
-```bash
-cp .env.example .env
-# Edit .env with your MySQL credentials
-```
-
-### 4. Database
-
-```sql
-CREATE DATABASE nexibase CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-```
-
-```bash
-npx prisma db push
-```
-
-### 5. Run
-
-```bash
-npm run dev
-```
-
-Visit http://localhost:3000 — **first signup becomes admin automatically.**
-
----
-
-## Plugin System
-
-Plugins are self-contained folders in `src/plugins/`:
-
-```
-src/plugins/my-feature/
-├── plugin.ts           # Plugin metadata
-├── schema.prisma       # Database models
-├── schema.user.prisma  # User model relations (auto-injected)
-├── routes/             # Page components
-├── api/                # API endpoints
-├── admin/              # Admin pages & API
-├── widgets/            # Homepage widgets
-├── menus/              # Auto-registered menus
-└── header-widget.tsx   # Header icon/widget
-```
-
-**Add a plugin:**
-
-```bash
-# As git submodule
-git submodule add https://github.com/nexibase/plugin-shop.git src/plugins/shop
-
-# Sync database
-npx prisma db push
-
-# Restart → auto-detected → enable in admin
-npm run dev
-```
-
-### Available Plugins
-
-| Plugin | Description | Status |
-|--------|------------|--------|
-| `boards` | Community boards, posts, comments | Built-in |
-| `contents` | Content pages (about, FAQ) | Built-in |
-| `policies` | Terms, privacy policy | Built-in |
-| `shop` | E-commerce (products, cart, orders) | Submodule |
-
----
-
-## Project Structure
-
-```
-src/
-├── app/              # Core routes + auto-generated wrappers
-├── plugins/          # Plugin system
-│   ├── boards/       # Community (built-in)
-│   ├── contents/     # Content pages (built-in)
-│   ├── policies/     # Policies (built-in)
-│   └── shop/         # E-commerce (submodule)
-├── layouts/          # Layout system (Header, HomePage, Footer)
-├── themes/           # Theme system (CSS variables)
-├── widgets/          # Standalone widgets
-├── components/       # Shared UI components
-└── lib/              # Utilities
-```
-
----
-
-## Documentation
-
-- [Plugin Development Guide](docs/superpowers/specs/2026-04-06-plugin-architecture-design.md)
-- [Theme Customization](#theme-system)
-- [Widget System](#widget-system)
-
----
-
-## Social Login Setup
-
-<details>
-<summary>Google</summary>
-
-1. [Google Cloud Console](https://console.cloud.google.com/) → Create project
-2. APIs & Services → Credentials → OAuth 2.0 Client ID
-3. Redirect URI: `http://localhost:3000/api/auth/callback/google`
-4. Set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in `.env`
-</details>
-
-<details>
-<summary>Naver</summary>
-
-1. [Naver Developers](https://developers.naver.com/) → Register app
-2. Service URL: `http://localhost:3000`
-3. Callback URL: `http://localhost:3000/api/auth/callback/naver`
-4. Set `NAVER_CLIENT_ID` and `NAVER_CLIENT_SECRET` in `.env`
-</details>
-
-<details>
-<summary>Kakao</summary>
-
-1. [Kakao Developers](https://developers.kakao.com/) → Add app
-2. Enable Kakao Login → Redirect URI: `http://localhost:3000/api/auth/callback/kakao`
-3. Set email as required in consent items
-4. Set `KAKAO_CLIENT_ID` (REST API key) and `KAKAO_CLIENT_SECRET` in `.env`
-</details>
-
----
-
-## Contributing
-
-Contributions welcome! Open an issue, submit a PR, or just say hi.
-
----
-
-## License
+## 라이선스
 
 [MIT](LICENSE)
 
