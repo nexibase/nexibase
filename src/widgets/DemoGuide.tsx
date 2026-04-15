@@ -9,11 +9,11 @@ export default function DemoGuide() {
       <CardContent className="p-5 h-full flex flex-col justify-center">
         <div className="flex items-center gap-2.5 mb-4">
           <Monitor className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-          <h3 className="font-bold text-base">데모 사이트 안내</h3>
+          <h3 className="font-bold text-base">Try the demo site</h3>
         </div>
 
         <p className="text-sm text-muted-foreground mb-4">
-          NexiBase의 모든 기능을 직접 체험해보세요.
+          Experience every NexiBase feature yourself.
         </p>
 
         <div className="bg-white/60 dark:bg-white/5 rounded-md p-3 mb-4 space-y-2">
@@ -35,7 +35,7 @@ export default function DemoGuide() {
           rel="noopener noreferrer"
           className="inline-flex items-center justify-center gap-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 rounded-md px-4 py-2 transition-colors"
         >
-          데모 사이트 방문
+          Visit the demo site
           <ExternalLink className="h-3.5 w-3.5" />
         </a>
       </CardContent>

@@ -1,6 +1,6 @@
 export default {
-  title: 'NexiBase 홈 히어로',
-  description: 'nexibase.com 전용 — 사이트 자체 버전(NEXT_PUBLIC_APP_VERSION) 표시',
+  title: 'NexiBase Home Hero',
+  description: 'nexibase.com only — displays the site version (NEXT_PUBLIC_APP_VERSION)',
   defaultZone: 'top',
   defaultColSpan: 8,
   defaultRowSpan: 2,

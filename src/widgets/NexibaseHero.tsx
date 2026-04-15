@@ -86,19 +86,19 @@ export default function NexibaseHero() {
           </div>
           <h1 className="text-xl md:text-2xl font-bold mb-2">
             {user
-              ? `${user.nickname || '사용자'}님, 환영합니다!`
-              : 'NexiBase에 오신 것을 환영합니다'
+              ? `Welcome back, ${user.nickname || 'friend'}!`
+              : 'Welcome to NexiBase'
             }
           </h1>
           <p className="text-sm text-muted-foreground">
-            {siteDescription || '플러그인으로 무한 확장 가능한 오픈소스 웹 플랫폼'}
+            {siteDescription || 'An open-source web platform infinitely extensible via plugins'}
           </p>
         </div>
         <div className="flex flex-wrap gap-2 mt-4">
           {firstBoardSlug && (
             <Link href={`/boards/${firstBoardSlug}`}>
               <Button>
-                시작하기
+                Get started
                 <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
             </Link>
@@ -110,7 +110,7 @@ export default function NexibaseHero() {
             </Button>
           </Link>
           <Link href="/contents/about">
-            <Button variant="outline">더 알아보기</Button>
+            <Button variant="outline">Learn more</Button>
           </Link>
         </div>
       </CardContent>
