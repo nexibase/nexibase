@@ -803,6 +803,7 @@
     "today": "오늘",
     "yesterday": "어제",
     "last7days": "최근 7일",
+    "gaNotConfigured": "Google Analytics가 설정되지 않았습니다.",
     "welcomeUser": "{nickname}님, 환영합니다!",
     "welcomeSite": "{siteName}에 오신 것을 환영합니다",
     "defaultDesc": "성장하는 커뮤니티에 참여하여 이야기를 나눠보세요.",

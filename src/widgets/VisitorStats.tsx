@@ -37,9 +37,21 @@ export default function VisitorStats() {
     }
   }, [])
 
-  // Not configured → hide the widget entirely
+  // When GA is not configured, render a static placeholder instead of flashing the skeleton
   if (stats && !stats.configured) {
-    return null
+    return (
+      <Card className="h-full">
+        <CardContent className="p-4 h-full flex flex-col">
+          <div className="flex items-center gap-2 mb-3">
+            <Activity className="h-4 w-4 text-primary" />
+            <h3 className="font-semibold text-sm">{t('visitorStats')}</h3>
+          </div>
+          <p className="text-xs text-muted-foreground flex-1 flex items-center">
+            {t('gaNotConfigured')}
+          </p>
+        </CardContent>
+      </Card>
+    )
   }
 
   const formatNumber = (n: number) => n.toLocaleString()

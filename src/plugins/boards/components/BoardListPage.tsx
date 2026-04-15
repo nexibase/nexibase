@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -72,6 +72,7 @@ export default function BoardListPage() {
   const router = useRouter()
   const slug = params.slug as string
   const t = useTranslations('boards')
+  const locale = useLocale()
 
   const [board, setBoard] = useState<Board | null>(null)
   const [posts, setPosts] = useState<Post[]>([])
@@ -150,11 +151,11 @@ export default function BoardListPage() {
     const diffDays = Math.floor(diff / (1000 * 60 * 60 * 24))
 
     if (diffDays === 0) {
-      return date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+      return date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
     } else if (diffDays < 7) {
       return t('daysAgo', { days: diffDays })
     } else {
-      return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+      return date.toLocaleDateString(locale, { month: 'short', day: 'numeric' })
     }
   }
 

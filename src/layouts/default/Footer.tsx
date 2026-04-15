@@ -94,11 +94,9 @@ export default function Footer() {
 
         {/* Copyright strip */}
         <div className="border-t pt-6">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-muted-foreground">
-              {settings.footer_copyright || `© ${new Date().getFullYear()} ${settings.site_name}. All rights reserved.`}
-            </p>
-          </div>
+          <p className="text-center text-sm text-muted-foreground">
+            {settings.footer_copyright || `© ${new Date().getFullYear()} ${settings.site_name}. All rights reserved.`}
+          </p>
         </div>
       </div>
     </footer>

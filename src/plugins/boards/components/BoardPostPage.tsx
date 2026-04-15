@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -327,6 +327,7 @@ export default function BoardPostPage() {
   const slug = params.slug as string
   const postId = params.postId as string
   const t = useTranslations('boards')
+  const locale = useLocale()
 
   const [board, setBoard] = useState<Board | null>(null)
   const [post, setPost] = useState<Post | null>(null)
@@ -443,7 +444,7 @@ export default function BoardPostPage() {
 
   // Date format
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString(undefined, {
+    return new Date(dateString).toLocaleString(locale, {
       year: 'numeric',
       month: 'long',
       day: 'numeric',

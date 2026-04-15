@@ -803,6 +803,7 @@
     "today": "Today",
     "yesterday": "Yesterday",
     "last7days": "Last 7 days",
+    "gaNotConfigured": "Google Analytics is not configured.",
     "welcomeUser": "Welcome, {nickname}!",
     "welcomeSite": "Welcome to {siteName}",
     "defaultDesc": "Join our growing community and share your stories.",
