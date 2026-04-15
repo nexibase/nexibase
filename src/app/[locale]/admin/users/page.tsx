@@ -62,7 +62,7 @@ interface UserStats {
   deletedUsers: number
 }
 
-// Provider 배지
+// Provider badge
 function ProviderBadge({ provider }: { provider: string }) {
   const config: Record<string, { bg: string; text: string; border: string; label: string }> = {
     google: { bg: 'bg-red-100', text: 'text-red-700', border: 'border-red-200', label: 'Google' },
@@ -79,7 +79,7 @@ function ProviderBadge({ provider }: { provider: string }) {
   )
 }
 
-// 사용자 모달
+// User modal
 function UserModal({
   isOpen,
   onClose,
@@ -279,7 +279,7 @@ function UserModal({
   )
 }
 
-// 통계 카드
+// Stats card
 function StatCard({
   title,
   value,
@@ -318,7 +318,7 @@ function UsersPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  // URL에서 초기값 읽기
+  // Read initial values from URL
   const initialStatus = searchParams.get('status') || ''
   const initialRole = searchParams.get('role') || ''
   const initialPage = parseInt(searchParams.get('page') || '1')
@@ -342,7 +342,7 @@ function UsersPageContent() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
 
-  // edit 파라미터가 있으면 해당 사용자 모달 열기
+  // If an edit param is present, open the matching user modal
   useEffect(() => {
     if (editUserId && !loading) {
       const userToEdit = users.find(u => String(u.id) === String(editUserId))
@@ -351,12 +351,12 @@ function UsersPageContent() {
         setIsModalOpen(true)
         router.replace('/admin/users')
       } else {
-        // 목록에 없으면 API로 직접 조회
+        // Not in the list → fetch directly via the API
         fetch(`/api/admin/users/${editUserId}`)
           .then(res => res.json())
           .then(data => {
             if (data.success && data.user) {
-              // providers 필드 추가
+              // Add providers field
               const userWithProviders = {
                 ...data.user,
                 providers: data.user.accounts?.map((acc: { provider: string }) => acc.provider) || []
@@ -371,7 +371,7 @@ function UsersPageContent() {
     }
   }, [editUserId, users, loading, router])
 
-  // URL 업데이트 함수
+  // URL updater
   const updateURL = useCallback((status: string, role: string, page: number) => {
     const params = new URLSearchParams()
     if (status) params.set('status', status)
@@ -401,7 +401,7 @@ function UsersPageContent() {
         setTotalPages(data.pagination.totalPages)
       }
     } catch (error) {
-      console.error('사용자 목록 조회 실패:', error)
+      console.error('failed to fetch user list:', error)
     } finally {
       setLoading(false)
     }
@@ -432,7 +432,7 @@ function UsersPageContent() {
         alert(result.message || t('saveFailed'))
       }
     } catch (error) {
-      console.error('사용자 저장 실패:', error)
+      console.error('failed to save user:', error)
     }
   }
 
@@ -448,7 +448,7 @@ function UsersPageContent() {
         alert(result.message || t('deleteFailed'))
       }
     } catch (error) {
-      console.error('사용자 삭제 실패:', error)
+      console.error('failed to delete user:', error)
     }
   }
 
@@ -469,7 +469,7 @@ function UsersPageContent() {
         alert(result.message || t('restoreFailed'))
       }
     } catch (error) {
-      console.error('사용자 복원 실패:', error)
+      console.error('failed to restore user:', error)
     }
   }
 
@@ -490,7 +490,7 @@ function UsersPageContent() {
         alert(result.message || t('permanentDeleteFailed'))
       }
     } catch (error) {
-      console.error('사용자 영구 삭제 실패:', error)
+      console.error('failed to permanently delete user:', error)
     }
   }
 
@@ -726,10 +726,10 @@ function UsersPageContent() {
                           </td>
                           <td className="p-4 align-middle text-right">
                             {statusFilter === 'withdrawn' ? (
-                              // 탈퇴 회원: 정보가 익명화되어 있으므로 액션 없음
+                              // Withdrawn user: data is anonymized, so no actions are offered
                               <span className="text-xs text-muted-foreground">-</span>
                             ) : statusFilter === 'deleted' ? (
-                              // 관리자 삭제: 정보가 보존되어 복원 가능
+                              // Admin-deleted: data is retained so a restore is possible
                               <Button
                                 variant="ghost"
                                 size="icon"

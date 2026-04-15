@@ -73,7 +73,7 @@ export default function MenusAdminPage() {
         setFooterMenus(data.footer || [])
       }
     } catch (error) {
-      console.error('메뉴 조회 에러:', error)
+      console.error('failed to fetch menus:', error)
     }
   }, [])
 

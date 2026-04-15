@@ -33,26 +33,26 @@ interface FooterLink {
 }
 
 interface SettingsData {
-  // 사이트 기본
+  // Site basics
   site_name: string
   site_description: string
   site_logo: string
 
-  // 회원 설정
+  // Member settings
   signup_enabled: string
   email_verification_required: string
 
-  // 푸터 설정
+  // Footer settings
   footer_copyright: string
   footer_links: string
 
-  // 레이아웃 설정
+  // Layout settings
   layout_folder: string
 
-  // 테마 설정
+  // Theme settings
   theme_folder: string
 
-  // 외부 서비스
+  // External services
   google_analytics_id: string
   ga4_property_id: string
   ga4_service_account_json: string
@@ -101,7 +101,7 @@ export default function SettingsPage() {
   const [layouts, setLayouts] = useState<LayoutInfo[]>([])
   const [themes, setThemes] = useState<ThemeInfo[]>([])
 
-  // Google Analytics 섹션 전용 상태
+  // Local state for the Google Analytics section
   const [gaJsonEditing, setGaJsonEditing] = useState(false)
   const [gaJsonDraft, setGaJsonDraft] = useState('')
   const [gaTestResult, setGaTestResult] = useState<
@@ -149,7 +149,7 @@ export default function SettingsPage() {
     }
   }
 
-  // JSON 문자열을 FooterLink 배열로 파싱
+  // Parse a JSON string into a FooterLink array
   const parseFooterLinks = (jsonStr: string): FooterLink[] => {
     try {
       const parsed = JSON.parse(jsonStr)
@@ -157,12 +157,12 @@ export default function SettingsPage() {
         return parsed.filter(item => item.label && item.url)
       }
     } catch {
-      // 파싱 실패시 빈 배열
+      // Return an empty array on parse failure
     }
     return []
   }
 
-  // 설정 불러오기
+  // Load settings
   const fetchSettings = useCallback(async () => {
     try {
       const response = await fetch('/api/admin/settings')
@@ -179,7 +179,7 @@ export default function SettingsPage() {
         setFooterLinks(parseFooterLinks(newSettings.footer_links))
       }
     } catch (error) {
-      console.error('설정 조회 에러:', error)
+      console.error('failed to fetch settings:', error)
     } finally {
       setLoading(false)
     }
@@ -203,11 +203,11 @@ export default function SettingsPage() {
       .catch(() => {})
   }, [fetchSettings])
 
-  // 설정 저장
+  // Save settings
   const handleSave = async () => {
     setSaving(true)
     try {
-      // footerLinks를 JSON 문자열로 변환하여 저장
+      // Serialize footerLinks to a JSON string before saving
       const settingsToSave = {
         ...settings,
         footer_links: JSON.stringify(footerLinks)
@@ -229,14 +229,14 @@ export default function SettingsPage() {
         alert(data.error || t('settingsSaveFailed'))
       }
     } catch (error) {
-      console.error('설정 저장 에러:', error)
+      console.error('failed to save settings:', error)
       alert(t('settingsSaveError'))
     } finally {
       setSaving(false)
     }
   }
 
-  // 기본 설정 생성
+  // Create default settings
   const handleSeed = async () => {
     if (!confirm(t('confirmSeedSettings'))) return
 
@@ -254,34 +254,34 @@ export default function SettingsPage() {
         alert(data.error || t('settingsSeedFailed'))
       }
     } catch (error) {
-      console.error('기본 설정 생성 에러:', error)
+      console.error('failed to create default settings:', error)
       alert(t('settingsSeedError'))
     } finally {
       setSeeding(false)
     }
   }
 
-  // 값 변경 핸들러
+  // Value change handler
   const handleChange = (key: keyof SettingsData, value: string) => {
     setSettings(prev => ({ ...prev, [key]: value }))
   }
 
-  // 스위치 변경 핸들러
+  // Switch change handler
   const handleSwitchChange = (key: keyof SettingsData, checked: boolean) => {
     setSettings(prev => ({ ...prev, [key]: checked ? 'true' : 'false' }))
   }
 
-  // 푸터 링크 추가
+  // Add a footer link
   const addFooterLink = () => {
     setFooterLinks([...footerLinks, { label: '', url: '' }])
   }
 
-  // 푸터 링크 삭제
+  // Remove a footer link
   const removeFooterLink = (index: number) => {
     setFooterLinks(footerLinks.filter((_, i) => i !== index))
   }
 
-  // 푸터 링크 변경
+  // Update a footer link
   const updateFooterLink = (index: number, field: keyof FooterLink, value: string) => {
     setFooterLinks(footerLinks.map((link, i) =>
       i === index ? { ...link, [field]: value } : link
@@ -306,7 +306,7 @@ export default function SettingsPage() {
       <div className="flex">
         <Sidebar activeMenu="settings" />
         <main className="flex-1 lg:ml-0 p-6">
-          {/* 헤더 */}
+          {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-2xl font-bold flex items-center gap-2">
@@ -340,7 +340,7 @@ export default function SettingsPage() {
           </div>
 
           <div className="space-y-6">
-            {/* 사이트 기본 설정 */}
+            {/* Site basic settings */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -578,7 +578,7 @@ export default function SettingsPage() {
               </CardContent>
             </Card>
 
-            {/* 회원 설정 */}
+            {/* Member settings */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -620,7 +620,7 @@ export default function SettingsPage() {
               </CardContent>
             </Card>
 
-            {/* 푸터 설정 */}
+            {/* Footer settings */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -695,7 +695,7 @@ export default function SettingsPage() {
               </CardContent>
             </Card>
 
-            {/* 레이아웃 설정 */}
+            {/* Layout settings */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -723,7 +723,7 @@ export default function SettingsPage() {
                   </select>
                 </div>
 
-                {/* 파일 존재 여부 표시 */}
+                {/* Indicator for whether the file exists */}
                 {layouts.length > 0 && (
                   <div className="space-y-3">
                     <Label>{t('layoutFileStructure')}</Label>
@@ -760,7 +760,7 @@ export default function SettingsPage() {
               </CardContent>
             </Card>
 
-            {/* 테마 설정 */}
+            {/* Theme settings */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">

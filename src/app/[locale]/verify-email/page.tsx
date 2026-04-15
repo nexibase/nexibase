@@ -37,7 +37,7 @@ function VerifyEmailContent() {
           setMessage(data.error);
         }
       } catch (error) {
-        console.error('이메일 인증 에러:', error);
+        console.error('email verification error:', error);
         setVerificationStatus('error');
         setMessage(t('networkError'));
       }

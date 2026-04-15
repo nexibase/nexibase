@@ -43,7 +43,7 @@ function humanizeKey(key: string): string {
 }
 
 const ZONES = ['top', 'center', 'bottom'] as const
-// 레이아웃 사이드바 영역 (레이아웃 설정에서 관리)
+// Layout sidebar zones (managed in layout settings)
 const LAYOUT_ZONES = ['left', 'right'] as const
 
 export default function HomeWidgetsAdminPage() {
@@ -82,7 +82,7 @@ export default function HomeWidgetsAdminPage() {
         setWidgetMeta(data.metadata || {})
       }
     } catch (error) {
-      console.error('위젯 조회 에러:', error)
+      console.error('failed to fetch widgets:', error)
     }
   }, [])
 
@@ -297,7 +297,7 @@ export default function HomeWidgetsAdminPage() {
             </div>
           )}
 
-          {/* 위젯 설정 모달 */}
+          {/* Widget settings modal */}
           <Dialog open={!!selectedWidget} onOpenChange={(open) => !open && setSelectedWidget(null)}>
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
@@ -364,7 +364,7 @@ export default function HomeWidgetsAdminPage() {
             </DialogContent>
           </Dialog>
 
-          {/* 홈 위젯 영역 */}
+          {/* Home widget zones */}
           <div className="space-y-4">
             {ZONES.map(zone => {
               const zoneWidgets = getWidgetsByZone(zone)
@@ -385,7 +385,7 @@ export default function HomeWidgetsAdminPage() {
               )
             })}
 
-            {/* 레이아웃 사이드바 (모든 페이지에 적용) */}
+            {/* Layout sidebar (applies to every page) */}
             <div className="border-t pt-4 mt-4">
               <h2 className="text-lg font-bold mb-3">{t('layoutSidebar')} <span className="text-sm font-normal text-muted-foreground">— {t('layoutSidebarDesc')}</span></h2>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -410,7 +410,7 @@ export default function HomeWidgetsAdminPage() {
               </div>
             </div>
 
-            {/* 미배치 위젯 */}
+            {/* Unplaced widgets */}
             {unregistered.length > 0 && (
               <Card>
                 <CardHeader className="pb-2">

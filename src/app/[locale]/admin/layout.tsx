@@ -33,7 +33,7 @@ export default function AdminLayout({
 
         setIsAuthorized(true)
       } catch (error) {
-        console.error('권한 확인 실패:', error)
+        console.error('authorization check failed:', error)
         router.push('/login')
       } finally {
         setIsLoading(false)

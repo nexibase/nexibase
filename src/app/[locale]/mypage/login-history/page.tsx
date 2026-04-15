@@ -38,7 +38,7 @@ export default function LoginHistoryPage() {
       setTotalPages(data.pagination?.totalPages || 1)
       setTotal(data.pagination?.total || 0)
     } catch {
-      console.error("로그인 기록 조회 실패")
+      console.error("failed to fetch login history")
     } finally {
       setLoading(false)
     }

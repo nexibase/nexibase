@@ -90,7 +90,7 @@ function NewPostsPage() {
             </div>
             {posts.map(post => (
               <div key={post.id} className="flex items-center px-4 py-3 border-b last:border-b-0 hover:bg-muted/30">
-                {/* 모바일 */}
+                {/* Mobile */}
                 <div className="flex-1 min-w-0 sm:hidden">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-xs text-muted-foreground shrink-0">{post.board.name}</span>
@@ -103,7 +103,7 @@ function NewPostsPage() {
                     <span className="flex items-center gap-0.5"><Eye className="h-3 w-3" />{post.viewCount}</span>
                   </div>
                 </div>
-                {/* 데스크톱 */}
+                {/* Desktop */}
                 <div className="hidden sm:flex sm:items-center sm:flex-1 sm:min-w-0">
                   <div className="w-20 text-xs text-muted-foreground truncate">{post.board.name}</div>
                   <div className="flex-1 min-w-0 flex items-center gap-2">

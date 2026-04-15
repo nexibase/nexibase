@@ -24,7 +24,7 @@ function MembersContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   
-  // URL 파라미터에서 초기값 가져오기
+  // Initial values read from URL params
   const [activeMenu, setActiveMenu] = useState("members")
   const [selectedFilter, setSelectedFilter] = useState<MemberSearchFilter['filter']>(
     (searchParams.get("filter") as MemberSearchFilter['filter']) || "all"
@@ -43,10 +43,10 @@ function MembersContent() {
   const [currentPage, setCurrentPage] = useState(parseInt(searchParams.get("page") || "1"))
   const [totalPages, setTotalPages] = useState(1)
 
-  // 성공 메시지 상태 추가
+  // Success message state
   const [showSuccessMessage, setShowSuccessMessage] = useState(false)
 
-  // URL 업데이트 함수
+  // URL updater
   const updateURL = (params: Record<string, string>) => {
     const newSearchParams = new URLSearchParams(searchParams.toString())
     
@@ -62,7 +62,7 @@ function MembersContent() {
     router.push(newURL, { scroll: false })
   }
 
-  // 회원 목록 조회
+  // Fetch member list
   const fetchMembers = useCallback(async () => {
     setLoading(true)
     try {
@@ -83,7 +83,7 @@ function MembersContent() {
         setTotalPages(data.pagination.totalPages)
       }
     } catch (error) {
-      console.error('회원 목록 조회 실패:', error)
+      console.error('failed to fetch member list:', error)
     } finally {
       setLoading(false)
     }
@@ -94,10 +94,10 @@ function MembersContent() {
   }, [fetchMembers])
 
   useEffect(() => {
-    // URL에서 성공 파라미터 확인
+    // Check success flag in URL
     if (searchParams.get('success') === 'true') {
       setShowSuccessMessage(true)
-      // 3초 후 메시지 숨기기
+      // Hide the message after 3 seconds
       setTimeout(() => setShowSuccessMessage(false), 3000)
     }
   }, [searchParams])
@@ -121,7 +121,7 @@ function MembersContent() {
 
   const handleBulkEdit = () => {
     const selectedMembers = members.filter(member => member.selected)
-    console.log("선택된 회원 수정:", selectedMembers)
+    console.log("edit selected members:", selectedMembers)
   }
 
   const handleBulkDelete = async () => {
@@ -137,42 +137,42 @@ function MembersContent() {
         }
         fetchMembers()
       } catch (error) {
-        console.error('회원 삭제 실패:', error)
+        console.error('failed to delete members:', error)
       }
     }
   }
 
-  // 회원 추가 핸들러 수정
+  // Add member handler
   const handleAddMember = () => {
     router.push('/admin/members/new')
   }
 
-  // 회원 수정 핸들러 수정
+  // Edit member handler
   const handleEditMember = (mb_id: string) => {
     router.push(`/admin/members/${mb_id}/edit`)
   }
 
-  // 모달 관련 함수들 제거
-  // handleSaveMember, handleSaveMemberEdit 함수 제거
+  // Modal-related functions removed
+  // handleSaveMember / handleSaveMemberEdit removed
 
   const handleGroupMember = (mb_id: string) => {
-    console.log("회원 그룹 관리:", mb_id)
+    console.log("manage member group:", mb_id)
   }
 
-  // 필터 변경 핸들러
+  // Filter change handler
   const handleFilterChange = (filter: string) => {
     setSelectedFilter(filter as MemberSearchFilter['filter'])
     setCurrentPage(1)
     updateURL({ filter, page: "1" })
   }
 
-  // 검색 타입 변경 핸들러
+  // Search type change handler
   const handleSearchTypeChange = (type: string) => {
     setSearchType(type as MemberSearchFilter['searchType'])
     updateURL({ searchType: type })
   }
 
-  // 검색 실행 핸들러
+  // Execute search handler
   const handleSearch = () => {
     setCurrentPage(1)
     updateURL({ 
@@ -182,7 +182,7 @@ function MembersContent() {
     })
   }
 
-  // 페이지 변경 핸들러
+  // Page change handler
   const handlePageChange = (page: number) => {
     setCurrentPage(page)
     updateURL({ page: page.toString() })
@@ -225,7 +225,7 @@ function MembersContent() {
         <Sidebar activeMenu={activeMenu} onMenuChange={setActiveMenu} />
         <main className="flex-1 lg:ml-0 p-4">
           <div className="bg-white rounded-lg shadow">
-            {/* 성공 메시지 */}
+            {/* Success message */}
             {showSuccessMessage && (
               <div className="p-4 bg-green-50 border-b border-green-200">
                 <p className="text-sm text-green-800">
@@ -234,7 +234,7 @@ function MembersContent() {
               </div>
             )}
             
-            {/* 헤더 */}
+            {/* Header */}
             <div className="flex justify-between items-center p-4 border-b border-gray-200">
               <h1 className="text-xl font-bold text-gray-900">{t('membersTitle')}</h1>
               <div className="flex gap-2">
@@ -261,7 +261,7 @@ function MembersContent() {
               </div>
             </div>
 
-            {/* 필터 */}
+            {/* Filters */}
             <div className="p-4 border-b border-gray-200">
               <div className="flex gap-2 mb-3">
                 {filters.map((filter) => (
@@ -277,7 +277,7 @@ function MembersContent() {
                 ))}
               </div>
 
-              {/* 검색 */}
+              {/* Search */}
               <div className="flex gap-2">
                 <select
                   value={searchType}
@@ -303,14 +303,14 @@ function MembersContent() {
               </div>
             </div>
 
-            {/* 안내 메시지 */}
+            {/* Help message */}
             <div className="p-3 bg-blue-50 border-b border-blue-200">
               <p className="text-xs text-blue-800">
                 {t('membersNotice')}
               </p>
             </div>
 
-            {/* 회원 테이블 */}
+            {/* Member table */}
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-100 border-b border-gray-200">
@@ -463,7 +463,7 @@ function MembersContent() {
               </table>
             </div>
 
-            {/* 페이지네이션 */}
+            {/* Pagination */}
             {totalPages > 1 && (
               <div className="flex justify-center p-3 border-t border-gray-200">
                 <div className="flex gap-1">

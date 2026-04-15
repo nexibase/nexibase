@@ -102,7 +102,7 @@ export default function MyPage() {
           <div className="py-12 text-center text-muted-foreground">{tc('loading')}</div>
         ) : (
           <>
-            {/* 내 정보 */}
+            {/* My info */}
             {user && (
               <Card>
                 <CardHeader className="pb-3">
@@ -148,7 +148,7 @@ export default function MyPage() {
               </Card>
             )}
 
-            {/* 로그인 기록 */}
+            {/* Login history */}
             <Card>
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
@@ -182,7 +182,7 @@ export default function MyPage() {
               </CardContent>
             </Card>
 
-            {/* 내가 쓴 글 */}
+            {/* My posts */}
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
@@ -219,7 +219,7 @@ export default function MyPage() {
               </CardContent>
             </Card>
 
-            {/* 내가 쓴 댓글 */}
+            {/* My comments */}
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
@@ -251,7 +251,7 @@ export default function MyPage() {
           </>
         )}
 
-        {/* 로그아웃 */}
+        {/* Logout */}
         <Button variant="outline" onClick={handleLogout} className="w-full text-red-500">
           <LogOut className="h-4 w-4 mr-2" />
           {t('logout')}

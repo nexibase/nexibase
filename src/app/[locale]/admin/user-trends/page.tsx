@@ -34,7 +34,7 @@ function UserTrendsContent() {
         setPeriodUsers(data.periodUsers)
       }
     } catch (error) {
-      console.error("가입자 추이 조회 실패:", error)
+      console.error("failed to fetch signup trend:", error)
     } finally {
       setLoading(false)
     }
@@ -89,7 +89,7 @@ function UserTrendsContent() {
     return d.toLocaleDateString("ko-KR", { month: "short", day: "numeric" })
   }
 
-  // 90일일 때는 라벨이 너무 많으므로 간격 조정
+  // Too many labels on the 90-day view, so space them out
   const tickInterval = period === "90" ? 6 : period === "30" ? 2 : 0
 
   return (
@@ -132,7 +132,7 @@ function UserTrendsContent() {
             </div>
           </div>
 
-          {/* 통계 카드 */}
+          {/* Stats cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <Card>
               <CardContent className="p-6">
@@ -171,7 +171,7 @@ function UserTrendsContent() {
             </Card>
           </div>
 
-          {/* 차트 */}
+          {/* Chart */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>{t('dailyNewUsers')}</CardTitle>

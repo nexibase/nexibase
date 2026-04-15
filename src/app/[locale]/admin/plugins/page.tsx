@@ -44,7 +44,7 @@ export default function PluginsAdminPage() {
         setPlugins(data.plugins || [])
       }
     } catch (error) {
-      console.error('플러그인 조회 에러:', error)
+      console.error('failed to fetch plugins:', error)
     }
   }, [])
 

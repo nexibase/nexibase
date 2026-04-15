@@ -93,7 +93,7 @@ function LoginLogsContent() {
         setPagination(data.pagination)
       }
     } catch (error) {
-      console.error("로그인 기록 조회 실패:", error)
+      console.error("failed to fetch login logs:", error)
     } finally {
       setLoading(false)
     }
