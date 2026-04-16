@@ -953,55 +953,57 @@ export default function PageEditor({
         {/* ---------------------------------------------------------------- */}
         <div className="flex flex-1 overflow-hidden">
           {/* LEFT: Live Preview Panel */}
-          <div className="flex-1 overflow-y-auto p-4 border-r">
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragStart={handleDragStart}
-              onDragEnd={handleDragEnd}
-            >
-              {page.layoutTemplate === "with-sidebar" ? (
-                <div className="grid grid-cols-12 gap-2">
-                  <div className="col-span-3">
-                    <ZonePanel zone="left" widgets={widgetsByZone("left")} selectedId={selectedId} onSelect={setSelectedId} />
+          <div className="flex-1 flex flex-col border-r">
+            <div className="flex-1 overflow-y-auto p-4">
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+              >
+                {page.layoutTemplate === "with-sidebar" ? (
+                  <div className="grid grid-cols-12 gap-2">
+                    <div className="col-span-3">
+                      <ZonePanel zone="left" widgets={widgetsByZone("left")} selectedId={selectedId} onSelect={setSelectedId} />
+                    </div>
+                    <div className="col-span-6 space-y-2">
+                      <ZonePanel zone="top" widgets={widgetsByZone("top")} selectedId={selectedId} onSelect={setSelectedId} />
+                      <ZonePanel zone="center" widgets={widgetsByZone("center")} selectedId={selectedId} onSelect={setSelectedId} />
+                      <ZonePanel zone="bottom" widgets={widgetsByZone("bottom")} selectedId={selectedId} onSelect={setSelectedId} />
+                    </div>
+                    <div className="col-span-3">
+                      <ZonePanel zone="right" widgets={widgetsByZone("right")} selectedId={selectedId} onSelect={setSelectedId} />
+                    </div>
                   </div>
-                  <div className="col-span-6 space-y-2">
-                    <ZonePanel zone="top" widgets={widgetsByZone("top")} selectedId={selectedId} onSelect={setSelectedId} />
-                    <ZonePanel zone="center" widgets={widgetsByZone("center")} selectedId={selectedId} onSelect={setSelectedId} />
-                    <ZonePanel zone="bottom" widgets={widgetsByZone("bottom")} selectedId={selectedId} onSelect={setSelectedId} />
+                ) : (
+                  <div className="space-y-2">
+                    {zones.map((zone) => (
+                      <ZonePanel
+                        key={zone}
+                        zone={zone}
+                        widgets={widgetsByZone(zone)}
+                        selectedId={selectedId}
+                        onSelect={setSelectedId}
+                      />
+                    ))}
                   </div>
-                  <div className="col-span-3">
-                    <ZonePanel zone="right" widgets={widgetsByZone("right")} selectedId={selectedId} onSelect={setSelectedId} />
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {zones.map((zone) => (
-                    <ZonePanel
-                      key={zone}
-                      zone={zone}
-                      widgets={widgetsByZone(zone)}
-                      selectedId={selectedId}
-                      onSelect={setSelectedId}
-                    />
-                  ))}
-                </div>
-              )}
+                )}
 
-              <DragOverlay>
-                {activeWidget ? (
-                  <div className="flex items-center gap-2 rounded-md border border-primary bg-card px-3 py-2 text-sm shadow-lg">
-                    <GripVertical className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">
-                      {activeWidget.title || getWidgetLabel(activeWidget.widgetKey)}
-                    </span>
-                  </div>
-                ) : null}
-              </DragOverlay>
-            </DndContext>
+                <DragOverlay>
+                  {activeWidget ? (
+                    <div className="flex items-center gap-2 rounded-md border border-primary bg-card px-3 py-2 text-sm shadow-lg">
+                      <GripVertical className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium">
+                        {activeWidget.title || getWidgetLabel(activeWidget.widgetKey)}
+                      </span>
+                    </div>
+                  ) : null}
+                </DragOverlay>
+              </DndContext>
+            </div>
 
-            {/* Add buttons */}
-            <div className="flex gap-2 mt-4 pt-4 border-t">
+            {/* Add buttons — fixed at bottom, outside scroll container */}
+            <div className="flex gap-2 p-3 border-t bg-card shrink-0">
               <AddWidgetDropdown
                 onAdd={handleAddRegistryWidget}
                 disabled={saving}
