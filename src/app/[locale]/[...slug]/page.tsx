@@ -2,7 +2,6 @@ import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import WidgetRenderer from '@/lib/widgets/renderer'
 import { getTemplateZones } from '@/lib/widgets/layout-templates'
-import { AdminPageEditButton } from '@/components/AdminPageEditButton'
 import type { Metadata } from 'next'
 
 interface PageProps {
@@ -63,7 +62,6 @@ export default async function CustomPage({ params }: PageProps) {
             <WidgetRenderer key={zone} zone={zone} widgets={allWidgets} />
           ))}
         </div>
-        <AdminPageEditButton pageId={page.id} />
       </div>
     )
   }
@@ -73,7 +71,6 @@ export default async function CustomPage({ params }: PageProps) {
     return (
       <div className="max-w-3xl mx-auto px-2 sm:px-4 py-2 sm:py-6">
         <WidgetRenderer zone="main" widgets={allWidgets} />
-        <AdminPageEditButton pageId={page.id} />
       </div>
     )
   }
@@ -110,7 +107,6 @@ export default async function CustomPage({ params }: PageProps) {
           </aside>
         )}
       </div>
-      <AdminPageEditButton pageId={page.id} />
     </div>
   )
 }
