@@ -20,12 +20,14 @@ export default function VideoEmbedRenderer({ settings }: { settings?: Record<str
     : `https://player.vimeo.com/video/${id}`
   return (
     <div
-      className="w-full overflow-hidden rounded-lg bg-muted"
+      className="relative w-full overflow-hidden rounded-lg bg-muted"
       style={{ aspectRatio: ASPECT_RATIO[aspectRatio] ?? '16 / 9' }}
     >
       <iframe
         src={embedUrl}
-        className="h-full w-full border-0"
+        width="100%"
+        height="100%"
+        className="absolute inset-0 h-full w-full border-0"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowFullScreen
       />
