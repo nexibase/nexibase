@@ -208,8 +208,15 @@ export default function AdminPagesPage() {
                             page.title
                           )}
                         </TableCell>
-                        <TableCell className="text-muted-foreground font-mono text-sm">
-                          {isHome(page) ? "/" : `/${page.slug}`}
+                        <TableCell className="font-mono text-sm">
+                          <a
+                            href={isHome(page) ? "/" : `/${page.slug}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-muted-foreground hover:text-primary hover:underline"
+                          >
+                            {isHome(page) ? "/" : `/${page.slug}`} ↗
+                          </a>
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline">
