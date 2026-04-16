@@ -130,21 +130,48 @@ model Menu {
   @@map("menus")
 }
 
-model HomeWidget {
-  id         Int      @id @default(autoincrement())
-  widgetKey  String   @unique @db.VarChar(50)
-  zone       String   @db.VarChar(20)
-  title      String   @db.VarChar(100)
-  settings   String?  @db.Text
-  colSpan    Int      @default(1)
-  rowSpan    Int      @default(1)
-  isActive   Boolean  @default(true)
-  sortOrder  Int      @default(0)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+model WidgetPage {
+  id               Int          @id @default(autoincrement())
+  title            String       @db.VarChar(200)
+  slug             String       @unique @db.VarChar(200)
+  layoutTemplate   String       @default("full-width") @db.VarChar(30)
+  isActive         Boolean      @default(true)
+  sortOrder        Int          @default(0)
+  seoTitle         String?      @db.VarChar(200)
+  seoDescription   String?      @db.VarChar(500)
+  seoOgImage       String?      @db.VarChar(500)
+  seoOgTitle       String?      @db.VarChar(200)
+  seoOgDescription String?      @db.VarChar(500)
+  seoCanonical     String?      @db.VarChar(500)
+  seoNoIndex       Boolean      @default(false)
+  seoNoFollow      Boolean      @default(false)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  widgets          PageWidget[]
 
-  @@index([zone, sortOrder])
-  @@map("home_widgets")
+  @@index([slug])
+  @@index([isActive])
+  @@map("widget_pages")
+}
+
+model PageWidget {
+  id         Int         @id @default(autoincrement())
+  pageId     Int
+  widgetKey  String      @db.VarChar(50)
+  widgetType String      @default("registry") @db.VarChar(20)
+  zone       String      @db.VarChar(20)
+  title      String      @db.VarChar(100)
+  settings   String?     @db.Text
+  colSpan    Int         @default(1)
+  rowSpan    Int         @default(1)
+  isActive   Boolean     @default(true)
+  sortOrder  Int         @default(0)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  page       WidgetPage  @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@index([pageId, zone, sortOrder])
+  @@map("page_widgets")
 }
 
 model LoginAttempt {
