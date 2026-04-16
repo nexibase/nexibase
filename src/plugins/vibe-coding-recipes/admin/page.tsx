@@ -120,7 +120,6 @@ function RecipesTab() {
   const [type, setType] = useState('')
   const [showGenerate, setShowGenerate] = useState(false)
   const [generating, setGenerating] = useState(false)
-  const [detail, setDetail] = useState<Record<string, unknown> | null>(null)
 
   const fetchRecipes = useCallback(async (page = 1) => {
     setLoading(true)
@@ -175,12 +174,6 @@ function RecipesTab() {
     } finally {
       setGenerating(false)
     }
-  }
-
-  const handleViewDetail = async (id: number) => {
-    const res = await fetch(`/api/admin/vibe-coding-recipes/${id}`)
-    const data = await res.json()
-    if (data.success) setDetail(data.recipe)
   }
 
   return (
@@ -241,12 +234,14 @@ function RecipesTab() {
               {recipes.map((r) => (
                 <tr key={r.id} className="border-t hover:bg-muted/30">
                   <td className="p-3">
-                    <button
+                    <a
+                      href={`/en/vibe-coding-recipes/${r.slug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="text-left hover:underline font-medium"
-                      onClick={() => handleViewDetail(r.id)}
                     >
                       {r.titleEn}
-                    </button>
+                    </a>
                   </td>
                   <td className="p-3 text-muted-foreground">{r.slug}</td>
                   <td className="p-3">
@@ -300,9 +295,6 @@ function RecipesTab() {
         />
       )}
 
-      {detail && (
-        <DetailModal detail={detail} onClose={() => setDetail(null)} />
-      )}
     </>
   )
 }
@@ -496,72 +488,3 @@ function GenerateModal({
   )
 }
 
-function DetailModal({
-  detail,
-  onClose,
-}: {
-  detail: Record<string, unknown>
-  onClose: () => void
-}) {
-  const recipe = detail as unknown as {
-    id: number
-    slug: string
-    titleEn: string
-    titleKo: string
-    descriptionEn: string
-    difficulty: string
-    type: string
-    stepsEn: { step: number; prompt: string; expected: string }[]
-    generatedAt: string
-    model: string
-  }
-
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-3xl max-h-[80vh] overflow-y-auto">
-        <CardHeader className="flex flex-row items-start justify-between">
-          <div>
-            <CardTitle>{recipe.titleEn}</CardTitle>
-            <p className="text-sm text-muted-foreground mt-1">{recipe.titleKo}</p>
-            <div className="flex gap-2 mt-2">
-              <Badge variant="secondary" className={DIFF_COLORS[recipe.difficulty]}>{recipe.difficulty}</Badge>
-              <Badge variant="secondary">{recipe.type.replace(/_/g, ' ')}</Badge>
-              <Badge variant="outline">{recipe.model}</Badge>
-            </div>
-          </div>
-          <Button variant="ghost" size="sm" onClick={onClose}>
-            <X className="h-4 w-4" />
-          </Button>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <h3 className="font-medium mb-1">Description</h3>
-            <p className="text-sm whitespace-pre-wrap">{recipe.descriptionEn}</p>
-          </div>
-          <div>
-            <h3 className="font-medium mb-2">Steps ({recipe.stepsEn.length})</h3>
-            {recipe.stepsEn.map((s) => (
-              <div key={s.step} className="mb-3 border-l-2 pl-3">
-                <p className="text-sm font-medium">Step {s.step}</p>
-                <pre className="text-xs bg-muted p-2 rounded mt-1 whitespace-pre-wrap">{s.prompt}</pre>
-                <p className="text-xs text-muted-foreground mt-1">{s.expected}</p>
-              </div>
-            ))}
-          </div>
-          <div className="flex justify-end">
-            <a
-              href={`/en/vibe-coding-recipes/${recipe.slug}`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Button variant="outline" size="sm" className="gap-1">
-                <ExternalLink className="h-3 w-3" />
-                View public page
-              </Button>
-            </a>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  )
-}
