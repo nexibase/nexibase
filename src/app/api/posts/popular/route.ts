@@ -28,6 +28,7 @@ export async function GET(request: NextRequest) {
     }
 
     const where = {
+      status: 'published',
       isSecret: false,
       board: {
         isActive: true
