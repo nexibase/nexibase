@@ -830,11 +830,6 @@ export default function PageEditor({
   // ---------------------------------------------------------------------------
 
   const previewUrl = page ? (page.slug === "" ? "/" : `/${page.slug}`) : "/"
-  const templateLabel =
-    page && LAYOUT_TEMPLATES[page.layoutTemplate as keyof typeof LAYOUT_TEMPLATES]?.label
-      ? LAYOUT_TEMPLATES[page.layoutTemplate as keyof typeof LAYOUT_TEMPLATES].label
-      : page?.layoutTemplate
-
   if (loading) {
     return (
       <div className="flex h-screen bg-background">
@@ -883,9 +878,33 @@ export default function PageEditor({
             <Badge variant="secondary" className="font-mono text-xs shrink-0">
               {page.slug === "" ? "/" : `/${page.slug}`}
             </Badge>
-            <Badge variant="outline" className="text-xs shrink-0">
-              {templateLabel}
-            </Badge>
+            <Select
+              value={page.layoutTemplate}
+              onValueChange={async (val) => {
+                try {
+                  const res = await fetch(`/api/admin/pages/${page.id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ layoutTemplate: val }),
+                  })
+                  if (res.ok) {
+                    setPage({ ...page, layoutTemplate: val })
+                    markDirty()
+                  }
+                } catch {}
+              }}
+            >
+              <SelectTrigger className="h-7 w-[140px] text-xs shrink-0">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(LAYOUT_TEMPLATES).map(([key, tmpl]) => (
+                  <SelectItem key={key} value={key}>
+                    {tmpl.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
