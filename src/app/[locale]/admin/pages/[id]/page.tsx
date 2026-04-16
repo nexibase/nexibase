@@ -6,6 +6,7 @@ import {
   DndContext,
   closestCenter,
   DragOverlay,
+  useDroppable,
   useSensor,
   useSensors,
   PointerSensor,
@@ -163,6 +164,8 @@ interface ZonePanelProps {
 }
 
 function ZonePanel({ zone, widgets, selectedId, onSelect }: ZonePanelProps) {
+  const { setNodeRef, isOver } = useDroppable({ id: `zone-${zone}` })
+
   return (
     <div className="mb-4">
       <div className="flex items-center gap-2 mb-2">
@@ -171,9 +174,16 @@ function ZonePanel({ zone, widgets, selectedId, onSelect }: ZonePanelProps) {
         </span>
         <span className="text-xs text-muted-foreground">({widgets.length})</span>
       </div>
-      <div className="min-h-[48px] rounded-md border border-dashed border-muted-foreground/30 p-2 space-y-1">
+      <div
+        ref={setNodeRef}
+        className={`min-h-[48px] rounded-md border border-dashed p-2 space-y-1 transition-colors ${
+          isOver ? 'border-primary bg-primary/5' : 'border-muted-foreground/30'
+        }`}
+      >
         {widgets.length === 0 ? (
-          <p className="text-xs text-muted-foreground text-center py-2">Empty zone</p>
+          <p className="text-xs text-muted-foreground text-center py-2">
+            {isOver ? 'Drop here' : 'Empty zone'}
+          </p>
         ) : (
           <SortableContext
             items={widgets.map((w) => w.id)}
