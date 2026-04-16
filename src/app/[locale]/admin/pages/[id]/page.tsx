@@ -952,19 +952,17 @@ export default function PageEditor({
               onDragEnd={handleDragEnd}
             >
               {page.layoutTemplate === "with-sidebar" ? (
-                <div className="space-y-2">
-                  <div className="grid grid-cols-12 gap-2">
-                    <div className="col-span-3">
-                      <ZonePanel zone="left" widgets={widgetsByZone("left")} selectedId={selectedId} onSelect={setSelectedId} />
-                    </div>
-                    <div className="col-span-6 space-y-2">
-                      <ZonePanel zone="top" widgets={widgetsByZone("top")} selectedId={selectedId} onSelect={setSelectedId} />
-                      <ZonePanel zone="center" widgets={widgetsByZone("center")} selectedId={selectedId} onSelect={setSelectedId} />
-                      <ZonePanel zone="bottom" widgets={widgetsByZone("bottom")} selectedId={selectedId} onSelect={setSelectedId} />
-                    </div>
-                    <div className="col-span-3">
-                      <ZonePanel zone="right" widgets={widgetsByZone("right")} selectedId={selectedId} onSelect={setSelectedId} />
-                    </div>
+                <div className="grid grid-cols-12 gap-2">
+                  <div className="col-span-3">
+                    <ZonePanel zone="left" widgets={widgetsByZone("left")} selectedId={selectedId} onSelect={setSelectedId} />
+                  </div>
+                  <div className="col-span-6 space-y-2">
+                    <ZonePanel zone="top" widgets={widgetsByZone("top")} selectedId={selectedId} onSelect={setSelectedId} />
+                    <ZonePanel zone="center" widgets={widgetsByZone("center")} selectedId={selectedId} onSelect={setSelectedId} />
+                    <ZonePanel zone="bottom" widgets={widgetsByZone("bottom")} selectedId={selectedId} onSelect={setSelectedId} />
+                  </div>
+                  <div className="col-span-3">
+                    <ZonePanel zone="right" widgets={widgetsByZone("right")} selectedId={selectedId} onSelect={setSelectedId} />
                   </div>
                 </div>
               ) : (
