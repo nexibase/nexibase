@@ -574,6 +574,15 @@ export default function PageEditor({
 
   async function handleRemoveWidget(id: number) {
     if (!confirm("Remove this widget? This cannot be undone.")) return
+
+    // Temp widgets (negative id, not yet saved) — just remove from local state
+    if (id < 0) {
+      setWidgets((prev) => prev.filter((w) => w.id !== id))
+      if (selectedId === id) setSelectedId(null)
+      markDirty()
+      return
+    }
+
     try {
       const res = await fetch(`/api/admin/pages/${pageId}/widgets/${id}`, { method: "DELETE" })
       if (!res.ok) throw new Error("Delete failed")
