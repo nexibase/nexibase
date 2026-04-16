@@ -44,11 +44,12 @@ export function buildSystemPrompt(): string {
 
 export function buildUserPrompt(
   slot: SlotResult,
-  existingRecipes: { titleEn: string; slug: string }[]
+  existingRecipes: { titleEn: string; slug: string }[],
+  topic?: string
 ): string {
   const difficultyGuide = getDifficultyGuide(slot.difficulty, slot.type)
 
-  let prompt = `Generate 1 vibe-coding recipe for building a nexibase ${slot.type.replace(/_/g, ' ')}.
+  let prompt = `Generate 1 vibe-coding recipe for building a nexibase ${slot.type.replace(/_/g, ' ')}.${topic ? `\n\n## Requested Topic\n\nThe recipe MUST be about: ${topic}` : ''}
 
 ${PLUGIN_ARCHITECTURE_CONTEXT}
 

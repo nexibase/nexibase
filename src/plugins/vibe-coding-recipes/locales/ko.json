@@ -55,6 +55,8 @@
       "statusSkipped": "건너뜀",
       "selectDifficulty": "난이도 선택",
       "selectType": "유형 선택",
+      "topicLabel": "주제 (선택사항)",
+      "topicPlaceholder": "예: FAQ 관리, 날씨 위젯, 갤러리 플러그인...",
       "cancel": "취소",
       "generate": "생성"
     }

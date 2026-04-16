@@ -1,7 +1,7 @@
 {
   "vibe-coding-recipes": {
     "title": "Vibe Coding Recipes",
-    "subtitle": "AI-generated step-by-step tutorials for building nexibase plugins and widgets",
+    "subtitle": "AI recipes & prompts for building NexiBase plugins and widgets",
     "filterAll": "All",
     "filterBeginner": "Beginner",
     "filterIntermediate": "Intermediate",
@@ -55,6 +55,8 @@
       "statusSkipped": "Skipped",
       "selectDifficulty": "Select difficulty",
       "selectType": "Select type",
+      "topicLabel": "Topic (optional)",
+      "topicPlaceholder": "e.g., FAQ manager, weather widget, gallery plugin...",
       "cancel": "Cancel",
       "generate": "Generate"
     }

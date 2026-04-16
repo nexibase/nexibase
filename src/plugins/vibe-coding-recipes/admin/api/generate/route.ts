@@ -20,6 +20,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const difficulty = body.difficulty as string
     const type = body.type as string
+    const topic = (body.topic as string) || ''
 
     if (!difficulty || !type) {
       return NextResponse.json({ error: 'difficulty and type required' }, { status: 400 })
@@ -44,7 +45,7 @@ export async function POST(request: NextRequest) {
       })
 
       const systemPrompt = buildSystemPrompt()
-      const userPrompt = buildUserPrompt(slot, existingRecipes)
+      const userPrompt = buildUserPrompt(slot, existingRecipes, topic)
 
       const response = await callClaude(systemPrompt, userPrompt)
       const parsed = parseClaudeResponse(response.text)

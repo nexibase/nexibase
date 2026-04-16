@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Sidebar } from '@/components/admin/Sidebar'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -153,13 +154,15 @@ function RecipesTab() {
     }
   }
 
-  const handleGenerate = async (genDifficulty: string, genType: string) => {
+  const handleGenerate = async (genDifficulty: string, genType: string, genTopic: string) => {
     setGenerating(true)
     try {
+      const body: Record<string, string> = { difficulty: genDifficulty, type: genType }
+      if (genTopic.trim()) body.topic = genTopic.trim()
       const res = await fetch('/api/admin/vibe-coding-recipes/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ difficulty: genDifficulty, type: genType }),
+        body: JSON.stringify(body),
       })
       const data = await res.json()
       if (data.success) {
@@ -426,12 +429,13 @@ function GenerateModal({
   generating,
 }: {
   onClose: () => void
-  onGenerate: (difficulty: string, type: string) => void
+  onGenerate: (difficulty: string, type: string, topic: string) => void
   generating: boolean
 }) {
   const t = useTranslations('vibe-coding-recipes.admin')
   const [difficulty, setDifficulty] = useState('beginner')
   const [type, setType] = useState('plugin')
+  const [topic, setTopic] = useState('')
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -469,11 +473,19 @@ function GenerateModal({
               </SelectContent>
             </Select>
           </div>
+          <div>
+            <label className="text-sm font-medium mb-1 block">{t('topicLabel')}</label>
+            <Input
+              value={topic}
+              onChange={(e) => setTopic(e.target.value)}
+              placeholder={t('topicPlaceholder')}
+            />
+          </div>
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={onClose} disabled={generating}>
               {t('cancel')}
             </Button>
-            <Button onClick={() => onGenerate(difficulty, type)} disabled={generating} className="gap-1">
+            <Button onClick={() => onGenerate(difficulty, type, topic)} disabled={generating} className="gap-1">
               {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
               {generating ? t('generating') : t('generate')}
             </Button>
