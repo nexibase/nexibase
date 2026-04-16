@@ -120,34 +120,42 @@ function SortableWidget({ widget, isSelected, onSelect }: SortableWidgetProps) {
     opacity: isDragging ? 0.4 : 1,
   }
 
+  const title = widget.title || getWidgetLabel(widget.widgetKey)
+  const typeLabel = widget.widgetType === "content" ? widget.widgetKey : getWidgetLabel(widget.widgetKey)
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       onClick={onSelect}
-      className={`flex items-center gap-2 rounded-md border px-3 py-2 cursor-pointer text-sm transition-colors ${
+      title={title}
+      className={`rounded-md border px-2 py-2 cursor-pointer text-sm transition-colors ${
         isSelected
           ? "border-primary bg-primary/5 ring-1 ring-primary"
           : "border-border bg-card hover:bg-muted/50"
       } ${!widget.isActive ? "opacity-50" : ""}`}
     >
-      <span
-        {...attributes}
-        {...listeners}
-        className="cursor-grab text-muted-foreground hover:text-foreground"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <GripVertical className="h-4 w-4" />
-      </span>
-      <span className="flex-1 truncate font-medium">
-        {widget.title || getWidgetLabel(widget.widgetKey)}
-      </span>
-      <Badge variant="outline" className="text-xs shrink-0">
-        {widget.widgetType === "content" ? widget.widgetKey : getWidgetLabel(widget.widgetKey)}
-      </Badge>
-      {!widget.isActive && (
-        <EyeOff className="h-3 w-3 text-muted-foreground shrink-0" />
-      )}
+      <div className="flex items-start gap-2 min-w-0">
+        <span
+          {...attributes}
+          {...listeners}
+          className="cursor-grab text-muted-foreground hover:text-foreground mt-0.5 shrink-0"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <GripVertical className="h-4 w-4" />
+        </span>
+        <div className="flex-1 min-w-0">
+          <div className="font-medium break-words leading-tight">{title}</div>
+          <div className="mt-1 flex items-center gap-1 flex-wrap">
+            <Badge variant="outline" className="text-[10px] px-1 py-0 font-normal">
+              {typeLabel}
+            </Badge>
+            {!widget.isActive && (
+              <EyeOff className="h-3 w-3 text-muted-foreground" />
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
