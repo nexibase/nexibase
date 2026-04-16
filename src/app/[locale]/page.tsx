@@ -1,28 +1,41 @@
-"use client"
+import { prisma } from '@/lib/prisma'
+import { UserLayout } from '@/components/layout/UserLayout'
+import WidgetRenderer from '@/lib/widgets/renderer'
+import type { Metadata } from 'next'
 
-import { useState, useEffect } from "react"
-import { UserLayout } from "@/components/layout/UserLayout"
-import { getLayoutComponent } from "@/lib/layout-loader"
+async function getHomePage() {
+  return prisma.widgetPage.findUnique({
+    where: { slug: '' },
+    include: {
+      widgets: {
+        where: { isActive: true },
+        orderBy: [{ zone: 'asc' }, { sortOrder: 'asc' }],
+      },
+    },
+  })
+}
 
-export default function Page() {
-  const [layoutFolder, setLayoutFolder] = useState('default')
+export async function generateMetadata(): Promise<Metadata> {
+  const page = await getHomePage()
+  if (!page) return {}
 
-  useEffect(() => {
-    fetch('/api/settings')
-      .then(res => res.ok ? res.json() : null)
-      .then(data => {
-        if (data?.settings?.layout_folder) {
-          setLayoutFolder(data.settings.layout_folder)
-        }
-      })
-      .catch(() => {})
-  }, [])
+  return {
+    title: page.seoTitle || page.title,
+    description: page.seoDescription || undefined,
+  }
+}
 
-  const HomePageComponent = getLayoutComponent(layoutFolder, 'HomePage')
+export default async function HomePage() {
+  const page = await getHomePage()
+  const allWidgets = page?.widgets ?? []
 
   return (
     <UserLayout>
-      <HomePageComponent />
+      <div className="space-y-6">
+        <WidgetRenderer zone="top" widgets={allWidgets} />
+        <WidgetRenderer zone="center" widgets={allWidgets} />
+        <WidgetRenderer zone="bottom" widgets={allWidgets} />
+      </div>
     </UserLayout>
   )
 }
