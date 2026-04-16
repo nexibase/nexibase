@@ -1,0 +1,2 @@
+polls     Poll[]     @relation("UserPolls")
+pollVotes PollVote[] @relation("UserPollVotes")

@@ -1,0 +1,68 @@
+model Poll {
+  id          Int       @id @default(autoincrement())
+  question    String    @db.VarChar(500)
+  description String?   @db.Text
+  category    String?   @db.VarChar(50)
+  isMultiple  Boolean   @default(false)
+  status      String    @default("active") @db.VarChar(20)
+  authorId    Int
+  viewCount   Int       @default(0)
+  closesAt    DateTime?
+  isAi        Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  author      User         @relation("UserPolls", fields: [authorId], references: [id], onDelete: Cascade)
+  options     PollOption[]
+  votes       PollVote[]
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("polls")
+}
+
+model PollOption {
+  id        Int    @id @default(autoincrement())
+  pollId    Int
+  label     String @db.VarChar(500)
+  emoji     String? @db.VarChar(10)
+  sortOrder Int    @default(0)
+
+  poll      Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  votes     PollVote[]
+
+  @@index([pollId])
+  @@map("poll_options")
+}
+
+model PollVote {
+  id        Int      @id @default(autoincrement())
+  pollId    Int
+  optionId  Int
+  userId    Int?
+  ip        String?  @db.VarChar(50)
+  votedAt   DateTime @default(now())
+
+  poll      Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  option    PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  user      User?      @relation("UserPollVotes", fields: [userId], references: [id], onDelete: SetNull)
+
+  @@unique([pollId, userId])
+  @@index([pollId])
+  @@index([userId])
+  @@map("poll_votes")
+}
+
+model PollGenerationLog {
+  id           Int       @id @default(autoincrement())
+  topic        String?   @db.VarChar(500)
+  status       String    @db.VarChar(20)
+  pollId       Int?
+  tokensUsed   Int?
+  errorMessage String?   @db.Text
+  startedAt    DateTime  @default(now())
+  finishedAt   DateTime?
+
+  @@index([status])
+  @@map("poll_generation_logs")
+}

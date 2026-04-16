@@ -1,0 +1,12 @@
+{
+  "weather-widget": {
+    "title": "Weather",
+    "loading": "Loading weather...",
+    "error": "Unable to load weather data",
+    "temperature": "Temperature",
+    "feelsLike": "Feels like",
+    "humidity": "Humidity",
+    "wind": "Wind",
+    "defaultCity": "Seoul"
+  }
+}

@@ -9,7 +9,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Vibe Coding Recipes',
-  description: 'AI-generated step-by-step tutorials for building nexibase plugins and widgets',
+  description: 'AI recipes & prompts for building NexiBase plugins and widgets',
 }
 
 const PAGE_SIZE = 12
@@ -58,8 +58,8 @@ export default async function RecipeListPage({
         </h1>
         <p className="text-muted-foreground">
           {isKo
-            ? 'AI가 생성한 nexibase 플러그인/위젯 개발 단계별 튜토리얼'
-            : 'AI-generated step-by-step tutorials for building nexibase plugins and widgets'}
+            ? 'NexiBase 플러그인과 위젯을 만드는 레시피 & 프롬프트'
+            : 'AI recipes & prompts for building NexiBase plugins and widgets'}
         </p>
       </div>
 

@@ -1,0 +1,12 @@
+{
+  "weather-widget": {
+    "title": "날씨",
+    "loading": "날씨 정보 로딩 중...",
+    "error": "날씨 데이터를 불러올 수 없습니다",
+    "temperature": "온도",
+    "feelsLike": "체감 온도",
+    "humidity": "습도",
+    "wind": "바람",
+    "defaultCity": "서울"
+  }
+}
