@@ -60,6 +60,44 @@ const city = settings?.city ?? 'Seoul'
 
 Plugin scan runs at dev/build time (npm run dev triggers scripts/scan-plugins.js) and reads both files to register the widget.`
 
+const WIDGET_REFERENCE_EXAMPLE = `## Reference Example
+
+Below is the real WeatherWidget from src/plugins/weather-widget/. Use it ONLY as a structural anchor — do NOT copy its domain (weather). Follow the same file pair, prop signature, and settingsSchema pattern for whatever widget you are generating.
+
+### widgets/WeatherWidget.meta.ts
+
+\`\`\`ts
+export default {
+  title: 'Weather Widget',
+  defaultZone: 'right',
+  defaultColSpan: 4,
+  defaultRowSpan: 1,
+  settingsSchema: { city: 'Seoul', apiKey: '' },
+}
+\`\`\`
+
+### widgets/WeatherWidget.tsx (first 25 lines — signature and destructuring pattern)
+
+\`\`\`tsx
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
+
+interface WeatherWidgetProps {
+  settings?: {
+    city?: string;
+    apiKey?: string;
+  };
+}
+
+export default function WeatherWidget({ settings }: WeatherWidgetProps) {
+  const city = settings?.city || 'Seoul';
+  const apiKey = settings?.apiKey || process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY;
+  // ... component body ...
+}
+\`\`\``
+
 export function buildSystemPrompt(): string {
   return SYSTEM_PROMPT
 }
@@ -76,6 +114,8 @@ export function buildUserPrompt(
 ${PLUGIN_ARCHITECTURE_CONTEXT}
 
 ${slot.type !== 'plugin' ? WIDGET_ARCHITECTURE_CONTEXT : ''}
+
+${slot.type !== 'plugin' ? WIDGET_REFERENCE_EXAMPLE : ''}
 
 ## Rules
 
