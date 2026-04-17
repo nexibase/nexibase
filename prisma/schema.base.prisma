@@ -30,6 +30,7 @@ model User {
   providerId    String?         @db.VarChar(255)
   accounts      Account[]
   notifications Notification[]
+  notificationPreference NotificationPreference?
   addresses     UserAddress[]
 
   @@index([email])
@@ -105,6 +106,24 @@ model Notification {
   @@index([userId, isRead])
   @@index([createdAt])
   @@map("notifications")
+}
+
+model NotificationPreference {
+  id                Int      @id @default(autoincrement())
+  userId            Int      @unique
+  postComment       Boolean  @default(true)
+  commentReply      Boolean  @default(true)
+  mention           Boolean  @default(true)
+  orderStatus       Boolean  @default(true)
+  emailPostComment  Boolean  @default(false)
+  emailCommentReply Boolean  @default(false)
+  emailMention      Boolean  @default(false)
+  emailAdminMessage Boolean  @default(true)
+  emailOrderStatus  Boolean  @default(true)
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notification_preferences")
 }
 
 model Menu {
