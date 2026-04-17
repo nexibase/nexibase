@@ -8,6 +8,10 @@ import type { WidgetEditorProps } from './index'
 export default function VideoEmbedEditor({ settings, onChange }: WidgetEditorProps) {
   const update = (key: string, value: unknown) => onChange({ ...settings, [key]: value })
 
+  const autoplay = (settings.autoplay as boolean) ?? false
+  const muted = autoplay || ((settings.muted as boolean) ?? false)
+  const loop = (settings.loop as boolean) ?? false
+
   return (
     <div className="space-y-3">
       <div>
@@ -28,6 +32,39 @@ export default function VideoEmbedEditor({ settings, onChange }: WidgetEditorPro
             <SelectItem value="4:3">4:3 (Standard)</SelectItem>
           </SelectContent>
         </Select>
+      </div>
+      <div className="space-y-2 border-t pt-3">
+        <label className="flex items-center gap-2 text-sm cursor-pointer">
+          <input
+            type="checkbox"
+            checked={autoplay}
+            onChange={(e) => update('autoplay', e.target.checked)}
+            className="h-4 w-4"
+          />
+          Autoplay
+        </label>
+        <label className={`flex items-center gap-2 text-sm ${autoplay ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}>
+          <input
+            type="checkbox"
+            checked={muted}
+            disabled={autoplay}
+            onChange={(e) => update('muted', e.target.checked)}
+            className="h-4 w-4"
+          />
+          Muted
+          {autoplay && (
+            <span className="text-xs text-muted-foreground">(required for autoplay)</span>
+          )}
+        </label>
+        <label className="flex items-center gap-2 text-sm cursor-pointer">
+          <input
+            type="checkbox"
+            checked={loop}
+            onChange={(e) => update('loop', e.target.checked)}
+            className="h-4 w-4"
+          />
+          Loop
+        </label>
       </div>
     </div>
   )

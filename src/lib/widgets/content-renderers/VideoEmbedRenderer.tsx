@@ -10,14 +10,39 @@ function parseVideoUrl(url: string): { provider: 'youtube' | 'vimeo' | null; id:
 
 const ASPECT_RATIO: Record<string, string> = { '16:9': '16 / 9', '4:3': '4 / 3' }
 
+function buildEmbedUrl(
+  provider: 'youtube' | 'vimeo',
+  id: string,
+  opts: { autoplay: boolean; muted: boolean; loop: boolean },
+): string {
+  const params: string[] = []
+  if (provider === 'youtube') {
+    if (opts.autoplay) params.push('autoplay=1')
+    if (opts.muted) params.push('mute=1')
+    if (opts.loop) params.push('loop=1', `playlist=${id}`)
+    const query = params.length ? `?${params.join('&')}` : ''
+    return `https://www.youtube.com/embed/${id}${query}`
+  }
+  if (opts.autoplay) params.push('autoplay=1')
+  if (opts.muted) params.push('muted=1')
+  if (opts.loop) params.push('loop=1')
+  const query = params.length ? `?${params.join('&')}` : ''
+  return `https://player.vimeo.com/video/${id}${query}`
+}
+
 export default function VideoEmbedRenderer({ settings }: { settings?: Record<string, unknown> }) {
   const url = (settings?.url as string) ?? ''
   const aspectRatio = (settings?.aspectRatio as string) ?? '16:9'
+  const autoplay = (settings?.autoplay as boolean) ?? false
+  // Browsers block unmuted autoplay — force muted whenever autoplay is on
+  const muted = autoplay || ((settings?.muted as boolean) ?? false)
+  const loop = (settings?.loop as boolean) ?? false
+
   const { provider, id } = parseVideoUrl(url)
   if (!provider || !id) return null
-  const embedUrl = provider === 'youtube'
-    ? `https://www.youtube.com/embed/${id}`
-    : `https://player.vimeo.com/video/${id}`
+
+  const embedUrl = buildEmbedUrl(provider, id, { autoplay, muted, loop })
+
   return (
     <div
       className="relative w-full overflow-hidden rounded-lg bg-muted"
