@@ -5,7 +5,7 @@ export default function RichTextRenderer({ settings }: { settings?: Record<strin
   if (!html) return null
   return (
     <div
-      className="prose prose-sm max-w-none dark:prose-invert"
+      className="tiptap prose prose-sm max-w-none dark:prose-invert"
       dangerouslySetInnerHTML={{ __html: html }}
     />
   )
