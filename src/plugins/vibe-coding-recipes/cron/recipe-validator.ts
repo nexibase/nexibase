@@ -76,6 +76,50 @@ export function validateRecipe(data: Record<string, unknown>): ValidatedRecipe {
   }
 }
 
+function concatStepsText(recipe: ValidatedRecipe): string {
+  return recipe.stepsEn
+    .map((s) => `${s.prompt} ${s.expected}`)
+    .join('\n')
+    .toLowerCase()
+}
+
+export function validateRecipeCompleteness(recipe: ValidatedRecipe): void {
+  const haystack = concatStepsText(recipe)
+  const hasWidget = recipe.type === 'widget' || recipe.type === 'plugin_with_widget'
+  const hasPlugin = recipe.type === 'plugin' || recipe.type === 'plugin_with_widget'
+
+  if (hasWidget) {
+    if (!haystack.includes('.meta.ts')) {
+      throw new Error('Recipe is missing widget .meta.ts step')
+    }
+    if (!haystack.includes('{ settings }') && !haystack.includes('settings?:')) {
+      throw new Error('Recipe is missing widget { settings } prop signature')
+    }
+  }
+
+  if (hasPlugin) {
+    if (!haystack.includes('plugin.ts')) {
+      throw new Error('Recipe is missing plugin.ts step')
+    }
+  }
+
+  if (recipe.difficulty === 'intermediate' && recipe.type === 'plugin') {
+    for (const marker of ['schema.prisma', 'admin/', 'locales/']) {
+      if (!haystack.includes(marker)) {
+        console.warn(`[vibe-recipes] Intermediate plugin recipe missing marker: ${marker}`)
+      }
+    }
+  }
+
+  if (recipe.difficulty === 'advanced') {
+    for (const marker of ['menus/', 'routes/']) {
+      if (!haystack.includes(marker)) {
+        console.warn(`[vibe-recipes] Advanced recipe missing marker: ${marker}`)
+      }
+    }
+  }
+}
+
 export async function ensureUniqueSlug(
   prisma: PrismaClient,
   slug: string
