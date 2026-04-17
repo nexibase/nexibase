@@ -174,10 +174,15 @@ function getDifficultyGuide(
 ): string {
   if (difficulty === 'beginner' && type === 'widget') {
     return `Beginner Widget:
-- Single widget component + plugin.ts only
+- Three files total: plugin.ts + widgets/<Name>.tsx + widgets/<Name>.meta.ts
 - No schema.prisma, no admin, no API
-- Simple self-contained UI (clock, quotes, weather display, counters, etc.)
-- 2-3 steps`
+- Simple self-contained UI (clock, quotes, counters, etc.)
+- 3 steps — one per file, in this order:
+  1. plugin.ts
+  2. widgets/<Name>.tsx (component with { settings } prop)
+  3. widgets/<Name>.meta.ts (registry entry with settingsSchema defaults)
+- Widget component MUST accept { settings } prop, never individual props
+- .meta.ts settingsSchema MUST define a default value for every configurable field referenced in the component`
   }
 
   if (difficulty === 'beginner') {
@@ -201,7 +206,8 @@ function getDifficultyGuide(
 
   return `Advanced Plugin + Widget:
 - Everything from intermediate PLUS:
-- Widget component in widgets/ directory
+- Widget PAIR in widgets/: <Name>.tsx + <Name>.meta.ts (both files required)
+- Widget component accepts { settings } prop, never individual props
 - menus/footer.ts for footer navigation
 - External API integration OR complex data relationships
 - Multiple public routes (list + detail pages)
