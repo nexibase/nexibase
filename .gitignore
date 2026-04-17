@@ -114,6 +114,9 @@ CLAUDE.md
 .vscode/
 .superpowers/
 
+# git worktrees
+.worktrees/
+
 # 로그 파일
 *.log
 
