@@ -91,6 +91,10 @@ function getWidgetLabel(widgetKey: string): string {
   return widgetMetadata[widgetKey]?.label ?? humanizeKey(widgetKey)
 }
 
+function isSidebarZone(zone: string): boolean {
+  return zone === "left" || zone === "right" || zone === "sidebar"
+}
+
 function parseSettings(raw: string | null): Record<string, unknown> {
   if (!raw) return {}
   try {
@@ -175,7 +179,7 @@ function ZonePanel({ zone, widgets, selectedId, onSelect }: ZonePanelProps) {
   const { setNodeRef, isOver } = useDroppable({ id: `zone-${zone}` })
 
   return (
-    <div className="mb-4">
+    <div className="mb-2">
       <div className="flex items-center gap-2 mb-2">
         <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           {zone}
@@ -786,19 +790,30 @@ export default function PageEditor({
           </div>
 
           <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-1">
-              <Label htmlFor="w-colspan" className="text-sm">Col Span</Label>
-              <Input
-                id="w-colspan"
-                type="number"
-                min={1}
-                max={12}
-                value={selectedWidget.colSpan}
-                onChange={(e) =>
-                  updateWidget(selectedWidget.id, { colSpan: Math.max(1, Number(e.target.value)) })
-                }
-              />
-            </div>
+            {isSidebarZone(selectedWidget.zone) ? (
+              <div className="space-y-1 col-span-2">
+                <Label className="text-sm text-muted-foreground">Col Span</Label>
+                <p className="text-xs text-muted-foreground">
+                  Sidebar zones are full-width — col span has no effect here.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-1">
+                <Label htmlFor="w-colspan" className="text-sm">Col Span (max 12)</Label>
+                <Input
+                  id="w-colspan"
+                  type="number"
+                  min={1}
+                  max={12}
+                  value={selectedWidget.colSpan}
+                  onChange={(e) =>
+                    updateWidget(selectedWidget.id, {
+                      colSpan: Math.min(12, Math.max(1, Number(e.target.value))),
+                    })
+                  }
+                />
+              </div>
+            )}
             <div className="space-y-1">
               <Label htmlFor="w-rowspan" className="text-sm">Row Span</Label>
               <Input

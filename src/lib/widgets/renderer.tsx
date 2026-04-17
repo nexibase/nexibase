@@ -35,7 +35,7 @@ export default function WidgetRenderer({ zone, widgets }: WidgetRendererProps) {
     return (
       <div className="space-y-4">
         {zoneWidgets.map((widget) => (
-          <div key={widget.id} className={slotMinHeightClass(widget)}>
+          <div key={widget.id} className={slotMinHeightClass(widget, isSidebar)}>
             {renderWidgetContent(widget)}
           </div>
         ))}
@@ -57,7 +57,7 @@ export default function WidgetRenderer({ zone, widgets }: WidgetRendererProps) {
         return (
           <div
             key={widget.id}
-            className={`col-span-12 ${MD_SPAN_CLASS[span]} ${slotMinHeightClass(widget)}`}
+            className={`col-span-12 ${MD_SPAN_CLASS[span]} ${slotMinHeightClass(widget, false)}`}
           >
             {renderWidgetContent(widget)}
           </div>
@@ -70,9 +70,11 @@ export default function WidgetRenderer({ zone, widgets }: WidgetRendererProps) {
 // Reserve space per widget type to prevent layout shift while client-side
 // widgets fetch their data. Content widgets either size themselves from
 // settings (video via aspect-ratio, spacer via explicit height) or render
-// instantly, so they don't need a reservation.
-function slotMinHeightClass(widget: WidgetData): string {
+// instantly, so they don't need a reservation. Sidebar widgets are compact
+// by nature — reserving 140px creates excessive vertical gaps.
+function slotMinHeightClass(widget: WidgetData, isSidebar: boolean): string {
   if (widget.widgetType === 'content') return ''
+  if (isSidebar) return ''
   return 'min-h-[140px]'
 }
 

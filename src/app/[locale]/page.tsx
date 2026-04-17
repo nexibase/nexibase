@@ -46,13 +46,13 @@ export default async function HomePage() {
   return (
     <div className="max-w-6xl mx-auto px-2 sm:px-4 py-2 sm:py-6">
       {hasLeft || hasRight ? (
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
           {hasLeft && (
             <aside className={colSpanClass[leftCols]}>
               <WidgetRenderer zone="left" widgets={allWidgets} />
             </aside>
           )}
-          <main className={`${colSpanClass[centerCols]} space-y-6`}>
+          <main className={`${colSpanClass[centerCols]} space-y-4`}>
             <WidgetRenderer zone="top" widgets={allWidgets} />
             <WidgetRenderer zone="center" widgets={allWidgets} />
             <WidgetRenderer zone="bottom" widgets={allWidgets} />
@@ -65,7 +65,7 @@ export default async function HomePage() {
           )}
         </div>
       ) : (
-        <main className="space-y-6">
+        <main className="space-y-4">
           <WidgetRenderer zone="top" widgets={allWidgets} />
           <WidgetRenderer zone="center" widgets={allWidgets} />
           <WidgetRenderer zone="bottom" widgets={allWidgets} />
