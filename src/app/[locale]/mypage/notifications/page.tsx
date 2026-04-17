@@ -121,7 +121,7 @@ export default function NotificationsPage() {
         <div className="flex items-center justify-between gap-2">
           <h2 className="text-lg font-bold flex items-center gap-2">
             <Bell className="h-5 w-5" />
-            {t('notifications')}
+            {t('notifications.label')}
             {unreadCount > 0 && <Badge>{unreadCount}</Badge>}
           </h2>
           <div className="flex items-center gap-2">
