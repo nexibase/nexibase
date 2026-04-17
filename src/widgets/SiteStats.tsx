@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Users, FileText, MessageSquare, TrendingUp } from "lucide-react"
 import { useTranslations } from 'next-intl'
 
@@ -31,7 +32,23 @@ export default function SiteStats() {
     fetchStats()
   }, [])
 
-  if (!stats) return null
+  if (!stats) {
+    return (
+      <>
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Card key={i}>
+            <CardContent className="p-4 h-full flex items-center gap-3">
+              <Skeleton className="w-10 h-10 rounded-xl" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-7 w-16" />
+                <Skeleton className="h-4 w-20" />
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </>
+    )
+  }
 
   return (
     <>
