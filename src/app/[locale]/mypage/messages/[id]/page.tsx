@@ -22,5 +22,9 @@ export default function ThreadPage({ params }: { params: Promise<{ id: string }>
   }, [router])
 
   if (!me || !Number.isFinite(conversationId)) return null
-  return <ConversationView conversationId={conversationId} selfId={me.id} />
+  return (
+    <div className="max-w-3xl mx-auto w-full">
+      <ConversationView conversationId={conversationId} selfId={me.id} />
+    </div>
+  )
 }

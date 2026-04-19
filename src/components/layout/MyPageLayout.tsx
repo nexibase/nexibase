@@ -150,7 +150,7 @@ export function MyPageLayout({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* Navigation tabs */}
-        <div className="flex gap-1 overflow-x-auto mb-6 border-b pb-2">
+        <div className="flex flex-wrap gap-1 mb-6 border-b pb-2">
           {navItems.map((item, idx) => {
             const Icon = iconMap[item.icon] || User
             const active = isActive(item.path)
