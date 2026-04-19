@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAuthUser } from '@/lib/auth'
+import {
+  createPostCommentNotification,
+  createCommentReplyNotification,
+  createMentionNotification,
+} from '@/lib/notification'
+import { parseMentions, resolveMentions } from '@/lib/mentions'
 
 // Write comment
 export async function POST(
@@ -108,6 +114,58 @@ export async function POST(
       where: { id: postId },
       data: { commentCount: { increment: 1 } }
     })
+
+    // --- Notification fan-out ---------------------------------------------
+    // Build recipient map: one notification per user max per comment.
+    // Priority: mention (handled later) > comment_reply > post_comment.
+    const recipientKind = new Map<number, 'post_comment' | 'comment_reply'>()
+
+    if (parentId) {
+      const parent = await prisma.comment.findUnique({
+        where: { id: parseInt(parentId) },
+        select: { authorId: true },
+      })
+      if (parent && parent.authorId !== user.id) {
+        recipientKind.set(parent.authorId, 'comment_reply')
+      }
+      if (post.authorId !== user.id && !recipientKind.has(post.authorId)) {
+        recipientKind.set(post.authorId, 'post_comment')
+      }
+    } else {
+      if (post.authorId !== user.id) {
+        recipientKind.set(post.authorId, 'post_comment')
+      }
+    }
+
+    const postLink = `/boards/${slug}/${postId}`
+    const excerpt = content.trim().slice(0, 80)
+    const fromUserName = user.nickname
+
+    for (const [uid, kind] of recipientKind) {
+      if (kind === 'comment_reply') {
+        await createCommentReplyNotification({
+          userId: uid, fromUserName, postTitle: post.title, postLink, excerpt,
+        })
+      } else {
+        await createPostCommentNotification({
+          userId: uid, fromUserName, postTitle: post.title, postLink, excerpt,
+        })
+      }
+    }
+
+    // Mentions (skip self, skip users already covered above, cap at 10)
+    const nicknames = parseMentions(content).slice(0, 10)
+    if (nicknames.length > 0) {
+      const mentioned = await resolveMentions(nicknames)
+      for (const m of mentioned) {
+        if (m.id === user.id) continue
+        if (recipientKind.has(m.id)) continue
+        await createMentionNotification({
+          userId: m.id, fromUserName, postTitle: post.title, postLink, excerpt,
+        })
+      }
+    }
+    // --- end fan-out -----------------------------------------------------
 
     return NextResponse.json({
       success: true,

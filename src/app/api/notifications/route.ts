@@ -14,11 +14,13 @@ export async function GET(request: Request) {
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
     const unreadOnly = searchParams.get('unreadOnly') === 'true';
+    const type = searchParams.get('type');
 
     const where = {
       userId: session.id,
       deletedAt: null,  // Soft delete된 알림 제외
       ...(unreadOnly && { isRead: false }),
+      ...(type && { type }),
     };
 
     const [notifications, totalCount, unreadCount] = await Promise.all([

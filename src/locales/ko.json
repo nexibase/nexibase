@@ -193,7 +193,23 @@
     "editProfile": "프로필 수정",
     "myPosts": "내 게시글",
     "myComments": "내 댓글",
-    "notifications": "알림",
+    "notificationSettings": "알림 설정",
+    "notifications": {
+      "label": "알림",
+      "filter": {
+        "all": "전체",
+        "unread": "안 읽음",
+        "post_comment": "댓글",
+        "comment_reply": "답글",
+        "mention": "멘션",
+        "admin_message": "관리자",
+        "order_status": "주문"
+      },
+      "deleteAll": "전체 삭제",
+      "deleteOne": "삭제",
+      "confirmDeleteAll": "모든 알림을 삭제하시겠습니까?",
+      "loadMore": "더 보기"
+    },
     "loginHistory": "로그인 기록",
     "logout": "로그아웃",
     "level": "레벨",
@@ -238,7 +254,22 @@
     "noNotifications": "알림이 없습니다.",
     "minutesAgo": "{mins}분 전",
     "hoursAgo": "{hours}시간 전",
-    "daysAgo": "{days}일 전"
+    "daysAgo": "{days}일 전",
+    "settings": {
+      "notifications": {
+        "title": "알림 수신 설정",
+        "inApp": "인앱",
+        "email": "이메일",
+        "adminMessageNote": "관리자 알림은 인앱에서 끌 수 없습니다. 이메일만 선택적으로 끌 수 있습니다.",
+        "types": {
+          "postComment": "내 글에 댓글이 달렸을 때",
+          "commentReply": "내 댓글에 답글이 달렸을 때",
+          "mention": "나를 언급(@)했을 때",
+          "adminMessage": "관리자 알림",
+          "orderStatus": "주문 상태 변경"
+        }
+      }
+    }
   },
   "profile": {
     "title": "프로필",
@@ -324,6 +355,25 @@
     "colLikes": "추천"
   },
   "admin": {
+    "sendNotification": "알림 보내기",
+    "notifications": {
+      "send": {
+        "title": "알림 보내기",
+        "titleLabel": "제목",
+        "messageLabel": "본문",
+        "linkLabel": "링크 (선택, 내부 경로)",
+        "sendEmailLabel": "이메일도 함께 발송",
+        "submit": "보내기",
+        "cancel": "취소",
+        "success": "알림이 발송되었습니다.",
+        "failure": "알림 발송에 실패했습니다.",
+        "validation": {
+          "title": "제목은 1~100자여야 합니다.",
+          "message": "본문은 1~2000자여야 합니다.",
+          "link": "링크는 '/'로 시작하는 내부 경로여야 합니다."
+        }
+      }
+    },
     "themeMeta": {
       "default-name": "기본 테마",
       "default-description": "기본 라이트/다크 테마",

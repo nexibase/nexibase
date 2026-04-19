@@ -35,7 +35,9 @@ import {
   ChevronLeft,
   ChevronRight,
   UsersRound,
+  Send,
 } from "lucide-react"
+import { SendNotificationDialog } from "@/components/admin/SendNotificationDialog"
 
 interface User {
   id: string
@@ -341,6 +343,7 @@ function UsersPageContent() {
   const [roleFilter, setRoleFilter] = useState(initialRole)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
+  const [sendDialogUser, setSendDialogUser] = useState<User | null>(null)
 
   // If an edit param is present, open the matching user modal
   useEffect(() => {
@@ -741,6 +744,17 @@ function UsersPageContent() {
                               </Button>
                             ) : (
                               <div className="flex justify-end gap-1">
+                                {user.role !== 'admin' && user.role !== 'manager' && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    onClick={() => setSendDialogUser(user)}
+                                    title={t('sendNotification')}
+                                  >
+                                    <Send className="h-4 w-4" />
+                                  </Button>
+                                )}
                                 <Button
                                   variant="ghost"
                                   size="icon"
@@ -829,6 +843,15 @@ function UsersPageContent() {
         user={editingUser}
         onSave={handleSaveUser}
       />
+
+      {sendDialogUser && (
+        <SendNotificationDialog
+          open={!!sendDialogUser}
+          onOpenChange={(open) => { if (!open) setSendDialogUser(null) }}
+          userId={Number(sendDialogUser.id)}
+          userLabel={`${sendDialogUser.nickname ?? ''} (${sendDialogUser.email})`}
+        />
+      )}
     </div>
   )
 }

@@ -193,7 +193,23 @@
     "editProfile": "Edit profile",
     "myPosts": "My posts",
     "myComments": "My comments",
-    "notifications": "Notifications",
+    "notificationSettings": "Notification settings",
+    "notifications": {
+      "label": "Notifications",
+      "filter": {
+        "all": "All",
+        "unread": "Unread",
+        "post_comment": "Comments",
+        "comment_reply": "Replies",
+        "mention": "Mentions",
+        "admin_message": "Admin",
+        "order_status": "Orders"
+      },
+      "deleteAll": "Delete all",
+      "deleteOne": "Delete",
+      "confirmDeleteAll": "Delete all notifications?",
+      "loadMore": "Load more"
+    },
     "loginHistory": "Login history",
     "logout": "Log out",
     "level": "Level",
@@ -238,7 +254,22 @@
     "noNotifications": "No notifications.",
     "minutesAgo": "{mins}m ago",
     "hoursAgo": "{hours}h ago",
-    "daysAgo": "{days}d ago"
+    "daysAgo": "{days}d ago",
+    "settings": {
+      "notifications": {
+        "title": "Notification preferences",
+        "inApp": "In-app",
+        "email": "Email",
+        "adminMessageNote": "Admin notifications cannot be disabled in-app. You can opt out of email only.",
+        "types": {
+          "postComment": "Someone comments on my post",
+          "commentReply": "Someone replies to my comment",
+          "mention": "Someone mentions me (@)",
+          "adminMessage": "Admin notifications",
+          "orderStatus": "Order status updates"
+        }
+      }
+    }
   },
   "profile": {
     "title": "Profile",
@@ -324,6 +355,25 @@
     "colLikes": "Likes"
   },
   "admin": {
+    "sendNotification": "Send notification",
+    "notifications": {
+      "send": {
+        "title": "Send notification",
+        "titleLabel": "Title",
+        "messageLabel": "Message",
+        "linkLabel": "Link (optional, internal path)",
+        "sendEmailLabel": "Also send by email",
+        "submit": "Send",
+        "cancel": "Cancel",
+        "success": "Notification sent.",
+        "failure": "Failed to send notification.",
+        "validation": {
+          "title": "Title must be 1..100 characters.",
+          "message": "Message must be 1..2000 characters.",
+          "link": "Link must be an internal path starting with '/'."
+        }
+      }
+    },
     "themeMeta": {
       "default-name": "Default theme",
       "default-description": "Default light/dark theme",
