@@ -353,63 +353,52 @@ export default function BoardListPage() {
                 </div>
               </div>
             ) : (
-              /* List view */
+              /* List view — unified responsive 2-line rows */
               <div>
-                {/* Desktop header */}
-                <div className="hidden md:flex items-center px-4 py-2 border-b text-xs text-muted-foreground font-medium">
-                  <div className="flex-1">{t('post.title')}</div>
-                  <div className="w-28 text-left pl-2">{t('author')}</div>
-                  <div className="w-24 text-center">{t('createdAt')}</div>
-                  <div className="w-16 text-center">{t('viewCount')}</div>
-                  {board.useReaction && <div className="w-16 text-center">{t('recommend')}</div>}
-                </div>
                 {posts.map((post) => {
                   const postUrl = post.isSecret && post.author.id !== user?.id && !isAdmin ? '#' : `/boards/${slug}/${post.id}`
                   return (
-                  <div
-                    key={post.id}
-                    className="flex items-center px-4 py-3 border-b last:border-b-0"
-                  >
-                    {/* Mobile: original stacked layout */}
-                    <div className="flex-1 min-w-0 md:hidden">
+                    <Link
+                      key={post.id}
+                      href={postUrl}
+                      className="block py-3 px-1 hover:bg-muted/40 transition-colors"
+                      onClick={(e) => {
+                        if (post.isSecret && post.author.id !== user?.id && !isAdmin) {
+                          e.preventDefault()
+                          alert(t('secretPostAlert'))
+                        }
+                      }}
+                    >
                       <div className="flex items-center gap-2 mb-1">
-                        {post.isNotice && <Pin className="h-3.5 w-3.5 text-orange-500 shrink-0" />}
                         {post.isSecret && <Lock className="h-3.5 w-3.5 text-yellow-500 shrink-0" />}
-                        <Link href={postUrl} className="font-medium text-sm truncate hover:text-primary">{post.title}</Link>
+                        <span className="font-semibold text-[14px] sm:text-[15px] truncate flex-1">{post.title}</span>
                         {post.commentCount > 0 && board.useComment && (
-                          <span className="text-xs text-primary">[{post.commentCount}]</span>
-                        )}
-                        {post._count && post._count.attachments > 0 && (
-                          <Paperclip className="h-3 w-3 text-muted-foreground shrink-0" />
-                        )}
-                      </div>
-                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                        <UserNickname userId={post.author.id} uuid={post.author.uuid} nickname={post.author.nickname} image={post.author.image} showAvatar />
-                        <span>{formatDate(post.createdAt)}</span>
-                        <span className="flex items-center gap-0.5"><Eye className="h-3 w-3" />{post.viewCount}</span>
-                      </div>
-                    </div>
-                    {/* Desktop: table layout */}
-                    <div className="hidden md:flex md:items-center md:flex-1 md:min-w-0">
-                      <div className="flex-1 min-w-0 flex items-center gap-2">
-                        {post.isNotice && <Badge variant="outline" className="shrink-0 text-xs px-1.5 py-0 text-orange-500 border-orange-500">{t('noticeBadge')}</Badge>}
-                        {post.isSecret && <Lock className="h-3.5 w-3.5 text-yellow-500 shrink-0" />}
-                        <Link href={postUrl} className="font-medium text-sm truncate hover:text-primary">{post.title}</Link>
-                        {post.commentCount > 0 && board.useComment && (
-                          <span className="text-sm text-primary shrink-0">[{post.commentCount}]</span>
+                          <span className="text-primary text-[13px] shrink-0">[{post.commentCount}]</span>
                         )}
                         {post._count && post._count.attachments > 0 && (
                           <Paperclip className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                         )}
                       </div>
-                      <div className="w-28 text-left pl-2">
-                        <UserNickname userId={post.author.id} uuid={post.author.uuid} nickname={post.author.nickname} image={post.author.image} showAvatar className="text-muted-foreground" />
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[13px] text-muted-foreground">
+                        <UserNickname
+                          userId={post.author.id}
+                          uuid={post.author.uuid}
+                          nickname={post.author.nickname}
+                          image={post.author.image}
+                          className="text-muted-foreground"
+                        />
+                        <span className="opacity-50">·</span>
+                        <span>{formatDate(post.createdAt)}</span>
+                        <span className="opacity-50">·</span>
+                        <span className="inline-flex items-center gap-1"><Eye className="h-3 w-3" />{post.viewCount}</span>
+                        {board.useReaction && post.likeCount > 0 && (
+                          <>
+                            <span className="opacity-50">·</span>
+                            <span className="inline-flex items-center gap-1"><ThumbsUp className="h-3 w-3" />{post.likeCount}</span>
+                          </>
+                        )}
                       </div>
-                      <div className="w-24 text-center text-xs text-muted-foreground">{formatDate(post.createdAt)}</div>
-                      <div className="w-16 text-center text-xs text-muted-foreground">{post.viewCount}</div>
-                      {board.useReaction && <div className="w-16 text-center text-xs text-muted-foreground">{post.likeCount}</div>}
-                    </div>
-                  </div>
+                    </Link>
                   )
                 })}
               </div>
