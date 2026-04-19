@@ -14,7 +14,7 @@ type Pref = {
   emailPostComment: boolean
   emailCommentReply: boolean
   emailMention: boolean
-  emailAdminMessage: boolean
+  emailDirectMessage: boolean
   emailOrderStatus: boolean
 }
 
@@ -86,18 +86,18 @@ export default function NotificationSettingsPage() {
               </div>
             ))}
 
-            {/* Admin message row — in-app forced ON, only email toggles */}
+            {/* Direct message row — in-app forced ON, only email toggles */}
             <div className="grid grid-cols-[1fr_auto_auto] gap-4 px-4 py-3 items-center">
               <span className="text-sm flex items-center gap-2">
-                {t('types.adminMessage')}
-                <span title={t('adminMessageNote')}>
+                {t('types.directMessage')}
+                <span title={t('directMessageNote')}>
                   <Info className="h-3 w-3 text-muted-foreground" />
                 </span>
               </span>
               <Switch checked disabled />
               <Switch
-                checked={pref.emailAdminMessage}
-                onCheckedChange={v => update({ emailAdminMessage: v })}
+                checked={pref.emailDirectMessage}
+                onCheckedChange={v => update({ emailDirectMessage: v })}
               />
             </div>
           </div>

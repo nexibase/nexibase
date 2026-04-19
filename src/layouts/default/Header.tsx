@@ -145,15 +145,13 @@ export default function Header() {
     }
   }
 
-  // Fetch notification count once logged in
+  // Refresh unread count on login and whenever the user navigates.
+  // No background polling — users who stay on one page for a long time
+  // need to reload to see new notifications, same UX as traditional
+  // 쪽지 systems.
   useEffect(() => {
-    if (user) {
-      fetchUnreadCount()
-      // Refresh notification count every minute
-      const interval = setInterval(fetchUnreadCount, 60000)
-      return () => clearInterval(interval)
-    }
-  }, [user])
+    if (user) fetchUnreadCount()
+  }, [user, pathname])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -251,7 +249,7 @@ export default function Header() {
                       setNotificationOpen(!notificationOpen)
                     }}
                   >
-                    <Bell className="h-5 w-5" />
+                    <Bell className={`h-5 w-5 transition-colors ${unreadCount > 0 ? 'text-red-500 fill-red-500/10' : ''}`} />
                     {unreadCount > 0 && (
                       <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
                         {unreadCount > 99 ? "99+" : unreadCount}

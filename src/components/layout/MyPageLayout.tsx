@@ -106,6 +106,7 @@ export function MyPageLayout({ children }: { children: React.ReactNode }) {
       }
 
       items.push({ label: t('notifications.label'), icon: 'Bell', path: '/mypage/notifications' })
+      items.push({ label: t('messages.label'), icon: 'MessageSquare', path: '/mypage/messages' })
       items.push({ label: t('notificationSettings'), icon: 'Settings', path: '/mypage/settings/notifications' })
       setNavItems(items)
     }).finally(() => setLoading(false))
@@ -149,7 +150,7 @@ export function MyPageLayout({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* Navigation tabs */}
-        <div className="flex gap-1 overflow-x-auto mb-6 border-b pb-2">
+        <div className="flex flex-wrap gap-1 mb-6 border-b pb-2">
           {navItems.map((item, idx) => {
             const Icon = iconMap[item.icon] || User
             const active = isActive(item.path)

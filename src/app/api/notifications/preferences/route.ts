@@ -11,7 +11,6 @@ const DEFAULTS = {
   emailPostComment: false,
   emailCommentReply: false,
   emailMention: false,
-  emailAdminMessage: true,
   emailOrderStatus: true,
 }
 
@@ -37,7 +36,7 @@ export async function PUT(request: Request) {
   const allowed: (keyof typeof DEFAULTS)[] = [
     'postComment', 'commentReply', 'mention', 'orderStatus',
     'emailPostComment', 'emailCommentReply', 'emailMention',
-    'emailAdminMessage', 'emailOrderStatus',
+    'emailOrderStatus',
   ]
   const data: Record<string, boolean> = {}
   for (const key of allowed) {

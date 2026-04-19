@@ -37,7 +37,6 @@ import {
   UsersRound,
   Send,
 } from "lucide-react"
-import { SendNotificationDialog } from "@/components/admin/SendNotificationDialog"
 
 interface User {
   id: string
@@ -343,7 +342,6 @@ function UsersPageContent() {
   const [roleFilter, setRoleFilter] = useState(initialRole)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
-  const [sendDialogUser, setSendDialogUser] = useState<User | null>(null)
 
   // If an edit param is present, open the matching user modal
   useEffect(() => {
@@ -749,8 +747,17 @@ function UsersPageContent() {
                                     variant="ghost"
                                     size="icon"
                                     className="h-8 w-8"
-                                    onClick={() => setSendDialogUser(user)}
-                                    title={t('sendNotification')}
+                                    onClick={async () => {
+                                      const res = await fetch('/api/messages/conversation', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ toUserId: Number(user.id) }),
+                                      })
+                                      if (!res.ok) { alert(t('messages.send.failure')); return }
+                                      const data = await res.json()
+                                      window.open(`/mypage/messages/${data.conversationUuid}`, '_blank')
+                                    }}
+                                    title={t('messages.send.title')}
                                   >
                                     <Send className="h-4 w-4" />
                                   </Button>
@@ -844,14 +851,6 @@ function UsersPageContent() {
         onSave={handleSaveUser}
       />
 
-      {sendDialogUser && (
-        <SendNotificationDialog
-          open={!!sendDialogUser}
-          onOpenChange={(open) => { if (!open) setSendDialogUser(null) }}
-          userId={Number(sendDialogUser.id)}
-          userLabel={`${sendDialogUser.nickname ?? ''} (${sendDialogUser.email})`}
-        />
-      )}
     </div>
   )
 }

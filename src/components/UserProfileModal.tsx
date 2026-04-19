@@ -3,7 +3,9 @@
 import { useState, useEffect, useCallback } from "react"
 import { useTranslations } from "next-intl"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
-import { User, FileText, MessageSquare, Calendar } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { FileText, MessageSquare, Calendar, Send } from "lucide-react"
+import { SendMessageDialog } from "@/components/messaging/SendMessageDialog"
 
 interface UserProfile {
   id: number
@@ -15,6 +17,8 @@ interface UserProfile {
   commentCount: number
 }
 
+interface Me { id: number }
+
 interface UserProfileModalProps {
   userId: number | null
   onClose: () => void
@@ -22,9 +26,12 @@ interface UserProfileModalProps {
 
 export function UserProfileModal({ userId, onClose }: UserProfileModalProps) {
   const t = useTranslations('profile')
+  const tMsg = useTranslations('mypage.messages')
   const tc = useTranslations('common')
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(false)
+  const [me, setMe] = useState<Me | null>(null)
+  const [sendOpen, setSendOpen] = useState(false)
 
   const fetchProfile = useCallback(async (id: number) => {
     setLoading(true)
@@ -49,48 +56,75 @@ export function UserProfileModal({ userId, onClose }: UserProfileModalProps) {
     }
   }, [userId, fetchProfile])
 
+  useEffect(() => {
+    if (userId) {
+      fetch('/api/me').then(r => r.ok ? r.json() : null).then(d => setMe(d?.user ?? null))
+    }
+  }, [userId])
+
   const formatDate = (d: string) =>
     new Date(d).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })
 
+  const canSend = !!(me && profile && me.id !== profile.id)
+
   return (
-    <Dialog open={!!userId} onOpenChange={(open) => { if (!open) onClose() }}>
-      <DialogContent className="sm:max-w-xs p-0 gap-0">
-        {loading ? (
-          <div className="py-12 text-center text-muted-foreground text-sm">{tc('loading')}</div>
-        ) : profile ? (
-          <div className="p-6">
-            <div className="flex flex-col items-center gap-3 mb-4">
-              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
-                {profile.image ? (
-                  <img src={profile.image} alt={profile.nickname} className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-2xl font-medium text-primary">{(profile.nickname || '?').charAt(0)}</span>
-                )}
+    <>
+      <Dialog open={!!userId} onOpenChange={(open) => { if (!open) onClose() }}>
+        <DialogContent className="sm:max-w-xs p-0 gap-0">
+          {loading ? (
+            <div className="py-12 text-center text-muted-foreground text-sm">{tc('loading')}</div>
+          ) : profile ? (
+            <div className="p-6">
+              <div className="flex flex-col items-center gap-3 mb-4">
+                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
+                  {profile.image ? (
+                    <img src={profile.image} alt={profile.nickname} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-2xl font-medium text-primary">{(profile.nickname || '?').charAt(0)}</span>
+                  )}
+                </div>
+                <div className="text-center">
+                  <div className="font-semibold text-lg">{profile.nickname}</div>
+                  <div className="text-xs text-muted-foreground">Lv.{profile.level}</div>
+                </div>
               </div>
-              <div className="text-center">
-                <div className="font-semibold text-lg">{profile.nickname}</div>
-                <div className="text-xs text-muted-foreground">Lv.{profile.level}</div>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <FileText className="h-4 w-4" />
+                  <span>{t('posts')} <strong className="text-foreground">{profile.postCount}</strong></span>
+                </div>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <MessageSquare className="h-4 w-4" />
+                  <span>{t('comments')} <strong className="text-foreground">{profile.commentCount}</strong></span>
+                </div>
+                <div className="flex items-center gap-2 text-muted-foreground col-span-2">
+                  <Calendar className="h-4 w-4" />
+                  <span>{t('joinedAt')} {formatDate(profile.createdAt)}</span>
+                </div>
               </div>
+              {canSend && (
+                <div className="mt-4 flex justify-center">
+                  <Button size="sm" onClick={() => setSendOpen(true)}>
+                    <Send className="h-4 w-4 mr-1" />
+                    {tMsg('sendAction')}
+                  </Button>
+                </div>
+              )}
             </div>
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <FileText className="h-4 w-4" />
-                <span>{t('posts')} <strong className="text-foreground">{profile.postCount}</strong></span>
-              </div>
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <MessageSquare className="h-4 w-4" />
-                <span>{t('comments')} <strong className="text-foreground">{profile.commentCount}</strong></span>
-              </div>
-              <div className="flex items-center gap-2 text-muted-foreground col-span-2">
-                <Calendar className="h-4 w-4" />
-                <span>{t('joinedAt')} {formatDate(profile.createdAt)}</span>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="py-12 text-center text-muted-foreground text-sm">{t('notFound')}</div>
-        )}
-      </DialogContent>
-    </Dialog>
+          ) : (
+            <div className="py-12 text-center text-muted-foreground text-sm">{t('notFound')}</div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {profile && canSend && (
+        <SendMessageDialog
+          open={sendOpen}
+          onOpenChange={setSendOpen}
+          userId={profile.id}
+          userLabel={profile.nickname}
+        />
+      )}
+    </>
   )
 }

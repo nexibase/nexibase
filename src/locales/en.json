@@ -203,12 +203,32 @@
         "comment_reply": "Replies",
         "mention": "Mentions",
         "admin_message": "Admin",
-        "order_status": "Orders"
+        "order_status": "Orders",
+        "direct_message": "Messages"
       },
       "deleteAll": "Delete all",
       "deleteOne": "Delete",
       "confirmDeleteAll": "Delete all notifications?",
       "loadMore": "Load more"
+    },
+    "messages": {
+      "label": "Messages",
+      "filter": {
+        "all": "All",
+        "unread": "Unread",
+        "hidden": "Hidden"
+      },
+      "empty": "You have no messages yet.",
+      "hideAction": "Hide this conversation",
+      "unhideAction": "Restore",
+      "sendAction": "Send message",
+      "loadMore": "Load earlier"
+    },
+    "messagesThread": {
+      "placeholder": "Type a message…",
+      "sendButton": "Send",
+      "charLimit": "{count}/2000",
+      "confirmHide": "Hide this conversation?"
     },
     "loginHistory": "Login history",
     "logout": "Log out",
@@ -260,12 +280,12 @@
         "title": "Notification preferences",
         "inApp": "In-app",
         "email": "Email",
-        "adminMessageNote": "Admin notifications cannot be disabled in-app. You can opt out of email only.",
+        "directMessageNote": "Direct messages cannot be disabled in-app. You can opt out of email only.",
         "types": {
           "postComment": "Someone comments on my post",
           "commentReply": "Someone replies to my comment",
           "mention": "Someone mentions me (@)",
-          "adminMessage": "Admin notifications",
+          "directMessage": "Direct messages",
           "orderStatus": "Order status updates"
         }
       }
@@ -283,7 +303,8 @@
     "notFound": "User not found",
     "userNotFound": "User not found.",
     "goHome": "Go home",
-    "joinedSuffix": "joined"
+    "joinedSuffix": "joined",
+    "sendMessage": "Send message"
   },
   "search": {
     "title": "Search",
@@ -355,22 +376,17 @@
     "colLikes": "Likes"
   },
   "admin": {
-    "sendNotification": "Send notification",
-    "notifications": {
+    "messages": {
       "send": {
-        "title": "Send notification",
-        "titleLabel": "Title",
-        "messageLabel": "Message",
-        "linkLabel": "Link (optional, internal path)",
+        "title": "Send message",
+        "contentLabel": "Message",
         "sendEmailLabel": "Also send by email",
         "submit": "Send",
         "cancel": "Cancel",
-        "success": "Notification sent.",
-        "failure": "Failed to send notification.",
+        "success": "Message sent.",
+        "failure": "Failed to send message.",
         "validation": {
-          "title": "Title must be 1..100 characters.",
-          "message": "Message must be 1..2000 characters.",
-          "link": "Link must be an internal path starting with '/'."
+          "content": "Message must be 1..2000 characters."
         }
       }
     },

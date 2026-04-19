@@ -455,43 +455,44 @@ export const sendOrderCancelledEmailToAdmin = async (
 };
 
 /**
- * Send a free-form admin message email. Safe to fire-and-forget —
- * logs on failure, never throws.
+ * Send a direct-message arrival email. Fire-and-forget — logs on
+ * failure, never throws. Subject and body HTML-escape user input.
  */
-export async function sendAdminMessageEmail(
+export async function sendDirectMessageEmail(
   to: string,
-  title: string,
-  message: string,
-  link?: string,
+  senderName: string,
+  content: string,
+  conversationUuid: string,
 ) {
   try {
     const shopName = await getShopName()
     const transporter = createTransporter()
-    const href = link && link.startsWith('/')
-      ? `${process.env.NEXT_PUBLIC_APP_URL}${link}`
-      : null
+    const threadUrl = `${process.env.NEXT_PUBLIC_APP_URL}/mypage/messages/${conversationUuid}`
 
-    const escapedTitle = title.replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    const escapedMessage = message.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')
+    const escapedSender = senderName.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    const preview = content.slice(0, 200)
+    const escapedPreview = preview.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')
 
     const mailOptions = {
       from: process.env.SMTP_USER,
       to,
-      subject: `[${shopName}] ${title}`,
+      subject: `[${shopName}] ${escapedSender}님의 쪽지`,
       html: `
         <div style="font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <h2 style="color: #333; border-bottom: 2px solid #333; padding-bottom: 10px;">${shopName}</h2>
-          <h3 style="color: #333; margin-top: 20px;">${escapedTitle}</h3>
-          <p style="color: #555; line-height: 1.6;">${escapedMessage}</p>
-          ${href ? `<div style="text-align: center; margin: 30px 0;">
-            <a href="${href}" style="background-color: #333; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">바로가기</a>
-          </div>` : ''}
+          <p style="color: #666; line-height: 1.6;"><strong>${escapedSender}</strong>님이 쪽지를 보냈습니다.</p>
+          <div style="background: #f9f9f9; padding: 16px; border-radius: 8px; margin: 20px 0; color: #333;">
+            ${escapedPreview}
+          </div>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${threadUrl}" style="background-color: #333; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">답장하러 가기</a>
+          </div>
           <p style="color: #999; font-size: 12px; margin-top: 30px; text-align: center;">본 메일은 발신전용입니다.</p>
         </div>
       `,
     }
     await transporter.sendMail(mailOptions)
   } catch (error) {
-    console.error('failed to send admin message email:', error)
+    console.error('failed to send direct message email:', error)
   }
 }

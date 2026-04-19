@@ -29,9 +29,12 @@ model User {
   provider      String?         @db.VarChar(50)
   providerId    String?         @db.VarChar(255)
   accounts      Account[]
-  notifications Notification[]
+  notifications          Notification[]
   notificationPreference NotificationPreference?
-  addresses     UserAddress[]
+  conversationsAsUser1   Conversation[] @relation("ConversationUser1")
+  conversationsAsUser2   Conversation[] @relation("ConversationUser2")
+  sentMessages           Message[]      @relation("MessageSender")
+  addresses              UserAddress[]
 
   @@index([email])
   @@index([status])
@@ -118,9 +121,9 @@ model NotificationPreference {
   emailPostComment  Boolean  @default(false)
   emailCommentReply Boolean  @default(false)
   emailMention      Boolean  @default(false)
-  emailAdminMessage Boolean  @default(true)
-  emailOrderStatus  Boolean  @default(true)
-  updatedAt         DateTime @updatedAt
+  emailOrderStatus    Boolean  @default(true)
+  emailDirectMessage  Boolean  @default(false)
+  updatedAt           DateTime @updatedAt
   user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("notification_preferences")
@@ -204,4 +207,40 @@ model LoginAttempt {
   @@index([email, createdAt])
   @@index([ip, createdAt])
   @@map("login_attempts")
+}
+
+model Conversation {
+  id              Int       @id @default(autoincrement())
+  uuid            String    @unique @default(uuid()) @db.VarChar(36)
+  user1Id         Int
+  user2Id         Int
+  lastMessageAt   DateTime?
+  user1LastReadAt DateTime?
+  user2LastReadAt DateTime?
+  user1HiddenAt   DateTime?
+  user2HiddenAt   DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  messages        Message[]
+  user1           User      @relation("ConversationUser1", fields: [user1Id], references: [id], onDelete: Cascade)
+  user2           User      @relation("ConversationUser2", fields: [user2Id], references: [id], onDelete: Cascade)
+
+  @@unique([user1Id, user2Id])
+  @@index([user1Id, lastMessageAt])
+  @@index([user2Id, lastMessageAt])
+  @@map("conversations")
+}
+
+model Message {
+  id             Int          @id @default(autoincrement())
+  conversationId Int
+  senderId       Int
+  content        String       @db.Text
+  createdAt      DateTime     @default(now())
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User         @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+  @@index([senderId])
+  @@map("messages")
 }
