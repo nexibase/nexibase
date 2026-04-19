@@ -89,6 +89,22 @@ docker compose down -v       # stop + wipe data
 - Full-text search (MySQL FULLTEXT)
 - File attachments with auto image processing (Sharp → WebP)
 
+### 🔔 Notifications
+- In-app + email delivery, per-user preferences
+- Triggered by comments / replies / @mentions from the boards plugin
+- Admin can send a free-form notification to any user
+- Direct-message arrivals surface as notifications
+- Bell icon tints when unread; refresh on route change (no background polling)
+
+### 💬 Direct Messages (쪽지)
+- 1:1 threaded DM between any logged-in members
+- Start from a user nickname popover or profile page
+- Admin can initiate from `/admin/users` or a shop order detail
+- 5-second polling inside an open thread (paused when the tab is hidden)
+- Conversations use UUIDs in URLs so sequential ids aren't enumerable
+- Cursor-based pagination — only the last 30 messages load initially
+- Hide conversations per-viewer; auto-resurface when the other side sends
+
 ### 👥 Members
 - Email/password + social login (Google, Naver, Kakao)
 - Email verification
@@ -369,6 +385,22 @@ docker compose down -v       # 중지 + 데이터 삭제
 - 갤러리 뷰, 비밀글, 공지사항
 - 전문 검색 (MySQL FULLTEXT)
 - 파일 첨부 + 자동 이미지 처리 (Sharp → WebP)
+
+### 🔔 알림
+- 인앱 + 이메일 알림, 유저별 수신 설정
+- 게시판 댓글/답글/멘션에서 자동 트리거
+- 관리자는 특정 유저에게 자유 알림 발송 가능
+- 쪽지 도착 시 알림 시스템으로 통합 표시
+- 안 읽은 알림 있으면 헤더 종 아이콘 색상 강조, 경로 이동 시만 갱신(백그라운드 폴링 없음)
+
+### 💬 쪽지 (Direct Messages)
+- 로그인 회원 간 1:1 스레드형 쪽지
+- 닉네임 팝오버 / 프로필 페이지에서 시작
+- 관리자는 `/admin/users` 또는 쇼핑몰 주문 상세에서 발송
+- 대화방 안에서만 5초 폴링 (탭 비활성 시 일시중지)
+- URL이 UUID 기반이라 연속 id 유추 불가
+- 커서 기반 페이지네이션 — 초기엔 최근 30개만 로드
+- 대화방 숨기기 (뷰어별), 상대가 새 메시지 보내면 자동 복원
 
 ### 👥 회원
 - 이메일/비밀번호 + 소셜 로그인 (Google, Naver, Kakao)

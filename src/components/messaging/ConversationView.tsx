@@ -16,6 +16,21 @@ interface Message {
   createdAt: string
 }
 
+// Guard against races between polling and post-send refetch:
+// both call /api/messages/<uuid>?after=<lastId> and can overlap.
+function mergeUniqueAppend(prev: Message[], incoming: Message[]): Message[] {
+  if (incoming.length === 0) return prev
+  const seen = new Set(prev.map(m => m.id))
+  const filtered = incoming.filter(m => !seen.has(m.id))
+  return filtered.length === 0 ? prev : [...prev, ...filtered]
+}
+function mergeUniquePrepend(prev: Message[], incoming: Message[]): Message[] {
+  if (incoming.length === 0) return prev
+  const seen = new Set(prev.map(m => m.id))
+  const filtered = incoming.filter(m => !seen.has(m.id))
+  return filtered.length === 0 ? prev : [...filtered, ...prev]
+}
+
 interface ConversationMeta {
   id: number
   opponent: { id: number; nickname: string; image: string | null }
@@ -96,7 +111,7 @@ export function ConversationView({ conversationUuid, self }: Props) {
       if (data.messages.length > 0) {
         const el = scrollRef.current
         const nearBottom = el ? (el.scrollHeight - el.scrollTop - el.clientHeight < 200) : true
-        setMessages(prev => [...prev, ...data.messages])
+        setMessages(prev => mergeUniqueAppend(prev, data.messages))
         markRead()
         if (nearBottom) {
           requestAnimationFrame(() => {
@@ -147,7 +162,7 @@ export function ConversationView({ conversationUuid, self }: Props) {
       setLoadingEarlier(false)
       if (!res.ok) return
       const data = await res.json()
-      setMessages(prev => [...data.messages, ...prev])
+      setMessages(prev => mergeUniquePrepend(prev, data.messages))
       setHasMore(data.hasMore)
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
@@ -181,7 +196,7 @@ export function ConversationView({ conversationUuid, self }: Props) {
         if (r2.ok) {
           const d2 = await r2.json()
           if (d2.messages.length > 0) {
-            setMessages(prev => [...prev, ...d2.messages])
+            setMessages(prev => mergeUniqueAppend(prev, d2.messages))
             requestAnimationFrame(() => {
               requestAnimationFrame(() => {
                 const el = scrollRef.current
