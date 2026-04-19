@@ -374,9 +374,6 @@ export default function BoardListPage() {
                       <div className="flex items-center gap-2 mb-1">
                         {post.isSecret && <Lock className="h-3.5 w-3.5 text-yellow-500 shrink-0" />}
                         <span className="font-semibold text-[14px] sm:text-[15px] truncate flex-1">{post.title}</span>
-                        {post.commentCount > 0 && board.useComment && (
-                          <span className="text-primary text-[13px] shrink-0">[{post.commentCount}]</span>
-                        )}
                         {post._count && post._count.attachments > 0 && (
                           <Paperclip className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                         )}
@@ -397,6 +394,12 @@ export default function BoardListPage() {
                           <>
                             <span className="opacity-50">·</span>
                             <span className="inline-flex items-center gap-1"><ThumbsUp className="h-3 w-3" />{post.likeCount}</span>
+                          </>
+                        )}
+                        {board.useComment && post.commentCount > 0 && (
+                          <>
+                            <span className="opacity-50">·</span>
+                            <span className="inline-flex items-center gap-1">💬 {post.commentCount}</span>
                           </>
                         )}
                       </div>
