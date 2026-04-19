@@ -2,11 +2,12 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
-import { useTranslations } from "next-intl"
+import { useTranslations, useLocale } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { ChevronLeft, EyeOff, Eye, Send } from "lucide-react"
-import { Thread, ThreadItemData } from "@/components/thread/Thread"
+import { formatDistanceToNow } from "date-fns"
+import { ko, enUS } from "date-fns/locale"
 
 interface Message {
   id: number
@@ -36,6 +37,8 @@ export function ConversationView({ conversationId, self }: Props) {
   const t = useTranslations('mypage.messagesThread')
   const tMessages = useTranslations('mypage.messages')
   const tc = useTranslations('common')
+  const locale = useLocale()
+  const dfLocale = locale === 'ko' ? ko : enUS
   const router = useRouter()
 
   const [meta, setMeta] = useState<ConversationMeta | null>(null)
@@ -53,7 +56,7 @@ export function ConversationView({ conversationId, self }: Props) {
     fetch(`/api/messages/${conversationId}/read`, { method: 'PUT' }).catch(() => {})
   }, [conversationId])
 
-  // initial load
+  // Initial load
   useEffect(() => {
     let cancelled = false
     ;(async () => {
@@ -79,12 +82,56 @@ export function ConversationView({ conversationId, self }: Props) {
     return () => { cancelled = true }
   }, [conversationId, markRead, router])
 
-  // No polling — traditional 쪽지 style. New messages appear only on
-  // page mount or after the user sends one (see send()). Header Bell
-  // notification count updates on route change, which is the cue that
-  // a new message has arrived.
+  // Polling for new messages — scoped to this page only.
+  // Pauses when the tab is not visible (no background polling).
+  useEffect(() => {
+    if (loading) return
+    let timer: ReturnType<typeof setInterval> | null = null
+    const poll = async () => {
+      if (messages.length === 0) return
+      const lastId = messages[messages.length - 1].id
+      const res = await fetch(`/api/messages/${conversationId}?after=${lastId}`)
+      if (!res.ok) return
+      const data = await res.json()
+      if (data.messages.length > 0) {
+        const el = scrollRef.current
+        const nearBottom = el ? (el.scrollHeight - el.scrollTop - el.clientHeight < 200) : true
+        setMessages(prev => [...prev, ...data.messages])
+        markRead()
+        if (nearBottom) {
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              const el2 = scrollRef.current
+              if (el2) el2.scrollTo({ top: el2.scrollHeight })
+            })
+          })
+        }
+      }
+    }
+    const start = () => {
+      if (timer) return
+      timer = setInterval(poll, 5000)
+    }
+    const stop = () => {
+      if (timer) { clearInterval(timer); timer = null }
+    }
+    if (document.visibilityState === 'visible') start()
+    const onVis = () => {
+      if (document.visibilityState === 'visible') {
+        poll() // immediate catch-up on re-focus
+        start()
+      } else {
+        stop()
+      }
+    }
+    document.addEventListener('visibilitychange', onVis)
+    return () => {
+      document.removeEventListener('visibilitychange', onVis)
+      stop()
+    }
+  }, [loading, messages, conversationId, markRead])
 
-  // load earlier when the top sentinel appears
+  // Load earlier when the top sentinel appears
   useEffect(() => {
     if (loading || !hasMore) return
     const sentinel = topSentinelRef.current
@@ -128,8 +175,6 @@ export function ConversationView({ conversationId, self }: Props) {
       })
       if (!res.ok) return
       setDraft('')
-      // One-shot refetch to pick up the canonical server row (with id +
-      // createdAt) for the message we just sent. Not polling.
       setTimeout(async () => {
         const lastId = messages[messages.length - 1]?.id ?? 0
         const r2 = await fetch(`/api/messages/${conversationId}?after=${lastId}`)
@@ -166,16 +211,6 @@ export function ConversationView({ conversationId, self }: Props) {
     return <div className="py-12 text-center text-muted-foreground">{tc('loading')}</div>
   }
 
-  // Map Message → ThreadItemData for the generic Thread component.
-  const threadItems: ThreadItemData[] = messages.map(m => ({
-    id: m.id,
-    author: m.senderId === self.id
-      ? { id: self.id, nickname: self.nickname, image: self.image }
-      : { id: meta.opponent.id, nickname: meta.opponent.nickname, image: meta.opponent.image },
-    content: m.content,
-    createdAt: m.createdAt,
-  }))
-
   return (
     <div className="flex flex-col h-[calc(100vh-64px)] md:h-[70vh] md:max-h-[720px] md:border md:rounded-lg md:overflow-hidden md:my-4">
       {/* Header */}
@@ -198,17 +233,32 @@ export function ConversationView({ conversationId, self }: Props) {
         </Button>
       </div>
 
-      {/* Message list — rendered by the shared Thread primitive */}
-      <Thread
-        ref={scrollRef}
-        items={threadItems}
-        isMine={item => item.author.id === self.id}
-        header={hasMore ? (
-          <div ref={topSentinelRef} className="text-center text-xs text-muted-foreground py-2">
-            {tc('loading')}
-          </div>
-        ) : null}
-      />
+      {/* Messages */}
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
+        {hasMore && <div ref={topSentinelRef} className="text-center text-xs text-muted-foreground py-2">{tc('loading')}</div>}
+        {messages.map(m => {
+          const mine = m.senderId === self.id
+          return (
+            <div key={m.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
+              <div className="max-w-[75%]">
+                <div
+                  className={`px-3 py-2 rounded-2xl text-sm whitespace-pre-wrap break-words ${
+                    mine ? 'bg-primary text-primary-foreground rounded-br-sm' : 'bg-muted text-foreground rounded-bl-sm'
+                  }`}
+                >
+                  {m.content}
+                </div>
+                <div
+                  className={`text-[10px] text-muted-foreground mt-0.5 ${mine ? 'text-right' : 'text-left'}`}
+                  title={new Date(m.createdAt).toLocaleString(locale)}
+                >
+                  {formatDistanceToNow(new Date(m.createdAt), { addSuffix: true, locale: dfLocale })}
+                </div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
 
       {/* Input */}
       <form onSubmit={send} className="p-3 border-t flex items-end gap-2">
