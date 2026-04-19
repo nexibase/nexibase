@@ -272,16 +272,16 @@ export default function BoardListPage() {
                         <span>{formatDate(post.createdAt)}</span>
                         <span className="opacity-50">·</span>
                         <span className="inline-flex items-center gap-1"><Eye className="h-3 w-3" />{post.viewCount}</span>
-                        {board.useReaction && post.likeCount > 0 && (
-                          <>
-                            <span className="opacity-50">·</span>
-                            <span className="inline-flex items-center gap-1"><ThumbsUp className="h-3 w-3" />{post.likeCount}</span>
-                          </>
-                        )}
                         {board.useComment && post.commentCount > 0 && (
                           <>
                             <span className="opacity-50">·</span>
                             <span className="inline-flex items-center gap-1">💬 {post.commentCount}</span>
+                          </>
+                        )}
+                        {board.useReaction && post.likeCount > 0 && (
+                          <>
+                            <span className="opacity-50">·</span>
+                            <span className="inline-flex items-center gap-1"><ThumbsUp className="h-3 w-3" />{post.likeCount}</span>
                           </>
                         )}
                       </div>
@@ -390,16 +390,16 @@ export default function BoardListPage() {
                         <span>{formatDate(post.createdAt)}</span>
                         <span className="opacity-50">·</span>
                         <span className="inline-flex items-center gap-1"><Eye className="h-3 w-3" />{post.viewCount}</span>
-                        {board.useReaction && post.likeCount > 0 && (
-                          <>
-                            <span className="opacity-50">·</span>
-                            <span className="inline-flex items-center gap-1"><ThumbsUp className="h-3 w-3" />{post.likeCount}</span>
-                          </>
-                        )}
                         {board.useComment && post.commentCount > 0 && (
                           <>
                             <span className="opacity-50">·</span>
                             <span className="inline-flex items-center gap-1">💬 {post.commentCount}</span>
+                          </>
+                        )}
+                        {board.useReaction && post.likeCount > 0 && (
+                          <>
+                            <span className="opacity-50">·</span>
+                            <span className="inline-flex items-center gap-1"><ThumbsUp className="h-3 w-3" />{post.likeCount}</span>
                           </>
                         )}
                       </div>
