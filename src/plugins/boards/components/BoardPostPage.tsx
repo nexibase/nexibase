@@ -615,7 +615,7 @@ export default function BoardPostPage() {
 
   return (
     <UserLayout>
-      <div className="max-w-4xl mx-auto sm:px-4 py-2 sm:py-6">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-3 sm:py-6">
         {/* Board navigation */}
         <div className="flex items-center justify-between mb-4 sm:mb-6 px-2 sm:px-0">
           <div className="flex items-center gap-2 min-w-0">
