@@ -106,6 +106,7 @@ export function MyPageLayout({ children }: { children: React.ReactNode }) {
       }
 
       items.push({ label: t('notifications.label'), icon: 'Bell', path: '/mypage/notifications' })
+      items.push({ label: t('messages.label'), icon: 'MessageSquare', path: '/mypage/messages' })
       items.push({ label: t('notificationSettings'), icon: 'Settings', path: '/mypage/settings/notifications' })
       setNavItems(items)
     }).finally(() => setLoading(false))

@@ -27,6 +27,7 @@ const FILTERS = [
   { id: 'post_comment', typeParam: 'post_comment' },
   { id: 'comment_reply',typeParam: 'comment_reply' },
   { id: 'mention',      typeParam: 'mention' },
+  { id: 'direct_message', typeParam: 'direct_message' },
   { id: 'admin_message',typeParam: 'admin_message' },
   { id: 'order_status', typeParam: 'order_status' },
 ] as const
@@ -40,6 +41,7 @@ function iconFor(type: string) {
     case 'post_comment':  return <MessageSquare className="h-4 w-4" />
     case 'comment_reply': return <Reply className="h-4 w-4" />
     case 'mention':       return <AtSign className="h-4 w-4" />
+    case 'direct_message':return <MessageSquare className="h-4 w-4" />
     case 'admin_message': return <Megaphone className="h-4 w-4" />
     case 'order_status':  return <Package className="h-4 w-4" />
     default:              return <Bell className="h-4 w-4" />
