@@ -17,17 +17,16 @@ interface CreateNotificationParams {
  * in-app notification of the given type should be written.
  *
  * Rules:
- *   - ADMIN_MESSAGE bypasses preferences (always delivered in-app).
  *   - Types in PREFERENCE_CONTROLLED_TYPES respect the matching
  *     boolean field. Missing row = default (all true).
- *   - Any unlisted custom type (e.g. legacy 'review_reply') defaults to
- *     delivered (backwards compatible).
+ *   - Any unlisted custom type (e.g. DIRECT_MESSAGE, legacy
+ *     'review_reply', 'admin_message') defaults to delivered
+ *     (backwards compatible; in-app delivery mandatory for DM).
  */
 export async function shouldNotify(
   userId: number,
   type: NotificationTypeValue | string,
 ): Promise<boolean> {
-  if (type === NotificationType.ADMIN_MESSAGE) return true
   if (!PREFERENCE_CONTROLLED_TYPES.includes(type as NotificationTypeValue)) {
     return true
   }
