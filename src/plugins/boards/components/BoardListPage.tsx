@@ -239,29 +239,53 @@ export default function BoardListPage() {
           </div>
         </div>
 
-        <Card>
-          <CardContent className="p-0">
+        <div className="divide-y divide-border">
             {/* Notices */}
             {notices.length > 0 && (
-              <div className="border-b bg-muted/30">
-                {notices.map((post) => (
-                  <div
-                    key={post.id}
-                    onClick={(e) => handlePostClick(post, e)}
-                    className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 cursor-pointer border-b last:border-b-0 transition-colors"
-                  >
-                    <Badge variant="destructive" className="shrink-0">
-                      <Pin className="h-3 w-3 mr-1" />
-                      {t('noticeBadge')}
-                    </Badge>
-                    <span className="font-medium truncate flex-1">
-                      {post.title}
-                    </span>
-                    <span className="text-sm text-muted-foreground shrink-0">
-                      {formatDate(post.createdAt)}
-                    </span>
-                  </div>
-                ))}
+              <div className="space-y-2 py-3">
+                {notices.map((post) => {
+                  const postUrl = post.isSecret && post.author.id !== user?.id && !isAdmin ? '#' : `/boards/${slug}/${post.id}`
+                  return (
+                    <Link
+                      key={post.id}
+                      href={postUrl}
+                      className="block rounded-lg bg-red-500/5 hover:bg-red-500/10 transition-colors px-3 py-2.5"
+                      onClick={(e) => {
+                        if (post.isSecret && post.author.id !== user?.id && !isAdmin) {
+                          e.preventDefault()
+                          alert(t('secretPostAlert'))
+                        }
+                      }}
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <Badge variant="destructive" className="shrink-0 text-[11px] px-1.5 py-0">
+                          <Pin className="h-3 w-3 mr-1" />
+                          {t('noticeBadge')}
+                        </Badge>
+                        <span className="font-semibold text-[14px] truncate flex-1">{post.title}</span>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[13px] text-muted-foreground">
+                        <span>{post.author.nickname}</span>
+                        <span className="opacity-50">·</span>
+                        <span>{formatDate(post.createdAt)}</span>
+                        <span className="opacity-50">·</span>
+                        <span className="inline-flex items-center gap-1"><Eye className="h-3 w-3" />{post.viewCount}</span>
+                        {board.useReaction && post.likeCount > 0 && (
+                          <>
+                            <span className="opacity-50">·</span>
+                            <span className="inline-flex items-center gap-1"><ThumbsUp className="h-3 w-3" />{post.likeCount}</span>
+                          </>
+                        )}
+                        {board.useComment && post.commentCount > 0 && (
+                          <>
+                            <span className="opacity-50">·</span>
+                            <span className="inline-flex items-center gap-1">💬 {post.commentCount}</span>
+                          </>
+                        )}
+                      </div>
+                    </Link>
+                  )
+                })}
               </div>
             )}
 
@@ -415,8 +439,7 @@ export default function BoardListPage() {
                 </Button>
               </div>
             )}
-          </CardContent>
-        </Card>
+        </div>
 
         {/* Write button (bottom) */}
         {canWrite && posts.length > 0 && (
