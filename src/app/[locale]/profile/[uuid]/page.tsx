@@ -4,8 +4,10 @@ import { useState, useEffect } from "react"
 import { use } from "react"
 import { useTranslations } from "next-intl"
 import { Card, CardContent } from "@/components/ui/card"
-import { User, FileText, MessageSquare, Calendar, Loader2 } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { FileText, MessageSquare, Calendar, Loader2, Send } from "lucide-react"
 import Link from "next/link"
+import { SendMessageDialog } from "@/components/messaging/SendMessageDialog"
 
 interface UserProfile {
   id: number
@@ -24,6 +26,8 @@ export default function ProfilePage({ params }: { params: Promise<{ uuid: string
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [imgError, setImgError] = useState(false)
+  const [me, setMe] = useState<{ id: number } | null>(null)
+  const [sendOpen, setSendOpen] = useState(false)
 
   useEffect(() => {
     fetch(`/api/members/${uuid}`)
@@ -33,6 +37,10 @@ export default function ProfilePage({ params }: { params: Promise<{ uuid: string
       })
       .finally(() => setLoading(false))
   }, [uuid])
+
+  useEffect(() => {
+    fetch('/api/me').then(r => r.ok ? r.json() : null).then(d => setMe(d?.user ?? null))
+  }, [])
 
   const formatDate = (d: string) =>
     new Date(d).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })
@@ -91,8 +99,24 @@ export default function ProfilePage({ params }: { params: Promise<{ uuid: string
             <Calendar className="h-4 w-4" />
             <span>{formatDate(profile.createdAt)} {t('joinedSuffix')}</span>
           </div>
+          {me && profile && me.id !== profile.id && (
+            <div className="mt-6 flex justify-center">
+              <Button onClick={() => setSendOpen(true)}>
+                <Send className="h-4 w-4 mr-1" />
+                {t('sendMessage')}
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
+      {me && profile && me.id !== profile.id && (
+        <SendMessageDialog
+          open={sendOpen}
+          onOpenChange={setSendOpen}
+          userId={profile.id}
+          userLabel={profile.nickname}
+        />
+      )}
     </div>
   )
 }
