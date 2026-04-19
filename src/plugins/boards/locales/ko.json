@@ -1,6 +1,8 @@
 {
   "boards": {
     "title": "게시판",
+    "loadMore": "더 보기",
+    "loading": "로딩 중...",
     "list": "목록",
     "write": "글쓰기",
     "author": "작성자",

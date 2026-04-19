@@ -1,6 +1,8 @@
 {
   "boards": {
     "title": "Boards",
+    "loadMore": "Load more",
+    "loading": "Loading...",
     "list": "List",
     "write": "Write",
     "author": "Author",

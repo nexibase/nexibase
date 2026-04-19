@@ -82,6 +82,7 @@ export default function BoardListPage() {
   const [error, setError] = useState<string | null>(null)
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+  const [loadingMore, setLoadingMore] = useState(false)
   const isLoggedIn = !!user
   const isAdmin = user?.role === 'admin'
 
@@ -99,14 +100,15 @@ export default function BoardListPage() {
   }, [])
 
   // Fetch post list
-  const fetchPosts = useCallback(async () => {
-    setLoading(true)
+  const fetchPosts = useCallback(async (targetPage: number, append: boolean) => {
+    if (append) {
+      setLoadingMore(true)
+    } else {
+      setLoading(true)
+    }
     setError(null)
     try {
-      const params = new URLSearchParams({
-        page: page.toString()
-      })
-
+      const params = new URLSearchParams({ page: targetPage.toString() })
       const response = await fetch(`/api/boards/${slug}/posts?${params}`)
       const data = await response.json()
 
@@ -123,8 +125,8 @@ export default function BoardListPage() {
 
       if (data.success) {
         setBoard(data.board)
-        setPosts(data.posts)
-        setNotices(data.notices || [])
+        setPosts(prev => append ? [...prev, ...data.posts] : data.posts)
+        if (!append) setNotices(data.notices || [])
         setTotalPages(data.pagination.totalPages)
       }
     } catch (error) {
@@ -132,15 +134,17 @@ export default function BoardListPage() {
       setError(t('loadError'))
     } finally {
       setLoading(false)
+      setLoadingMore(false)
     }
-  }, [slug, page, t])
+  }, [slug, t])
 
   useEffect(() => {
     fetchUser()
   }, [fetchUser])
 
   useEffect(() => {
-    fetchPosts()
+    setPage(1)
+    fetchPosts(1, false)
   }, [fetchPosts])
 
   // Date format
@@ -404,27 +408,27 @@ export default function BoardListPage() {
               </div>
             )}
 
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex justify-center items-center gap-2 py-4 border-t">
+            {/* Load more */}
+            {page < totalPages && (
+              <div className="flex justify-center py-4">
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setPage(p => Math.max(1, p - 1))}
-                  disabled={page === 1}
+                  onClick={() => {
+                    const next = page + 1
+                    setPage(next)
+                    fetchPosts(next, true)
+                  }}
+                  disabled={loadingMore}
                 >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <span className="text-sm text-muted-foreground px-4">
-                  {page} / {totalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                  disabled={page === totalPages}
-                >
-                  <ChevronRight className="h-4 w-4" />
+                  {loadingMore ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      {t('loading')}
+                    </>
+                  ) : (
+                    t('loadMore')
+                  )}
                 </Button>
               </div>
             )}
