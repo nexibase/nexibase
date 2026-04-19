@@ -750,7 +750,7 @@ function UsersPageContent() {
                                     size="icon"
                                     className="h-8 w-8"
                                     onClick={() => setSendDialogUser(user)}
-                                    title={t('sendNotification')}
+                                    title={t('messages.send.title')}
                                   >
                                     <Send className="h-4 w-4" />
                                   </Button>
