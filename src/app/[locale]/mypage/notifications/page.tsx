@@ -182,7 +182,7 @@ export default function NotificationsPage() {
                     <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{n.message}</p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs text-muted-foreground" title={new Date(n.createdAt).toLocaleString(locale)}>
                       {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true, locale: dfLocale })}
                     </span>
                     <button

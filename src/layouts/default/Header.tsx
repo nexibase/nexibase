@@ -12,7 +12,9 @@ import Image from "next/image"
 import { useRouter, usePathname } from "next/navigation"
 import { headerWidgets } from "@/lib/widgets/_generated-header-widgets"
 import { useSite } from "@/lib/SiteContext"
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
+import { formatDistanceToNow } from 'date-fns'
+import { ko, enUS } from 'date-fns/locale'
 
 interface Notification {
   id: number
@@ -27,6 +29,8 @@ interface Notification {
 export default function Header() {
   const { user, setUser, settings, headerMenus, isLoading } = useSite()
   const t = useTranslations('header')
+  const locale = useLocale()
+  const dfLocale = locale === 'ko' ? ko : enUS
   const [mounted, setMounted] = useState(false)
   const [moreMenuOpen, setMoreMenuOpen] = useState(false)
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null)
@@ -292,12 +296,10 @@ export default function Header() {
                                   <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
                                     {notification.message}
                                   </p>
-                                  <p className="text-xs text-muted-foreground mt-1">
-                                    {new Date(notification.createdAt).toLocaleDateString('ko-KR', {
-                                      month: 'short',
-                                      day: 'numeric',
-                                      hour: '2-digit',
-                                      minute: '2-digit'
+                                  <p className="text-xs text-muted-foreground mt-1" title={new Date(notification.createdAt).toLocaleString(locale)}>
+                                    {formatDistanceToNow(new Date(notification.createdAt), {
+                                      addSuffix: true,
+                                      locale: dfLocale,
                                     })}
                                   </p>
                                 </div>
