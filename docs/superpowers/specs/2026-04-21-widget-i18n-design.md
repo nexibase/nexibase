@@ -46,13 +46,11 @@ Structural changes required:
 No new keys needed — reuses existing `widgets.*` keys:
 - `widgets.welcome` → "Welcome" badge
 - `widgets.welcomeUser` (`{nickname}`) → "Welcome back, X!"
-- `widgets.welcomeSite` (`{siteName}`) → "Welcome to NexiBase"
+- `widgets.welcomeSite` (`{siteName}`) → "Welcome to NexiBase" — pass literal `"NexiBase"` as the `siteName` value (this repo is the nexibase.com marketing site; no need to fetch the brand from settings)
 - `widgets.defaultDesc` → fallback description
 - `widgets.startBtn` → "Get started"
 - `widgets.learnMore` → "Learn more"
 - `GitHub` button label: **stays hardcoded** (brand name)
-
-`siteName` can be derived from the `site_name` setting already fetched, or fall back to `NexiBase`.
 
 ### `src/widgets/NexibaseHomeHero.tsx`
 Same treatment as `NexibaseHero.tsx`. Reuses same keys.
