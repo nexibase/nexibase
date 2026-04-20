@@ -785,6 +785,8 @@
     "siteBasicSettings": "사이트 기본 설정",
     "siteBasicDesc": "사이트의 기본 정보를 설정합니다",
     "siteName": "사이트 이름",
+    "siteLocale": "사이트 언어",
+    "siteLocaleDescription": "관리자 화면과 공개 사이트 전반에 적용됩니다. 저장 시 페이지가 새로고침됩니다.",
     "siteDescription": "사이트 설명",
     "siteDescriptionPlaceholder": "사이트에 대한 간단한 설명을 입력하세요",
     "seoMetaDesc": "SEO 메타 태그에 사용됩니다",

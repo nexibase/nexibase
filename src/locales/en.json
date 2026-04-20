@@ -785,6 +785,8 @@
     "siteBasicSettings": "Site basic settings",
     "siteBasicDesc": "Configure basic site information",
     "siteName": "Site name",
+    "siteLocale": "Site language",
+    "siteLocaleDescription": "Applies to the admin and the public site. The page will reload when saved.",
     "siteDescription": "Site description",
     "siteDescriptionPlaceholder": "Enter a short description of the site",
     "seoMetaDesc": "Used in SEO meta tags",
