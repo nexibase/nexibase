@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { Sidebar } from "@/components/admin/Sidebar"
@@ -35,6 +35,7 @@ interface FooterLink {
 interface SettingsData {
   // Site basics
   site_name: string
+  site_locale: string
   site_description: string
   site_logo: string
 
@@ -74,6 +75,7 @@ interface LayoutInfo {
 
 const DEFAULT_SETTINGS: SettingsData = {
   site_name: 'NexiBase',
+  site_locale: 'en',
   site_description: '',
   site_logo: '',
   signup_enabled: 'true',
@@ -100,6 +102,7 @@ export default function SettingsPage() {
   const [hasSettings, setHasSettings] = useState(false)
   const [layouts, setLayouts] = useState<LayoutInfo[]>([])
   const [themes, setThemes] = useState<ThemeInfo[]>([])
+  const localeOnLoadRef = useRef<string | null>(null)
 
   // Local state for the Google Analytics section
   const [gaJsonEditing, setGaJsonEditing] = useState(false)
@@ -177,6 +180,7 @@ export default function SettingsPage() {
         }
         setSettings(newSettings)
         setFooterLinks(parseFooterLinks(newSettings.footer_links))
+        localeOnLoadRef.current = newSettings.site_locale
       }
     } catch (error) {
       console.error('failed to fetch settings:', error)
