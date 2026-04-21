@@ -36,11 +36,6 @@ interface GitHubRelease {
   html_url?: string
 }
 
-interface GitHubRepo {
-  stargazers_count?: number
-}
-
-
 export default function NexibaseLandingHero() {
   const t = useTranslations("widgets.landingHero")
   const tRel = useTranslations("widgets.landingHero.relativeTime")
@@ -82,30 +77,12 @@ export default function NexibaseLandingHero() {
   useEffect(() => {
     let cancelled = false
 
-    fetch("https://api.github.com/repos/nexibase/nexibase")
+    fetch("/api/github-stats")
       .then(res => (res.ok ? res.json() : null))
-      .then((data: GitHubRepo | null) => {
+      .then((data: { stars: number | null; release: GitHubRelease | null } | null) => {
         if (cancelled || !data) return
-        if (typeof data.stargazers_count === "number") {
-          setStars(data.stargazers_count)
-        }
-      })
-      .catch(() => {})
-
-    fetch("https://api.github.com/repos/nexibase/nexibase/releases/latest")
-      .then(res => (res.ok ? res.json() : null))
-      .then((data: GitHubRelease | null) => {
-        if (cancelled) return
-        if (data) {
-          setRelease(data)
-          return
-        }
-        return fetch("https://api.github.com/repos/nexibase/nexibase/tags")
-          .then(res => (res.ok ? res.json() : null))
-          .then((tags: Array<{ name?: string }> | null) => {
-            if (cancelled || !tags?.[0]?.name) return
-            setRelease({ tag_name: tags[0].name })
-          })
+        if (typeof data.stars === "number") setStars(data.stars)
+        if (data.release) setRelease(data.release)
       })
       .catch(() => {})
 
