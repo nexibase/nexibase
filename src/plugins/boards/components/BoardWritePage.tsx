@@ -16,6 +16,7 @@ import {
   ArrowLeft,
   Lock,
   Paperclip,
+  Pin,
   X,
   Upload,
   GripVertical,
@@ -33,6 +34,7 @@ interface Board {
 interface User {
   id: string
   name: string
+  role?: string
 }
 
 interface AttachmentFile {
@@ -77,6 +79,8 @@ export default function BoardWritePage() {
   const [title, setTitle] = useState("")
   const [content, setContent] = useState("")
   const [isSecret, setIsSecret] = useState(false)
+  const [isNotice, setIsNotice] = useState(false)
+  const isAdmin = user?.role === 'admin'
 
   // File attachment state
   const [attachments, setAttachments] = useState<AttachmentFile[]>([])
@@ -242,6 +246,7 @@ export default function BoardWritePage() {
           title: title.trim(),
           content: content.trim(),
           isSecret,
+          isNotice,
           attachments // 첨부파일 정보 포함
         })
       })
@@ -447,6 +452,20 @@ export default function BoardWritePage() {
                   <Label htmlFor="isSecret" className="flex items-center gap-1 cursor-pointer">
                     <Lock className="h-4 w-4" />
                     {t('post.secret')}
+                  </Label>
+                </div>
+              )}
+
+              {isAdmin && (
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="isNotice"
+                    checked={isNotice}
+                    onCheckedChange={(checked) => setIsNotice(checked === true)}
+                  />
+                  <Label htmlFor="isNotice" className="flex items-center gap-1 cursor-pointer">
+                    <Pin className="h-4 w-4" />
+                    {t('post.notice')}
                   </Label>
                 </div>
               )}

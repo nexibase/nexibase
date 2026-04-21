@@ -16,6 +16,7 @@ import {
   ArrowLeft,
   Lock,
   Paperclip,
+  Pin,
   X,
   Upload,
   GripVertical,
@@ -54,7 +55,13 @@ interface Post {
   title: string
   content: string
   isSecret: boolean
+  isNotice: boolean
   attachments?: ExistingAttachment[]
+}
+
+interface User {
+  id: string
+  role?: string
 }
 
 // Format file size
@@ -84,12 +91,15 @@ export default function BoardEditPage() {
 
   const [board, setBoard] = useState<Board | null>(null)
   const [post, setPost] = useState<Post | null>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [title, setTitle] = useState("")
   const [content, setContent] = useState("")
   const [isSecret, setIsSecret] = useState(false)
+  const [isNotice, setIsNotice] = useState(false)
+  const isAdmin = user?.role === 'admin'
 
   // File attachment state
   const [attachments, setAttachments] = useState<AttachmentFile[]>([])
@@ -100,6 +110,19 @@ export default function BoardEditPage() {
   // Drag state
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await fetch('/api/me')
+        const data = await res.json()
+        if (data.user) setUser(data.user)
+      } catch {
+        // ignore — admin-only UI will stay hidden
+      }
+    }
+    fetchUser()
+  }, [])
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -117,6 +140,7 @@ export default function BoardEditPage() {
         setTitle(data.post.title)
         setContent(data.post.content)
         setIsSecret(data.post.isSecret)
+        setIsNotice(data.post.isNotice ?? false)
 
         // Load existing attachments
         if (data.post.attachments && data.post.attachments.length > 0) {
@@ -248,6 +272,7 @@ export default function BoardEditPage() {
           title: title.trim(),
           content: content.trim(),
           isSecret,
+          isNotice,
           attachments: attachments.filter(a => a.isNew).map(a => ({
             filename: a.filename,
             storedName: a.storedName,
@@ -466,6 +491,20 @@ export default function BoardEditPage() {
                   <Label htmlFor="isSecret" className="flex items-center gap-1 cursor-pointer">
                     <Lock className="h-4 w-4" />
                     {t('post.secret')}
+                  </Label>
+                </div>
+              )}
+
+              {isAdmin && (
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="isNotice"
+                    checked={isNotice}
+                    onCheckedChange={(checked) => setIsNotice(checked === true)}
+                  />
+                  <Label htmlFor="isNotice" className="flex items-center gap-1 cursor-pointer">
+                    <Pin className="h-4 w-4" />
+                    {t('post.notice')}
                   </Label>
                 </div>
               )}
