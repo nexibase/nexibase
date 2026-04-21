@@ -89,8 +89,17 @@ export default function NexibaseLandingHero() {
     fetch("https://api.github.com/repos/nexibase/nexibase/releases/latest")
       .then(res => (res.ok ? res.json() : null))
       .then((data: GitHubRelease | null) => {
-        if (cancelled || !data) return
-        setRelease(data)
+        if (cancelled) return
+        if (data) {
+          setRelease(data)
+          return
+        }
+        return fetch("https://api.github.com/repos/nexibase/nexibase/tags")
+          .then(res => (res.ok ? res.json() : null))
+          .then((tags: Array<{ name?: string }> | null) => {
+            if (cancelled || !tags?.[0]?.name) return
+            setRelease({ tag_name: tags[0].name })
+          })
       })
       .catch(() => {})
 
