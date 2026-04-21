@@ -46,6 +46,7 @@
     "hoursAgo": "{hours}시간 전",
     "minutesAgo": "{minutes}분 전",
     "justNow": "방금 전",
+    "attachmentsLabel": "첨부파일 있음",
     "post": {
       "title": "제목",
       "titleRequired": "제목을 입력해 주세요.",

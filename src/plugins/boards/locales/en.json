@@ -46,6 +46,7 @@
     "hoursAgo": "{hours}h ago",
     "minutesAgo": "{minutes}m ago",
     "justNow": "Just now",
+    "attachmentsLabel": "Has attachments",
     "post": {
       "title": "Title",
       "titleRequired": "Please enter a title.",

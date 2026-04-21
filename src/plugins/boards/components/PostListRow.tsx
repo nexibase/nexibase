@@ -75,7 +75,7 @@ export function PostListRow({
   }
 
   // Grid templates:
-  //   mobile (default): 1fr / "title" "meta"
+  //   mobile (default): 1fr / "title"  — meta is nested inside title cell
   //   desktop (md+):   50px 1fr 90px 60px 50px 50px  (with-number)
   //                     1fr 90px 60px 50px 50px       (hide-number)
   const showNumberCol = board.showPostNumber
@@ -89,7 +89,7 @@ export function PostListRow({
       onClick={onClick}
       className={[
         "grid gap-x-3 gap-y-1 items-center px-3 py-2.5 border-b border-border hover:bg-muted/40 transition-colors",
-        "[grid-template-columns:1fr] [grid-template-areas:'title'_'meta']",
+        "[grid-template-columns:1fr] [grid-template-areas:'title']",
         "md:px-2 md:py-2",
         gridDesktop,
         post.isNotice ? "bg-amber-50 dark:bg-amber-950/20" : "",
@@ -167,7 +167,7 @@ export function PostListRow({
           {post._count && post._count.attachments > 0 && (
             <>
               <span className="opacity-50">·</span>
-              <Paperclip className="h-3 w-3" />
+              <Paperclip className="h-3 w-3" aria-label={t('attachmentsLabel')} />
             </>
           )}
         </div>
