@@ -243,7 +243,20 @@ export default function BoardListPage() {
         </div>
 
         <div className="divide-y divide-border">
-            {/* Notices + posts unified grid */}
+            {/* Notices — render in both list and gallery modes */}
+            {notices.map(notice => (
+              <PostListRow
+                key={`n-${notice.id}`}
+                post={notice}
+                board={board}
+                displayNumber={null}
+                viewer={user}
+                isAdmin={isAdmin}
+                formatDate={formatDate}
+                onSecretBlocked={() => alert(t('secretPostAlert'))}
+              />
+            ))}
+
             {board.displayType === 'list' ? (
               <div className="divide-y-0">
                 {/* Desktop header row */}
@@ -266,20 +279,6 @@ export default function BoardListPage() {
                   <div className="text-center [grid-area:likes]">{t('colLikes')}</div>
                 </div>
 
-                {/* Notices */}
-                {notices.map(notice => (
-                  <PostListRow
-                    key={`n-${notice.id}`}
-                    post={notice}
-                    board={board}
-                    displayNumber={null}
-                    viewer={user}
-                    isAdmin={isAdmin}
-                    formatDate={formatDate}
-                    onSecretBlocked={() => alert(t('secretPostAlert'))}
-                  />
-                ))}
-
                 {/* Regular posts (or empty state when none) */}
                 {posts.length === 0 ? (
                   <div className="py-12 text-center text-muted-foreground">
@@ -291,11 +290,7 @@ export default function BoardListPage() {
                       key={post.id}
                       post={post}
                       board={board}
-                      displayNumber={
-                        board.showPostNumber
-                          ? total - (page - 1) * board.postsPerPage - i
-                          : null
-                      }
+                      displayNumber={board.showPostNumber ? total - i : null}
                       viewer={user}
                       isAdmin={isAdmin}
                       formatDate={formatDate}
