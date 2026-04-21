@@ -50,6 +50,8 @@ interface SettingsData {
   site_name: string
   site_locale: string
   site_description: string
+  site_url: string
+  site_keywords: string
   site_logo: string
 
   // Member settings
@@ -90,6 +92,8 @@ const DEFAULT_SETTINGS: SettingsData = {
   site_name: 'NexiBase',
   site_locale: 'en',
   site_description: '',
+  site_url: '',
+  site_keywords: '',
   site_logo: '',
   signup_enabled: 'true',
   email_verification_required: 'false',
@@ -225,6 +229,17 @@ export default function SettingsPage() {
 
   // Save settings
   const handleSave = async () => {
+    // Client-side validation
+    if (!settings.site_name.trim()) {
+      alert(t('siteNameRequired'))
+      return
+    }
+    const urlValue = settings.site_url.trim()
+    if (urlValue !== '' && !/^https?:\/\//.test(urlValue)) {
+      alert(t('siteUrlInvalid'))
+      return
+    }
+
     setSaving(true)
     try {
       // Serialize footerLinks to a JSON string before saving
@@ -250,6 +265,14 @@ export default function SettingsPage() {
           return
         }
       } else {
+        if (data.error === 'site_name_required') {
+          alert(t('siteNameRequired'))
+          return
+        }
+        if (data.error === 'site_url_invalid') {
+          alert(t('siteUrlInvalid'))
+          return
+        }
         alert(data.error || t('settingsSaveFailed'))
       }
     } catch (error) {
@@ -387,6 +410,20 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="grid gap-2">
+                  <Label htmlFor="site_url">{t('siteUrl')}</Label>
+                  <Input
+                    id="site_url"
+                    type="url"
+                    value={settings.site_url}
+                    onChange={(e) => handleChange('site_url', e.target.value)}
+                    placeholder={t('siteUrlPlaceholder')}
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    {t('siteUrlDescription')}
+                  </p>
+                </div>
+
+                <div className="grid gap-2">
                   <Label htmlFor="site_locale">{t('siteLocale')}</Label>
                   <Select
                     value={settings.site_locale}
@@ -419,6 +456,19 @@ export default function SettingsPage() {
                   />
                   <p className="text-sm text-muted-foreground">
                     {t('seoMetaDesc')}
+                  </p>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="site_keywords">{t('siteKeywords')}</Label>
+                  <Input
+                    id="site_keywords"
+                    value={settings.site_keywords}
+                    onChange={(e) => handleChange('site_keywords', e.target.value)}
+                    placeholder={t('siteKeywordsPlaceholder')}
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    {t('siteKeywordsDescription')}
                   </p>
                 </div>
 
