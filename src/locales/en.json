@@ -800,6 +800,7 @@
     "seoMetaDesc": "Used in SEO meta tags",
     "siteLogo": "Site logo",
     "logoAlt": "Logo",
+    "delete": "Delete",
     "upload": "Upload",
     "logoUploaded": "Logo uploaded.",
     "logoUploadFailed": "Logo upload failed",
