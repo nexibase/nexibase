@@ -146,19 +146,26 @@ export default function BoardListPage() {
   }, [fetchPosts])
 
   // Date format
+  // Short display in the list: today → HH:MM (24-hour), any older date → MM-DD.
+  // The full datetime is rendered as a tooltip on the <time> element in PostListRow.
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
     const now = new Date()
-    const diff = now.getTime() - date.getTime()
-    const diffDays = Math.floor(diff / (1000 * 60 * 60 * 24))
+    const sameDay =
+      date.getFullYear() === now.getFullYear() &&
+      date.getMonth() === now.getMonth() &&
+      date.getDate() === now.getDate()
 
-    if (diffDays === 0) {
-      return date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
-    } else if (diffDays < 7) {
-      return t('daysAgo', { days: diffDays })
-    } else {
-      return date.toLocaleDateString(locale, { month: 'short', day: 'numeric' })
+    if (sameDay) {
+      return date.toLocaleTimeString(locale, {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      })
     }
+    const mm = String(date.getMonth() + 1).padStart(2, '0')
+    const dd = String(date.getDate()).padStart(2, '0')
+    return `${mm}-${dd}`
   }
 
   // Post click
@@ -242,20 +249,6 @@ export default function BoardListPage() {
         </div>
 
         <div className="divide-y divide-border">
-            {/* Notices — render in both list and gallery modes */}
-            {notices.map(notice => (
-              <PostListRow
-                key={`n-${notice.id}`}
-                post={notice}
-                board={board}
-                displayNumber={null}
-                viewer={user}
-                isAdmin={isAdmin}
-                formatDate={formatDate}
-                onSecretBlocked={() => alert(t('secretPostAlert'))}
-              />
-            ))}
-
             {board.displayType === 'list' ? (
               <div className="divide-y-0">
                 {/* Desktop header row */}
@@ -277,6 +270,20 @@ export default function BoardListPage() {
                   <div className="text-center [grid-area:views]">{t('colViews')}</div>
                   <div className="text-center [grid-area:likes]">{t('colLikes')}</div>
                 </div>
+
+                {/* Notices — rendered between the desktop header and regular posts */}
+                {notices.map(notice => (
+                  <PostListRow
+                    key={`n-${notice.id}`}
+                    post={notice}
+                    board={board}
+                    displayNumber={null}
+                    viewer={user}
+                    isAdmin={isAdmin}
+                    formatDate={formatDate}
+                    onSecretBlocked={() => alert(t('secretPostAlert'))}
+                  />
+                ))}
 
                 {/* Regular posts (or empty state when none) */}
                 {posts.length === 0 ? (

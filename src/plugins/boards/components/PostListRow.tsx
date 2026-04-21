@@ -39,6 +39,18 @@ export interface PostListRowViewer {
   role?: string
 }
 
+// Full datetime string for the date tooltip: YYYY-MM-DD HH:MM:SS (24-hour, local).
+function formatFullDateTime(iso: string): string {
+  const d = new Date(iso)
+  const yyyy = d.getFullYear()
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  const hh = String(d.getHours()).padStart(2, '0')
+  const mi = String(d.getMinutes()).padStart(2, '0')
+  const ss = String(d.getSeconds()).padStart(2, '0')
+  return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`
+}
+
 interface PostListRowProps {
   post: PostListRowData
   board: PostListRowBoard
@@ -149,7 +161,9 @@ export function PostListRow({
             className="text-muted-foreground"
           />
           <span className="opacity-50">·</span>
-          <span>{formatDate(post.createdAt)}</span>
+          <time dateTime={post.createdAt} title={formatFullDateTime(post.createdAt)}>
+            {formatDate(post.createdAt)}
+          </time>
           <span className="opacity-50">·</span>
           <span className="inline-flex items-center gap-1"><Eye className="h-3 w-3" />{post.viewCount}</span>
           {board.useComment && post.commentCount > 0 && (
@@ -184,7 +198,9 @@ export function PostListRow({
         />
       </div>
       <div className="hidden md:block text-center text-[13px] text-muted-foreground tabular-nums [grid-area:date]">
-        {formatDate(post.createdAt)}
+        <time dateTime={post.createdAt} title={formatFullDateTime(post.createdAt)}>
+          {formatDate(post.createdAt)}
+        </time>
       </div>
       <div className="hidden md:block text-center text-[13px] text-muted-foreground tabular-nums [grid-area:views]">
         {post.viewCount}
