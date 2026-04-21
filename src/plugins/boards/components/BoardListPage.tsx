@@ -6,15 +6,13 @@ import Link from "next/link"
 import { useTranslations, useLocale } from 'next-intl'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { UserLayout } from "@/components/layout/UserLayout"
-import { UserNickname } from "@/components/UserNickname"
+import { PostListRow } from "./PostListRow"
 import {
   Loader2,
   Eye,
   ThumbsUp,
   Lock,
-  Pin,
   PenSquare,
   Home,
   ImageIcon,
@@ -245,62 +243,73 @@ export default function BoardListPage() {
         </div>
 
         <div className="divide-y divide-border">
-            {/* Notices */}
-            {notices.length > 0 && (
-              <div className="space-y-2 py-3">
-                {notices.map((post) => {
-                  const postUrl = post.isSecret && post.author.id !== user?.id && !isAdmin ? '#' : `/boards/${slug}/${post.id}`
-                  return (
-                    <Link
-                      key={post.id}
-                      href={postUrl}
-                      className="block rounded-lg bg-red-500/5 hover:bg-red-500/10 transition-colors px-3 py-2.5"
-                      onClick={(e) => {
-                        if (post.isSecret && post.author.id !== user?.id && !isAdmin) {
-                          e.preventDefault()
-                          alert(t('secretPostAlert'))
-                        }
-                      }}
-                    >
-                      <div className="flex items-center gap-2 mb-1">
-                        <Badge variant="destructive" className="shrink-0 text-[11px] px-1.5 py-0">
-                          <Pin className="h-3 w-3 mr-1" />
-                          {t('noticeBadge')}
-                        </Badge>
-                        <span className="font-semibold text-[14px] truncate flex-1">{post.title}</span>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[13px] text-muted-foreground">
-                        <span>{post.author.nickname}</span>
-                        <span className="opacity-50">·</span>
-                        <span>{formatDate(post.createdAt)}</span>
-                        <span className="opacity-50">·</span>
-                        <span className="inline-flex items-center gap-1"><Eye className="h-3 w-3" />{post.viewCount}</span>
-                        {board.useComment && post.commentCount > 0 && (
-                          <>
-                            <span className="opacity-50">·</span>
-                            <span className="inline-flex items-center gap-1">💬 {post.commentCount}</span>
-                          </>
-                        )}
-                        {board.useReaction && post.likeCount > 0 && (
-                          <>
-                            <span className="opacity-50">·</span>
-                            <span className="inline-flex items-center gap-1"><ThumbsUp className="h-3 w-3" />{post.likeCount}</span>
-                          </>
-                        )}
-                      </div>
-                    </Link>
-                  )
-                })}
-              </div>
-            )}
+            {/* Notices + posts unified grid */}
+            {board.displayType === 'list' ? (
+              <div className="divide-y-0">
+                {/* Desktop header row */}
+                <div
+                  className={[
+                    "hidden md:grid gap-x-3 items-center px-2 py-2 bg-muted/50 border-b border-border",
+                    "text-[12px] font-semibold text-muted-foreground",
+                    board.showPostNumber
+                      ? "md:[grid-template-columns:50px_1fr_90px_60px_50px_50px] md:[grid-template-areas:'num_title_author_date_views_likes']"
+                      : "md:[grid-template-columns:1fr_90px_60px_50px_50px] md:[grid-template-areas:'title_author_date_views_likes']",
+                  ].join(" ")}
+                >
+                  {board.showPostNumber && (
+                    <div className="text-center [grid-area:num]">{t('colNumber')}</div>
+                  )}
+                  <div className="text-center [grid-area:title]">{t('colTitle')}</div>
+                  <div className="text-center [grid-area:author]">{t('colAuthor')}</div>
+                  <div className="text-center [grid-area:date]">{t('colDate')}</div>
+                  <div className="text-center [grid-area:views]">{t('colViews')}</div>
+                  <div className="text-center [grid-area:likes]">{t('colLikes')}</div>
+                </div>
 
-            {/* Post list */}
-            {posts.length === 0 ? (
+                {/* Notices */}
+                {notices.map(notice => (
+                  <PostListRow
+                    key={`n-${notice.id}`}
+                    post={notice}
+                    board={board}
+                    displayNumber={null}
+                    viewer={user}
+                    isAdmin={isAdmin}
+                    formatDate={formatDate}
+                    onSecretBlocked={() => alert(t('secretPostAlert'))}
+                  />
+                ))}
+
+                {/* Regular posts (or empty state when none) */}
+                {posts.length === 0 ? (
+                  <div className="py-12 text-center text-muted-foreground">
+                    {t('noPosts')}
+                  </div>
+                ) : (
+                  posts.map((post, i) => (
+                    <PostListRow
+                      key={post.id}
+                      post={post}
+                      board={board}
+                      displayNumber={
+                        board.showPostNumber
+                          ? total - (page - 1) * board.postsPerPage - i
+                          : null
+                      }
+                      viewer={user}
+                      isAdmin={isAdmin}
+                      formatDate={formatDate}
+                      onSecretBlocked={() => alert(t('secretPostAlert'))}
+                    />
+                  ))
+                )}
+              </div>
+            ) : posts.length === 0 ? (
               <div className="py-12 text-center text-muted-foreground">
                 {t('noPosts')}
               </div>
-            ) : board.displayType === 'gallery' ? (
-              /* Gallery view */
+            ) : (
+              /* Gallery view — preserved from previous implementation */
               <div className="p-4">
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   {posts.map((post) => (
@@ -356,59 +365,6 @@ export default function BoardListPage() {
                     </div>
                   ))}
                 </div>
-              </div>
-            ) : (
-              /* List view — unified responsive 2-line rows */
-              <div>
-                {posts.map((post) => {
-                  const postUrl = post.isSecret && post.author.id !== user?.id && !isAdmin ? '#' : `/boards/${slug}/${post.id}`
-                  return (
-                    <Link
-                      key={post.id}
-                      href={postUrl}
-                      className="block py-3 px-1 hover:bg-muted/40 transition-colors"
-                      onClick={(e) => {
-                        if (post.isSecret && post.author.id !== user?.id && !isAdmin) {
-                          e.preventDefault()
-                          alert(t('secretPostAlert'))
-                        }
-                      }}
-                    >
-                      <div className="flex items-center gap-2 mb-1">
-                        {post.isSecret && <Lock className="h-3.5 w-3.5 text-yellow-500 shrink-0" />}
-                        <span className="font-semibold text-[14px] sm:text-[15px] truncate flex-1">{post.title}</span>
-                        {post._count && post._count.attachments > 0 && (
-                          <Paperclip className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                        )}
-                      </div>
-                      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[13px] text-muted-foreground">
-                        <UserNickname
-                          userId={post.author.id}
-                          uuid={post.author.uuid}
-                          nickname={post.author.nickname}
-                          image={post.author.image}
-                          className="text-muted-foreground"
-                        />
-                        <span className="opacity-50">·</span>
-                        <span>{formatDate(post.createdAt)}</span>
-                        <span className="opacity-50">·</span>
-                        <span className="inline-flex items-center gap-1"><Eye className="h-3 w-3" />{post.viewCount}</span>
-                        {board.useComment && post.commentCount > 0 && (
-                          <>
-                            <span className="opacity-50">·</span>
-                            <span className="inline-flex items-center gap-1">💬 {post.commentCount}</span>
-                          </>
-                        )}
-                        {board.useReaction && post.likeCount > 0 && (
-                          <>
-                            <span className="opacity-50">·</span>
-                            <span className="inline-flex items-center gap-1"><ThumbsUp className="h-3 w-3" />{post.likeCount}</span>
-                          </>
-                        )}
-                      </div>
-                    </Link>
-                  )
-                })}
               </div>
             )}
 
