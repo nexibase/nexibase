@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
+import { useTranslations } from "next-intl"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import {
@@ -28,14 +29,6 @@ cd nexibase && docker compose up -d`
 
 const SITE_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || ""
 
-const FEATURES = [
-  { icon: Puzzle, label: "Plugins" },
-  { icon: Palette, label: "Themes" },
-  { icon: LayoutGrid, label: "Widgets" },
-  { icon: MessageSquare, label: "Boards" },
-  { icon: Users, label: "Auth" },
-  { icon: Globe, label: "EN / 한국어" },
-]
 
 interface GitHubRelease {
   tag_name?: string
@@ -47,18 +40,31 @@ interface GitHubRepo {
   stargazers_count?: number
 }
 
-function formatRelativeTime(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime()
-  const day = 24 * 60 * 60 * 1000
-  if (diff < day) return "today"
-  const days = Math.floor(diff / day)
-  if (days < 7) return `${days}d ago`
-  if (days < 30) return `${Math.floor(days / 7)}w ago`
-  if (days < 365) return `${Math.floor(days / 30)}mo ago`
-  return `${Math.floor(days / 365)}y ago`
-}
 
 export default function NexibaseLandingHero() {
+  const t = useTranslations("widgets.landingHero")
+  const tRel = useTranslations("widgets.landingHero.relativeTime")
+
+  const FEATURES = [
+    { icon: Puzzle, label: t("features.plugins") },
+    { icon: Palette, label: t("features.themes") },
+    { icon: LayoutGrid, label: t("features.widgets") },
+    { icon: MessageSquare, label: t("features.boards") },
+    { icon: Users, label: t("features.auth") },
+    { icon: Globe, label: t("features.i18n") },
+  ]
+
+  const formatRelativeTime = useCallback((iso: string): string => {
+    const diff = Date.now() - new Date(iso).getTime()
+    const day = 24 * 60 * 60 * 1000
+    if (diff < day) return tRel("today")
+    const days = Math.floor(diff / day)
+    if (days < 7) return tRel("daysAgo", { days })
+    if (days < 30) return tRel("weeksAgo", { weeks: Math.floor(days / 7) })
+    if (days < 365) return tRel("monthsAgo", { months: Math.floor(days / 30) })
+    return tRel("yearsAgo", { years: Math.floor(days / 365) })
+  }, [tRel])
+
   const [copied, setCopied] = useState(false)
   const [stars, setStars] = useState<number | null>(null)
   const [release, setRelease] = useState<GitHubRelease | null>(null)
@@ -125,7 +131,7 @@ export default function NexibaseLandingHero() {
       <CardContent className="p-5 md:p-6 flex flex-col gap-4">
         <div className="flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
-            Open source · Next.js 16
+            {t("badge")}
           </span>
           {versionTag && (
             <Link
@@ -144,12 +150,10 @@ export default function NexibaseLandingHero() {
 
         <div className="space-y-1.5">
           <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight leading-tight">
-            The community CMS, in one Next.js app.
+            {t("headline")}
           </h1>
           <p className="text-sm md:text-base text-muted-foreground max-w-2xl">
-            Launch forums, boards, and membership sites in under a minute —
-            plugin folders, CSS-variable themes, pick your language at install.
-            One self-hostable codebase.
+            {t("tagline")}
           </p>
         </div>
 
@@ -166,7 +170,7 @@ export default function NexibaseLandingHero() {
           <button
             type="button"
             onClick={handleCopy}
-            aria-label="Copy install command"
+            aria-label={t("copyAria")}
             className="absolute top-2 right-2 inline-flex h-7 w-7 items-center justify-center rounded border bg-background hover:bg-muted transition-colors"
           >
             {copied ? (
@@ -181,7 +185,7 @@ export default function NexibaseLandingHero() {
           <Link href={GITHUB_URL} target="_blank" rel="noopener noreferrer">
             <Button size="sm">
               <Github className="h-4 w-4 mr-1.5" />
-              Star on GitHub
+              {t("starOnGithub")}
               {starLabel && (
                 <span className="ml-1.5 rounded-sm bg-white/15 px-1.5 py-0.5 text-[11px] font-mono leading-none">
                   {starLabel}
@@ -192,13 +196,13 @@ export default function NexibaseLandingHero() {
           <Link href={DEMO_URL} target="_blank" rel="noopener noreferrer">
             <Button size="sm" variant="outline">
               <ExternalLink className="h-4 w-4 mr-1.5" />
-              Live demo
+              {t("liveDemo")}
             </Button>
           </Link>
           <Link href={DOCS_URL} target="_blank" rel="noopener noreferrer">
             <Button size="sm" variant="outline">
               <BookOpen className="h-4 w-4 mr-1.5" />
-              Docs
+              {t("docs")}
             </Button>
           </Link>
         </div>
@@ -211,7 +215,7 @@ export default function NexibaseLandingHero() {
             </span>
           ))}
           <span className="hidden md:inline text-muted-foreground/50">·</span>
-          <span>MIT · Self-hostable</span>
+          <span>{t("footer")}</span>
         </div>
       </CardContent>
     </Card>
