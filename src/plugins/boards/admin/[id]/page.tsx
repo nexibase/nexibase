@@ -292,17 +292,17 @@ export default function BoardEditPage({ params }: { params: Promise<{ id: string
                   </select>
                 </div>
               </div>
-              <label className="flex items-start gap-2 cursor-pointer">
+              <label className="flex items-start space-x-2 cursor-pointer">
                 <input
                   type="checkbox"
                   className="mt-1 rounded border-gray-300"
                   checked={formData.showPostNumber}
                   onChange={e => setFormData({ ...formData, showPostNumber: e.target.checked })}
                 />
-                <div>
-                  <div className="text-sm font-medium">{t('admin.showPostNumberLabel')}</div>
-                  <div className="text-xs text-muted-foreground">{t('admin.showPostNumberHelp')}</div>
-                </div>
+                <span>
+                  <span className="block text-sm font-medium">{t('admin.showPostNumberLabel')}</span>
+                  <span className="block text-xs text-muted-foreground">{t('admin.showPostNumberHelp')}</span>
+                </span>
               </label>
             </CardContent>
           </Card>
