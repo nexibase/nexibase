@@ -82,7 +82,6 @@ export function UserNickname({
         <button
           type="button"
           data-user-nickname
-          onClick={(e) => { e.stopPropagation() }}
           className={`inline-flex items-center gap-1.5 hover:text-primary transition-colors ${className}`}
         >
           {showAvatar && (
