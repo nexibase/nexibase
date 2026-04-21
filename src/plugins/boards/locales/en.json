@@ -13,6 +13,13 @@
     "writeLoginRequired": "Login required to write a post.",
     "notice": "Notice",
     "noticeBadge": "Notice",
+    "noticeBadgeShort": "Notice",
+    "colNumber": "No.",
+    "colTitle": "Title",
+    "colAuthor": "Author",
+    "colDate": "Date",
+    "colViews": "Views",
+    "colLikes": "Likes",
     "all": "All",
     "allBoards": "All boards",
     "exploreBoards": "Explore boards on various topics",
@@ -229,7 +236,9 @@
       "iconFile": "Files",
       "iconSecret": "Secret",
       "postsCount": "{count} posts",
-      "boardNotFound": "Board not found."
+      "boardNotFound": "Board not found.",
+      "showPostNumberLabel": "Show post number",
+      "showPostNumberHelp": "Displays sequential numbers in the list. Numbers may shift as posts are added or removed."
     },
     "widgets": {
       "popularBoards": "Popular boards",
