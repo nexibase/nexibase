@@ -11,6 +11,10 @@ import './custom.css'
 const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] })
 const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] })
 
+// Metadata and JSON-LD read from the DB settings table on each request,
+// so every page must render dynamically (no static prerender).
+export const dynamic = 'force-dynamic'
+
 async function resolveBaseUrl(settingsUrl: string): Promise<URL> {
   const raw = settingsUrl || (await fallbackUrlFromHeaders())
   try {

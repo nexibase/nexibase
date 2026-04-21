@@ -11,18 +11,32 @@ export interface SiteMetadataSettings {
 
 const SETTING_KEYS = ['site_name', 'site_description', 'site_url', 'site_keywords', 'site_locale'] as const
 
+const FALLBACK_SETTINGS: SiteMetadataSettings = {
+  site_name: 'NexiBase',
+  site_description: '',
+  site_url: '',
+  keywords_array: [],
+  site_locale: 'ko',
+}
+
 export async function loadSiteSettings(): Promise<SiteMetadataSettings> {
-  const rows = await prisma.setting.findMany({
-    where: { key: { in: [...SETTING_KEYS] } },
-  })
-  const m = new Map(rows.map((r) => [r.key, r.value]))
-  const rawKeywords = m.get('site_keywords') || ''
-  return {
-    site_name: (m.get('site_name') || '').trim() || 'NexiBase',
-    site_description: (m.get('site_description') || '').trim(),
-    site_url: (m.get('site_url') || '').trim(),
-    keywords_array: rawKeywords.split(',').map((s) => s.trim()).filter(Boolean),
-    site_locale: m.get('site_locale') || 'ko',
+  try {
+    const rows = await prisma.setting.findMany({
+      where: { key: { in: [...SETTING_KEYS] } },
+    })
+    const m = new Map(rows.map((r) => [r.key, r.value]))
+    const rawKeywords = m.get('site_keywords') || ''
+    return {
+      site_name: (m.get('site_name') || '').trim() || 'NexiBase',
+      site_description: (m.get('site_description') || '').trim(),
+      site_url: (m.get('site_url') || '').trim(),
+      keywords_array: rawKeywords.split(',').map((s) => s.trim()).filter(Boolean),
+      site_locale: m.get('site_locale') || 'ko',
+    }
+  } catch {
+    // DB unavailable (build-time prerender, migration in progress, misconfiguration).
+    // Return safe fallbacks so metadata generation doesn't crash.
+    return FALLBACK_SETTINGS
   }
 }
 
