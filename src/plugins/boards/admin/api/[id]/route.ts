@@ -75,6 +75,7 @@ export async function PUT(
       postsPerPage,
       sortOrder,
       displayType,
+      showPostNumber,
       isActive
     } = body
 
@@ -132,6 +133,7 @@ export async function PUT(
         postsPerPage: postsPerPage ?? existingBoard.postsPerPage,
         sortOrder: sortOrder || existingBoard.sortOrder,
         displayType: displayType || existingBoard.displayType,
+        showPostNumber: showPostNumber ?? existingBoard.showPostNumber,
         isActive: isActive ?? existingBoard.isActive
       }
     })
