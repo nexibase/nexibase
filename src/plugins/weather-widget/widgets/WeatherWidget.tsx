@@ -86,11 +86,11 @@ export default function WeatherWidget({ settings }: WeatherWidgetProps) {
 
   if (loading) {
     return (
-      <div className="bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg p-6 text-white shadow-lg">
+      <div className="bg-gradient-to-br from-primary/10 to-primary/25 rounded-lg p-6 text-foreground shadow-lg">
         <div className="animate-pulse flex flex-col items-center">
-          <div className="w-12 h-12 bg-white/30 rounded-full mb-4"></div>
-          <div className="h-4 bg-white/30 rounded w-32 mb-2"></div>
-          <div className="h-8 bg-white/30 rounded w-24"></div>
+          <div className="w-12 h-12 bg-foreground/20 rounded-full mb-4"></div>
+          <div className="h-4 bg-foreground/20 rounded w-32 mb-2"></div>
+          <div className="h-8 bg-foreground/20 rounded w-24"></div>
         </div>
       </div>
     );
@@ -109,18 +109,18 @@ export default function WeatherWidget({ settings }: WeatherWidgetProps) {
   }
 
   return (
-    <div className="bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg p-6 text-white shadow-lg hover:shadow-xl transition-shadow">
+    <div className="bg-gradient-to-br from-primary/10 to-primary/25 rounded-lg p-6 text-foreground shadow-lg hover:shadow-xl transition-shadow">
       <div className="flex flex-col items-center">
         <div className="mb-4">
           {getWeatherIcon(weather.main)}
         </div>
 
         <h3 className="text-2xl font-bold mb-1">{city}</h3>
-        <p className="text-sm opacity-90 capitalize mb-4">{weather.description}</p>
+        <p className="text-sm text-muted-foreground capitalize mb-4">{weather.description}</p>
 
         <button
           onClick={() => setIsCelsius(!isCelsius)}
-          className="text-xs bg-white/20 px-2 py-1 rounded mb-2 hover:bg-white/30 transition-colors"
+          className="text-xs bg-background/60 px-2 py-1 rounded mb-2 hover:bg-background/80 transition-colors"
         >
           {isCelsius ? '°C' : '°F'}
         </button>
@@ -131,10 +131,10 @@ export default function WeatherWidget({ settings }: WeatherWidgetProps) {
         </div>
 
         <div className="grid grid-cols-2 gap-4 w-full text-sm">
-          <div className="flex items-center justify-center space-x-2 bg-white/20 rounded-lg p-2">
+          <div className="flex items-center justify-center space-x-2 bg-background/60 rounded-lg p-2">
             <Sun className="w-4 h-4" />
             <div>
-              <div className="opacity-75 text-xs">{t('feelsLike')}</div>
+              <div className="text-muted-foreground text-xs">{t('feelsLike')}</div>
               <div className="font-semibold">
                 {isCelsius ? weather.feelsLike : Math.round(weather.feelsLike * 9 / 5 + 32)}
                 {isCelsius ? '°C' : '°F'}
@@ -142,18 +142,18 @@ export default function WeatherWidget({ settings }: WeatherWidgetProps) {
             </div>
           </div>
 
-          <div className="flex items-center justify-center space-x-2 bg-white/20 rounded-lg p-2">
+          <div className="flex items-center justify-center space-x-2 bg-background/60 rounded-lg p-2">
             <Droplets className="w-4 h-4" />
             <div>
-              <div className="opacity-75 text-xs">{t('humidity')}</div>
+              <div className="text-muted-foreground text-xs">{t('humidity')}</div>
               <div className="font-semibold">{weather.humidity}%</div>
             </div>
           </div>
 
-          <div className="flex items-center justify-center space-x-2 bg-white/20 rounded-lg p-2 col-span-2">
+          <div className="flex items-center justify-center space-x-2 bg-background/60 rounded-lg p-2 col-span-2">
             <Wind className="w-4 h-4" />
             <div>
-              <div className="opacity-75 text-xs">{t('wind')}</div>
+              <div className="text-muted-foreground text-xs">{t('wind')}</div>
               <div className="font-semibold">{weather.windSpeed} km/h</div>
             </div>
           </div>
