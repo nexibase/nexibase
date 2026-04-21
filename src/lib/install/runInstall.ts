@@ -8,7 +8,6 @@ export interface InstallParams {
   adminPassword: string
   adminNickname: string
   siteName: string
-  siteDescription: string
 }
 
 export class InstallError extends Error {
@@ -50,7 +49,6 @@ export async function runInstall(params: InstallParams): Promise<void> {
     await tx.setting.createMany({
       data: [
         { key: 'site_name', value: params.siteName },
-        { key: 'site_description', value: params.siteDescription || '' },
         { key: 'site_locale', value: params.locale },
         { key: 'signup_enabled', value: 'true' },
       ],

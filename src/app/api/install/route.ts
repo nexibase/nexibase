@@ -47,11 +47,6 @@ function validateBody(body: unknown): ValidationResult {
     errors.siteName = 'Site name must be 1-100 characters'
   }
 
-  const siteDescription = typeof b.siteDescription === 'string' ? b.siteDescription.trim() : ''
-  if (siteDescription.length > 500) {
-    errors.siteDescription = 'Site description must be 500 characters or less'
-  }
-
   if (Object.keys(errors).length > 0) return { ok: false, errors }
 
   return {
@@ -62,7 +57,6 @@ function validateBody(body: unknown): ValidationResult {
       adminPassword,
       adminNickname,
       siteName,
-      siteDescription,
     },
   }
 }
