@@ -129,7 +129,7 @@ export default function NexibaseLandingHero() {
           <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight leading-tight">
             {t("headline")}
           </h1>
-          <p className="text-sm md:text-base text-muted-foreground max-w-2xl">
+          <p className="text-sm md:text-base text-muted-foreground">
             {t("tagline")}
           </p>
         </div>
