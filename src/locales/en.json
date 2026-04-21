@@ -895,7 +895,7 @@
     "last7daysLabel": "Last 7 days",
     "landingHero": {
       "badge": "Open source · Next.js 16",
-      "headline": "An open-source Next.js CMS, built with plugins and widgets.",
+      "headline": "A Next.js CMS, built with plugins and widgets",
       "tagline": "Community, boards, and commerce — an open-source web platform you extend with plugins.",
       "copyAria": "Copy install command",
       "starOnGithub": "Star on GitHub",

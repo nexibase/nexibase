@@ -125,7 +125,7 @@ export default function NexibaseLandingHero() {
           )}
         </div>
 
-        <div className="space-y-1.5">
+        <div className="space-y-1.5 break-keep">
           <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight leading-tight">
             {t("headline")}
           </h1>
