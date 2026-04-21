@@ -153,6 +153,7 @@ export async function GET(
         writeMemberOnly: board.writeMemberOnly,
         useComment: board.useComment,
         useReaction: board.useReaction,
+        postsPerPage: board.postsPerPage,
         displayType: board.displayType,
         showPostNumber: board.showPostNumber,
       },
