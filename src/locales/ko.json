@@ -895,8 +895,8 @@
     "last7daysLabel": "최근 7일",
     "landingHero": {
       "badge": "오픈소스 · Next.js 16",
-      "headline": "Next.js 앱 하나로, 커뮤니티 CMS를.",
-      "tagline": "포럼·게시판·멤버십 사이트를 1분 안에 런칭하세요 — 플러그인 폴더, CSS 변수 테마, 설치 시점에 언어 선택. 셀프 호스팅 가능한 단일 코드베이스.",
+      "headline": "플러그인과 위젯으로 완성하는 오픈소스 Next.js CMS.",
+      "tagline": "커뮤니티·게시판·쇼핑몰까지, 필요한 기능을 플러그인으로 확장하는 오픈소스 웹 플랫폼입니다.",
       "copyAria": "설치 명령어 복사",
       "starOnGithub": "GitHub에 스타 남기기",
       "liveDemo": "라이브 데모",
