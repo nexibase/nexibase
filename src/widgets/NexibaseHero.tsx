@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { useTranslations } from "next-intl"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Sparkles, ArrowRight, Github } from "lucide-react"
@@ -13,6 +14,7 @@ interface UserInfo {
 const GITHUB_URL = "https://github.com/nexibase/nexibase"
 
 export default function NexibaseHero() {
+  const t = useTranslations("widgets")
   const [user, setUser] = useState<UserInfo | null>(null)
   const [siteDescription, setSiteDescription] = useState('')
   const [firstBoardSlug, setFirstBoardSlug] = useState('')
@@ -77,7 +79,7 @@ export default function NexibaseHero() {
         <div>
           <div className="flex items-center gap-2 mb-3">
             <Sparkles className="h-5 w-5 text-primary" />
-            <span className="text-sm font-medium text-primary">Welcome</span>
+            <span className="text-sm font-medium text-primary">{t("welcome")}</span>
             {version && (
               <span className="text-xs px-1.5 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
                 {version}
@@ -86,19 +88,19 @@ export default function NexibaseHero() {
           </div>
           <h1 className="text-xl md:text-2xl font-bold mb-2">
             {user
-              ? `Welcome back, ${user.nickname || 'friend'}!`
-              : 'Welcome to NexiBase'
+              ? t("welcomeUser", { nickname: user.nickname || t("defaultNickname") })
+              : t("welcomeSite", { siteName: "NexiBase" })
             }
           </h1>
           <p className="text-sm text-muted-foreground">
-            {siteDescription || 'An open-source web platform infinitely extensible via plugins'}
+            {siteDescription || t("defaultDesc")}
           </p>
         </div>
         <div className="flex flex-wrap gap-2 mt-4">
           {firstBoardSlug && (
             <Link href={`/boards/${firstBoardSlug}`}>
               <Button>
-                Get started
+                {t("startBtn")}
                 <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
             </Link>
@@ -110,7 +112,7 @@ export default function NexibaseHero() {
             </Button>
           </Link>
           <Link href="/contents/about">
-            <Button variant="outline">Learn more</Button>
+            <Button variant="outline">{t("learnMore")}</Button>
           </Link>
         </div>
       </CardContent>
