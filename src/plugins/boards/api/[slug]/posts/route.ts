@@ -51,12 +51,14 @@ export async function GET(
       status: 'published',
     }
 
-    if (search) {
-      baseWhere.OR = [
-        { title: { contains: search } },
-        { content: { contains: search } },
-      ]
-    }
+    const searchFilter: Record<string, unknown> = search
+      ? {
+          OR: [
+            { title: { contains: search } },
+            { content: { contains: search } },
+          ],
+        }
+      : {}
 
     // Non-notice sort (notice sort field is dropped because notices are fetched separately)
     let orderBy: Record<string, string>[] = []
@@ -111,7 +113,7 @@ export async function GET(
     }
 
     const noticeWhere = { ...baseWhere, isNotice: true }
-    const postWhere = { ...baseWhere, isNotice: false }
+    const postWhere = { ...baseWhere, isNotice: false, ...searchFilter }
 
     const [notices, posts, total] = await Promise.all([
       prisma.post.findMany({

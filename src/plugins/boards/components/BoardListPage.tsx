@@ -39,7 +39,6 @@ interface Board {
 interface Post {
   id: string
   title: string
-  content: string
   viewCount: number
   likeCount: number
   commentCount: number
@@ -272,7 +271,7 @@ export default function BoardListPage() {
                   {board.showPostNumber && (
                     <div className="text-center [grid-area:num]">{t('colNumber')}</div>
                   )}
-                  <div className="text-center [grid-area:title]">{t('colTitle')}</div>
+                  <div className="text-left [grid-area:title]">{t('colTitle')}</div>
                   <div className="text-center [grid-area:author]">{t('colAuthor')}</div>
                   <div className="text-center [grid-area:date]">{t('colDate')}</div>
                   <div className="text-center [grid-area:views]">{t('colViews')}</div>
