@@ -18,10 +18,10 @@ export async function generateMetadata(): Promise<Metadata> {
   const page = await getHomePage()
   if (!page) return {}
 
-  return {
-    title: page.seoTitle || page.title,
-    description: page.seoDescription || undefined,
-  }
+  const metadata: Metadata = {}
+  if (page.seoTitle) metadata.title = { absolute: page.seoTitle }
+  if (page.seoDescription) metadata.description = page.seoDescription
+  return metadata
 }
 
 export default async function HomePage() {

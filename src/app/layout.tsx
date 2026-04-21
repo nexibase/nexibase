@@ -4,73 +4,95 @@ import { ThemeProvider } from '@/components/theme-provider'
 import { SessionProvider } from '@/components/providers/SessionProvider'
 import ThemeLoader from '@/components/theme-loader'
 import { GoogleAnalytics } from '@/components/GoogleAnalytics'
+import { loadSiteSettings, fallbackUrlFromHeaders, mapToOgLocale } from '@/lib/site-settings'
 import './globals.css'
 import './custom.css'
 
 const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] })
 const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] })
 
-export const metadata: Metadata = {
-  metadataBase: new URL('https://nexibase.com'),
-  title: {
-    default: 'NexiBase - 커뮤니티 플랫폼',
-    template: '%s | NexiBase',
-  },
-  description: 'NexiBase - 오픈소스 커뮤니티 플랫폼. 게시판, 콘텐츠 관리, 사용자 관리를 하나로.',
-  keywords: ['NexiBase', '커뮤니티', '게시판', '오픈소스', 'Next.js', '커뮤니티 플랫폼'],
-  authors: [{ name: 'NexiBase' }],
-  openGraph: {
-    type: 'website',
-    locale: 'ko_KR',
-    url: 'https://nexibase.com',
-    siteName: 'NexiBase',
-    title: 'NexiBase - 커뮤니티 플랫폼',
-    description: 'NexiBase - 오픈소스 커뮤니티 플랫폼. 게시판, 콘텐츠 관리, 사용자 관리를 하나로.',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'NexiBase - 커뮤니티 플랫폼',
-    description: 'NexiBase - 오픈소스 커뮤니티 플랫폼. 게시판, 콘텐츠 관리, 사용자 관리를 하나로.',
-  },
-  alternates: {
-    canonical: 'https://nexibase.com',
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
+// Metadata and JSON-LD read from the DB settings table on each request,
+// so every page must render dynamically (no static prerender).
+export const dynamic = 'force-dynamic'
+
+async function resolveBaseUrl(settingsUrl: string): Promise<URL> {
+  const raw = settingsUrl || (await fallbackUrlFromHeaders())
+  try {
+    return new URL(raw)
+  } catch {
+    return new URL(await fallbackUrlFromHeaders())
+  }
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const s = await loadSiteSettings()
+  const base = await resolveBaseUrl(s.site_url)
+  const baseStr = base.toString().replace(/\/$/, '')
+  const ogLocale = mapToOgLocale(s.site_locale)
+
+  return {
+    metadataBase: base,
+    title: {
+      default: s.site_description ? `${s.site_name} - ${s.site_description}` : s.site_name,
+      template: `%s | ${s.site_name}`,
+    },
+    ...(s.site_description && { description: s.site_description }),
+    ...(s.keywords_array.length > 0 && { keywords: s.keywords_array }),
+    openGraph: {
+      type: 'website',
+      locale: ogLocale,
+      url: baseStr,
+      siteName: s.site_name,
+      title: s.site_name,
+      ...(s.site_description && { description: s.site_description }),
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: s.site_name,
+      ...(s.site_description && { description: s.site_description }),
+    },
+    alternates: { canonical: baseStr },
+    robots: {
       index: true,
       follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-video-preview': -1,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      },
     },
-  },
+  }
 }
 
 export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const s = await loadSiteSettings()
+  const base = await resolveBaseUrl(s.site_url)
+  const baseStr = base.toString().replace(/\/$/, '')
+
+  const ld: Record<string, unknown> = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: s.site_name,
+    url: baseStr,
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: `${baseStr}/search?q={search_term_string}`,
+      'query-input': 'required name=search_term_string',
+    },
+  }
+  if (s.site_description) ld.description = s.site_description
+
   return (
-    <html lang="ko" suppressHydrationWarning>
+    <html lang={s.site_locale} suppressHydrationWarning>
       <head>
         <ThemeLoader />
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              '@context': 'https://schema.org',
-              '@type': 'WebSite',
-              name: 'NexiBase',
-              url: 'https://nexibase.com',
-              description: 'NexiBase - 오픈소스 커뮤니티 플랫폼',
-              potentialAction: {
-                '@type': 'SearchAction',
-                target: 'https://nexibase.com/search?q={search_term_string}',
-                'query-input': 'required name=search_term_string',
-              },
-            }),
-          }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }}
         />
         <GoogleAnalytics />
       </head>

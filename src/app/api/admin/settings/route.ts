@@ -46,6 +46,20 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    if ('site_name' in settings) {
+      const v = typeof settings.site_name === 'string' ? settings.site_name.trim() : ''
+      if (!v) {
+        return NextResponse.json({ error: 'site_name_required' }, { status: 400 })
+      }
+    }
+
+    if ('site_url' in settings) {
+      const v = typeof settings.site_url === 'string' ? settings.site_url.trim() : ''
+      if (v !== '' && !/^https?:\/\//i.test(v)) {
+        return NextResponse.json({ error: 'site_url_invalid' }, { status: 400 })
+      }
+    }
+
     // Upsert each setting
     const promises = Object.entries(settings).map(([key, value]) =>
       prisma.setting.upsert({

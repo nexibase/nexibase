@@ -15,7 +15,6 @@ const LABELS: Record<string, Record<string, string>> = {
     adminPasswordConfirm: 'Confirm Password',
     adminNickname: 'Admin Nickname',
     siteName: 'Site Name',
-    siteDescription: 'Site Description (optional)',
     submit: 'Install',
     submitting: 'Installing...',
     unknownError: 'Installation failed. Please check your input and try again.',
@@ -28,7 +27,6 @@ const LABELS: Record<string, Record<string, string>> = {
     adminPasswordConfirm: '비밀번호 확인',
     adminNickname: '관리자 닉네임',
     siteName: '사이트 이름',
-    siteDescription: '사이트 설명 (선택)',
     submit: '설치',
     submitting: '설치 중...',
     unknownError: '설치에 실패했습니다. 입력값을 확인하고 다시 시도해주세요.',
@@ -55,7 +53,6 @@ function SetupForm() {
     adminPasswordConfirm: '',
     adminNickname: '',
     siteName: '',
-    siteDescription: '',
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [submitting, setSubmitting] = useState(false)
@@ -184,17 +181,6 @@ function SetupForm() {
             className="w-full px-3 py-2 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800"
           />
           {errors.siteName && <p className="mt-1 text-xs text-red-600">{errors.siteName}</p>}
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">{t.siteDescription}</label>
-          <textarea
-            value={form.siteDescription}
-            onChange={e => handleChange('siteDescription', e.target.value)}
-            rows={3}
-            className="w-full px-3 py-2 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 resize-none"
-          />
-          {errors.siteDescription && <p className="mt-1 text-xs text-red-600">{errors.siteDescription}</p>}
         </div>
 
         <button
