@@ -18,7 +18,7 @@ export async function loadSiteSettings(): Promise<SiteMetadataSettings> {
   const m = new Map(rows.map((r) => [r.key, r.value]))
   const rawKeywords = m.get('site_keywords') || ''
   return {
-    site_name: (m.get('site_name') || '').trim() || 'My Site',
+    site_name: (m.get('site_name') || '').trim() || 'NexiBase',
     site_description: (m.get('site_description') || '').trim(),
     site_url: (m.get('site_url') || '').trim(),
     keywords_array: rawKeywords.split(',').map((s) => s.trim()).filter(Boolean),
