@@ -39,7 +39,7 @@ src/plugins/shop/
 │   ├── adapter.ts
 │   ├── registry.ts
 │   ├── inicis/
-│   └── bank_transfer/
+│   └── bank_deposit/
 ├── notifications/        # in-app + email + sms
 │   ├── send.ts
 │   ├── sms.ts
@@ -140,7 +140,7 @@ CREATE TABLE return_items (
 ALTER TABLE orders
   ADD COLUMN originalOrderId  INT NULL,                                 -- root order of an exchange chain
   ADD COLUMN orderType        ENUM('normal','exchange') NOT NULL DEFAULT 'normal',
-  ADD COLUMN paymentGateway   VARCHAR(20) NULL,                         -- adapter id: 'inicis','toss','bank_transfer'
+  ADD COLUMN paymentGateway   VARCHAR(20) NULL,                         -- adapter id: 'inicis','toss','bank_deposit'
   ADD COLUMN pgTransactionId  VARCHAR(100) NULL,                        -- PG unique id, needed for refund
   ADD FOREIGN KEY (originalOrderId) REFERENCES orders(id);
 ```
@@ -149,11 +149,12 @@ Migration fills `paymentGateway='inicis'` for existing paid orders, null for leg
 
 **Existing `paymentMethod` column (already in schema)** — reused to store the specific payment method selected by the customer. Values standardized in §3.1 `PayMethod` enum:
 - `card` — 신용카드
-- `bank` — 실시간 계좌이체 (via PG)
+- `account_transfer` — 실시간 계좌이체 (via PG)
 - `virtual_account` — 가상계좌
 - `mobile` — 휴대폰 결제
-- `easypay_kakao`, `easypay_naver`, `easypay_toss` — 간편결제
-- `bank_transfer` — 무통장입금 (manual deposit, no PG)
+- `bank_deposit` — 무통장입금 (customer manually transfers to merchant's bank account, no PG)
+
+Easypay services (KakaoPay, NaverPay, etc.) are handled as sub-methods of the PG that supports them (e.g., Inicis/Toss offer KakaoPay within their SDK). No separate `PayMethod` value needed — the PG exposes easypay as part of its payment UI, and the final `paymentMethod` stored is whichever of the above best matches (typically `card` since most easypay transactions map to a card underneath).
 
 **Persistence timing:** at `handleCallback()` success, `/api/shop/payment/callback/[adapterId]` writes `paymentGateway`, `pgTransactionId`, `paymentMethod`, `paidAt`, `paymentInfo` (raw JSON), and transitions status `pending → paid`, all in one transaction along with an `order_activities` `payment_succeeded` row.
 
@@ -164,7 +165,7 @@ Migration fills `paymentGateway='inicis'` for existing paid orders, null for leg
 | `return_window_days` | int | 7 | Days after `delivered` during which return/exchange requests are accepted |
 | `return_shipping_fee` | int | 3000 | Default deduction when `customerBearsShipping=true` (reuses existing key if present) |
 | `default_confirm_days` | int | 7 | Auto-transition `delivered → confirmed` after N days |
-| `enabled_payment_gateways` | JSON array | `["inicis","bank_transfer"]` | Adapters visible at checkout |
+| `enabled_payment_gateways` | JSON array | `["inicis","bank_deposit"]` | Adapters visible at checkout |
 | `default_card_gateway` | string | `"inicis"` | Which adapter handles generic "card" selection |
 | `sms_notifications_enabled` | boolean | false | Global SMS master switch |
 | `sms_provider_config` | JSON | `{}` | SMS gateway credentials (provider, apiKey, from, etc.) |
@@ -266,13 +267,10 @@ export interface PaymentAdapter {
 
 export type PayMethod =
   | 'card'              // 신용카드
-  | 'bank'              // 실시간 계좌이체 (PG 경유)
+  | 'account_transfer'  // 실시간 계좌이체 (PG 경유)
   | 'virtual_account'   // 가상계좌
   | 'mobile'            // 휴대폰 결제
-  | 'easypay_kakao'     // 카카오페이
-  | 'easypay_naver'     // 네이버페이
-  | 'easypay_toss'      // 토스페이
-  | 'bank_transfer'     // 무통장입금 (PG 외, 관리자가 수동 확인)
+  | 'bank_deposit'      // 무통장입금 (PG 외, 관리자가 수동 확인)
 
 export interface PrepareResult {
   kind: 'redirect' | 'form' | 'manual'
@@ -320,11 +318,10 @@ Each adapter module imports and self-registers at load time.
 ### 3.3 Checkout method resolution
 
 1. Client calls `GET /api/shop/payment/methods` → returns enabled adapters with `{id, displayName, supportedMethods}`.
-2. Customer selects a method (e.g., `card`, `virtual_account`, `easypay_kakao`, `bank_transfer`).
+2. Customer selects a method (e.g., `card`, `virtual_account`, `bank_deposit`).
 3. Server resolves method → adapter:
-   - **Standard methods** (`card`, `bank`, `virtual_account`, `mobile`) → `shop_settings.default_card_gateway` (e.g., `inicis` or `toss` — the primary PG handles all of these).
-   - **Easypay methods** → dedicated adapter per method (`easypay_kakao` → KakaoPay adapter, etc.). If a standard PG adapter (e.g., Toss) also handles easypay natively, `default_card_gateway` can route those as well.
-   - **`bank_transfer`** → built-in `bank_transfer` adapter (manual flow).
+   - **Standard methods** (`card`, `bank`, `virtual_account`, `mobile`) → `shop_settings.default_card_gateway` (e.g., `inicis` or `toss` — the primary PG handles all of these, including any bundled easypay options inside the PG's payment UI).
+   - **`bank_deposit`** → built-in `bank_deposit` adapter (manual flow).
 4. Client calls `POST /api/shop/payment/init` with `{orderItems, buyer, shipping, method}`; server resolves adapter and calls `adapter.prepare(order)`.
 5. After callback success, server persists `paymentGateway`, `paymentMethod`, `pgTransactionId` — `paymentMethod` captures what the customer chose, `paymentGateway` captures which adapter processed it.
 
@@ -337,7 +334,7 @@ Migration note: existing Inicis callback URL registered at PG admin portal (`/ap
 ### 3.5 Phase 1 adapter implementations
 
 1. **InicisAdapter** — refactors existing `api/payment/inicis/*` routes into the adapter. Implements `refund()` via Inicis `/stdpay/refund` API.
-2. **BankTransferAdapter** — `prepare` returns `{kind:'manual'}`, `handleCallback` is admin-triggered "payment confirmed" action, `refund` is admin-triggered "refund completed" (manual bank transfer, no PG call).
+2. **BankDepositAdapter** — `prepare` returns `{kind:'manual'}`, `handleCallback` is admin-triggered "payment confirmed" action, `refund` is admin-triggered "refund completed" (manual bank transfer, no PG call).
 
 ---
 
@@ -487,7 +484,7 @@ Templates: `src/plugins/shop/notifications/templates/*.ts`, each exporting `{sub
 - Backfill `paymentGateway='inicis'` for existing paid orders.
 
 **1.2 Payment Adapter**
-- Implement `adapter.ts`, `registry.ts`, `InicisAdapter`, `BankTransferAdapter`.
+- Implement `adapter.ts`, `registry.ts`, `InicisAdapter`, `BankDepositAdapter`.
 - Migrate existing Inicis routes into the adapter.
 - New `/api/shop/payment/init` and `/api/shop/payment/callback/[adapterId]`.
 - Update PG-registered callback URL during deployment.
