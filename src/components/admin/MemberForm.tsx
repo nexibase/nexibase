@@ -607,12 +607,12 @@ export function MemberForm({ mode, memberId, onCancel, onSuccess }: MemberFormPr
 
   return (
     <>
-      {/* Load the Daum postcode API script */}
+      {/* Load the Kakao postcode API script */}
       <Script
-        src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"
+        src="//t1.kakaocdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"
         strategy="lazyOnload"
         onError={(e) => {
-          console.error('Daum Postcode API load failed:', e)
+          console.error('Kakao Postcode API load failed:', e)
         }}
       />
       
