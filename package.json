@@ -9,6 +9,7 @@
     "build": "node scripts/scan-plugins.js && node scripts/scan-layouts.js && node scripts/scan-themes.js && prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
+    "cron:shop-auto-confirm": "tsx scripts/cron/shop-auto-confirm.ts",
     "db:setup": "prisma migrate deploy && prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:push": "prisma db push",

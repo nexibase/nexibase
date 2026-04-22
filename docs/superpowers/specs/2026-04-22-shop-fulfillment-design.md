@@ -549,6 +549,13 @@ Add Toss, KakaoPay, Naver Pay adapters. Validates Phase 1 abstractions.
 - **Audit log retention**: append-only, no cleanup job in v1. Revisit when table grows large.
 - **Permissions**: admin-only endpoints gated by existing admin session check; customer endpoints scoped to `session.userId === record.userId`.
 
+### Phase 1 deployment (post-implementation)
+
+- **PG callback URL migration**: before deploying Phase 1, update the Inicis merchant admin portal callback URL from `/api/shop/payment/inicis/return` to `/api/shop/payment/callback/inicis`. Deploy in a low-traffic window.
+- After deployment, monitor `/api/shop/payment/callback/inicis` logs for failed callbacks for 24h. Legacy URL remains deleted; any Inicis retry at the old URL returns 404 and the PG marks the payment as failed, which triggers the normal cancel path.
+- **Auto-confirm cron**: schedule `npm run cron:shop-auto-confirm` to run daily via crontab or a host scheduler. Default N=7 days; override via `shop_settings.default_confirm_days`.
+- **Shop settings seeded in migration**: `default_confirm_days=7` (seeded manually via `npx tsx -e` during Task 13). If deploying to a fresh environment, add this to the install wizard or seed script.
+
 ## 9. Open Questions (to resolve during implementation)
 
 - Exact SMS provider choice (CoolSMS vs Aligo) — pick based on pricing / account availability at Phase 2 start.
