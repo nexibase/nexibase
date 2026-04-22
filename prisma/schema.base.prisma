@@ -29,6 +29,7 @@ model User {
   provider      String?         @db.VarChar(50)
   providerId    String?         @db.VarChar(255)
   accounts      Account[]
+  withdrawalJobs         WithdrawalJob[]
   notifications          Notification[]
   notificationPreference NotificationPreference?
   conversationsAsUser1   Conversation[] @relation("ConversationUser1")
@@ -63,6 +64,26 @@ model Account {
   @@unique([provider, providerAccountId])
   @@index([userId])
   @@map("accounts")
+}
+
+/// Audit log + retry queue for user withdrawals. One row per withdrawal event. Retained indefinitely.
+model WithdrawalJob {
+  id           Int       @id @default(autoincrement())
+  userId       Int
+  status       String    @default("pending") @db.VarChar(20)   // 'pending' | 'running' | 'done' | 'failed'
+  attempts     Int       @default(0)
+  lastError    String?   @db.Text
+  reasonCode   String?   @db.VarChar(40)                         // 'rarely_used' | 'no_feature' | 'moved_service' | 'privacy' | 'other' | null
+  reasonText   String?   @db.VarChar(500)                        // free text when reasonCode = 'other'
+  createdAt    DateTime  @default(now())
+  startedAt    DateTime?
+  completedAt  DateTime?
+  user         User      @relation(fields: [userId], references: [id])
+
+  @@index([status, createdAt])
+  @@index([userId])
+  @@index([status, startedAt])
+  @@map("withdrawal_jobs")
 }
 
 model Setting {
