@@ -33,6 +33,7 @@ import {
   Gavel,
   GitBranch,
   Globe,
+  UserMinus,
   type LucideIcon,
 } from "lucide-react"
 
@@ -87,6 +88,7 @@ const iconMap: Record<string, LucideIcon> = {
   Gavel,
   ChevronDown,
   ChevronRight,
+  UserMinus,
 }
 
 function getIcon(iconName: string): LucideIcon {
@@ -102,6 +104,7 @@ const coreMenuItems = [
   { id: "plugins", labelKey: "plugins", icon: Puzzle, path: "/admin/plugins" },
   { id: "menus", labelKey: "menus", icon: MenuIcon, path: "/admin/menus" },
   { id: "pages", labelKey: "pages", icon: LayoutGrid, path: "/admin/pages" },
+  { id: "withdrawalPolicy", labelKey: "withdrawalPolicy", icon: UserMinus, path: "/admin/privacy/withdrawal-policy" },
 ] as const
 
 // Returns cached user info (session-storage backed)
