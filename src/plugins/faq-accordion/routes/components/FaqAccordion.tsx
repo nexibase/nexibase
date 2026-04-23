@@ -160,15 +160,22 @@ export function FaqAccordion({ categories, faqs, topFaqs }: Props) {
 
       {debouncedSearch.trim() === '' && (
         <Tabs value={selectedCat} onValueChange={setSelectedCat}>
-          <TabsList className="flex-wrap">
-            <TabsTrigger value="all">
+          <TabsList className="flex-wrap h-auto bg-transparent p-0 gap-2">
+            <TabsTrigger
+              value="all"
+              className="rounded-full border px-3 h-8 flex-none data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:border-primary data-[state=active]:shadow-none"
+            >
               {t('all')}
               <Badge variant="secondary" className="ml-1.5">{faqs.length}</Badge>
             </TabsTrigger>
             {categories
               .filter((c) => (c._count?.faqs ?? 0) > 0)
               .map((c) => (
-                <TabsTrigger key={c.id} value={c.id.toString()}>
+                <TabsTrigger
+                  key={c.id}
+                  value={c.id.toString()}
+                  className="rounded-full border px-3 h-8 flex-none data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:border-primary data-[state=active]:shadow-none"
+                >
                   {c.name}
                   <Badge variant="secondary" className="ml-1.5">{c._count?.faqs ?? 0}</Badge>
                 </TabsTrigger>
