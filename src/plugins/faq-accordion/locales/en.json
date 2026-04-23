@@ -10,6 +10,9 @@
     "no": "No",
     "thanksForFeedback": "Thanks for your feedback!",
     "empty": "No FAQs available yet.",
+    "widget": {
+      "viewAll": "View all FAQs"
+    },
     "admin": {
       "title": "FAQ Management",
       "tabs": {

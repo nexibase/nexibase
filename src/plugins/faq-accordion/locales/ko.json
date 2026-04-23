@@ -10,6 +10,9 @@
     "no": "아니오",
     "thanksForFeedback": "피드백 감사합니다!",
     "empty": "아직 등록된 FAQ가 없습니다.",
+    "widget": {
+      "viewAll": "전체 FAQ 보기"
+    },
     "admin": {
       "title": "FAQ 관리",
       "tabs": {
