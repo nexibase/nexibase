@@ -23,12 +23,16 @@ interface AccordionItemProps {
 }
 
 export function AccordionItem({ expanded, onToggle, trigger, children, id }: AccordionItemProps) {
+  const triggerId = id ? `${id}-trigger` : undefined
+  const panelId = id ? `${id}-panel` : undefined
   return (
     <div id={id} className="overflow-hidden">
       <button
         type="button"
+        id={triggerId}
         onClick={onToggle}
         aria-expanded={expanded}
+        aria-controls={panelId}
         className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-muted/50 transition-colors"
       >
         <div className="flex-1 min-w-0">{trigger}</div>
@@ -37,6 +41,9 @@ export function AccordionItem({ expanded, onToggle, trigger, children, id }: Acc
         />
       </button>
       <div
+        id={panelId}
+        role="region"
+        aria-labelledby={triggerId}
         className={cn(
           'grid transition-[grid-template-rows] duration-300 ease-out',
           expanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
