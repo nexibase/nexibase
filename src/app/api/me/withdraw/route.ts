@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAuthUser, verifyPassword } from '@/lib/auth'
+import bcrypt from 'bcryptjs'
+import { getAuthUser } from '@/lib/auth'
 import { executeWithdrawalPhase1, executeWithdrawalPhase2 } from '@/lib/withdrawal/execute'
 
 const ALLOWED_REASON_CODES = new Set(['rarely_used', 'no_feature', 'moved_service', 'privacy', 'other'])
@@ -26,7 +27,7 @@ export async function POST(req: NextRequest) {
     if (typeof password !== 'string' || password.length === 0) {
       return NextResponse.json({ error: 'password_required' }, { status: 400 })
     }
-    if (!verifyPassword(password, user.password)) {
+    if (!(await bcrypt.compare(password, user.password))) {
       return NextResponse.json({ error: 'invalid_password' }, { status: 401 })
     }
   }

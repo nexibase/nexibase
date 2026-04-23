@@ -163,11 +163,11 @@ export default function WithdrawPage() {
         <form onSubmit={onSubmit} className="space-y-6 border-t pt-6">
           <div className="space-y-3">
             <Label className="text-base font-semibold">탈퇴 사유 (선택)</Label>
-            <RadioGroup value={reasonCode} onValueChange={setReasonCode} className="gap-2">
+            <RadioGroup value={reasonCode} onValueChange={setReasonCode} className="gap-3 pt-1">
               {REASON_OPTIONS.map(opt => (
-                <div key={opt.value} className="flex items-center gap-2">
+                <div key={opt.value} className="flex items-center gap-3">
                   <RadioGroupItem value={opt.value} id={`reason-${opt.value}`} />
-                  <Label htmlFor={`reason-${opt.value}`} className="text-sm font-normal cursor-pointer">
+                  <Label htmlFor={`reason-${opt.value}`} className="text-base font-normal cursor-pointer leading-relaxed">
                     {opt.label}
                   </Label>
                 </div>
