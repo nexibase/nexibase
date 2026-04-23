@@ -16,7 +16,12 @@ export interface WithdrawalInput {
  */
 export async function executeWithdrawalPhase1(input: WithdrawalInput): Promise<{ jobId: number }> {
   const { userId, reasonCode, reasonText } = input
-  const token = crypto.randomBytes(8).toString('hex').slice(0, 12)        // stable random per withdrawal
+  // Random token — NOT the userId. Exposing userId in the public-facing
+  // nickname would leak the user's approximate signup order/timing on every
+  // post/comment they ever wrote, and that's a weak re-identification
+  // vector. Admins can still cross-reference withdrawal_jobs.userId with
+  // the User row's anonymized nickname internally.
+  const token = crypto.randomBytes(8).toString('hex').slice(0, 12)
   const anonEmail = `deleted_${token}@deleted.local`
   const anonNickname = `탈퇴한회원_${token.slice(0, 6)}`
 

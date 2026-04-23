@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 type Job = {
   id: number
   userId: number
+  anonNickname: string | null
   status: string
   attempts: number
   lastError: string | null
@@ -97,7 +98,7 @@ export default function WithdrawalPolicyAdminPage() {
                   <thead className="bg-muted/50 text-left">
                     <tr>
                       <th className="p-2 font-medium">ID</th>
-                      <th className="p-2 font-medium">회원 ID</th>
+                      <th className="p-2 font-medium">회원</th>
                       <th className="p-2 font-medium">상태</th>
                       <th className="p-2 font-medium">시도</th>
                       <th className="p-2 font-medium">사유</th>
@@ -118,7 +119,12 @@ export default function WithdrawalPolicyAdminPage() {
                       data.jobs.map(j => (
                         <tr key={j.id} className="border-t">
                           <td className="p-2">{j.id}</td>
-                          <td className="p-2">{j.userId}</td>
+                          <td className="p-2">
+                            <div>#{j.userId}</div>
+                            {j.anonNickname && (
+                              <div className="text-xs text-muted-foreground">{j.anonNickname}</div>
+                            )}
+                          </td>
                           <td className="p-2">
                             <Badge variant={STATUS_VARIANT[j.status] ?? 'outline'}>
                               {STATUS_LABEL[j.status] ?? j.status}
