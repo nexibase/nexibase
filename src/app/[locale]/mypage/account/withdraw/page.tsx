@@ -161,9 +161,9 @@ export default function WithdrawPage() {
         </Card>
 
         <form onSubmit={onSubmit} className="space-y-6 border-t pt-6">
-          <div className="space-y-3">
+          <div className="space-y-4">
             <Label className="text-base font-semibold">탈퇴 사유 (선택)</Label>
-            <RadioGroup value={reasonCode} onValueChange={setReasonCode} className="gap-3 pt-1">
+            <RadioGroup value={reasonCode} onValueChange={setReasonCode} className="gap-3">
               {REASON_OPTIONS.map(opt => (
                 <div key={opt.value} className="flex items-center gap-3">
                   <RadioGroupItem
@@ -188,8 +188,8 @@ export default function WithdrawPage() {
             )}
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="withdraw-password" className="font-semibold">비밀번호 확인</Label>
+          <div className="space-y-3">
+            <Label htmlFor="withdraw-password" className="text-base font-semibold">비밀번호 확인</Label>
             <Input
               id="withdraw-password"
               type="password"
