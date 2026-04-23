@@ -99,6 +99,10 @@ next-env.d.ts
 /src/app/api/photo-gallery/
 /src/app/\[locale\]/admin/photo-gallery/
 /src/app/api/admin/photo-gallery/
+/src/app/\[locale\]/faq-accordion/
+/src/app/api/faq-accordion/
+/src/app/\[locale\]/admin/faq-accordion/
+/src/app/api/admin/faq-accordion/
 
 # public 디렉토리의 모든 파일 무시. 단, 아래 예외는 포함.
 /public/*
