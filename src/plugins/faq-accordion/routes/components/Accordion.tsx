@@ -14,7 +14,6 @@ export function Accordion({ children, className }: AccordionProps) {
 }
 
 interface AccordionItemProps {
-  value: string
   expanded: boolean
   onToggle: () => void
   trigger: ReactNode

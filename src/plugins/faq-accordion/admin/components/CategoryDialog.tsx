@@ -68,12 +68,23 @@ export function CategoryDialog({ open, initial, onClose, onSaved }: Props) {
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <Label>{t('categoryName')}</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} maxLength={100} />
+            <Label htmlFor="category-name">{t('categoryName')}</Label>
+            <Input
+              id="category-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              maxLength={100}
+            />
           </div>
           <div>
-            <Label>{t('categorySlug')}</Label>
-            <Input value={slug} onChange={(e) => setSlug(e.target.value)} maxLength={100} placeholder="auto" />
+            <Label htmlFor="category-slug">{t('categorySlug')}</Label>
+            <Input
+              id="category-slug"
+              value={slug}
+              onChange={(e) => setSlug(e.target.value)}
+              maxLength={100}
+              placeholder="auto"
+            />
           </div>
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={onClose} disabled={saving}>{t('cancel')}</Button>

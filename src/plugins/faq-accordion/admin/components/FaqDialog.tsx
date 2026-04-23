@@ -82,20 +82,27 @@ export function FaqDialog({ open, initial, categories, onClose, onSaved }: Props
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <Label>{t('question')}</Label>
-            <Input value={question} onChange={(e) => setQuestion(e.target.value)} maxLength={500} />
+            <Label htmlFor="faq-question">{t('question')}</Label>
+            <Input
+              id="faq-question"
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
+              maxLength={500}
+            />
           </div>
           <div>
-            <Label>{t('answer')}</Label>
-            <MiniEditor content={answer} onChange={setAnswer} />
+            <Label htmlFor="faq-answer">{t('answer')}</Label>
+            <div id="faq-answer">
+              <MiniEditor content={answer} onChange={setAnswer} />
+            </div>
           </div>
           <div>
-            <Label>{t('category')}</Label>
+            <Label htmlFor="faq-category">{t('category')}</Label>
             <Select
               value={categoryId?.toString() ?? ''}
               onValueChange={(v) => setCategoryId(parseInt(v, 10))}
             >
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger id="faq-category"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {categories.map((c) => (
                   <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>

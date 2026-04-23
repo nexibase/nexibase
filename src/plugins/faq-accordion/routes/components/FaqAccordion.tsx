@@ -128,6 +128,7 @@ export function FaqAccordion({ categories, faqs, topFaqs }: Props) {
         <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
         <Input
           placeholder={t('search')}
+          aria-label={t('search')}
           value={rawSearch}
           onChange={(e) => setRawSearch(e.target.value)}
           className="pl-9"
@@ -188,7 +189,6 @@ export function FaqAccordion({ categories, faqs, topFaqs }: Props) {
               <AccordionItem
                 key={faq.id}
                 id={`faq-item-${faq.id}`}
-                value={faq.id.toString()}
                 expanded={expanded}
                 onToggle={() => onToggle(faq.id)}
                 trigger={

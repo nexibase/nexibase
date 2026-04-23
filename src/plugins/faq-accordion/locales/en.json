@@ -5,7 +5,6 @@
     "search": "Search FAQs...",
     "noResults": "No FAQs found matching your search.",
     "mostViewed": "Most Viewed",
-    "views": "{count} views",
     "helpful": "Was this helpful?",
     "yes": "Yes",
     "no": "No",
@@ -19,7 +18,6 @@
       },
       "addFaq": "Add FAQ",
       "editFaq": "Edit FAQ",
-      "deleteFaq": "Delete FAQ",
       "addCategory": "Add Category",
       "editCategory": "Edit Category",
       "question": "Question",
@@ -38,9 +36,7 @@
       "categorySlug": "Slug (auto if blank)",
       "emptyFaqs": "No FAQs yet. Create your first one.",
       "emptyCategories": "Create a category before adding FAQs.",
-      "reorderSuccess": "Order updated",
       "reorderFailed": "Reorder failed",
-      "slugTaken": "Slug already in use",
       "searchFaqs": "Search questions...",
       "reorder": "Reorder"
     }
