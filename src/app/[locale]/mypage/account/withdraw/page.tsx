@@ -83,11 +83,6 @@ export default function WithdrawPage() {
     })
     if (res.ok) {
       setSucceeded(true)
-      // Give the user a beat to read the confirmation, then sign out
-      // (clears client-side NextAuth session) and redirect to home.
-      setTimeout(() => {
-        signOut({ callbackUrl: '/', redirect: true })
-      }, 2500)
       return
     }
     const err = await res.json().catch(() => ({ error: 'unknown' }))
@@ -107,10 +102,15 @@ export default function WithdrawPage() {
     <MyPageLayout>
       <div className="mx-auto max-w-md p-6">
         <Card>
-          <CardContent className="space-y-3 p-8 text-center">
+          <CardContent className="space-y-4 p-8 text-center">
             <h2 className="text-lg font-semibold">탈퇴가 완료되었습니다</h2>
             <p className="text-sm text-muted-foreground">이용해주셔서 감사합니다.</p>
-            <p className="text-xs text-muted-foreground">잠시 후 홈으로 이동합니다…</p>
+            <Button
+              className="w-full"
+              onClick={() => signOut({ callbackUrl: '/', redirect: true })}
+            >
+              홈으로 이동
+            </Button>
           </CardContent>
         </Card>
       </div>
