@@ -41,7 +41,8 @@
       "reorderSuccess": "순서가 저장되었습니다",
       "reorderFailed": "순서 저장에 실패했습니다",
       "slugTaken": "이미 사용 중인 슬러그입니다",
-      "searchFaqs": "질문 검색..."
+      "searchFaqs": "질문 검색...",
+      "reorder": "순서 변경"
     }
   }
 }

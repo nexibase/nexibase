@@ -32,6 +32,7 @@ interface Category {
 }
 
 function Row({ cat, onEdit, onDelete }: { cat: Category; onEdit: () => void; onDelete: () => void }) {
+  const t = useTranslations('faqAccordion.admin')
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: cat.id })
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -40,7 +41,13 @@ function Row({ cat, onEdit, onDelete }: { cat: Category; onEdit: () => void; onD
   }
   return (
     <Card ref={setNodeRef} style={style} className="p-3 flex items-center gap-3">
-      <button {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing text-muted-foreground">
+      <button
+        type="button"
+        {...attributes}
+        {...listeners}
+        aria-label={t('reorder')}
+        className="cursor-grab active:cursor-grabbing text-muted-foreground"
+      >
         <GripVertical className="h-5 w-5" />
       </button>
       <div className="flex-1">
@@ -48,8 +55,12 @@ function Row({ cat, onEdit, onDelete }: { cat: Category; onEdit: () => void; onD
         <div className="text-xs text-muted-foreground">/{cat.slug}</div>
       </div>
       <Badge variant="secondary">{cat._count.faqs}</Badge>
-      <Button size="sm" variant="ghost" onClick={onEdit}><Pencil className="h-4 w-4" /></Button>
-      <Button size="sm" variant="ghost" onClick={onDelete}><Trash2 className="h-4 w-4" /></Button>
+      <Button size="sm" variant="ghost" onClick={onEdit} aria-label={t('editCategory')}>
+        <Pencil className="h-4 w-4" />
+      </Button>
+      <Button size="sm" variant="ghost" onClick={onDelete} aria-label={t('delete')}>
+        <Trash2 className="h-4 w-4" />
+      </Button>
     </Card>
   )
 }

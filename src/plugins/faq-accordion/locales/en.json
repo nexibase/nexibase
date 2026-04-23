@@ -41,7 +41,8 @@
       "reorderSuccess": "Order updated",
       "reorderFailed": "Reorder failed",
       "slugTaken": "Slug already in use",
-      "searchFaqs": "Search questions..."
+      "searchFaqs": "Search questions...",
+      "reorder": "Reorder"
     }
   }
 }
