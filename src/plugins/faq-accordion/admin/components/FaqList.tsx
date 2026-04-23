@@ -23,7 +23,7 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Plus, Pencil, Trash2, GripVertical, Eye, Search } from 'lucide-react'
-import { FaqDialog } from './FaqDialog'
+import Link from 'next/link'
 import { stripHtml } from '@/plugins/faq-accordion/lib/sanitize'
 
 interface Category { id: number; name: string; slug: string }
@@ -39,7 +39,7 @@ interface Faq {
   published: boolean
 }
 
-function Row({ faq, onEdit, onDelete }: { faq: Faq; onEdit: () => void; onDelete: () => void }) {
+function Row({ faq, onDelete }: { faq: Faq; onDelete: () => void }) {
   const t = useTranslations('faqAccordion.admin')
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: faq.id })
   const style = {
@@ -66,8 +66,10 @@ function Row({ faq, onEdit, onDelete }: { faq: Faq; onEdit: () => void; onDelete
           {!faq.published && <Badge variant="secondary">{t('draft')}</Badge>}
         </div>
       </div>
-      <Button size="sm" variant="ghost" onClick={onEdit} aria-label={t('editFaq')}>
-        <Pencil className="h-4 w-4" />
+      <Button size="sm" variant="ghost" asChild aria-label={t('editFaq')}>
+        <Link href={`/admin/faq-accordion/${faq.id}/edit`}>
+          <Pencil className="h-4 w-4" />
+        </Link>
       </Button>
       <Button size="sm" variant="ghost" onClick={onDelete} aria-label={t('delete')}>
         <Trash2 className="h-4 w-4" />
@@ -88,8 +90,6 @@ export function FaqList({
   const t = useTranslations('faqAccordion.admin')
   const [selectedCat, setSelectedCat] = useState<string>('all')
   const [search, setSearch] = useState('')
-  const [editing, setEditing] = useState<Faq | null>(null)
-  const [creating, setCreating] = useState(false)
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }))
 
@@ -159,9 +159,17 @@ export function FaqList({
           />
         </div>
         <div className="ml-auto">
-          <Button onClick={() => setCreating(true)} disabled={!canCreate}>
-            <Plus className="h-4 w-4 mr-1" /> {t('addFaq')}
-          </Button>
+          {canCreate ? (
+            <Button asChild>
+              <Link href="/admin/faq-accordion/new">
+                <Plus className="h-4 w-4 mr-1" /> {t('addFaq')}
+              </Link>
+            </Button>
+          ) : (
+            <Button disabled>
+              <Plus className="h-4 w-4 mr-1" /> {t('addFaq')}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -177,20 +185,13 @@ export function FaqList({
           <SortableContext items={display.map((i) => i.id)} strategy={verticalListSortingStrategy}>
             <div className="space-y-2">
               {display.map((faq) => (
-                <Row key={faq.id} faq={faq} onEdit={() => setEditing(faq)} onDelete={() => handleDelete(faq)} />
+                <Row key={faq.id} faq={faq} onDelete={() => handleDelete(faq)} />
               ))}
             </div>
           </SortableContext>
         </DndContext>
       )}
 
-      <FaqDialog
-        open={creating || editing !== null}
-        initial={editing}
-        categories={categories}
-        onClose={() => { setCreating(false); setEditing(null) }}
-        onSaved={onChanged}
-      />
     </div>
   )
 }
