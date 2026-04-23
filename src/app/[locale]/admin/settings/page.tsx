@@ -32,6 +32,7 @@ import {
   Upload,
   ImageIcon,
   BarChart3,
+  Search,
 } from "lucide-react"
 import { SUPPORTED_LOCALES } from "@/i18n/_generated-locales"
 
@@ -73,6 +74,10 @@ interface SettingsData {
   ga4_property_id: string
   ga4_service_account_json: string
 
+  // Search engine verification
+  google_site_verification: string
+  naver_site_verification: string
+  bing_site_verification: string
 }
 
 interface ThemeInfo {
@@ -103,7 +108,10 @@ const DEFAULT_SETTINGS: SettingsData = {
   theme_folder: 'default',
   google_analytics_id: '',
   ga4_property_id: '',
-  ga4_service_account_json: ''
+  ga4_service_account_json: '',
+  google_site_verification: '',
+  naver_site_verification: '',
+  bing_site_verification: ''
 }
 
 export default function SettingsPage() {
@@ -541,6 +549,59 @@ export default function SettingsPage() {
                   </p>
                 </div>
 
+              </CardContent>
+            </Card>
+
+            {/* Search engine verification */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Search className="h-5 w-5" />
+                  {t('searchVerification')}
+                </CardTitle>
+                <CardDescription>
+                  {t('searchVerificationDesc')}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="google_site_verification">{t('googleSiteVerification')}</Label>
+                  <Input
+                    id="google_site_verification"
+                    value={settings.google_site_verification}
+                    onChange={(e) => handleChange('google_site_verification', e.target.value)}
+                    placeholder={t('googleSiteVerificationPlaceholder')}
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    {t('googleSiteVerificationDesc')}
+                  </p>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="naver_site_verification">{t('naverSiteVerification')}</Label>
+                  <Input
+                    id="naver_site_verification"
+                    value={settings.naver_site_verification}
+                    onChange={(e) => handleChange('naver_site_verification', e.target.value)}
+                    placeholder={t('naverSiteVerificationPlaceholder')}
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    {t('naverSiteVerificationDesc')}
+                  </p>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="bing_site_verification">{t('bingSiteVerification')}</Label>
+                  <Input
+                    id="bing_site_verification"
+                    value={settings.bing_site_verification}
+                    onChange={(e) => handleChange('bing_site_verification', e.target.value)}
+                    placeholder={t('bingSiteVerificationPlaceholder')}
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    {t('bingSiteVerificationDesc')}
+                  </p>
+                </div>
               </CardContent>
             </Card>
 

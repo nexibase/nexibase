@@ -52,6 +52,19 @@ export async function generateMetadata(): Promise<Metadata> {
       ...(s.site_description && { description: s.site_description }),
     },
     alternates: { canonical: baseStr },
+    ...(() => {
+      const other: Record<string, string> = {}
+      if (s.naver_site_verification) other['naver-site-verification'] = s.naver_site_verification
+      if (s.bing_site_verification) other['msvalidate.01'] = s.bing_site_verification
+      const hasAny = s.google_site_verification || Object.keys(other).length > 0
+      if (!hasAny) return {}
+      return {
+        verification: {
+          ...(s.google_site_verification && { google: s.google_site_verification }),
+          ...(Object.keys(other).length > 0 && { other }),
+        },
+      }
+    })(),
     robots: {
       index: true,
       follow: true,
