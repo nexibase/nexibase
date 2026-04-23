@@ -256,6 +256,16 @@ export default function MyPage() {
           <LogOut className="h-4 w-4 mr-2" />
           {t('logout')}
         </Button>
+
+        {/* Withdraw — discreet secondary action, intentionally not a prominent button */}
+        <div className="pt-8 text-center">
+          <Link
+            href="/mypage/account/withdraw"
+            className="text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
+          >
+            {t('withdraw')}
+          </Link>
+        </div>
       </div>
     </MyPageLayout>
   )
