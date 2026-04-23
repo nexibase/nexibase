@@ -169,7 +169,7 @@ export default function WithdrawPage() {
                   <RadioGroupItem
                     value={opt.value}
                     id={`reason-${opt.value}`}
-                    className="size-5 border-2 border-foreground/70"
+                    className="size-5 border-foreground/40"
                   />
                   <Label htmlFor={`reason-${opt.value}`} className="text-base font-normal cursor-pointer leading-relaxed">
                     {opt.label}
