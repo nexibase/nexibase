@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { Card, CardContent } from '@/components/ui/card'
-import { Eye, ArrowRight } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { Accordion, AccordionItem } from '@/plugins/faq-accordion/routes/components/Accordion'
 import { sanitizeHtml } from '@/plugins/faq-accordion/lib/sanitize'
 
@@ -12,7 +12,6 @@ interface Faq {
   id: number
   question: string
   answer: string
-  views: number
 }
 
 interface Props {
@@ -26,7 +25,6 @@ export default function FaqWidget({ settings }: Props) {
   const [faqs, setFaqs] = useState<Faq[]>([])
   const [loading, setLoading] = useState(true)
   const [expandedId, setExpandedId] = useState<number | null>(null)
-  const [viewCounts, setViewCounts] = useState<Record<number, number>>({})
 
   useEffect(() => {
     let cancelled = false
@@ -40,7 +38,6 @@ export default function FaqWidget({ settings }: Props) {
         }
         const data: { faqs: Faq[] } = await res.json()
         setFaqs(data.faqs)
-        setViewCounts(Object.fromEntries(data.faqs.map((f) => [f.id, f.views])))
       } catch {
         if (!cancelled) setFaqs([])
       } finally {
@@ -53,23 +50,16 @@ export default function FaqWidget({ settings }: Props) {
     }
   }, [limit])
 
-  async function onToggle(id: number) {
+  function onToggle(id: number) {
     const next = expandedId === id ? null : id
     setExpandedId(next)
     if (next !== null) {
-      try {
-        const res = await fetch('/api/faq-accordion', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ type: 'view', id }),
-        })
-        if (res.ok) {
-          const d: { views: number } = await res.json()
-          setViewCounts((prev) => ({ ...prev, [id]: d.views }))
-        }
-      } catch {
-        // ignore — widget keeps working without the count update
-      }
+      // Fire-and-forget view tracking; widget doesn't display the count.
+      fetch('/api/faq-accordion', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'view', id }),
+      }).catch(() => {})
     }
   }
 
@@ -92,21 +82,13 @@ export default function FaqWidget({ settings }: Props) {
           <Accordion>
             {faqs.map((faq) => {
               const expanded = faq.id === expandedId
-              const views = viewCounts[faq.id] ?? faq.views
               return (
                 <AccordionItem
                   key={faq.id}
                   id={`faq-widget-item-${faq.id}`}
                   expanded={expanded}
                   onToggle={() => onToggle(faq.id)}
-                  trigger={
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="font-medium text-sm">{faq.question}</span>
-                      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground shrink-0">
-                        <Eye className="h-3 w-3" /> {views}
-                      </span>
-                    </div>
-                  }
+                  trigger={<span className="font-medium text-sm">{faq.question}</span>}
                 >
                   <div
                     className="prose prose-sm max-w-none dark:prose-invert"
