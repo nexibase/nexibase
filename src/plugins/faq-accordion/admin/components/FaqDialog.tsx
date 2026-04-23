@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { MiniEditor } from '@/components/editors/MiniEditor'
+import { stripHtml } from '@/plugins/faq-accordion/lib/sanitize'
 
 interface Category { id: number; name: string }
 interface Faq {
@@ -45,7 +46,7 @@ export function FaqDialog({ open, initial, categories, onClose, onSaved }: Props
   }, [open, initial, categories])
 
   async function handleSave() {
-    if (!question.trim() || !answer.replace(/<[^>]*>/g, '').trim() || !categoryId) return
+    if (!question.trim() || !stripHtml(answer) || !categoryId) return
     setSaving(true)
     try {
       const isEdit = !!initial
