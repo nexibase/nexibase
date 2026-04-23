@@ -51,16 +51,7 @@ export default function FaqWidget({ settings }: Props) {
   }, [limit])
 
   function onToggle(id: number) {
-    const next = expandedId === id ? null : id
-    setExpandedId(next)
-    if (next !== null) {
-      // Fire-and-forget view tracking; widget doesn't display the count.
-      fetch('/api/faq-accordion', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'view', id }),
-      }).catch(() => {})
-    }
+    setExpandedId(expandedId === id ? null : id)
   }
 
   return (
