@@ -5,8 +5,6 @@ import { ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface AccordionProps {
-  value: string | null
-  onValueChange: (v: string | null) => void
   children: ReactNode
   className?: string
 }
