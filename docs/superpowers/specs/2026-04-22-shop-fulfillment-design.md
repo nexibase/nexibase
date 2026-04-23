@@ -556,15 +556,6 @@ Add Toss, KakaoPay, Naver Pay adapters. Validates Phase 1 abstractions.
 - **Auto-confirm cron**: schedule `npm run cron:shop-auto-confirm` to run daily via crontab or a host scheduler. Default N=7 days; override via `shop_settings.default_confirm_days`.
 - **Shop settings seeded in migration**: `default_confirm_days=7` (seeded manually via `npx tsx -e` during Task 13). If deploying to a fresh environment, add this to the install wizard or seed script.
 
-### Phase 2 deployment (post-implementation)
-
-- **SMS provider:** CoolSMS v4 chosen. Configure `sms_provider_config` (JSON with `apiKey`, `apiSecret`, `from` phone) in shop settings before enabling `sms_notifications_enabled`. Until configured, the SMS channel logs a warning and silently skips.
-- **User smsOptIn field:** the SMS channel treats absent `smsOptIn` as opted-in. To add explicit user opt-out, extend the User model with `smsOptIn Boolean @default(true)` (or `default(false)` for stricter default) via a core migration when policy dictates.
-- **Photo upload retention:** return request photos go to the existing `/api/upload` target. Retain at least 90 days for audit purposes.
-- **Exchange orders** are created with `finalPrice=0` and stock decremented at create time. Existing sales reports that treat `finalPrice` as revenue should filter `orderType='normal'` to avoid counting exchanges as revenue.
-- **Return window:** default 7 days via `shop_settings.return_window_days`. Adjust per business policy.
-- **Migration order:** plugin-shop PR merges first (Phase 2 schema additions), then nexibase PR (migration file + submodule pointer).
-
 ## 9. Open Questions (to resolve during implementation)
 
 - Exact SMS provider choice (CoolSMS vs Aligo) — pick based on pricing / account availability at Phase 2 start.
