@@ -1,0 +1,46 @@
+{
+  "faqAccordion": {
+    "title": "자주 묻는 질문",
+    "all": "전체",
+    "search": "FAQ 검색...",
+    "noResults": "검색 결과가 없습니다.",
+    "mostViewed": "많이 본 질문",
+    "views": "조회수 {count}회",
+    "helpful": "도움이 되었나요?",
+    "yes": "예",
+    "no": "아니오",
+    "thanksForFeedback": "피드백 감사합니다!",
+    "empty": "아직 등록된 FAQ가 없습니다.",
+    "admin": {
+      "title": "FAQ 관리",
+      "tabs": {
+        "faqs": "FAQ 목록",
+        "categories": "카테고리"
+      },
+      "addFaq": "FAQ 추가",
+      "editFaq": "FAQ 수정",
+      "deleteFaq": "FAQ 삭제",
+      "addCategory": "카테고리 추가",
+      "editCategory": "카테고리 수정",
+      "question": "질문",
+      "answer": "답변",
+      "category": "카테고리",
+      "published": "게시됨",
+      "draft": "초안",
+      "allCategories": "모든 카테고리",
+      "save": "저장",
+      "cancel": "취소",
+      "delete": "삭제",
+      "confirmDeleteFaq": "이 FAQ를 삭제하시겠습니까?",
+      "categoryHasFaqs": "이 카테고리에 FAQ가 {count}개 있습니다. 모두 삭제하시겠습니까?",
+      "categoryName": "카테고리 이름",
+      "categorySlug": "슬러그 (비우면 자동 생성)",
+      "emptyFaqs": "FAQ가 없습니다. 첫 FAQ를 추가하세요.",
+      "emptyCategories": "FAQ를 추가하기 전에 카테고리를 먼저 만드세요.",
+      "reorderSuccess": "순서가 저장되었습니다",
+      "reorderFailed": "순서 저장에 실패했습니다",
+      "slugTaken": "이미 사용 중인 슬러그입니다",
+      "searchFaqs": "질문 검색..."
+    }
+  }
+}
