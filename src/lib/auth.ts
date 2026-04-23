@@ -10,8 +10,11 @@ export const getSession = async () => {
   try {
     const nextAuthSession = await getServerSession(authOptions);
     if (nextAuthSession?.user?.email) {
-      const user = await prisma.user.findUnique({
-        where: { email: nextAuthSession.user.email },
+      const user = await prisma.user.findFirst({
+        where: {
+          email: nextAuthSession.user.email,
+          status: { not: 'withdrawn' },
+        },
         select: {
           id: true,
           email: true,
@@ -34,8 +37,11 @@ export const getAuthUser = async () => {
   try {
     const nextAuthSession = await getServerSession(authOptions);
     if (nextAuthSession?.user?.email) {
-      const user = await prisma.user.findUnique({
-        where: { email: nextAuthSession.user.email }
+      const user = await prisma.user.findFirst({
+        where: {
+          email: nextAuthSession.user.email,
+          status: { not: 'withdrawn' },
+        },
       });
       if (user) return user;
     }
