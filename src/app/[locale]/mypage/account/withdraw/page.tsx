@@ -166,7 +166,11 @@ export default function WithdrawPage() {
             <RadioGroup value={reasonCode} onValueChange={setReasonCode} className="gap-3 pt-1">
               {REASON_OPTIONS.map(opt => (
                 <div key={opt.value} className="flex items-center gap-3">
-                  <RadioGroupItem value={opt.value} id={`reason-${opt.value}`} />
+                  <RadioGroupItem
+                    value={opt.value}
+                    id={`reason-${opt.value}`}
+                    className="size-5 border-2 border-foreground/70"
+                  />
                   <Label htmlFor={`reason-${opt.value}`} className="text-base font-normal cursor-pointer leading-relaxed">
                     {opt.label}
                   </Label>
