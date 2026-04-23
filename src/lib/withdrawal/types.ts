@@ -7,6 +7,7 @@ export type UserDataPolicyKind =
 export interface BaseWithdrawalEntry {
   model: string                     // Prisma model name as written in schema
   reason?: string                   // human-readable justification, surfaced in admin audit page
+  field?: string                    // user-id column name (defaults to 'userId'); used for counting (retain) and deleting (delete)
 }
 
 export interface RetainEntry extends BaseWithdrawalEntry {
@@ -20,7 +21,6 @@ export interface RetainViaParentEntry extends BaseWithdrawalEntry {
 
 export interface DeleteEntry extends BaseWithdrawalEntry {
   policy: 'delete'
-  field?: string                    // user-id column (defaults to 'userId')
 }
 
 export interface CustomEntry extends BaseWithdrawalEntry {
