@@ -32,7 +32,8 @@ src/plugins/faq-accordion/
 ├── routes/
 │   ├── page.tsx                   # /[locale]/faq-accordion (server)
 │   └── components/
-│       └── FaqAccordion.tsx       # client (search/filter/view/vote)
+│       ├── FaqAccordion.tsx       # client (search/filter/view/vote)
+│       └── Accordion.tsx          # plugin-local accordion primitive
 └── lib/sanitize.ts                # DOMPurify wrapper (server+client safe)
 ```
 
@@ -169,7 +170,7 @@ All methods gate on `getAdminUser()` → 401 if missing.
 - Category delete: first 400 → confirm dialog "Delete N FAQs?" → retry with `?force=true`.
 - Empty states: no categories → add-FAQ disabled with guidance banner.
 - Loading: skeleton on initial fetch, spinner on dialog save.
-- Toasts: `sonner` (match existing project pattern).
+- User feedback: native `alert()` / `confirm()` — matches existing project convention (see `src/plugins/polls/admin/page.tsx`; no toast library is installed).
 
 **Admin menu** (`admin/menus.ts`):
 
@@ -216,7 +217,7 @@ Icon is a string — scanner parses strings, not component references.
 **Interactions:**
 - Category tabs: shadcn `<Tabs>` — "All" + one per category with count badge.
 - Search: debounced 300ms; overrides tab filter when non-empty; matches `question` + `stripHtml(answer)`.
-- Accordion: shadcn `<Accordion type="single" collapsible>`; `onValueChange` fires view ping `PATCH { type:'view', id }`. Response updates view count inline.
+- Accordion: **plugin-local custom accordion** (shadcn `<Accordion>` not present in this project and no radix-accordion dep — a ~30-line React component under `routes/components/Accordion.tsx` keeps core untouched). Single-expand mode. `onValueChange` fires view ping `PATCH { type:'view', id }`. Response updates view count inline. Animation via Tailwind `transition-all` + `grid-rows-[0fr]`/`grid-rows-[1fr]` trick for height-auto animation.
 - Voting: localStorage key `faq-voted:<id>`. If present, buttons disabled + "Thanks for your feedback!" shown. On vote: set localStorage, call API, update local counts.
 - Most Viewed: rendered only when `selectedCategory === 'all' && searchQuery === ''`. Click scrolls to item + auto-expands (sets `expandedItem`).
 - Empty states: search miss → `noResults` message; no FAQs at all → `empty` message with no search/tabs.
