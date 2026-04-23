@@ -160,55 +160,68 @@ export default function WithdrawPage() {
           </CardContent>
         </Card>
 
-        <form onSubmit={onSubmit} className="space-y-6 border-t pt-6">
-          <div className="space-y-5">
-            <Label className="text-base font-semibold">탈퇴 사유 (선택)</Label>
-            <RadioGroup value={reasonCode} onValueChange={setReasonCode} className="gap-3">
-              {REASON_OPTIONS.map(opt => (
-                <div key={opt.value} className="flex items-center gap-3">
-                  <RadioGroupItem
-                    value={opt.value}
-                    id={`reason-${opt.value}`}
-                    className="size-5 border-foreground/40"
-                  />
-                  <Label htmlFor={`reason-${opt.value}`} className="text-base font-normal cursor-pointer leading-relaxed">
-                    {opt.label}
-                  </Label>
-                </div>
-              ))}
-            </RadioGroup>
-            {reasonCode === 'other' && (
-              <Textarea
-                maxLength={500}
-                rows={3}
-                placeholder="탈퇴 사유를 적어주세요 (500자 이내)"
-                value={reasonText}
-                onChange={e => setReasonText(e.target.value)}
-              />
-            )}
-          </div>
+        <form onSubmit={onSubmit} className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">탈퇴 사유 <span className="text-sm font-normal text-muted-foreground">(선택)</span></CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <RadioGroup value={reasonCode} onValueChange={setReasonCode} className="gap-4">
+                {REASON_OPTIONS.map(opt => (
+                  <div key={opt.value} className="flex items-center gap-3">
+                    <RadioGroupItem
+                      value={opt.value}
+                      id={`reason-${opt.value}`}
+                      className="size-5 border-foreground/40"
+                    />
+                    <Label htmlFor={`reason-${opt.value}`} className="text-base font-normal cursor-pointer">
+                      {opt.label}
+                    </Label>
+                  </div>
+                ))}
+              </RadioGroup>
+              {reasonCode === 'other' && (
+                <Textarea
+                  maxLength={500}
+                  rows={3}
+                  placeholder="탈퇴 사유를 적어주세요 (500자 이내)"
+                  value={reasonText}
+                  onChange={e => setReasonText(e.target.value)}
+                />
+              )}
+            </CardContent>
+          </Card>
 
-          <div className="space-y-4">
-            <Label htmlFor="withdraw-password" className="text-base font-semibold">비밀번호 확인</Label>
-            <Input
-              id="withdraw-password"
-              type="password"
-              placeholder="비밀번호"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              autoComplete="current-password"
-            />
-            <p className="text-xs text-muted-foreground">소셜 로그인만 사용 중이면 비워두셔도 됩니다.</p>
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">비밀번호 확인</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <Input
+                id="withdraw-password"
+                type="password"
+                placeholder="비밀번호"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                autoComplete="current-password"
+              />
+              <p className="text-xs text-muted-foreground">소셜 로그인만 사용 중이면 비워두셔도 됩니다.</p>
+            </CardContent>
+          </Card>
 
           {error && <p className="text-sm text-destructive">{error}</p>}
 
-          <div className="flex gap-2 pt-2">
+          <div className="rounded-md bg-muted/40 p-4 text-sm text-muted-foreground">
+            ※ 탈퇴 후에는 복구할 수 없습니다.
+          </div>
+
+          <div className="flex gap-2">
             <Button
               type="button"
               variant="outline"
               onClick={() => router.back()}
               disabled={submitting}
+              className="flex-1"
             >
               취소
             </Button>
@@ -216,13 +229,12 @@ export default function WithdrawPage() {
               type="submit"
               variant="destructive"
               disabled={submitting}
+              className="flex-1"
             >
               {submitting ? '처리 중…' : '탈퇴하기'}
             </Button>
           </div>
         </form>
-
-        <p className="text-xs text-muted-foreground">※ 탈퇴 후에는 복구할 수 없습니다.</p>
       </div>
     </MyPageLayout>
   )
