@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { signOut } from 'next-auth/react'
 import { MyPageLayout } from '@/components/layout/MyPageLayout'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -56,6 +57,7 @@ export default function WithdrawPage() {
   const [reasonText, setReasonText] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [succeeded, setSucceeded] = useState(false)
 
   useEffect(() => {
     fetch('/api/me/withdraw/preview')
@@ -80,7 +82,12 @@ export default function WithdrawPage() {
       body: JSON.stringify(body),
     })
     if (res.ok) {
-      router.push('/?withdrawn=1')
+      setSucceeded(true)
+      // Give the user a beat to read the confirmation, then sign out
+      // (clears client-side NextAuth session) and redirect to home.
+      setTimeout(() => {
+        signOut({ callbackUrl: '/', redirect: true })
+      }, 2500)
       return
     }
     const err = await res.json().catch(() => ({ error: 'unknown' }))
@@ -95,6 +102,20 @@ export default function WithdrawPage() {
 
   if (loading) return <MyPageLayout><div className="p-6 text-sm text-muted-foreground">로딩 중…</div></MyPageLayout>
   if (!preview) return <MyPageLayout><div className="p-6 text-sm text-destructive">{error || '미리보기를 불러올 수 없습니다.'}</div></MyPageLayout>
+
+  if (succeeded) return (
+    <MyPageLayout>
+      <div className="mx-auto max-w-md p-6">
+        <Card>
+          <CardContent className="space-y-3 p-8 text-center">
+            <h2 className="text-lg font-semibold">탈퇴가 완료되었습니다</h2>
+            <p className="text-sm text-muted-foreground">이용해주셔서 감사합니다.</p>
+            <p className="text-xs text-muted-foreground">잠시 후 홈으로 이동합니다…</p>
+          </CardContent>
+        </Card>
+      </div>
+    </MyPageLayout>
+  )
 
   return (
     <MyPageLayout>
