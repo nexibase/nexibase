@@ -1,6 +1,6 @@
 export default [
   { model: 'Poll',     policy: 'retain', field: 'authorId',
-    reason: 'Public content; anonymized via User join' },
+    reason: '공개 콘텐츠; User 조인으로 작성자 익명화' },
   { model: 'PollVote', policy: 'retain', field: 'userId',
-    reason: 'Affects aggregate vote counts; voter rendered as anonymized User via join' },
+    reason: '집계 투표 수에 영향; 투표자는 User 조인으로 익명화' },
 ]
