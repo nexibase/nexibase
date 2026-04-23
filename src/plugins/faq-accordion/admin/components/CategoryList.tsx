@@ -87,7 +87,7 @@ export function CategoryList({ categories, onChanged }: { categories: Category[]
   }
 
   async function handleDelete(cat: Category) {
-    if (!confirm(t('deleteFaq'))) return
+    if (!confirm(t('confirmDeleteCategory'))) return
     const url = `/api/admin/faq-accordion?type=category&id=${cat.id}`
     let res = await fetch(url, { method: 'DELETE' })
     if (res.status === 400) {

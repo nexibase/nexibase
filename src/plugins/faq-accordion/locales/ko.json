@@ -32,6 +32,7 @@
       "cancel": "취소",
       "delete": "삭제",
       "confirmDeleteFaq": "이 FAQ를 삭제하시겠습니까?",
+      "confirmDeleteCategory": "이 카테고리를 삭제하시겠습니까?",
       "categoryHasFaqs": "이 카테고리에 FAQ가 {count}개 있습니다. 모두 삭제하시겠습니까?",
       "categoryName": "카테고리 이름",
       "categorySlug": "슬러그 (비우면 자동 생성)",
