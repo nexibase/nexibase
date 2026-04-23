@@ -38,7 +38,14 @@
       "emptyCategories": "FAQ를 추가하기 전에 카테고리를 먼저 만드세요.",
       "reorderFailed": "순서 저장에 실패했습니다",
       "searchFaqs": "질문 검색...",
-      "reorder": "순서 변경"
+      "reorder": "순서 변경",
+      "back": "목록으로",
+      "unsavedConfirm": "저장되지 않은 변경사항이 있습니다. 나가시겠습니까?",
+      "notFound": "FAQ를 찾을 수 없습니다",
+      "statsTitle": "통계",
+      "statsViews": "조회수",
+      "statsHelpful": "도움됨",
+      "statsNotHelpful": "도움 안 됨"
     }
   }
 }

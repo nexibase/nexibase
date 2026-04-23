@@ -38,7 +38,14 @@
       "emptyCategories": "Create a category before adding FAQs.",
       "reorderFailed": "Reorder failed",
       "searchFaqs": "Search questions...",
-      "reorder": "Reorder"
+      "reorder": "Reorder",
+      "back": "Back to list",
+      "unsavedConfirm": "You have unsaved changes. Leave anyway?",
+      "notFound": "FAQ not found",
+      "statsTitle": "Stats",
+      "statsViews": "Views",
+      "statsHelpful": "Helpful",
+      "statsNotHelpful": "Not helpful"
     }
   }
 }
