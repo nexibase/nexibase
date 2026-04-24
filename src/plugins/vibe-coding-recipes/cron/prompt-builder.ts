@@ -36,7 +36,9 @@ Key rules:
 - UI: shadcn/ui components + lucide-react icons + Tailwind CSS
   Available shadcn components: button, card, badge, input, label, tabs, textarea, dialog, popover, select, checkbox, switch, radio-group, separator, avatar. Use any of these freely.
 - NO TOAST LIBRARY is installed — do NOT import useToast, toast, sonner, or \`@/hooks/use-toast\` (these do not exist in this project). For user feedback after form submission, use plain \`alert()\` or inline state-driven message divs. This is a deliberate project convention.
-- i18n: useTranslations() from next-intl (client) or getTranslations() (server)
+- i18n imports are module-split: \`useTranslations\` (client hook) is imported from \`'next-intl'\`, but \`getTranslations\` (server async) MUST be imported from \`'next-intl/server'\`. Writing \`import { getTranslations } from 'next-intl'\` in a Server Component compiles but throws at runtime because the server entry is a different module.
+- Next 15+ dynamic route \`params\` and \`searchParams\` are Promises that must be awaited: \`{ params: Promise<{ locale: string }>, searchParams: Promise<{ q?: string }> }\`, then \`const { locale } = await params; const { q } = await searchParams\`. Declaring them as plain objects (\`params: { locale: string }\`) type-checks loosely but at runtime \`params.locale\` is \`undefined\` because the actual value is still wrapped in a Promise.
+- Every file you write MUST declare at the top every \`import\` it needs. Do not use a React component (Card, Badge, Button, icons, etc.) without importing it in the same file — the code block is what actually gets pasted, so a "using Card below" mention in prose is not enough. Include every shadcn/ui, lucide-react, next/*, prisma import the file's body references.
 
 API route URL mapping (IMPORTANT — do not guess):
 - \`src/plugins/<slug>/api/foo/route.ts\` is served at \`/api/<slug>/foo\` (NO locale prefix, NO plugin-slug in path twice)
