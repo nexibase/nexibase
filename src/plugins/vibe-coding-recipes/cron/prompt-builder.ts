@@ -28,6 +28,7 @@ Each plugin is a folder in src/plugins/<name>/ with these conventions:
 
 Key rules:
 - Routes are Server Components by default; use "use client" only when needed
+- Server Components must NEVER \`fetch()\` their own plugin's API. Call the database directly with \`prisma.*\` instead. A server component fetching \`/api/<slug>/...\` from itself is an anti-pattern that round-trips through the network (slower) and requires a correct absolute URL, which is hard to get right: \`process.env.NEXT_PUBLIC_BASE_URL\` is NOT set in this project, and the default fallback \`http://localhost:3000\` fails because the dev server listens on a different port. Move the query to the page itself (server → DB) or — if the same data is already served via an API — duplicate the read (small Prisma call is cheaper than a synthetic HTTP round-trip). Client components may freely \`fetch('/api/<slug>/...')\` because the browser already knows the origin.
 - Admin auth via \`getAdminUser()\` from \`@/lib/auth\` (returns null if the current user is not an admin)
 - Logged-in-user auth (non-admin public APIs): use \`getServerSession(authOptions)\` from \`next-auth\`, where authOptions is imported from \`@/app/api/auth/[...nextauth]/route\`. There is NO \`@/lib/auth-options\` module — do not invent that import path.
 - Prisma client: \`import { prisma } from '@/lib/prisma'\` — \`prisma\` is a NAMED export, not a default export. \`import prisma from '@/lib/prisma'\` is wrong and gives undefined at runtime.
