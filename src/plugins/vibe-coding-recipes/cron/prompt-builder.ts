@@ -64,9 +64,12 @@ const WIDGET_REFERENCE_EXAMPLE = `## Reference Example
 
 Below is the real WeatherWidget from src/plugins/weather-widget/. Use it ONLY as a structural anchor — do NOT copy its domain (weather). Follow the same file pair, prop signature, and settingsSchema pattern for whatever widget you are generating.
 
+Notice both files are shown as complete fenced code blocks with a path comment on the first line — your generated steps MUST follow the same format (see the Code Block Requirement section).
+
 ### widgets/WeatherWidget.meta.ts
 
 \`\`\`ts
+// src/plugins/weather-widget/widgets/WeatherWidget.meta.ts
 export default {
   title: 'Weather Widget',
   defaultZone: 'right',
@@ -79,6 +82,7 @@ export default {
 ### widgets/WeatherWidget.tsx (first 25 lines — signature and destructuring pattern)
 
 \`\`\`tsx
+// src/plugins/weather-widget/widgets/WeatherWidget.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -127,6 +131,35 @@ ${slot.type !== 'plugin' ? WIDGET_REFERENCE_EXAMPLE : ''}
 6. Bilingual: provide both English and Korean for all text fields
 7. slug must be lowercase letters, digits, and hyphens only (e.g., "faq-manager", "weather-widget")
 
+## Code Block Requirement (CRITICAL)
+
+Every step's \`prompt\` field MUST contain at least one fenced code block. The prompt is rendered as Markdown to the reader, so combine:
+
+1. A short leading sentence naming the step and target file.
+2. At least one fenced code block (\`\`\`ts, \`\`\`tsx, \`\`\`prisma, \`\`\`json, etc.) whose FIRST LINE is a comment identifying the target path, e.g.:
+   \`// src/plugins/<slug>/widgets/<Name>.meta.ts\`
+3. The code block MUST contain the complete file contents — not an outline. Don't abbreviate a component body with \`// ...\` unless the remaining work is trivial and unambiguous.
+
+Do NOT describe field lists, component props, or API shapes in prose when a code block can show them directly.
+
+BAD (prose):
+> "Create the Prisma schema with model StockCache having fields id (Int, autoincrement), symbol (String, indexed), price (Decimal), lastUpdated (DateTime, default now)..."
+
+GOOD (fenced code):
+\`\`\`prisma
+// src/plugins/stock-ticker/schema.prisma
+model StockCache {
+  id          Int      @id @default(autoincrement())
+  symbol      String   @db.VarChar(20)
+  price       Decimal  @db.Decimal(12, 4)
+  lastUpdated DateTime @default(now())
+
+  @@index([symbol])
+}
+\`\`\`
+
+Since the prompt is stored inside JSON, the triple-backtick fences must be written as literal \`\`\` characters (JSON-escape newlines as \\n as usual).
+
 ## Difficulty: ${slot.difficulty}
 
 ${difficultyGuide}
@@ -154,9 +187,19 @@ Respond with exactly this JSON structure (no wrapping, no markdown):
   "type": "${slot.type}",
   "constraintsEn": ["string array of constraints"],
   "constraintsKo": ["string array of constraints in Korean"],
-  "stepsEn": [{"step": 1, "prompt": "detailed prompt to paste into AI tool", "expected": "what this step produces"}],
-  "stepsKo": [{"step": 1, "prompt": "detailed Korean prompt", "expected": "Korean expected result"}]
-}`
+  "stepsEn": [{"step": 1, "prompt": "Markdown prompt with at least one fenced code block — see 'Code Block Requirement' above", "expected": "what this step produces"}],
+  "stepsKo": [{"step": 1, "prompt": "코드 블록을 포함한 Markdown 프롬프트", "expected": "Korean expected result"}]
+}
+
+Example of a well-formed step (just illustrative shape, not for copying):
+
+\`\`\`json
+{
+  "step": 2,
+  "prompt": "Define the Prisma schema at \`src/plugins/<slug>/schema.prisma\`:\\n\\n\`\`\`prisma\\n// src/plugins/<slug>/schema.prisma\\nmodel Foo {\\n  id Int @id @default(autoincrement())\\n  name String\\n}\\n\`\`\`\\n\\nAfter adding, the plugin scan will merge this into the root schema.",
+  "expected": "schema.prisma file created with the Foo model."
+}
+\`\`\``
 
   if (existingRecipes.length > 0) {
     prompt += '\n\n## Already Generated (DO NOT duplicate titles, slugs, or similar topics):\n'

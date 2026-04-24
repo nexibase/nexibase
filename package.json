@@ -50,6 +50,7 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "dotenv": "^17.4.2",
+    "highlight.js": "^11.11.1",
     "isomorphic-dompurify": "~2.19.0",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.528.0",
@@ -62,7 +63,10 @@
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "react-google-recaptcha-v3": "^1.11.0",
+    "react-markdown": "^10.1.0",
     "recharts": "^3.8.1",
+    "rehype-highlight": "^7.0.2",
+    "remark-gfm": "^4.0.1",
     "sharp": "^0.34.5",
     "tailwind-merge": "^3.3.1"
   },

@@ -83,7 +83,19 @@ function concatStepsText(steps: { prompt: string; expected: string }[]): string 
     .toLowerCase()
 }
 
+const FENCED_CODE_BLOCK = /```[a-z]*\r?\n[\s\S]*?```/i
+
 export function validateRecipeCompleteness(recipe: ValidatedRecipe): void {
+  for (const [lang, steps] of [['en', recipe.stepsEn], ['ko', recipe.stepsKo]] as const) {
+    for (const s of steps) {
+      if (!FENCED_CODE_BLOCK.test(s.prompt)) {
+        throw new Error(
+          `Recipe step ${s.step} (${lang}) prompt has no fenced code block`
+        )
+      }
+    }
+  }
+
   const en = concatStepsText(recipe.stepsEn)
   const ko = concatStepsText(recipe.stepsKo)
   const hasWidget = recipe.type === 'widget' || recipe.type === 'plugin_with_widget'
