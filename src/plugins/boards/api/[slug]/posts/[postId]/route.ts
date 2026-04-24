@@ -230,6 +230,13 @@ export async function PUT(
     const body = await request.json()
     const { title, content, isNotice, isSecret, attachments, deletedAttachmentIds, attachmentOrder } = body
 
+    if (content && content.length > 4_000_000) {
+      return NextResponse.json(
+        { error: '본문이 너무 깁니다.' },
+        { status: 413 }
+      )
+    }
+
     // Login check
     const user = await getAuthUser()
     if (!user) {

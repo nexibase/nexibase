@@ -250,6 +250,13 @@ export async function POST(
       )
     }
 
+    if (content.length > 4_000_000) {
+      return NextResponse.json(
+        { error: '본문이 너무 깁니다.' },
+        { status: 413 }
+      )
+    }
+
     // IP address
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0] ||
                request.headers.get('x-real-ip') ||
