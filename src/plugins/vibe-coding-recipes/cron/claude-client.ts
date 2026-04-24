@@ -18,7 +18,7 @@ export async function callClaude(
 
   const stream = await client.messages.stream({
     model,
-    max_tokens: 32000,
+    max_tokens: 48000,
     temperature: 0.8,
     system: systemPrompt,
     messages: [{ role: 'user', content: userPrompt }],
@@ -33,7 +33,7 @@ export async function callClaude(
 
   if (response.stop_reason === 'max_tokens') {
     throw new Error(
-      `Claude response truncated at max_tokens=32000 (output_tokens=${response.usage.output_tokens}). ` +
+      `Claude response truncated at max_tokens=48000 (output_tokens=${response.usage.output_tokens}). ` +
         `Try reducing step count or request simpler recipe.`
     )
   }
