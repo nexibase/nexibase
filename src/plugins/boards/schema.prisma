@@ -33,7 +33,7 @@ model Post {
   boardId      Int
   authorId     Int
   title        String           @db.VarChar(200)
-  content      String           @db.Text
+  content      String           @db.LongText
   status       String           @default("published") @db.VarChar(20)
   isNotice     Boolean          @default(false)
   isSecret     Boolean          @default(false)
