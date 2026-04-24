@@ -2,8 +2,6 @@
 
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import rehypeHighlight from 'rehype-highlight'
-import 'highlight.js/styles/github.css'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { CopyButton } from './CopyButton'
 import { useTranslations } from 'next-intl'
@@ -33,11 +31,8 @@ export function RecipeSteps({ steps }: { steps: Step[] }) {
                 <span className="text-sm font-medium text-muted-foreground">{t('prompt')}</span>
                 <CopyButton text={s.prompt} />
               </div>
-              <div className="p-3 rounded-md overflow-x-auto prose prose-sm dark:prose-invert max-w-none prose-pre:bg-transparent prose-pre:p-0 prose-pre:m-0">
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  rehypePlugins={[rehypeHighlight]}
-                >
+              <div className="prose prose-sm dark:prose-invert max-w-none">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
                   {s.prompt}
                 </ReactMarkdown>
               </div>
