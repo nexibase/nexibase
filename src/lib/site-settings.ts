@@ -7,9 +7,21 @@ export interface SiteMetadataSettings {
   site_url: string
   keywords_array: string[]
   site_locale: string
+  google_site_verification: string
+  naver_site_verification: string
+  bing_site_verification: string
 }
 
-const SETTING_KEYS = ['site_name', 'site_description', 'site_url', 'site_keywords', 'site_locale'] as const
+const SETTING_KEYS = [
+  'site_name',
+  'site_description',
+  'site_url',
+  'site_keywords',
+  'site_locale',
+  'google_site_verification',
+  'naver_site_verification',
+  'bing_site_verification',
+] as const
 
 const FALLBACK_SETTINGS: SiteMetadataSettings = {
   site_name: 'NexiBase',
@@ -17,6 +29,9 @@ const FALLBACK_SETTINGS: SiteMetadataSettings = {
   site_url: '',
   keywords_array: [],
   site_locale: 'ko',
+  google_site_verification: '',
+  naver_site_verification: '',
+  bing_site_verification: '',
 }
 
 export async function loadSiteSettings(): Promise<SiteMetadataSettings> {
@@ -32,6 +47,9 @@ export async function loadSiteSettings(): Promise<SiteMetadataSettings> {
       site_url: (m.get('site_url') || '').trim(),
       keywords_array: rawKeywords.split(',').map((s) => s.trim()).filter(Boolean),
       site_locale: m.get('site_locale') || 'ko',
+      google_site_verification: (m.get('google_site_verification') || '').trim(),
+      naver_site_verification: (m.get('naver_site_verification') || '').trim(),
+      bing_site_verification: (m.get('bing_site_verification') || '').trim(),
     }
   } catch {
     // DB unavailable (build-time prerender, migration in progress, misconfiguration).
