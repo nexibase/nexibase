@@ -1,6 +1,6 @@
 {
   "name": "nexibase",
-  "version": "0.28.0",
+  "version": "0.29.0",
   "private": true,
   "scripts": {
     "dev": "node scripts/scan-plugins.js && node scripts/scan-layouts.js && node scripts/scan-themes.js && prisma generate && next dev --turbopack",
