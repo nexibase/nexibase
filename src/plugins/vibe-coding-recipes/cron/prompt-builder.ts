@@ -145,6 +145,8 @@ ${slot.type !== 'plugin' ? WIDGET_REFERENCE_EXAMPLE : ''}
 5. Each step builds incrementally on the previous step's result
 6. Bilingual: provide both English and Korean for all text fields
 7. slug must be lowercase letters, digits, and hyphens only (e.g., "faq-manager", "weather-widget")
+8. **Recipe must be SELF-CONTAINED.** Every file referenced by the recipe — every \`import\` path, every \`fetch('/api/<slug>/...')\` URL, every child component rendered by an admin/page.tsx — MUST have its own step that creates that file. Do NOT write "we'll create this in the next step" if you are already near the step limit and cannot fit another step. Prefer to inline small files (a tiny stats API route, locale JSON, admin sub-components) into the final step as an additional code block rather than omitting them. A recipe that builds but crashes at runtime because a fetched endpoint returns HTML 404 is worse than a recipe with one fewer feature.
+9. **User display name field is \`nickname\`, not \`name\`.** The core User model in this project has \`nickname String @unique\` (no \`name\` column). When selecting user fields for display: \`select: { nickname: true, email: true }\`. Accessing \`user.name\` at runtime returns undefined and often crashes the page.
 
 ## Code Block Requirement (CRITICAL)
 
