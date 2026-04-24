@@ -13,22 +13,33 @@ const PLUGIN_ARCHITECTURE_CONTEXT = `## Nexibase Plugin Architecture
 Each plugin is a folder in src/plugins/<name>/ with these conventions:
 - plugin.ts: manifest with name, description, version, author, slug, defaultEnabled
 - schema.prisma: Prisma models (merged into main schema at build time)
+- withdrawal-policy.ts (REQUIRED): exports a default array declaring retain/anonymize/delete policy for any model that references User. Empty array \`export default []\` is valid when there are no User references. The build fails without this file.
 - routes/page.tsx: public pages at /[locale]/<slug>/
 - routes/[param]/page.tsx: dynamic public pages
 - admin/page.tsx: admin UI at /admin/<slug>
-- admin/menus.ts: sidebar menu array [{label, icon, path}]
+- admin/menus.ts (REQUIRED if admin/ exists): sidebar menu \`export default [{label, icon, path}]\` — without this, the admin page is inaccessible from the sidebar.
 - admin/api/route.ts: admin CRUD API endpoints
 - api/route.ts: public API endpoints
 - components/: internal React components
 - locales/en.json, locales/ko.json: i18n strings (keyed by slug)
 - menus/footer.ts: footer menu entries
+- widgets/<Name>.tsx + widgets/<Name>.meta.ts: widget pair (both files required)
 
 Key rules:
 - Routes are Server Components by default; use "use client" only when needed
 - Admin auth via getAdminUser() from @/lib/auth
 - Prisma client via prisma from @/lib/prisma
 - UI: shadcn/ui components + lucide-react icons + Tailwind CSS
+  Available shadcn components: button, card, badge, input, label, tabs, textarea, dialog, popover, select, checkbox, switch, radio-group, separator, avatar. Use any of these freely.
+- NO TOAST LIBRARY is installed — do NOT import useToast, toast, sonner, or \`@/hooks/use-toast\` (these do not exist in this project). For user feedback after form submission, use plain \`alert()\` or inline state-driven message divs. This is a deliberate project convention.
 - i18n: useTranslations() from next-intl (client) or getTranslations() (server)
+
+API route URL mapping (IMPORTANT — do not guess):
+- \`src/plugins/<slug>/api/foo/route.ts\` is served at \`/api/<slug>/foo\` (NO locale prefix, NO plugin-slug in path twice)
+- \`src/plugins/<slug>/admin/api/route.ts\` is served at \`/api/admin/<slug>\`
+- Public pages \`src/plugins/<slug>/routes/page.tsx\` are at \`/[locale]/<slug>/\` (locale prefix present)
+- Therefore a client component fetching its own plugin's API should call \`fetch('/api/<slug>/foo')\` — NOT \`fetch('/\${locale}/<slug>/api/foo')\` which does not exist
+
 - Plugin scan runs at dev/build time: npm run dev triggers scripts/scan-plugins.js`
 
 const WIDGET_ARCHITECTURE_CONTEXT = `## Nexibase Widget Architecture
