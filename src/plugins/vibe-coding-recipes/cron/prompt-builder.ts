@@ -12,9 +12,9 @@ const PLUGIN_ARCHITECTURE_CONTEXT = `## Nexibase Plugin Architecture
 
 Each plugin is a folder in src/plugins/<name>/ with these conventions:
 - plugin.ts: manifest with name, description, version, author, slug, defaultEnabled
-- schema.prisma: Prisma models (merged into main schema at build time)
+- schema.prisma: Prisma models (merged into main schema at build time). The \`User\` model is defined in the core schema with \`id Int @id @default(autoincrement())\` — so any FK field referencing User MUST be typed \`Int\` (e.g. \`userId Int\`, \`userId Int?\`), NEVER \`String\`. Using \`String\` for userId causes \`prisma validate\` to fail on relation type mismatch.
 - schema.user.prisma (REQUIRED when schema.prisma has any \`User\` relation): lists the back-relation fields to merge onto the User model. Prisma's named \`@relation("Foo")\` fields must be declared on BOTH sides, so if schema.prisma has \`createdBy User @relation("AuctionCreator", ...)\`, then schema.user.prisma must contain \`auctionsCreated Auction[] @relation("AuctionCreator")\`. Without this file \`prisma generate\` fails on validation. Include ONLY the back-relation lines (no \`model User {}\` wrapper — the build merges them).
-- withdrawal-policy.ts (REQUIRED): exports a default array declaring retain/anonymize/delete policy for any model that references User. Empty array \`export default []\` is valid when there are no User references. The build fails without this file. Follow the existing-plugin shape: \`{ model: 'X', policy: 'retain' | 'anonymize' | 'delete', field: 'userIdFieldName', reason: 'why' }\` (one entry per user-referencing field) — this is the shape the withdrawal runtime consumes.
+- withdrawal-policy.ts (REQUIRED): exports a default array declaring retain/anonymize/delete policy for any model that references User. Empty array \`export default []\` is valid when there are no User references. The build fails without this file. Follow the existing-plugin shape: \`{ model: 'X', policy: 'retain' | 'anonymize' | 'delete', field: 'userIdFieldName', reason: 'why' }\` (one entry per user-referencing field) — this is the shape the withdrawal runtime consumes. This file is parsed by a JS evaluator, so do NOT use TypeScript-only syntax like \`as const\` or type annotations — plain string literals only (\`policy: 'delete'\`, not \`policy: 'delete' as const\`).
 - routes/page.tsx: public pages at /[locale]/<slug>/
 - routes/[param]/page.tsx: dynamic public pages
 - admin/page.tsx: admin UI at /admin/<slug>
@@ -30,7 +30,8 @@ Key rules:
 - Routes are Server Components by default; use "use client" only when needed
 - Admin auth via \`getAdminUser()\` from \`@/lib/auth\` (returns null if the current user is not an admin)
 - Logged-in-user auth (non-admin public APIs): use \`getServerSession(authOptions)\` from \`next-auth\`, where authOptions is imported from \`@/app/api/auth/[...nextauth]/route\`. There is NO \`@/lib/auth-options\` module — do not invent that import path.
-- Prisma client via prisma from @/lib/prisma
+- Prisma client: \`import { prisma } from '@/lib/prisma'\` — \`prisma\` is a NAMED export, not a default export. \`import prisma from '@/lib/prisma'\` is wrong and gives undefined at runtime.
+- Session user id quirk: \`session.user.id\` is typed as \`string\` (next-auth augmentation in src/types/next-auth.d.ts), but the real \`User.id\` column is \`Int\`. Always convert with \`parseInt(session.user.id, 10)\` before using it in Prisma \`where\` / \`data\` / comparison against \`userId\` columns. Otherwise the query fails at runtime with a type mismatch.
 - UI: shadcn/ui components + lucide-react icons + Tailwind CSS
   Available shadcn components: button, card, badge, input, label, tabs, textarea, dialog, popover, select, checkbox, switch, radio-group, separator, avatar. Use any of these freely.
 - NO TOAST LIBRARY is installed — do NOT import useToast, toast, sonner, or \`@/hooks/use-toast\` (these do not exist in this project). For user feedback after form submission, use plain \`alert()\` or inline state-driven message divs. This is a deliberate project convention.
