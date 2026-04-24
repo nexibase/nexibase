@@ -163,14 +163,16 @@ function RecipesTab() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       })
-      const data = await res.json()
-      if (data.success) {
-        alert(t('generateSuccess'))
+      const data = await res.json().catch(() => ({}))
+      if (res.ok && data.success) {
         setShowGenerate(false)
-        fetchRecipes()
+        await fetchRecipes()
+        alert(t('generateSuccess'))
       } else {
-        alert(`${t('generateFailed')}: ${data.error || ''}`)
+        alert(`${t('generateFailed')}: ${data.error || res.statusText || 'Unknown error'}`)
       }
+    } catch (err) {
+      alert(`${t('generateFailed')}: ${err instanceof Error ? err.message : 'Network error'}`)
     } finally {
       setGenerating(false)
     }
