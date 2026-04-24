@@ -13,11 +13,12 @@ const PLUGIN_ARCHITECTURE_CONTEXT = `## Nexibase Plugin Architecture
 Each plugin is a folder in src/plugins/<name>/ with these conventions:
 - plugin.ts: manifest with name, description, version, author, slug, defaultEnabled
 - schema.prisma: Prisma models (merged into main schema at build time)
-- withdrawal-policy.ts (REQUIRED): exports a default array declaring retain/anonymize/delete policy for any model that references User. Empty array \`export default []\` is valid when there are no User references. The build fails without this file.
+- schema.user.prisma (REQUIRED when schema.prisma has any \`User\` relation): lists the back-relation fields to merge onto the User model. Prisma's named \`@relation("Foo")\` fields must be declared on BOTH sides, so if schema.prisma has \`createdBy User @relation("AuctionCreator", ...)\`, then schema.user.prisma must contain \`auctionsCreated Auction[] @relation("AuctionCreator")\`. Without this file \`prisma generate\` fails on validation. Include ONLY the back-relation lines (no \`model User {}\` wrapper — the build merges them).
+- withdrawal-policy.ts (REQUIRED): exports a default array declaring retain/anonymize/delete policy for any model that references User. Empty array \`export default []\` is valid when there are no User references. The build fails without this file. Follow the existing-plugin shape: \`{ model: 'X', policy: 'retain' | 'anonymize' | 'delete', field: 'userIdFieldName', reason: 'why' }\` (one entry per user-referencing field) — this is the shape the withdrawal runtime consumes.
 - routes/page.tsx: public pages at /[locale]/<slug>/
 - routes/[param]/page.tsx: dynamic public pages
 - admin/page.tsx: admin UI at /admin/<slug>
-- admin/menus.ts (REQUIRED if admin/ exists): sidebar menu \`export default [{label, icon, path}]\` — without this, the admin page is inaccessible from the sidebar.
+- admin/menus.ts (REQUIRED if admin/ exists): sidebar menu \`export default [{label, icon, path}]\` — without this, the admin page is inaccessible from the sidebar. The \`icon\` value is a STRING matching a lucide-react icon name (e.g. \`icon: 'Gavel'\`), NOT a component import. The sidebar renderer looks up the icon by name; do not write \`import { Gavel } from 'lucide-react'\` and pass the component — that breaks the menu scan.
 - admin/api/route.ts: admin CRUD API endpoints
 - api/route.ts: public API endpoints
 - components/: internal React components
@@ -27,7 +28,8 @@ Each plugin is a folder in src/plugins/<name>/ with these conventions:
 
 Key rules:
 - Routes are Server Components by default; use "use client" only when needed
-- Admin auth via getAdminUser() from @/lib/auth
+- Admin auth via \`getAdminUser()\` from \`@/lib/auth\` (returns null if the current user is not an admin)
+- Logged-in-user auth (non-admin public APIs): use \`getServerSession(authOptions)\` from \`next-auth\`, where authOptions is imported from \`@/app/api/auth/[...nextauth]/route\`. There is NO \`@/lib/auth-options\` module — do not invent that import path.
 - Prisma client via prisma from @/lib/prisma
 - UI: shadcn/ui components + lucide-react icons + Tailwind CSS
   Available shadcn components: button, card, badge, input, label, tabs, textarea, dialog, popover, select, checkbox, switch, radio-group, separator, avatar. Use any of these freely.
