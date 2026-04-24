@@ -933,6 +933,14 @@
       "title": "데모 사이트 체험하기",
       "description": "NexiBase의 모든 기능을 직접 경험해 보세요.",
       "visitBtn": "데모 사이트 방문하기"
+    },
+    "pgPromoSir": {
+      "headline": "쇼핑몰 오픈하시나요?",
+      "leadLabel": "국내 최저 카드 수수료",
+      "bullet1": "연회비 평생면제",
+      "bullet2": "정기결제 · 바로오픈 지원",
+      "bullet3": "본인인증 · SMS도 한번에",
+      "cta": "sir.kr/services에서 알아보기"
     }
   }
 }

@@ -933,6 +933,14 @@
       "title": "Try the demo site",
       "description": "Experience every NexiBase feature yourself.",
       "visitBtn": "Visit the demo site"
+    },
+    "pgPromoSir": {
+      "headline": "Opening an online shop?",
+      "leadLabel": "Lowest card fee in Korea",
+      "bullet1": "Lifetime annual-fee waiver",
+      "bullet2": "Recurring billing · instant open",
+      "bullet3": "Bundled identity verification & SMS",
+      "cta": "Learn more on sir.kr/services"
     }
   }
 }
