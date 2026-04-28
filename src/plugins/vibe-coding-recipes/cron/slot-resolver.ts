@@ -6,41 +6,24 @@ export interface SlotResult {
   type: 'plugin' | 'widget' | 'plugin_with_widget'
 }
 
-const SCHEDULE: Record<string, ('beginner' | 'intermediate' | 'advanced')[]> = {
-  mon: ['beginner', 'beginner', 'advanced'],
-  thu: ['beginner', 'beginner', 'advanced'],
-  _default: ['beginner', 'beginner', 'intermediate'],
-}
-
-const DAY_MAP: Record<number, string> = {
-  0: '_default', // Sun
-  1: 'mon',
-  2: '_default', // Tue
-  3: '_default', // Wed
-  4: 'thu',
-  5: '_default', // Fri
-  6: '_default', // Sat
-}
-
-const HOUR_TO_SLOT: Record<number, 1 | 2 | 3> = {
-  9: 1,
-  14: 2,
-  20: 3,
+// One recipe per weekday, generated at 07:00 KST.
+// Sat/Sun: cron does not fire; admin UI calls always pass overrides so the
+// fallback path is rare but safe (defaults to beginner / weekday-style type).
+const WEEKDAY_DIFFICULTY: Record<number, SlotResult['difficulty']> = {
+  1: 'beginner',     // Mon
+  2: 'beginner',     // Tue
+  3: 'beginner',     // Wed
+  4: 'intermediate', // Thu
+  5: 'advanced',     // Fri
 }
 
 export async function resolveSlot(
   prisma: PrismaClient,
   overrides?: { difficulty?: SlotResult['difficulty']; type?: SlotResult['type'] }
 ): Promise<SlotResult> {
-  const now = new Date()
-  const hour = now.getHours()
-  const dayOfWeek = now.getDay()
-
-  const slot = HOUR_TO_SLOT[hour] ?? inferSlotFromHour(hour)
-  const dayKey = DAY_MAP[dayOfWeek] ?? '_default'
-  const schedule = SCHEDULE[dayKey] ?? SCHEDULE['_default']
-
-  const difficulty = overrides?.difficulty ?? schedule[slot - 1]
+  const dayOfWeek = new Date().getDay()
+  const difficulty =
+    overrides?.difficulty ?? WEEKDAY_DIFFICULTY[dayOfWeek] ?? 'beginner'
 
   let type: SlotResult['type']
   if (overrides?.type) {
@@ -53,13 +36,9 @@ export async function resolveSlot(
     type = await getNextBeginnerType(prisma)
   }
 
-  return { slot, difficulty, type }
-}
-
-function inferSlotFromHour(hour: number): 1 | 2 | 3 {
-  if (hour < 12) return 1
-  if (hour < 17) return 2
-  return 3
+  // slot is kept in the schema but no longer disambiguates time-of-day.
+  // Always 1 since there's a single fire per day.
+  return { slot: 1, difficulty, type }
 }
 
 async function getNextBeginnerType(
