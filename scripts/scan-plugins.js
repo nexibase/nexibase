@@ -125,14 +125,16 @@ function scanPlugins() {
       const adminMenuFile = path.join(PLUGINS_DIR, folder, 'admin', 'menus.ts')
       if (fs.existsSync(adminMenuFile)) {
         const amContent = fs.readFileSync(adminMenuFile, 'utf-8')
-        // Simple parse: use Function() to safely evaluate the JS array literal
-        try {
-          const arrayStr = amContent
-            .replace(/export\s+default\s+/, '')
-            .trim()
-          adminMenus = (new Function('return ' + arrayStr))()
-        } catch (e) {
-          console.warn(`[scan-plugins] Warning: could not parse admin menus for ${folder}:`, e.message)
+        // Slice from `export default` onward so any leading `// path` comment
+        // can't end the `return` statement via JS automatic-semicolon-insertion.
+        const m = amContent.match(/export\s+default\s+/)
+        if (m) {
+          const arrayStr = amContent.slice(m.index + m[0].length).trim()
+          try {
+            adminMenus = (new Function('return ' + arrayStr))()
+          } catch (e) {
+            console.warn(`[scan-plugins] Warning: could not parse admin menus for ${folder}:`, e.message)
+          }
         }
       }
     }
