@@ -171,7 +171,19 @@ export default function PluginsAdminPage() {
           </div>
           <div>
             <span className="text-muted-foreground">{t('pluginUrlPath')}:</span>{' '}
-            <code className="text-xs bg-muted px-1 rounded">/{plugin.currentSlug}</code>
+            {plugin.hasRoutes ? (
+              <a
+                href={`/${plugin.currentSlug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs bg-muted hover:bg-accent hover:text-accent-foreground px-1 rounded inline-flex items-center gap-1 transition-colors"
+              >
+                <code>/{plugin.currentSlug}</code>
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            ) : (
+              <code className="text-xs bg-muted px-1 rounded">/{plugin.currentSlug}</code>
+            )}
           </div>
         </div>
 
