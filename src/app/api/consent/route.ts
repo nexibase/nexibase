@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/app/api/auth/[...nextauth]/route'
 import { prisma } from '@/lib/prisma'
 import { serializeConsent } from '@/lib/consent/cookie'
+import { isCrossSiteWrite } from '@/lib/consent/origin'
 import { readConsentContext } from '@/lib/consent/server'
 import {
   CONSENT_COOKIE_NAME,
@@ -59,46 +60,6 @@ function deriveConsentFlags(
 }
 
 /**
- * 이 요청을 같은 출처에서 온 것으로 볼 수 있는지 판정한다.
- *
- * 이 엔드포인트가 만드는 것은 "이 사람이 이렇게 결정했다"는 증빙 레코드다.
- * 제3자 페이지가 방문자의 브라우저를 시켜 쓸 수 있으면, 본인이 한 적 없는
- * 결정이 증빙 테이블에 남는다 — 동의의 유효성을 입증하려고 만든 테이블이
- * 무효한 동의로 채워진다.
- *
- * `Origin`이 없으면 통과시킨다. 브라우저는 cross-site POST에 반드시 이 헤더를
- * 붙이므로, 없는 경우는 브라우저가 아닌 클라이언트(운영자 스크립트, curl 등)다.
- * `Sec-Fetch-Site`는 `Origin`을 보강한다 — 값을 보내는 브라우저라면
- * cross-site/same-site를 여기서 걸러낸다.
- *
- * 기대 출처는 요청에서 끌어낸다. 자체 호스팅 소프트웨어라 운영자가 고른
- * 도메인이 무엇인지 코드가 알 수 없기 때문에 하드코딩하지 않는다.
- */
-function isCrossSiteWrite(request: NextRequest): boolean {
-  const fetchSite = request.headers.get('sec-fetch-site')?.trim().toLowerCase()
-  if (fetchSite === 'cross-site' || fetchSite === 'same-site') return true
-
-  const origin = request.headers.get('origin')
-  if (!origin) return false
-
-  const expected = new Set<string>()
-  expected.add(request.nextUrl.origin.toLowerCase())
-
-  // 리버스 프록시 뒤에서는 nextUrl이 내부 주소(localhost:9119 등)를 가리킬 수
-  // 있어 브라우저가 보낸 Origin과 어긋난다. 프록시가 전달한 호스트도 인정한다.
-  const host = request.headers.get('x-forwarded-host') ?? request.headers.get('host')
-  if (host) {
-    const proto = (
-      request.headers.get('x-forwarded-proto')?.split(',')[0]?.trim() ||
-      request.nextUrl.protocol.replace(/:$/, '')
-    ).toLowerCase()
-    expected.add(`${proto}://${host.trim().toLowerCase()}`)
-  }
-
-  return !expected.has(origin.trim().toLowerCase())
-}
-
-/**
  * `application/json`만 받는다.
  *
  * 컨텐츠 타입을 확인하지 않으면 `enctype="text/plain"` 폼으로 JSON 본문을
@@ -113,7 +74,7 @@ function hasJsonContentType(request: NextRequest): boolean {
 }
 
 export async function POST(request: NextRequest) {
-  if (isCrossSiteWrite(request)) {
+  if (isCrossSiteWrite(request.headers, request.nextUrl)) {
     return NextResponse.json({ error: 'cross_origin' }, { status: 403 })
   }
   if (!hasJsonContentType(request)) {
