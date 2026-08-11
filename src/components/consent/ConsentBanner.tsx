@@ -71,9 +71,14 @@ export function ConsentBanner() {
             >
               {strings.settings}
             </Button>
-            {/* 거부와 수락은 반드시 동일한 variant/size를 쓴다 */}
+            {/*
+              거부와 수락은 반드시 동일한 variant/size를 쓴다.
+              둘 다 채움(default)으로 두어 결정 쌍이 "설정"보다 도드라지게 하되,
+              서로는 완전히 같게 유지한다. 한쪽만 채우면 그 선택지를 강조하는
+              것이 되어 EDPB Guidelines 03/2022이 다루는 기만적 설계에 해당한다.
+            */}
             <Button
-              variant="outline"
+              variant="default"
               size="sm"
               disabled={submitting}
               onClick={() => submit('reject_all', { analytics: false, marketing: false })}
@@ -81,7 +86,7 @@ export function ConsentBanner() {
               {strings.rejectAll}
             </Button>
             <Button
-              variant="outline"
+              variant="default"
               size="sm"
               disabled={submitting}
               onClick={() => submit('accept_all', { analytics: true, marketing: false })}

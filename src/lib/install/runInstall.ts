@@ -55,7 +55,7 @@ export async function runInstall(params: InstallParams): Promise<void> {
         // 기존 설치는 마이그레이션이 'false'로 넣는다.
         { key: 'consent_enabled', value: 'true' },
         { key: 'consent_banner_version', value: '1' },
-        { key: 'consent_policy_slug', value: 'privacy' },
+        { key: 'consent_policy_slug', value: 'cookie' },
       ],
     })
 

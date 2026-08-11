@@ -6,7 +6,7 @@ export const CONSENT_MAX_AGE_SECONDS = 15552000
 export const CONSENT_MAX_AGE_MS = CONSENT_MAX_AGE_SECONDS * 1000
 
 export const DEFAULT_BANNER_VERSION = 1
-export const DEFAULT_POLICY_SLUG = 'privacy'
+export const DEFAULT_POLICY_SLUG = 'cookie'
 
 /**
  * `consent_enabled` 설정을 읽은 결과.
