@@ -1110,11 +1110,14 @@ function revokeAnalyticsClientSide() {
   w.gtag?.('consent', 'update', { analytics_storage: 'denied' })
 
   // _ga, _ga_XXXX, _gid 제거. 도메인 변형까지 훑는다.
+  // 정규식은 _ga / _ga_로 시작하는 것과 정확히 _gid만 잡는다.
+  // `^_ga|^_gid$` 처럼 쓰면 교차가 잘못 묶여 _gadget 같은 이름까지 지운다.
+  const GA_COOKIE = /^_ga($|_)|^_gid$/
   const host = window.location.hostname
   const domains = [host, `.${host}`, `.${host.split('.').slice(-2).join('.')}`]
   for (const raw of document.cookie.split(';')) {
     const name = raw.split('=')[0]?.trim()
-    if (!name || !/^_ga|^_gid$/.test(name)) continue
+    if (!name || !GA_COOKIE.test(name)) continue
     for (const domain of domains) {
       document.cookie = `${name}=; Max-Age=0; path=/; domain=${domain}`
     }
