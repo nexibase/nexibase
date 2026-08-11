@@ -33,14 +33,14 @@ export function ConsentBanner() {
         1. 모션 — 정지한 요소는 주변시가 잡아내지 못한다. motion-safe로 감싸
            prefers-reduced-motion 사용자에게는 움직임 없이 즉시 표시된다.
         2. 색 — 흰 배경 페이지 위의 흰 카드는 그림자와 테두리만으로 버티지
-           못한다. 강조색 상단 띠와 쿠키 아이콘으로 색을 넣는다.
+           못한다. 강조색 쿠키 아이콘으로 색을 넣는다. (상단 강조색 띠도
+           썼다가 과하다는 판단으로 뺐다 — 다시 넣지 말 것.)
         3. 무게 — 제목을 16px semibold로 키운다.
 
         위치는 하단 그대로다. 인지율만 보면 중앙이 낫지만 본문을 덮는 것은
         압박에 해당해 GDPR 4(11)의 "자유롭게 주어진" 요건과 충돌한다.
       */}
       <div className="mx-auto max-w-5xl overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-2xl motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4 motion-safe:duration-500">
-        <div className="h-1 w-full bg-primary" aria-hidden />
         <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-5">
           <div className="flex min-w-0 gap-3">
             <Cookie className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden />
