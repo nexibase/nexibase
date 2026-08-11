@@ -115,7 +115,7 @@ export default async function RootLayout({
     settings: t('settings'),
     save: t('save'),
     close: t('close'),
-    privacyLink: t('privacyLink'),
+    policyLink: t('policyLink'),
     reopen: t('reopen'),
     error: t('error'),
     necessaryTitle: t('necessaryTitle'),
@@ -154,7 +154,7 @@ export default async function RootLayout({
               <ConsentProvider
                 initialState={consentClientState}
                 strings={consentStrings}
-                privacyHref={`/policies/${encodeURIComponent(consent.policySlug)}`}
+                policyHref={`/policies/${encodeURIComponent(consent.policySlug)}`}
               >
                 {children}
                 <GatedAnalytics measurementId={measurementId} />

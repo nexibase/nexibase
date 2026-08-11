@@ -103,7 +103,7 @@
     "settings": "설정",
     "save": "저장",
     "close": "닫기",
-    "privacyLink": "개인정보처리방침",
+    "policyLink": "쿠키 정책",
     "reopen": "쿠키 설정",
     "error": "저장하지 못했습니다. 잠시 후 다시 시도해 주세요.",
     "necessaryTitle": "필수 쿠키",

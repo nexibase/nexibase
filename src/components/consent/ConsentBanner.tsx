@@ -14,7 +14,7 @@ import { useConsent } from './ConsentProvider'
  * - 모바일 본문 15px 이상.
  */
 export function ConsentBanner() {
-  const { strings, privacyHref, submitting, error, submit, openPreferences } = useConsent()
+  const { strings, policyHref, submitting, error, submit, openPreferences } = useConsent()
 
   return (
     // 페이지 위에 떠 있는 카드로 보여야 한다. 이전에는 bg-background/95를 써서
@@ -48,8 +48,8 @@ export function ConsentBanner() {
               <p className="text-[16px] font-semibold">{strings.title}</p>
               <p className="mt-1 text-[15px] leading-relaxed text-muted-foreground sm:text-sm">
                 {strings.description}{' '}
-                <a href={privacyHref} className="underline underline-offset-2 hover:text-foreground">
-                  {strings.privacyLink}
+                <a href={policyHref} className="underline underline-offset-2 hover:text-foreground">
+                  {strings.policyLink}
                 </a>
               </p>
               {error && <p className="mt-2 text-[13px] text-destructive">{strings.error}</p>}

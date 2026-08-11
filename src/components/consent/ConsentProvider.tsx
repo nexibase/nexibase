@@ -18,7 +18,7 @@ export type ConsentStrings = {
   settings: string
   save: string
   close: string
-  privacyLink: string
+  policyLink: string
   reopen: string
   error: string
   necessaryTitle: string
@@ -33,7 +33,7 @@ type ConsentContextValue = {
   submitting: boolean
   error: boolean
   strings: ConsentStrings
-  privacyHref: string
+  policyHref: string
   preferencesOpen: boolean
   openPreferences: () => void
   closePreferences: () => void
@@ -126,12 +126,12 @@ function revokeAnalyticsClientSide() {
 export function ConsentProvider({
   initialState,
   strings,
-  privacyHref,
+  policyHref,
   children,
 }: {
   initialState: ConsentClientState
   strings: ConsentStrings
-  privacyHref: string
+  policyHref: string
   children: React.ReactNode
 }) {
   const router = useRouter()
@@ -196,13 +196,13 @@ export function ConsentProvider({
       submitting,
       error,
       strings,
-      privacyHref,
+      policyHref,
       preferencesOpen,
       openPreferences: () => setPreferencesOpen(true),
       closePreferences: () => setPreferencesOpen(false),
       submit,
     }),
-    [state, submitting, error, strings, privacyHref, preferencesOpen, submit],
+    [state, submitting, error, strings, policyHref, preferencesOpen, submit],
   )
 
   return (
