@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useCallback, useContext, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { ConsentAction, ConsentChoices, ConsentClientState } from '@/lib/consent/types'
 import { ConsentBanner } from './ConsentBanner'
@@ -38,6 +38,8 @@ type ConsentContextValue = {
   openPreferences: () => void
   closePreferences: () => void
   submit: (action: ConsentAction, choices: ConsentChoices) => Promise<void>
+  /** ConsentSettingsLink가 마운트 시 호출한다. cleanup 함수를 돌려준다. */
+  registerSettingsLink: () => () => void
 }
 
 const ConsentContext = createContext<ConsentContextValue | null>(null)
@@ -130,6 +132,14 @@ export function ConsentProvider({
   // 저장 직후 잠깐 뜨는 확인 토스트. null이면 표시하지 않는다.
   const [toastAnalytics, setToastAnalytics] = useState<boolean | null>(null)
   const dismissToast = useCallback(() => setToastAnalytics(null), [])
+  // 테마가 배치한 ConsentSettingsLink 개수. 0이면 Provider가 예비 줄을 렌더한다.
+  const [settingsLinkCount, setSettingsLinkCount] = useState(0)
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
+  const registerSettingsLink = useCallback(() => {
+    setSettingsLinkCount((n) => n + 1)
+    return () => setSettingsLinkCount((n) => n - 1)
+  }, [])
 
   const submit = useCallback(
     async (action: ConsentAction, choices: ConsentChoices) => {
@@ -189,8 +199,9 @@ export function ConsentProvider({
       openPreferences: () => setPreferencesOpen(true),
       closePreferences: () => setPreferencesOpen(false),
       submit,
+      registerSettingsLink,
     }),
-    [state, submitting, error, strings, privacyHref, preferencesOpen, submit],
+    [state, submitting, error, strings, privacyHref, preferencesOpen, submit, registerSettingsLink],
   )
 
   return (
@@ -209,17 +220,17 @@ export function ConsentProvider({
       )}
 
       {/*
-        철회 진입점. 예전에는 fixed로 화면 좌하단에 상시 떠 있었는데, 모든 페이지를
-        따라다녀 거슬린다는 지적을 받아 문서 흐름 맨 끝으로 내렸다.
+        철회 진입점의 예비 줄.
 
-        없애지는 않는다. GDPR 7(3)이 철회를 동의만큼 쉬울 것으로 요구하는데,
-        수락은 배너에서 1클릭이므로 철회 경로가 사라지면 요건을 못 맞춘다.
-        모든 페이지 하단에 있으니 접근 자체는 유지된다.
+        평소에는 테마가 <ConsentSettingsLink />를 푸터 저작권 옆에 배치하고, 그러면
+        여기서는 아무것도 렌더하지 않는다. 테마가 그 컴포넌트를 쓰지 않으면 철회
+        경로가 통째로 사라지므로, 등록된 링크가 하나도 없을 때만 이 줄이 나온다.
+        GDPR 7(3)의 "철회는 동의만큼 쉬울 것"이 테마 선택에 좌우되면 안 된다.
 
-        테마의 Footer가 아니라 여기서 렌더하는 이유는 3.6절과 같다 — 푸터는
-        테마 소유라 테마를 바꾸면 링크가 사라진다.
+        mounted를 함께 보는 이유는 등록이 자식의 useEffect에서 일어나기 때문이다.
+        첫 렌더에는 카운트가 0이라 확인 없이 렌더하면 예비 줄이 잠깐 깜빡인다.
       */}
-      {state.decided && (
+      {mounted && settingsLinkCount === 0 && state.decided && (
         <div className="border-t border-border py-4 text-center">
           <button
             type="button"

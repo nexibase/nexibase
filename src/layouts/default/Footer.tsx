@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
+import { ConsentSettingsLink } from "@/components/consent/ConsentSettingsLink"
 
 interface FooterSettings {
   site_name: string
@@ -94,9 +95,16 @@ export default function Footer() {
 
         {/* Copyright strip */}
         <div className="border-t pt-6">
-          <p className="text-center text-sm text-muted-foreground">
-            {settings.footer_copyright || `© ${new Date().getFullYear()} ${settings.site_name}. All rights reserved.`}
-          </p>
+          <div className="flex flex-col items-center justify-center gap-2 sm:flex-row sm:gap-4">
+            <p className="text-sm text-muted-foreground">
+              {settings.footer_copyright || `© ${new Date().getFullYear()} ${settings.site_name}. All rights reserved.`}
+            </p>
+            {/* 쿠키 동의 철회 진입점. 아직 결정 전이거나 기능이 꺼져 있으면 스스로
+                아무것도 렌더하지 않는다. 이 컴포넌트를 빼면 Provider가 페이지 맨
+                아래에 예비 줄을 대신 내보낸다 — 철회 경로는 어떤 테마에서도
+                사라지면 안 되기 때문이다(GDPR 7(3)). */}
+            <ConsentSettingsLink />
+          </div>
         </div>
       </div>
     </footer>
