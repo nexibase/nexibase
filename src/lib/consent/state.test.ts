@@ -43,6 +43,18 @@ test('180일 직전은 유효', () => {
   assert.equal(evaluateConsent(stored(), 1, NOW + CONSENT_MAX_AGE_MS - 1).decided, true)
 })
 
+test('180일 만료로 미결정이 되어도 consentId는 유지한다', () => {
+  const s = evaluateConsent(stored(), 1, NOW + CONSENT_MAX_AGE_MS)
+  assert.equal(s.decided, false)
+  assert.equal(s.consentId, ID)
+})
+
+test('미래 시각의 ts는 유효로 본다 (시계 오차가 배너를 다시 띄우지 않는다)', () => {
+  const s = evaluateConsent(stored({ ts: NOW + 60_000 }), 1, NOW)
+  assert.equal(s.decided, true)
+  assert.equal(s.analytics, true)
+})
+
 test('미결정이어도 consentId는 재사용을 위해 유지한다', () => {
   const s = evaluateConsent(stored({ v: 1 }), 5, NOW)
   assert.equal(s.decided, false)
