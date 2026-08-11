@@ -49,6 +49,18 @@ export function useConsent(): ConsentContextValue {
 }
 
 /**
+ * Provider 밖에서도 안전한 변형. 컨텍스트가 없으면 null을 돌려준다.
+ *
+ * `consent_enabled`가 꺼져 있으면 루트 레이아웃이 ConsentProvider를 아예
+ * 마운트하지 않는다. 그 상태에서 `useConsent()`를 부르는 컴포넌트는 throw하며
+ * 페이지를 통째로 깨뜨린다 — 쿠키 정책 페이지가 정확히 그 경우였다.
+ * 동의 기능과 무관하게 렌더될 수 있는 곳에서는 이쪽을 쓴다.
+ */
+export function useConsentOptional(): ConsentContextValue | null {
+  return useContext(ConsentContext)
+}
+
+/**
  * 같은 페이지 세션에서 다시 동의했을 때, 이미 로드된 gtag에 허용을 알린다.
  *
  * `next/script`는 모듈 레벨 `LoadCache`를 스크립트 `id`로 유지한다. 그래서

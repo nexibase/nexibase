@@ -1,6 +1,6 @@
 'use client'
 
-import { useConsent } from './ConsentProvider'
+import { useConsentOptional } from './ConsentProvider'
 
 /**
  * 동의 설정을 다시 여는 버튼. 쿠키 정책 페이지(`/policies/cookie`)에 놓인다.
@@ -16,8 +16,11 @@ import { useConsent } from './ConsentProvider'
  * 아직 결정 전이면 배너가 떠 있으므로 아무것도 렌더하지 않는다.
  */
 export function ConsentSettingsLink({ className }: { className?: string }) {
-  const { state, strings, openPreferences } = useConsent()
+  // 동의 기능이 꺼져 있으면 Provider 자체가 없다. 그때는 조용히 사라진다.
+  const consent = useConsentOptional()
+  if (!consent) return null
 
+  const { state, strings, openPreferences } = consent
   if (!state.decided) return null
 
   return (
