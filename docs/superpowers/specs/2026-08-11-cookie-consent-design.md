@@ -223,9 +223,20 @@ SSR에서 쿠키를 읽어 `analytics: true`면 배너 없이 `GatedAnalytics`�
 
 1. 이미 로드된 gtag에 `consent update: denied` 전송
 2. `_ga`/`_gid` 쿠키 삭제 시도
-3. `router.refresh()` → 다음 렌더부터 스크립트 자체가 사라짐
+3. `router.refresh()` → 서버가 다시 판정한 상태(배너 노출 여부)를 받아온다
 
-분석을 켜는 경우는 4.2의 주입 절차와 동일하다.
+> **정정 (2026-08-11).** 3번은 최초 작성 시 "다음 렌더부터 스크립트 자체가
+> 사라짐"이라고 적었으나 사실이 아니다. `next/script`에는 언마운트 정리가
+> 없어, `GatedAnalytics`가 `null`을 반환해도 이미 삽입된 `<script>` 태그는
+> 전체 페이지 로드 전까지 DOM에 남는다. 철회를 실제로 담보하는 것은 1·2번
+> (Consent Mode denied + 쿠키 삭제)이다.
+
+분석을 켜는 경우는 4.2의 주입 절차와 동일하다. 단 **같은 페이지 세션에서
+철회 후 다시 켜는 경우**는 예외다. `next/script`가 모듈 레벨 `LoadCache`를
+스크립트 `id`로 유지하므로 리마운트된 `<Script id="ga-consent-init">`는 다시
+실행되지 않는다. `update: granted`가 그 인라인 스크립트에만 있으면 쿠키·감사
+로그는 granted인데 GA는 denied로 남는다. 그래서 재동의 시에는 이미 존재하는
+`window.gtag`에 `consent update: granted`를 직접 push한다.
 
 ### 4.6 배너 버전 상향
 

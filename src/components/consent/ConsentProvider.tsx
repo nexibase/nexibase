@@ -44,6 +44,23 @@ export function useConsent(): ConsentContextValue {
   return ctx
 }
 
+/**
+ * 같은 페이지 세션에서 다시 동의했을 때, 이미 로드된 gtag에 허용을 알린다.
+ *
+ * `next/script`는 모듈 레벨 `LoadCache`를 스크립트 `id`로 유지한다. 그래서
+ * 언마운트 후 다시 마운트된 `<Script id="ga-consent-init">`는 두 번 다시
+ * 실행되지 않는다. `update: granted`를 담은 인라인 스크립트가 거기에만 있으므로
+ * 리마운트에 기대면 철회 → 재동의 시 쿠키와 감사 로그는 granted인데 GA만
+ * denied로 남아 새로고침 전까지 수집이 죽는다.
+ *
+ * gtag가 이미 있으면 여기서 직접 밀어 넣는다. 아직 없으면 `GatedAnalytics`가
+ * 처음 주입될 때 인라인 스크립트가 실행되므로 아무것도 하지 않는 것이 맞다.
+ */
+function grantAnalyticsClientSide() {
+  const w = window as unknown as { gtag?: (...args: unknown[]) => void }
+  w.gtag?.('consent', 'update', { analytics_storage: 'granted' })
+}
+
 /** 이미 로드된 gtag에 철회를 알리고 GA 쿠키를 지운다. */
 function revokeAnalyticsClientSide() {
   const w = window as unknown as { gtag?: (...args: unknown[]) => void }
@@ -130,8 +147,17 @@ export function ConsentProvider({
 
         if (wasAnalytics && !choices.analytics) {
           revokeAnalyticsClientSide()
-          // 다음 렌더부터 스크립트 자체가 사라지게 한다
+          // 주의: 이미 삽입된 <script> 태그는 사라지지 않는다. next/script는
+          // 언마운트 정리를 하지 않으므로 GatedAnalytics가 null을 반환해도
+          // 태그 요소는 전체 페이지 로드 전까지 DOM에 남는다. 철회를 실제로
+          // 담보하는 것은 위의 Consent Mode denied 전송과 GA 쿠키 삭제다.
+          // router.refresh()는 서버가 다시 판정한 상태(배너·게이팅)를 받기 위한 것.
           router.refresh()
+        } else if (!wasAnalytics && choices.analytics) {
+          // 같은 페이지 세션에서의 재동의. next/script의 LoadCache 때문에
+          // GatedAnalytics가 다시 마운트되어도 인라인 스크립트가 재실행되지
+          // 않으므로, granted를 여기서 직접 밀어 넣는다.
+          grantAnalyticsClientSide()
         }
       } catch (err) {
         console.error('[consent]', err)
