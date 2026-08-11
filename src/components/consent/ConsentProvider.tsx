@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { ConsentAction, ConsentChoices, ConsentClientState } from '@/lib/consent/types'
 import { ConsentBanner } from './ConsentBanner'
@@ -38,8 +38,6 @@ type ConsentContextValue = {
   openPreferences: () => void
   closePreferences: () => void
   submit: (action: ConsentAction, choices: ConsentChoices) => Promise<void>
-  /** ConsentSettingsLink가 마운트 시 호출한다. cleanup 함수를 돌려준다. */
-  registerSettingsLink: () => () => void
 }
 
 const ConsentContext = createContext<ConsentContextValue | null>(null)
@@ -132,14 +130,6 @@ export function ConsentProvider({
   // 저장 직후 잠깐 뜨는 확인 토스트. null이면 표시하지 않는다.
   const [toastAnalytics, setToastAnalytics] = useState<boolean | null>(null)
   const dismissToast = useCallback(() => setToastAnalytics(null), [])
-  // 테마가 배치한 ConsentSettingsLink 개수. 0이면 Provider가 예비 줄을 렌더한다.
-  const [settingsLinkCount, setSettingsLinkCount] = useState(0)
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => setMounted(true), [])
-  const registerSettingsLink = useCallback(() => {
-    setSettingsLinkCount((n) => n + 1)
-    return () => setSettingsLinkCount((n) => n - 1)
-  }, [])
 
   const submit = useCallback(
     async (action: ConsentAction, choices: ConsentChoices) => {
@@ -199,9 +189,8 @@ export function ConsentProvider({
       openPreferences: () => setPreferencesOpen(true),
       closePreferences: () => setPreferencesOpen(false),
       submit,
-      registerSettingsLink,
     }),
-    [state, submitting, error, strings, privacyHref, preferencesOpen, submit, registerSettingsLink],
+    [state, submitting, error, strings, privacyHref, preferencesOpen, submit],
   )
 
   return (
@@ -219,28 +208,6 @@ export function ConsentProvider({
         />
       )}
 
-      {/*
-        철회 진입점의 예비 줄.
-
-        평소에는 테마가 <ConsentSettingsLink />를 푸터 저작권 옆에 배치하고, 그러면
-        여기서는 아무것도 렌더하지 않는다. 테마가 그 컴포넌트를 쓰지 않으면 철회
-        경로가 통째로 사라지므로, 등록된 링크가 하나도 없을 때만 이 줄이 나온다.
-        GDPR 7(3)의 "철회는 동의만큼 쉬울 것"이 테마 선택에 좌우되면 안 된다.
-
-        mounted를 함께 보는 이유는 등록이 자식의 useEffect에서 일어나기 때문이다.
-        첫 렌더에는 카운트가 0이라 확인 없이 렌더하면 예비 줄이 잠깐 깜빡인다.
-      */}
-      {mounted && settingsLinkCount === 0 && state.decided && (
-        <div className="border-t border-border py-4 text-center">
-          <button
-            type="button"
-            onClick={() => setPreferencesOpen(true)}
-            className="text-[13px] text-muted-foreground underline underline-offset-4 hover:text-foreground"
-          >
-            {strings.reopen}
-          </button>
-        </div>
-      )}
     </ConsentContext.Provider>
   )
 }

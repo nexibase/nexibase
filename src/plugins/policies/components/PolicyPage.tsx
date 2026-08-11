@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { sanitizeHtml } from "@/lib/sanitize"
+import { ConsentSettingsLink } from "@/components/consent/ConsentSettingsLink"
 import { useTranslations, useLocale } from 'next-intl'
 
 interface Policy {
@@ -174,6 +175,20 @@ export default function PolicyPage() {
           />
         </CardContent>
       </Card>
+
+      {/*
+        쿠키 정책 페이지에서는 동의 설정을 바로 바꿀 수 있어야 한다.
+        GDPR 7(3)은 철회가 동의만큼 쉬울 것을 요구하는데, 정책 페이지는 정보
+        제공일 뿐 조작 수단이 아니다. 읽은 자리에서 바로 바꿀 수 있어야 정보와
+        철회 수단이 한자리에 모인다.
+        쿠키 동의 기능이 꺼져 있거나 아직 결정 전이면 컴포넌트가 스스로
+        아무것도 렌더하지 않는다.
+      */}
+      {policy.slug === 'cookie' && (
+        <div className="mt-6 flex justify-center">
+          <ConsentSettingsLink className="inline-flex h-9 items-center rounded-md border border-input bg-background px-4 text-sm font-medium shadow-xs hover:bg-accent hover:text-accent-foreground" />
+        </div>
+      )}
 
       <div className="mt-6 text-center">
         <Button asChild variant="outline">

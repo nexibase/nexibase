@@ -1,22 +1,22 @@
 'use client'
 
-import { useEffect } from 'react'
 import { useConsent } from './ConsentProvider'
 
 /**
- * 철회 진입점. 테마가 원하는 자리(보통 푸터 저작권 옆)에 놓는다.
+ * 동의 설정을 다시 여는 버튼. 쿠키 정책 페이지(`/policies/cookie`)에 놓인다.
  *
- * 마운트되면 Provider에 자신을 등록한다. 등록된 링크가 하나도 없으면 Provider가
- * 페이지 맨 아래에 예비 줄을 대신 렌더한다 — 푸터는 테마 소유라, 이 컴포넌트를
- * 쓰지 않는 테마로 바꾸는 순간 철회 경로가 통째로 사라지기 때문이다.
- * GDPR 7(3)의 "철회는 동의만큼 쉬울 것"이 테마 선택에 좌우되어서는 안 된다.
+ * 철회 경로는 "푸터의 쿠키 정책 링크 → 이 버튼"이다. 정책 페이지는 정보 제공
+ * 의무(ePrivacy 5(3), GDPR 13조)를 지고, 철회 수단(GDPR 7(3))은 별개 의무라
+ * 읽을 거리만 두면 충족되지 않는다. 둘을 한 페이지에 모으는 것이 유럽 사이트들의
+ * 일반적인 형태다.
+ *
+ * 따라서 **푸터 메뉴에서 쿠키 정책 링크를 지우면 철회 경로가 끊긴다.**
+ * 개인정보처리방침 링크를 지우는 것과 같은 성격의 운영자 책임이다.
  *
  * 아직 결정 전이면 배너가 떠 있으므로 아무것도 렌더하지 않는다.
  */
 export function ConsentSettingsLink({ className }: { className?: string }) {
-  const { state, strings, openPreferences, registerSettingsLink } = useConsent()
-
-  useEffect(() => registerSettingsLink(), [registerSettingsLink])
+  const { state, strings, openPreferences } = useConsent()
 
   if (!state.decided) return null
 
