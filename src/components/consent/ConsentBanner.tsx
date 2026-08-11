@@ -57,8 +57,14 @@ export function ConsentBanner() {
           </div>
 
           <div className="flex shrink-0 flex-wrap items-center gap-2">
+            {/*
+              설정도 테두리를 준다. ghost로 두었더니 텍스트처럼 보여 클릭할 수 있는
+              줄 모르겠다는 지적이 반복됐다.
+              셋이 같은 모양이 되어도 법적 요건은 지켜진다 — 요구되는 것은 거부가
+              수락만큼 눈에 띌 것이지, 설정이 그 둘보다 약할 것이 아니다.
+            */}
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
               disabled={submitting}
               onClick={openPreferences}
