@@ -92,6 +92,23 @@
     "terms": "이용약관",
     "privacy": "개인정보처리방침"
   },
+  "consent": {
+    "title": "쿠키 사용 동의",
+    "description": "이 사이트는 서비스 운영에 필요한 쿠키를 사용합니다. 방문 통계를 위한 분석 쿠키는 동의하신 경우에만 사용합니다.",
+    "acceptAll": "모두 동의",
+    "rejectAll": "모두 거부",
+    "settings": "설정",
+    "save": "저장",
+    "close": "닫기",
+    "privacyLink": "개인정보처리방침",
+    "reopen": "쿠키 설정",
+    "error": "저장하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+    "necessaryTitle": "필수 쿠키",
+    "necessaryDescription": "로그인 유지와 동의 기록 저장 등 사이트 작동에 반드시 필요합니다. 끌 수 없습니다.",
+    "analyticsTitle": "분석 쿠키",
+    "analyticsDescription": "방문자 수와 인기 페이지를 파악하는 데 사용합니다. 거부해도 사이트 이용에는 제한이 없습니다.",
+    "alwaysOn": "항상 켜짐"
+  },
   "locale": {
     "switchTo": "언어 변경",
     "en": "English",

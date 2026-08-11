@@ -92,6 +92,23 @@
     "terms": "Terms of service",
     "privacy": "Privacy policy"
   },
+  "consent": {
+    "title": "Cookie consent",
+    "description": "This site uses cookies required to operate the service. Analytics cookies for visit statistics are used only if you agree.",
+    "acceptAll": "Accept all",
+    "rejectAll": "Reject all",
+    "settings": "Settings",
+    "save": "Save",
+    "close": "Close",
+    "privacyLink": "Privacy Policy",
+    "reopen": "Cookie settings",
+    "error": "Could not save. Please try again in a moment.",
+    "necessaryTitle": "Necessary cookies",
+    "necessaryDescription": "Required for the site to work, including keeping you signed in and storing your consent record. These cannot be turned off.",
+    "analyticsTitle": "Analytics cookies",
+    "analyticsDescription": "Used to understand visitor numbers and popular pages. Rejecting them does not limit your use of the site.",
+    "alwaysOn": "Always on"
+  },
   "locale": {
     "switchTo": "Change language",
     "en": "English",
