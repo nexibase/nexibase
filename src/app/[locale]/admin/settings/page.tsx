@@ -74,6 +74,9 @@ interface SettingsData {
   ga4_property_id: string
   ga4_service_account_json: string
 
+  // Cookie consent
+  consent_enabled: string
+
   // Search engine verification
   google_site_verification: string
   naver_site_verification: string
@@ -109,6 +112,8 @@ const DEFAULT_SETTINGS: SettingsData = {
   google_analytics_id: '',
   ga4_property_id: '',
   ga4_service_account_json: '',
+  // Matches the server default: readConsentContext() treats a missing row as off
+  consent_enabled: 'false',
   google_site_verification: '',
   naver_site_verification: '',
   bing_site_verification: ''
@@ -731,6 +736,26 @@ export default function SettingsPage() {
                 <p className="text-xs text-muted-foreground">
                   {t('gaTestSavedWarning')}
                 </p>
+
+                <Separator />
+
+                {/* Cookie consent gating. Lives in this card because it decides
+                    whether the Measurement ID above loads before the visitor agrees. */}
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5 pr-4">
+                    <Label>{t('consentEnabled')}</Label>
+                    <p className="text-sm text-muted-foreground">
+                      {t('consentEnabledDesc')}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {t('consentEnabledPolicyNote')}
+                    </p>
+                  </div>
+                  <Switch
+                    checked={settings.consent_enabled === 'true'}
+                    onCheckedChange={(checked) => handleSwitchChange('consent_enabled', checked)}
+                  />
+                </div>
               </CardContent>
             </Card>
 
