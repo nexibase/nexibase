@@ -95,6 +95,7 @@
   "consent": {
     "title": "Cookie consent",
     "description": "This site uses cookies required to operate the service. Analytics cookies for visit statistics are used only if you agree.",
+    "toastSaved": "Your choice has been saved.",
     "statusAccepted": "You currently allow analytics cookies.",
     "statusRejected": "You currently refuse analytics cookies.",
     "acceptAll": "Accept all",

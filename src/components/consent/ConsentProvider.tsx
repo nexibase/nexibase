@@ -5,10 +5,12 @@ import { useRouter } from 'next/navigation'
 import type { ConsentAction, ConsentChoices, ConsentClientState } from '@/lib/consent/types'
 import { ConsentBanner } from './ConsentBanner'
 import { ConsentPreferences } from './ConsentPreferences'
+import { ConsentToast } from './ConsentToast'
 
 export type ConsentStrings = {
   title: string
   description: string
+  toastSaved: string
   statusAccepted: string
   statusRejected: string
   acceptAll: string
@@ -125,6 +127,9 @@ export function ConsentProvider({
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(false)
   const [preferencesOpen, setPreferencesOpen] = useState(false)
+  // 저장 직후 잠깐 뜨는 확인 토스트. null이면 표시하지 않는다.
+  const [toastAnalytics, setToastAnalytics] = useState<boolean | null>(null)
+  const dismissToast = useCallback(() => setToastAnalytics(null), [])
 
   const submit = useCallback(
     async (action: ConsentAction, choices: ConsentChoices) => {
@@ -146,6 +151,7 @@ export function ConsentProvider({
           decidedAt: Date.now(),
         })
         setPreferencesOpen(false)
+        setToastAnalytics(choices.analytics)
 
         if (wasAnalytics && !choices.analytics) {
           revokeAnalyticsClientSide()
@@ -192,14 +198,37 @@ export function ConsentProvider({
       {children}
       {!state.decided && <ConsentBanner />}
       <ConsentPreferences />
+
+      {toastAnalytics !== null && (
+        <ConsentToast
+          title={strings.toastSaved}
+          detail={toastAnalytics ? strings.statusAccepted : strings.statusRejected}
+          closeLabel={strings.close}
+          onDismiss={dismissToast}
+        />
+      )}
+
+      {/*
+        철회 진입점. 예전에는 fixed로 화면 좌하단에 상시 떠 있었는데, 모든 페이지를
+        따라다녀 거슬린다는 지적을 받아 문서 흐름 맨 끝으로 내렸다.
+
+        없애지는 않는다. GDPR 7(3)이 철회를 동의만큼 쉬울 것으로 요구하는데,
+        수락은 배너에서 1클릭이므로 철회 경로가 사라지면 요건을 못 맞춘다.
+        모든 페이지 하단에 있으니 접근 자체는 유지된다.
+
+        테마의 Footer가 아니라 여기서 렌더하는 이유는 3.6절과 같다 — 푸터는
+        테마 소유라 테마를 바꾸면 링크가 사라진다.
+      */}
       {state.decided && (
-        <button
-          type="button"
-          onClick={() => setPreferencesOpen(true)}
-          className="fixed bottom-3 left-3 z-40 rounded-md border border-border bg-background/90 px-3 py-1.5 text-[13px] text-muted-foreground shadow-sm backdrop-blur hover:text-foreground"
-        >
-          {strings.reopen}
-        </button>
+        <div className="border-t border-border py-4 text-center">
+          <button
+            type="button"
+            onClick={() => setPreferencesOpen(true)}
+            className="text-[13px] text-muted-foreground underline underline-offset-4 hover:text-foreground"
+          >
+            {strings.reopen}
+          </button>
+        </div>
       )}
     </ConsentContext.Provider>
   )

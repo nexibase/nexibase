@@ -107,6 +107,7 @@ export default async function RootLayout({
   const consentStrings = {
     title: t('title'),
     description: t('description'),
+    toastSaved: t('toastSaved'),
     statusAccepted: t('statusAccepted'),
     statusRejected: t('statusRejected'),
     acceptAll: t('acceptAll'),
