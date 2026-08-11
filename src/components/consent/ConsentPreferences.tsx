@@ -54,6 +54,18 @@ export function ConsentPreferences() {
           </DialogDescription>
         </DialogHeader>
 
+        {/*
+          이전 선택을 다시 보여준다. 쿠키에 남는 건 어느 버튼을 눌렀는지가 아니라
+          결과 상태(analytics 불리언)이므로, "모두 거부를 눌렀다"가 아니라 지금
+          어떤 상태인지로 표현한다. 노출 카테고리가 분석 하나뿐이라 실질적으로
+          같은 정보다. 아직 결정 전이면 보여줄 이전 선택이 없다.
+        */}
+        {state.decided && (
+          <p className="rounded-md bg-muted px-3 py-2 text-[13px] text-muted-foreground">
+            {state.analytics ? strings.statusAccepted : strings.statusRejected}
+          </p>
+        )}
+
         <div className="space-y-4 py-2">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">

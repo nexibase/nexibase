@@ -9,6 +9,8 @@ import { ConsentPreferences } from './ConsentPreferences'
 export type ConsentStrings = {
   title: string
   description: string
+  statusAccepted: string
+  statusRejected: string
   acceptAll: string
   rejectAll: string
   settings: string

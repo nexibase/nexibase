@@ -95,6 +95,8 @@
   "consent": {
     "title": "쿠키 사용 동의",
     "description": "이 사이트는 서비스 운영에 필요한 쿠키를 사용합니다. 방문 통계를 위한 분석 쿠키는 동의하신 경우에만 사용합니다.",
+    "statusAccepted": "지금은 분석 쿠키에 동의한 상태입니다.",
+    "statusRejected": "지금은 분석 쿠키를 거부한 상태입니다.",
     "acceptAll": "모두 동의",
     "rejectAll": "모두 거부",
     "settings": "설정",
