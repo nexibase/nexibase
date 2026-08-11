@@ -34,6 +34,11 @@ test('JSON이 아니면 throw하지 않고 null', () => {
   assert.equal(parseConsentCookie('%7Bbroken'), null)
 })
 
+test('잘못된 퍼센트 인코딩도 throw하지 않고 null', () => {
+  assert.equal(parseConsentCookie('%'), null)
+  assert.equal(parseConsentCookie('%zz'), null)
+})
+
 test('JSON 배열/원시값은 null', () => {
   assert.equal(parseConsentCookie(encodeURIComponent('[1,2]')), null)
   assert.equal(parseConsentCookie(encodeURIComponent('"str"')), null)
@@ -45,11 +50,21 @@ test('필수 필드가 없거나 타입이 다르면 null', () => {
     { ...sample, v: '1' },
     { ...sample, id: '' },
     { ...sample, analytics: 'yes' },
-    { ...sample, ts: Number.NaN },
+    { ...sample, ts: null },
   ]
   for (const b of bad) {
     assert.equal(parseConsentCookie(encodeURIComponent(JSON.stringify(b))), null)
   }
+})
+
+test('Infinity ts는 Number.isFinite 가드에서 걸러진다', () => {
+  const raw = `{"v":1,"id":"${sample.id}","analytics":true,"marketing":false,"ts":1e400,"pv":"1.0"}`
+  assert.equal(parseConsentCookie(encodeURIComponent(raw)), null)
+})
+
+test('Infinity v도 Number.isFinite 가드에서 걸러진다', () => {
+  const raw = `{"v":1e400,"id":"${sample.id}","analytics":true,"marketing":false,"ts":${sample.ts},"pv":"1.0"}`
+  assert.equal(parseConsentCookie(encodeURIComponent(raw)), null)
 })
 
 test('marketing 누락은 false로 채운다', () => {
