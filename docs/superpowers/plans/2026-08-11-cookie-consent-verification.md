@@ -129,6 +129,71 @@ UPDATE settings SET `value`='false' WHERE `key`='consent_enabled';
 
 ---
 
+## 전체 브랜치 리뷰 지적사항 5건 수정 (2026-08-11, HEAD `5ade045` 이후)
+
+이 절 위쪽의 기록은 `5ade045` 시점까지의 검증 결과다. 이후 전체 브랜치 리뷰에서
+5건(MF-1~MF-4, SF-1)이 지적되었고 전부 재현·수정되었다. 상세 기록은
+[`.superpowers/sdd/final-fix-report.md`](../../../.superpowers/sdd/final-fix-report.md)에
+있고, 여기에는 결론과 새 검증 결과만 남긴다.
+
+| 지적 | 내용 | 커밋 |
+|---|---|---|
+| MF-1 | 설정 조회 실패가 fail OPEN이라 거부한 방문자에게도 GA가 붙었다 | `bb3ea0f` |
+| MF-2 | 익명 `consentId`가 flight 페이로드로 발행되어 `HttpOnly`가 무력화되었다 | `c4a5bc6` |
+| MF-3 | `POST /api/consent`가 크로스 사이트 쓰기를 받아 동의를 위조할 수 있었다 | `09c1b43` |
+| MF-4 | `consent_enabled` 관리자 컨트롤이 없어 기존 설치에서 기능에 도달할 수 없었다 | `b03e5b6` |
+| SF-1 | 같은 세션에서 철회 후 재동의하면 GA가 denied로 남았다 | `bead1f2` |
+
+### 이 문서의 이전 서술 중 정정이 필요한 부분
+
+- 위 "해결 기록" 절과 그 재검증 표는 `consent_enabled`가 두 상태(켜짐/꺼짐)인
+  것을 전제로 쓰였다. **지금은 세 상태다** — `'on'` / `'off'` / `'unknown'`.
+  `'unknown'`(설정을 읽지 못함)은 게이팅된 경로도 게이팅 없는 경로도 렌더하지
+  않는다. 재검증 표의 4a/4b는 여전히 유효하고, 여기에 4c가 추가된다.
+- Step 1의 타입체크 기준선 서술(`29`, 기준선 33)은 그 시점 값이다. 현재
+  기준선은 `19`이며 이번 수정 후에도 `19`를 유지한다.
+
+### 새 검증 결과 (dev 서버, 포트 3300, DB `gnu5`)
+
+| # | 항목 | 명령 / 방법 | 실제 결과 | 판정 |
+|---|---|---|---|---|
+| 1 | `consent_enabled='true'`, 쿠키 없음 | `curl -s http://localhost:3300/` | `googletagmanager` 문자열 **0건**(프리로드 힌트·RSC 페이로드 포함), 배너 마크업(`role="region"`) 1건 | **PASS** |
+| 2 | `consent_enabled='true'`, 수락 쿠키 | 같은 서버, `-b` 쿠키 jar | `googletagmanager.com/gtag/js` 1건, 배너 0건 | **PASS** |
+| 3 | `consent_enabled='false'` | `settings` 행 변경 후 `curl` | `googletagmanager.com/gtag/js` 2건, 배너 0건 | **PASS** |
+| 4 | MF-2 재방문자 HTML | `curl -s -b jar / \| grep -c consentId` | **0**. 쿠키에 든 UUID 문자열로 검색해도 0건 | **PASS** (수정 전 1건) |
+| 5 | MF-3 | POST 4종 | `Origin: https://evil.example` → **403** `cross_origin`, `Content-Type: text/plain` → **415** `unsupported_media_type`, `Sec-Fetch-Site: cross-site` → **403**, 정상 same-origin POST → **200** | **PASS** (수정 전 앞의 둘이 200 + `Set-Cookie` + 로그 행) |
+| 6 | MF-4 관리자 토글 | 소스·프로덕션 번들 grep, i18n 로드 확인, 저장 API 401 확인, 행 변경 → 동작 변경 확인 | 토글이 GA 카드 안에 존재하고 `handleSwitchChange('consent_enabled', ...)`에 연결됨. 관리자 세션으로 실제 클릭하는 것은 미검증 — 검증용 임시 관리자 계정 생성이 권한 분류기에 차단되었고 기존 관리자 비밀번호는 알지 못한다 | **PARTIALLY VERIFIED** |
+| 4c | 설정 조회 실패(`status='unknown'`) | `readConsentContext()`에 임시 throw를 주입해 런타임 재현. **임시 코드는 커밋하지 않고 제거함** | 수정 전: 거부 쿠키를 가진 방문자에게 `googletagmanager` **2건**. 수정 후: **0건**, 배너도 0건, `POST /api/consent` → **503** `consent_unavailable`. 페이지는 정상 렌더(274565 bytes) | **PASS** |
+| 4d | 플래그 정규화 | `consent_enabled='True '`(대문자 + 후행 공백)로 설정 후 `curl` | `googletagmanager.com/gtag/js` 0건, 배너 1건 — 게이팅 정상 동작. 수정 전이라면 `=== 'true'` 실패로 GA가 무조건 로드되었을 값 | **PASS** |
+
+### 게이트
+
+| 명령 | 결과 |
+|---|---|
+| `npx tsc --noEmit 2>&1 \| grep -E "error TS" \| grep -iE "consent\|analytics\|layout\|settings"` | 출력 없음 |
+| `npx tsc --noEmit 2>&1 \| grep -cE "error TS"` | `19` (기준선 그대로) |
+| `npm test` | `# tests 40`, `# pass 40`, `# fail 0`. 기존 35 + `decideAnalyticsMode` 5건 |
+| `npm run build` | exit 0. `@/plugins/shop/...` 생성 래퍼 문제 없음 |
+
+### 이번에도 검증하지 못한 것 (그대로 기록)
+
+- **SF-1의 실제 효과** — 철회 후 재동의 시 GA가 denied → granted로 돌아오는지는
+  브라우저 클릭 시퀀스가 필요하다. **NOT VERIFIED — requires browser.** 코드
+  수준으로는 `window.gtag`가 있으면 직접 push하고 없으면 no-op이라 양쪽 경로가
+  안전함을 확인했다.
+- **MF-4의 관리자 세션 클릭** — 위 6번 참조.
+- 이 문서 위쪽의 기존 미검증 항목(배너의 비차단 스크롤, 프로덕션 `Secure` 속성,
+  `_ga` 생성·삭제)은 이번에도 브라우저가 필요해 그대로 남아 있다.
+
+### 뒷정리
+
+- `consent_enabled`는 `'true'`로 되돌렸고 dev 서버는 종료했다.
+- 검증 과정에서 `consent_logs` 13–25번 행이 추가되었다. append-only 테이블이라
+  삭제하지 않는다. 이 중 15·16번은 MF-3 수정 **전** 크로스 오리진 / `text/plain`
+  POST가 실제로 성공해 남은 행으로, 지적사항이 실재했다는 증거다.
+
+---
+
 ## 릴리스 노트 (기존 사이트 운영자용)
 
 이번 버전부터 쿠키 동의 배너가 추가되었습니다. **기존 사이트는 꺼진 상태로
@@ -136,9 +201,11 @@ UPDATE settings SET `value`='false' WHERE `key`='consent_enabled';
 업그레이드 이전과 동일하게 계속 수집됩니다 — 아무 조치도 하지 않아도
 수집이 끊기지 않습니다.
 
-관리자 설정에서 배너를 켜면 그 순간부터 Google Analytics가 동의 게이팅
-뒤로 들어갑니다: 방문자가 분석 쿠키에 동의하기 전까지는 수집되지 않고,
-그만큼 수치가 줄어드는 것이 정상입니다.
+켜는 곳은 **관리자 → 설정 → Google Analytics 카드 맨 아래의 "쿠키 동의 배너"
+스위치**입니다. Measurement ID 입력란과 같은 카드에 있습니다. 스위치를 켜고
+저장하면 그 순간부터 Google Analytics가 동의 게이팅 뒤로 들어갑니다: 방문자가
+분석 쿠키에 동의하기 전까지는 수집되지 않고, 그만큼 수치가 줄어드는 것이
+정상입니다. 다시 끄면 배너가 사라지고 이전과 똑같이 첫 방문부터 수집됩니다.
 
 EU/EEA 방문자가 있는 사이트라면 켜는 것을 권합니다. 켜지 않은 상태는
 ePrivacy 지침 5(3)의 사전 동의 요건을 충족하지 않습니다.
@@ -147,9 +214,11 @@ ePrivacy 지침 5(3)의 사전 동의 요건을 충족하지 않습니다.
 플러그인을 켜고 privacy 정책을 발행해 두어야 합니다.** 방침 페이지 없이
 동의를 받으면 정보제공 요건을 충족하지 못합니다.
 
-> **정정 (2026-08-11, Task 11 이후):** 이 절은 최초 작성 시 "켜면" 시나리오만
-> 안내하고, 꺼진 기본 상태에서 GA가 어떻게 되는지는 말하지 않았다 — 당시
-> 구현이 실제로 GA를 완전히 정지시키고 있었기 때문이다. 그 구현이 설계
-> 문서 §5·마이그레이션 의도와 반대였음이 확인되어 코드를 고쳤고(위 "해결
-> 기록" 절), 이 문구도 고쳐진 동작(꺼진 상태 = GA 계속 로드)에 맞게
-> 다시 썼다.
+> **정정 이력.**
+> - *(2026-08-11, Task 11 이후)* 최초 작성 시에는 "켜면" 시나리오만 안내하고
+>   꺼진 기본 상태에서 GA가 어떻게 되는지 말하지 않았다 — 당시 구현이 실제로
+>   GA를 완전히 정지시키고 있었기 때문이다. 그 구현이 설계 문서 §5·마이그레이션
+>   의도와 반대였음이 확인되어 코드를 고쳤고(위 "해결 기록" 절) 문구도 다시 썼다.
+> - *(2026-08-11, 리뷰 지적사항 수정 이후)* "관리자 설정에서 배너를 켜면"이라고만
+>   적혀 있었으나, 당시에는 그런 컨트롤이 실제로 존재하지 않았다(MF-4). 토글을
+>   구현한 뒤(`b03e5b6`) 정확한 위치를 명시하도록 고쳤다.
