@@ -108,8 +108,10 @@ export function ConsentPreferences() {
           <Button variant="ghost" size="sm" onClick={closePreferences} disabled={submitting}>
             {strings.close}
           </Button>
+          {/* 배너와 같은 규칙 — 거부·수락만 채움으로 도드라지게 하고, 서로는
+              완전히 동일하게 둔다. 한쪽만 채우면 그 선택지를 우대하는 것이 된다. */}
           <Button
-            variant="outline"
+            variant="default"
             size="sm"
             disabled={submitting}
             onClick={() => submit('reject_all', { analytics: false, marketing: false })}
@@ -117,7 +119,7 @@ export function ConsentPreferences() {
             {strings.rejectAll}
           </Button>
           <Button
-            variant="outline"
+            variant="default"
             size="sm"
             disabled={submitting}
             onClick={() => submit('accept_all', { analytics: true, marketing: false })}
