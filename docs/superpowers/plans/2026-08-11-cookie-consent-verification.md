@@ -82,50 +82,34 @@ UPDATE settings SET `value`='false' WHERE `key`='consent_enabled';
 
 확인 후 `UPDATE settings SET value='true' WHERE key='consent_enabled';`로 원복. 원복 후 쿠키 없는 새 방문자에게 배너가 다시 노출됨(`role="region"` 1건, `googletagmanager` 0건)을 재확인했다.
 
-## 중대 발견 사항 — `consent_enabled=false`가 설계 의도와 반대로 동작한다
+## 해결 기록 — `consent_enabled=false`가 설계 의도와 반대로 동작하던 문제
 
-Step 4의 결과는 **브리핑(task-11-brief.md)이 요구한 조건은 통과**하지만, 이것이 원래 **설계 문서(`docs/superpowers/specs/2026-08-11-cookie-consent-design.md` §5 예외 처리 표)의 의도와 정면으로 배치된다는 것을 발견했다.** 지시사항에 따라 코드를 직접 고치지 않고 여기에 그대로 남긴다.
+이 절은 원래 "중대 발견 사항"으로, 이 문제를 미해결 이슈와 두 가지 해결 방향으로 남겨 두었다. 이후 사람이 검토해 방향을 확정했으므로, 그 결정과 조치 결과를 기록으로 남긴다.
 
-**설계 문서의 명시적 요구사항** (§5):
+**문제였던 것.** `src/app/layout.tsx`의 disabled 분기(`consent.enabled`가 `false`)가 `children`을 그대로 렌더할 뿐 `getMeasurementId()`조차 호출하지 않았다. Task 9에서 예전의 무조건 GA 렌더 경로(`<GoogleAnalytics/>`)가 제거된 뒤였기 때문에, 결과적으로 disabled 상태에서 GA가 전혀 로드되지 않았다. 그런데 `consent_enabled=false`는 이 브랜치로 업그레이드하는 **모든 기존 사이트가 받는 기본값**이며, 설계 문서(`docs/superpowers/specs/2026-08-11-cookie-consent-design.md` §5, §2 결정 사항 표)와 마이그레이션 SQL 주석은 그 기본값의 존재 이유를 "업그레이드 시 GA가 말없이 끊기는 사고 방지"라고 명시하고 있었다. 즉 구현이 막으려던 사고를 그대로 재현하고 있었다.
 
-> `consent_enabled=false` | 배너 없음. **GA는 기존 동작대로 로드**
+**어느 쪽이 맞는지.** Task 10의 브리핑(`task-10-brief.md` 91행)은 이 동작을 "의도"라고 명시했지만, 그 결정이 설계 문서 §2/§5/§8과 마이그레이션 주석이 정한 원래 목적을 뒤집는다는 점을 재검토한 기록은 어디에도 없었다. 사람에게 확인한 결과, **스펙 문서가 최종 판단 기준이며 구현 계획(plan) 쪽이 틀렸다**는 것으로 확정되었다. 스펙 문서는 수정하지 않는다 — 처음부터 옳았다.
 
-**마이그레이션 파일의 명시적 의도** (`prisma/migrations/20260811000000_add_consent_log/migration.sql`):
+**실제로 바꾼 것.**
+1. `src/components/consent/UngatedAnalytics.tsx`를 새로 만들었다. 이 브랜치 이전에 `src/components/GoogleAnalytics.tsx`가 렌더하던 GA 마크업(`gtag.js` 스크립트 + 인라인 `gtag('config', ...)`)을 그대로 재현하는 순수 컴포넌트로, `useConsent()`를 쓰지 않고 동의 게이팅을 전혀 하지 않는다 — `ConsentProvider` 바깥(= disabled 상태)에서 렌더되기 때문이다.
+2. `src/app/layout.tsx`를 고쳤다: `measurementId`를 두 분기 모두에서 쓰도록 `consent.enabled` 조건 없이 무조건 `getMeasurementId()`를 호출하고, disabled 분기를 bare `children`에서 `children` + `<UngatedAnalytics measurementId={measurementId} />`로 바꿨다. enabled 분기(`ConsentProvider` + `GatedAnalytics`)는 그대로 유지했다.
+3. 구현 계획 문서(`docs/superpowers/plans/2026-08-11-cookie-consent.md`)의 Task 10 Step 4 서술과 Task 11 릴리스 노트 문구를 이 결정에 맞게 정정했다 — "disabled = GA 완전 정지가 의도"라는 잘못된 서술을 "disabled = 업그레이드 이전과 동일하게 GA가 계속 로드되고, enabled로 전환하는 것이 GA를 동의 게이팅 뒤로 옮기는 스위치"로 바꿨다.
+4. 아래 "릴리스 노트" 절도 같은 방향으로 다시 썼다(검증자 주석 삭제, 본문 자체를 수정).
 
-```sql
--- 기존 설치는 배너를 꺼진 상태로 시작한다.
--- 업그레이드 즉시 GA가 말없이 끊기는 것을 막기 위함이며,
--- 운영자가 관리자 설정에서 직접 켜야 한다.
-```
+**재검증 결과.**
 
-**설계 문서 §2 결정 사항 표**: `consent_enabled` 기본값 — "신규 `true` / 기존 `false`" 근거: "업그레이드 시 GA가 말없이 끊기는 사고 방지".
+| 항목 | 명령 | 결과 |
+|---|---|---|
+| 1a | `npx tsc --noEmit 2>&1 \| grep -E "error TS" \| grep -i -E "consent\|analytics\|layout"` | 출력 없음 |
+| 1b | `npx tsc --noEmit 2>&1 \| grep -cE "error TS"` | `19` (기준선 33 이하) |
+| 2 | `npm test` | `# tests 35`, `# pass 35`, `# fail 0` |
+| 3 | `npm run build` | exit 0, 정상 완료. `@/plugins/shop/...` 관련 생성 래퍼 문제 없음 — 별도 조치 불필요 |
+| 4a | `consent_enabled='false'`, 쿠키 없음, `GET /` (dev, port 3000, DB `gnu5`) | `googletagmanager` 참조 2건(`<link rel="preload">` + RSC 페이로드의 `<Script src=...>` 직렬화), 배너 마크업(`role="region"`) 0건 |
+| 4b | `consent_enabled='true'`, 쿠키 없음, `GET /` (동일 서버) | `googletagmanager` 참조 0건, 배너 마크업(`role="region"`) 1건 |
 
-**그런데 실제 구현(`src/app/layout.tsx:140-151`)은:**
+4a/4b 모두 이번에 직접 `curl`로 재현·확인했다(Task 11의 기존 curl 방법론을 그대로 사용). `googletagmanager` 참조가 실제 DOM `<script src>` 태그가 아니라 프리로드 힌트 + RSC 하이드레이션 페이로드로 나타나는 것은 `GatedAnalytics`(Task 11에서 이미 확인된 것)와 동일한 `next/script afterInteractive` 특성이며, disabled 경로에 새로 추가한 `UngatedAnalytics`도 같은 메커니즘을 쓰므로 예상된 형태다. 검증 후 `consent_enabled`는 `true`로 되돌렸고 dev 서버는 종료했다.
 
-```tsx
-{consent.enabled ? (
-  <ConsentProvider ...>
-    {children}
-    <GatedAnalytics measurementId={measurementId} />
-  </ConsentProvider>
-) : (
-  children
-)}
-```
-
-`consent.enabled`가 `false`이면 `ConsentProvider`와 `GatedAnalytics`가 **둘 다 마운트되지 않는다.** GA를 무조건 렌더링하던 예전 `<GoogleAnalytics />` 컴포넌트 자체가 이번 작업에서 제거되었고(현재 `src/components/GoogleAnalytics.tsx`는 `getMeasurementId()`만 export, 렌더링 능력 없음), disabled 상태를 위한 "게이팅 없이 무조건 로드"하는 대체 경로가 어디에도 없다. 즉:
-
-**`consent_enabled=false`(기존 사이트의 업그레이드 직후 기본값)일 때 GA는 전혀 로드되지 않는다 — 이것이 바로 설계 문서와 마이그레이션 주석이 "막겠다"고 명시한 그 사고다.**
-
-이번 검증에서 Step 4로 직접 재현·확인했다: `google_analytics_id` 설정이 유효한 값(`G-G1YDVZ5CE4`)으로 존재하는 상태에서 `consent_enabled='false'`로 두었을 때 `GET /` 응답에 `googletagmanager`/`gtag` 참조가 **0건**이었다(위 Step 4 결과 참조). 기존 사이트를 이 브랜치로 업그레이드하면, 운영자가 아무것도 하지 않아도 GA 수집이 배포 즉시 끊긴다.
-
-**참고 — 이 편차는 우연한 버그가 아니라 Task 10에서 의식적으로 결정된 것으로 보인다.** `task-10-brief.md` 91행: "`consent.enabled`가 false면 Provider도 GatedAnalytics도 마운트되지 않는다. 이 경우 GA는 로드되지 않는다 — 기존 사이트가 배너를 켜기 전까지 GA가 멈추는 것이 의도된 동작이며, 릴리스 노트에 안내한다(Task 11)." Task 10은 이 동작을 "의도"라고 명시했지만, 이 결정이 설계 문서 §2/§5/§8과 마이그레이션 주석이 명시한 원래 목적(사고 방지)을 뒤집는다는 점을 재검토한 기록은 어디에도 없다.
-
-**이것이 릴리스 노트에 미치는 영향:** 브리핑이 제시한 릴리스 노트 문구(아래 "릴리스 노트" 섹션)는 "켜면 방문자가 동의하기 전까지 GA가 수집되지 않는다"고만 안내한다. **꺼진 기본 상태에서도 이미 GA가 전혀 수집되지 않는다는 사실은 안내하지 않는다.** 기존 운영자가 업그레이드 후 아무 조치도 취하지 않으면 GA 수치가 즉시 0에 가깝게 떨어지는데, 이는 정확히 설계 문서가 피하려던 "말없이 끊기는 사고"이며 현재 릴리스 노트로는 운영자가 이를 예상할 수 없다.
-
-**이 문서는 지시에 따라 소스를 수정하지 않는다.** 아래 두 가지 중 하나를 사람이 결정해야 한다고 판단해 그대로 넘긴다:
-1. `layout.tsx`에 "disabled일 때 GA를 게이팅 없이 무조건 로드"하는 세 번째 경로를 추가해 설계 문서 §5·마이그레이션 의도를 실제로 충족시킨다, 또는
-2. 이 동작(꺼진 상태 = GA 완전 정지)을 정식으로 채택하기로 결정하고, 설계 문서 §2/§5/§8과 마이그레이션 주석, 그리고 아래 릴리스 노트 문구를 전부 이 결정에 맞게 고쳐 운영자에게 명확히 경고한다.
+**결론.** disabled 상태(기존 사이트의 업그레이드 기본값)에서 GA가 게이팅 없이 계속 로드되는 것을 확인했고, enabled 상태에서는 여전히 동의 전 GA 참조가 0건임을 재확인했다 — Task 11이 확립한 회귀 방지선(동의 전 GA 요청 0건)은 깨지지 않았다.
 
 ## 그 외 관찰 사항 (버그 아님, 참고용)
 
@@ -139,7 +123,7 @@ Step 4의 결과는 **브리핑(task-11-brief.md)이 요구한 조건은 통과*
 | PASS | 1(빌드/테스트/타입체크), 1, 2, 4, 5, 6, 7(부분), 10, 11, 12, Step4(3항목) = 코드/서버 레벨로 확인된 항목 다수 |
 | PARTIALLY VERIFIED (서버측만 확인, 브라우저 필요 부분 남음) | 8, 9 |
 | NOT VERIFIED — requires browser | 3, 7의 프로덕션 Secure 속성, 8의 실제 네트워크 요청·`_ga` 생성, 9의 `_ga` 실제 삭제 |
-| 중대 발견 | `consent_enabled=false`가 설계 의도(GA 무조건 로드)와 반대로 GA를 완전히 차단함 — 위 "중대 발견 사항" 참조 |
+| 해결됨 | `consent_enabled=false`가 설계 의도(GA 무조건 로드)와 반대로 동작하던 문제 — 위 "해결 기록" 절 참조. `UngatedAnalytics` 추가로 수정, 재검증 통과 |
 
 **가장 중요한 회귀 방지선("동의 전 googletagmanager 요청 0건, DOM에 gtag 스크립트 없음")은 항목 1·2·5·6·10에서 curl로 반복 확인했고 전부 통과했다.** 이 속성 자체는 깨지지 않았다. 다만 위에서 발견한 "꺼진 상태에서 GA가 아예 로드되지 않는" 문제는 별개의, 그러나 이 기능의 존재 이유(기존 사이트 보호)와 직결되는 중요한 사안이다.
 
@@ -148,19 +132,24 @@ Step 4의 결과는 **브리핑(task-11-brief.md)이 요구한 조건은 통과*
 ## 릴리스 노트 (기존 사이트 운영자용)
 
 이번 버전부터 쿠키 동의 배너가 추가되었습니다. **기존 사이트는 꺼진 상태로
-업그레이드됩니다.** 관리자 설정에서 직접 켜야 동작합니다.
+업그레이드됩니다.** 이 상태에서는 배너가 보이지 않고, Google Analytics는
+업그레이드 이전과 동일하게 계속 수집됩니다 — 아무 조치도 하지 않아도
+수집이 끊기지 않습니다.
 
-켜면 방문자가 분석 쿠키에 동의하기 전까지 Google Analytics가 수집되지
-않습니다. 그만큼 수치가 줄어드는 것이 정상입니다.
+관리자 설정에서 배너를 켜면 그 순간부터 Google Analytics가 동의 게이팅
+뒤로 들어갑니다: 방문자가 분석 쿠키에 동의하기 전까지는 수집되지 않고,
+그만큼 수치가 줄어드는 것이 정상입니다.
 
 EU/EEA 방문자가 있는 사이트라면 켜는 것을 권합니다. 켜지 않은 상태는
 ePrivacy 지침 5(3)의 사전 동의 요건을 충족하지 않습니다.
 
-배너에서 개인정보처리방침으로 링크가 걸리므로 **policies 플러그인을 켜고
-privacy 정책을 발행해 두어야 합니다.** 방침 페이지 없이 동의를 받으면
-정보제공 요건을 충족하지 못합니다.
+배너를 켤 경우 배너에서 개인정보처리방침으로 링크가 걸리므로 **policies
+플러그인을 켜고 privacy 정책을 발행해 두어야 합니다.** 방침 페이지 없이
+동의를 받으면 정보제공 요건을 충족하지 못합니다.
 
-> **검증자 주석 (브리핑 원문 아님):** 위 문구는 "켜면" 시나리오만 안내한다.
-> 이번 검증에서 확인한 바로는, **꺼진 기본 상태에서도 이미 Google Analytics가
-> 전혀 수집되지 않는다.** 위 "중대 발견 사항" 절 참조. 이 사실을 운영자에게
-> 알릴지, 아니면 코드를 설계 의도대로 고칠지는 사람이 결정해야 한다.
+> **정정 (2026-08-11, Task 11 이후):** 이 절은 최초 작성 시 "켜면" 시나리오만
+> 안내하고, 꺼진 기본 상태에서 GA가 어떻게 되는지는 말하지 않았다 — 당시
+> 구현이 실제로 GA를 완전히 정지시키고 있었기 때문이다. 그 구현이 설계
+> 문서 §5·마이그레이션 의도와 반대였음이 확인되어 코드를 고쳤고(위 "해결
+> 기록" 절), 이 문구도 고쳐진 동작(꺼진 상태 = GA 계속 로드)에 맞게
+> 다시 썼다.

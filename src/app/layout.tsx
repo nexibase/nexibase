@@ -8,6 +8,7 @@ import { getTranslations } from 'next-intl/server'
 import { getMeasurementId } from '@/components/GoogleAnalytics'
 import { ConsentProvider } from '@/components/consent/ConsentProvider'
 import { GatedAnalytics } from '@/components/consent/GatedAnalytics'
+import { UngatedAnalytics } from '@/components/consent/UngatedAnalytics'
 import { readConsentContext } from '@/lib/consent/server'
 import './globals.css'
 import './custom.css'
@@ -91,7 +92,7 @@ export default async function RootLayout({
   const baseStr = base.toString().replace(/\/$/, '')
 
   const consent = await readConsentContext()
-  const measurementId = consent.enabled ? await getMeasurementId() : null
+  const measurementId = await getMeasurementId()
   const t = await getTranslations('consent')
 
   const consentStrings = {
@@ -147,7 +148,10 @@ export default async function RootLayout({
                 <GatedAnalytics measurementId={measurementId} />
               </ConsentProvider>
             ) : (
-              children
+              <>
+                {children}
+                <UngatedAnalytics measurementId={measurementId} />
+              </>
             )}
           </ThemeProvider>
         </SessionProvider>
