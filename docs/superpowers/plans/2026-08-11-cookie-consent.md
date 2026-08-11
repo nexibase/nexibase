@@ -24,6 +24,10 @@
 - `getTranslations`는 반드시 `next-intl/server`에서 import한다. `next-intl`에서 가져오면 런타임에 throw한다.
 - 마케팅 카테고리는 타입·쿠키·DB 필드로만 존재하고 **UI에 노출하지 않는다.**
 - 실패의 기본값은 항상 "추적 안 함"이다. 어떤 오류 경로에서도 동의를 낙관적으로 켜지 않는다.
+- `tsc --noEmit`은 착수 시점에 이미 33개의 기존 오류(19개 파일, 전부 consent 무관)를
+  낸다. 타입체크 게이트는 "오류 0건"이 아니라 "consent 관련 오류 0건 + 총계 33 이하"다.
+- `src/lib/core-withdrawal-policy.ts`도 수정 대상에 포함된다. userId 스칼라를 가진 core
+  모델은 빌드 시 withdrawal 정책 선언이 강제되기 때문이다 (Task 3에서 확인됨).
 
 ---
 
@@ -590,8 +594,13 @@ Expected: `Applying migration '20260811000000_add_consent_log'` 후 성공
 
 - [ ] **Step 6: 타입체크**
 
-Run: `npx tsc --noEmit`
-Expected: 오류 없음
+Run: `npx tsc --noEmit 2>&1 | grep -E "error TS" | grep -i consent`
+Expected: 출력 없음 (consent 관련 오류 0건)
+
+**주의:** 이 저장소의 `tsc --noEmit`은 원래 깨끗하지 않다. 착수 시점 기준으로
+19개 파일에 33개의 기존 오류가 있으며 전부 consent와 무관하다. "오류 없음"을
+기대하지 말고, **consent 관련 오류가 0건인지**와 전체 개수가 33개를 넘지
+않는지로 판단한다. 기준선은 `.superpowers/sdd/tsc-baseline.txt`에 있다.
 
 - [ ] **Step 7: 커밋**
 
@@ -711,8 +720,13 @@ export async function readConsentContext(): Promise<ConsentServerContext> {
 
 - [ ] **Step 2: 타입체크**
 
-Run: `npx tsc --noEmit`
-Expected: 오류 없음
+Run: `npx tsc --noEmit 2>&1 | grep -E "error TS" | grep -i consent`
+Expected: 출력 없음 (consent 관련 오류 0건)
+
+**주의:** 이 저장소의 `tsc --noEmit`은 원래 깨끗하지 않다. 착수 시점 기준으로
+19개 파일에 33개의 기존 오류가 있으며 전부 consent와 무관하다. "오류 없음"을
+기대하지 말고, **consent 관련 오류가 0건인지**와 전체 개수가 33개를 넘지
+않는지로 판단한다. 기준선은 `.superpowers/sdd/tsc-baseline.txt`에 있다.
 
 이 파일은 `cookies()`를 쓰므로 서버 전용이다. `server-only` 패키지는 이 저장소에
 설치돼 있지 않으므로 import하지 않는다. 클라이언트 컴포넌트에서 실수로 import하면
@@ -873,8 +887,13 @@ export async function POST(request: NextRequest) {
 
 - [ ] **Step 2: 타입체크**
 
-Run: `npx tsc --noEmit`
-Expected: 오류 없음
+Run: `npx tsc --noEmit 2>&1 | grep -E "error TS" | grep -i consent`
+Expected: 출력 없음 (consent 관련 오류 0건)
+
+**주의:** 이 저장소의 `tsc --noEmit`은 원래 깨끗하지 않다. 착수 시점 기준으로
+19개 파일에 33개의 기존 오류가 있으며 전부 consent와 무관하다. "오류 없음"을
+기대하지 말고, **consent 관련 오류가 0건인지**와 전체 개수가 33개를 넘지
+않는지로 판단한다. 기준선은 `.superpowers/sdd/tsc-baseline.txt`에 있다.
 
 - [ ] **Step 3: 수동 동작 확인**
 
@@ -1448,8 +1467,13 @@ Expected: `1` 이상
 
 - [ ] **Step 3: 타입체크**
 
-Run: `npx tsc --noEmit`
-Expected: 오류 없음 (Task 7의 순환 참조가 해소된다)
+Run: `npx tsc --noEmit 2>&1 | grep -E "error TS" | grep -i consent`
+Expected: 출력 없음 (consent 관련 오류 0건)
+
+**주의:** 이 저장소의 `tsc --noEmit`은 원래 깨끗하지 않다. 착수 시점 기준으로
+19개 파일에 33개의 기존 오류가 있으며 전부 consent와 무관하다. "오류 없음"을
+기대하지 말고, **consent 관련 오류가 0건인지**와 전체 개수가 33개를 넘지
+않는지로 판단한다. 기준선은 `.superpowers/sdd/tsc-baseline.txt`에 있다. (Task 7의 순환 참조가 해소된다)
 
 - [ ] **Step 4: 커밋**
 
@@ -1703,8 +1727,13 @@ policies 플러그인이 비활성인 사이트에서는 이 링크가 404가 �
 
 - [ ] **Step 6: 타입체크와 빌드**
 
-Run: `npx tsc --noEmit`
-Expected: 오류 없음
+Run: `npx tsc --noEmit 2>&1 | grep -E "error TS" | grep -i consent`
+Expected: 출력 없음 (consent 관련 오류 0건)
+
+**주의:** 이 저장소의 `tsc --noEmit`은 원래 깨끗하지 않다. 착수 시점 기준으로
+19개 파일에 33개의 기존 오류가 있으며 전부 consent와 무관하다. "오류 없음"을
+기대하지 말고, **consent 관련 오류가 0건인지**와 전체 개수가 33개를 넘지
+않는지로 판단한다. 기준선은 `.superpowers/sdd/tsc-baseline.txt`에 있다.
 
 Run: `npm run build`
 Expected: 빌드 성공
@@ -1745,8 +1774,12 @@ EOF
 
 - [ ] **Step 1: 전체 테스트와 빌드**
 
-Run: `npm test && npx tsc --noEmit && npm run build`
+Run: `npm test && npm run build`
 Expected: 모두 통과. 실패하면 여기서 멈추고 고친다.
+
+이어서 Run: `npx tsc --noEmit 2>&1 | grep -cE "error TS"`
+Expected: `33` 이하이고, `| grep -i consent` 했을 때 출력이 없을 것.
+기존 오류 33개는 이 작업과 무관한 선재 문제다.
 
 - [ ] **Step 2: 배너 켜고 개발 서버 기동**
 
