@@ -8,6 +8,15 @@ export const CONSENT_MAX_AGE_MS = CONSENT_MAX_AGE_SECONDS * 1000
 export const DEFAULT_BANNER_VERSION = 1
 export const DEFAULT_POLICY_SLUG = 'privacy'
 
+/**
+ * `consent_enabled` 설정을 읽은 결과.
+ *
+ * `'off'`와 `'unknown'`은 반드시 구분한다. `'off'`는 게이팅 없는 GA 로드를
+ * 뜻하므로, 설정을 읽지 못한 상태를 `'off'`로 뭉개면 일시적인 DB 오류가
+ * "거부"를 누른 방문자에게까지 GA를 붙이게 된다.
+ */
+export type ConsentSettingsStatus = 'on' | 'off' | 'unknown'
+
 /** 이용자가 켜고 끌 수 있는 카테고리. necessary는 항상 켜져 있어 여기 없다. */
 export type ConsentChoices = {
   analytics: boolean

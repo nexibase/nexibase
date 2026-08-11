@@ -10,6 +10,7 @@ import { ConsentProvider } from '@/components/consent/ConsentProvider'
 import { GatedAnalytics } from '@/components/consent/GatedAnalytics'
 import { UngatedAnalytics } from '@/components/consent/UngatedAnalytics'
 import { readConsentContext } from '@/lib/consent/server'
+import { decideAnalyticsMode } from '@/lib/consent/state'
 import './globals.css'
 import './custom.css'
 
@@ -92,6 +93,9 @@ export default async function RootLayout({
   const baseStr = base.toString().replace(/\/$/, '')
 
   const consent = await readConsentContext()
+  // 'gated' = 동의 게이팅, 'ungated' = 이전과 동일한 무조건 로드,
+  // 'none' = 설정을 읽지 못했다(둘 다 렌더하지 않는다). state.ts의 순수 함수다.
+  const analyticsMode = decideAnalyticsMode(consent)
   const measurementId = await getMeasurementId()
   const t = await getTranslations('consent')
 
@@ -138,7 +142,7 @@ export default async function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <SessionProvider>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-            {consent.enabled ? (
+            {analyticsMode === 'gated' ? (
               <ConsentProvider
                 initialState={consent.state}
                 strings={consentStrings}
@@ -150,7 +154,7 @@ export default async function RootLayout({
             ) : (
               <>
                 {children}
-                <UngatedAnalytics measurementId={measurementId} />
+                {analyticsMode === 'ungated' && <UngatedAnalytics measurementId={measurementId} />}
               </>
             )}
           </ThemeProvider>

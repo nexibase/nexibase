@@ -86,7 +86,12 @@ export async function POST(request: NextRequest) {
   )
 
   const context = await readConsentContext()
-  if (!context.enabled) {
+  // 설정을 읽지 못한 상태에서는 동의를 기록하지 않는다 — bannerVersion 등
+  // 함께 기록해야 할 값들도 신뢰할 수 없다. 클라이언트는 배너를 유지한다.
+  if (context.status === 'unknown') {
+    return NextResponse.json({ error: 'consent_unavailable' }, { status: 503 })
+  }
+  if (context.status === 'off') {
     return NextResponse.json({ error: 'consent_disabled' }, { status: 404 })
   }
 

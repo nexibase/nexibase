@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { evaluateConsent, decideAction } from './state'
+import { evaluateConsent, decideAction, decideAnalyticsMode } from './state'
 import { CONSENT_MAX_AGE_MS } from './types'
 import type { ConsentState, StoredConsent } from './types'
 
@@ -99,4 +99,29 @@ test('하나는 켜고 하나는 끄면 withdraw가 이긴다', () => {
 test('미결정 상태에서의 저장은 withdraw가 아니다', () => {
   const a = decideAction(evaluateConsent(null, 1, NOW), { analytics: false, marketing: false })
   assert.equal(a, 'save_custom')
+})
+
+test('consent_enabled가 켜져 있으면 게이팅된 GA를 렌더한다', () => {
+  assert.equal(decideAnalyticsMode({ status: 'on' }), 'gated')
+})
+
+test('consent_enabled가 꺼져 있으면 업그레이드 이전과 같이 무조건 로드한다', () => {
+  assert.equal(decideAnalyticsMode({ status: 'off' }), 'ungated')
+})
+
+test('설정을 읽지 못하면 어느 분석 경로도 렌더하지 않는다', () => {
+  assert.equal(decideAnalyticsMode({ status: 'unknown' }), 'none')
+})
+
+test('설정을 읽지 못한 상태를 "꺼짐"으로 뭉개지 않는다 — 게이팅 없는 GA 금지', () => {
+  // 이 기능의 핵심 속성이다. DB 오류가 "운영자가 껐다"로 읽히면 거부한
+  // 방문자에게도 GA가 붙는다(설계 문서 §5, "실패의 기본값은 추적 안 함").
+  assert.notEqual(decideAnalyticsMode({ status: 'unknown' }), 'ungated')
+  assert.notEqual(decideAnalyticsMode({ status: 'unknown' }), decideAnalyticsMode({ status: 'off' }))
+})
+
+test('세 상태가 서로 다른 결과로 갈린다', () => {
+  const modes = (['on', 'off', 'unknown'] as const).map((status) => decideAnalyticsMode({ status }))
+  assert.deepEqual(modes, ['gated', 'ungated', 'none'])
+  assert.equal(new Set(modes).size, 3)
 })
