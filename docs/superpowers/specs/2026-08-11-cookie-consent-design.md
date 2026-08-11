@@ -133,13 +133,34 @@ i18n 키는 `src/locales/{en,ko}.json`에 넣는다. `src/messages/`는 생성�
 
 **수정 (core 3개)**
 
-- `src/app/layout.tsx` — 서버에서 `readConsent()` 호출, `ConsentProvider`로 감싸고
-  `<GoogleAnalytics/>`를 `<GatedAnalytics/>`로 교체
+- `src/app/layout.tsx` — 서버에서 `readConsentContext()`와 `getTranslations('consent')`
+  호출, `<body>`에서 `ConsentProvider`로 감싸고 `<head>`의 `<GoogleAnalytics/>`를
+  제거한 뒤 `ConsentProvider` 하위에 `<GatedAnalytics/>` 배치 (3.5 참고)
 - `src/components/GoogleAnalytics.tsx` — `getMeasurementId()` 서버 함수만 남기고
   렌더링 책임을 `GatedAnalytics`로 이관
 - `prisma/schema.base.prisma` — `ConsentLog` 추가
 
-### 3.5 철회 진입점의 위치
+### 3.5 마운트 위치와 i18n 전달
+
+`NextIntlClientProvider`는 `src/app/[locale]/layout.tsx`에 있고, 이는 루트 레이아웃의
+**자식**이다. 따라서 루트 레이아웃에 마운트하는 클라이언트 컴포넌트는 `useTranslations`를
+쓸 수 없다(런타임 오류).
+
+두 가지를 조정한다.
+
+1. **문구는 props로 내린다.** 루트 레이아웃(서버 컴포넌트)이
+   `getTranslations('consent')`로 문자열을 만들어 `ConsentProvider`에 평문 props로
+   전달한다. 클라이언트 쪽 next-intl 의존이 없어진다.
+   `getTranslations`는 반드시 `next-intl/server`에서 import한다 — `next-intl`에서
+   가져오면 컴파일은 되지만 런타임에 throw한다.
+2. **`<head>`가 아니라 `<body>`에 마운트한다.** `GatedAnalytics`를 `ConsentProvider`
+   하위에 두어야 컨텍스트를 공유한다. `next/script`의 `afterInteractive`는 `<body>`
+   에서도 동일하게 동작하므로 제약이 없다.
+
+`src/i18n/request.ts`가 URL이 아니라 DB의 `site_locale`로 로케일을 정하므로
+`getTranslations()`는 `[locale]` 세그먼트 밖에서도 정상 동작한다.
+
+### 3.6 철회 진입점의 위치
 
 `src/components/layout/Footer.tsx`는 `src/layouts/default/Footer.tsx`를 재export하는
 얇은 shim이다. 즉 푸터는 테마가 소유한다. 철회 링크를 테마 파일에 넣으면 테마를
