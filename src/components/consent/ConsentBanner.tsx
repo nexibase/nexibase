@@ -26,7 +26,13 @@ export function ConsentBanner() {
       aria-label={strings.title}
       className="fixed inset-x-0 bottom-0 z-50 p-3 sm:p-4"
     >
-      <div className="mx-auto flex max-w-5xl flex-col gap-3 rounded-xl border border-border bg-card p-4 text-card-foreground shadow-2xl sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-5">
+      {/*
+        등장 모션. 정지한 요소는 주변시가 잡아내지 못해, 카드로 띄우는 것만으로는
+        "여기 뭔가 생겼다"가 전달되지 않는다. 색·그림자가 분리를 만든다면 모션은
+        주의를 만든다.
+        motion-safe로 감싸 prefers-reduced-motion 사용자에게는 즉시 표시된다.
+      */}
+      <div className="mx-auto flex max-w-5xl flex-col gap-3 rounded-xl border border-border bg-card p-4 text-card-foreground shadow-2xl motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4 motion-safe:duration-500 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-5">
         <div className="min-w-0">
           <p className="text-[15px] font-medium">{strings.title}</p>
           <p className="mt-1 text-[15px] leading-relaxed text-muted-foreground sm:text-sm">
