@@ -86,9 +86,31 @@ export function ConsentPreferences() {
           {error && <p className="text-[13px] text-destructive">{strings.error}</p>}
         </div>
 
-        <DialogFooter className="gap-2 sm:gap-2">
+        {/*
+          배너와 동일한 1클릭 경로를 여기에도 둔다. 수락이 배너에서 1클릭이므로
+          철회도 1클릭이어야 한다 — GDPR 7(3)의 "철회는 동의만큼 쉬울 것".
+          토글을 만지고 저장하는 3단계만 제공하면 그 요건이 흔들린다.
+          거부·수락·저장은 모두 같은 variant/size를 써서 시각적 우열을 만들지 않는다.
+        */}
+        <DialogFooter className="flex-wrap gap-2 sm:gap-2">
           <Button variant="ghost" size="sm" onClick={closePreferences} disabled={submitting}>
             {strings.close}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={submitting}
+            onClick={() => submit('reject_all', { analytics: false, marketing: false })}
+          >
+            {strings.rejectAll}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={submitting}
+            onClick={() => submit('accept_all', { analytics: true, marketing: false })}
+          >
+            {strings.acceptAll}
           </Button>
           <Button variant="outline" size="sm" onClick={handleSave} disabled={submitting}>
             {strings.save}
