@@ -10,4 +10,5 @@ export default [
   { model: 'Conversation',           policy: 'retain', reason: '상대방의 대화 기록 보존; 탈퇴 사용자는 User 조인으로 "탈퇴한회원_xxxxxx" 로 표시. 다중 FK 모델(user1Id/user2Id) 이라 미리보기 카운트는 생략, Message 카운트가 활동 지표 역할.' },
   { model: 'Message',                policy: 'retain', field: 'senderId', reason: '대화 기록 보존; 발신자는 User 조인으로 익명화' },
   { model: 'WithdrawalJob',          policy: 'retain', reason: '탈퇴 감사 기록 자체이므로 보존이 맞음' },
+  { model: 'ConsentLog',             policy: 'retain', reason: '동의 이력 감사 기록(append-only); consentId(익명 UUID)가 주 식별자이고 IP/UA도 저장하지 않으므로 탈퇴 후에도 그대로 보존. userId는 관계가 없는 단순 스칼라라 익명화된 User row를 계속 가리켜도 문제없음' },
 ]
