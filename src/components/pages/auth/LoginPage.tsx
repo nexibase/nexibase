@@ -186,7 +186,7 @@ function LoginForm() {
                   {t("email")}
                 </label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="email"
                     name="email"
@@ -207,7 +207,7 @@ function LoginForm() {
                   {t("password")}
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="password"
                     name="password"
@@ -222,9 +222,13 @@ function LoginForm() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-3 h-4 w-4 text-muted-foreground hover:text-foreground"
+                    className="absolute right-3 top-1/2 flex -translate-y-1/2 text-muted-foreground hover:text-foreground"
                   >
-                    {showPassword ? <EyeOff /> : <Eye />}
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5" strokeWidth={1.75} />
+                    ) : (
+                      <Eye className="h-5 w-5" strokeWidth={1.75} />
+                    )}
                   </button>
                 </div>
               </div>
