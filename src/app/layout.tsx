@@ -3,8 +3,12 @@ import { Geist, Geist_Mono } from 'next/font/google'
 import { ThemeProvider } from '@/components/theme-provider'
 import { SessionProvider } from '@/components/providers/SessionProvider'
 import ThemeLoader from '@/components/theme-loader'
-import { GoogleAnalytics } from '@/components/GoogleAnalytics'
 import { loadSiteSettings, fallbackUrlFromHeaders, mapToOgLocale } from '@/lib/site-settings'
+import { getTranslations } from 'next-intl/server'
+import { getMeasurementId } from '@/components/GoogleAnalytics'
+import { ConsentProvider } from '@/components/consent/ConsentProvider'
+import { GatedAnalytics } from '@/components/consent/GatedAnalytics'
+import { readConsentContext } from '@/lib/consent/server'
 import './globals.css'
 import './custom.css'
 
@@ -86,6 +90,28 @@ export default async function RootLayout({
   const base = await resolveBaseUrl(s.site_url)
   const baseStr = base.toString().replace(/\/$/, '')
 
+  const consent = await readConsentContext()
+  const measurementId = consent.enabled ? await getMeasurementId() : null
+  const t = await getTranslations('consent')
+
+  const consentStrings = {
+    title: t('title'),
+    description: t('description'),
+    acceptAll: t('acceptAll'),
+    rejectAll: t('rejectAll'),
+    settings: t('settings'),
+    save: t('save'),
+    close: t('close'),
+    privacyLink: t('privacyLink'),
+    reopen: t('reopen'),
+    error: t('error'),
+    necessaryTitle: t('necessaryTitle'),
+    necessaryDescription: t('necessaryDescription'),
+    analyticsTitle: t('analyticsTitle'),
+    analyticsDescription: t('analyticsDescription'),
+    alwaysOn: t('alwaysOn'),
+  }
+
   const ld: Record<string, unknown> = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
@@ -107,12 +133,22 @@ export default async function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }}
         />
-        <GoogleAnalytics />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <SessionProvider>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-            {children}
+            {consent.enabled ? (
+              <ConsentProvider
+                initialState={consent.state}
+                strings={consentStrings}
+                privacyHref={`/policies/${encodeURIComponent(consent.policySlug)}`}
+              >
+                {children}
+                <GatedAnalytics measurementId={measurementId} />
+              </ConsentProvider>
+            ) : (
+              children
+            )}
           </ThemeProvider>
         </SessionProvider>
       </body>
