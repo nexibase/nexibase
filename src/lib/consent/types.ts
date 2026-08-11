@@ -48,4 +48,17 @@ export type ConsentState = {
   decidedAt: number | null
 }
 
+/**
+ * 클라이언트 컴포넌트에 props로 내려도 되는 상태.
+ *
+ * `consentId`를 뺀다. 클라이언트 컴포넌트의 props는 React가 flight 페이로드로
+ * 직렬화해 SSR HTML에 그대로 박아 넣으므로(`self.__next_f`), 넣는 순간 익명
+ * UUID가 페이지 소스에서 아무 스크립트에나 읽힌다 — 쿠키를 `HttpOnly`로 둔
+ * 이유가 그대로 무너진다(설계 문서 §3.1).
+ *
+ * 클라이언트는 이 값을 쓸 일이 없다. `POST /api/consent`는 재사용할 id를
+ * 요청 본문이 아니라 쿠키에서 직접 읽는다.
+ */
+export type ConsentClientState = Omit<ConsentState, 'consentId'>
+
 export type ConsentAction = 'accept_all' | 'reject_all' | 'save_custom' | 'withdraw'

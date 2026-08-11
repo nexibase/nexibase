@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import type { ConsentAction, ConsentChoices, ConsentState } from '@/lib/consent/types'
+import type { ConsentAction, ConsentChoices, ConsentClientState } from '@/lib/consent/types'
 import { ConsentBanner } from './ConsentBanner'
 import { ConsentPreferences } from './ConsentPreferences'
 
@@ -25,7 +25,7 @@ export type ConsentStrings = {
 }
 
 type ConsentContextValue = {
-  state: ConsentState
+  state: ConsentClientState
   submitting: boolean
   error: boolean
   strings: ConsentStrings
@@ -82,19 +82,27 @@ function revokeAnalyticsClientSide() {
   }
 }
 
+/**
+ * `initialState`는 `ConsentClientState`다 — `consentId`가 없다.
+ *
+ * 클라이언트 컴포넌트의 props는 SSR HTML 안의 flight 페이로드로 직렬화되므로,
+ * 여기에 `consentId`를 실으면 `HttpOnly` 쿠키에 감춰 둔 익명 UUID가 페이지
+ * 소스에서 그대로 읽힌다. 클라이언트는 이 값을 쓸 일이 없고, 서버는 쿠키에서
+ * 직접 읽는다. 다시 넣지 말 것.
+ */
 export function ConsentProvider({
   initialState,
   strings,
   privacyHref,
   children,
 }: {
-  initialState: ConsentState
+  initialState: ConsentClientState
   strings: ConsentStrings
   privacyHref: string
   children: React.ReactNode
 }) {
   const router = useRouter()
-  const [state, setState] = useState<ConsentState>(initialState)
+  const [state, setState] = useState<ConsentClientState>(initialState)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(false)
   const [preferencesOpen, setPreferencesOpen] = useState(false)
@@ -114,7 +122,6 @@ export function ConsentProvider({
         const wasAnalytics = state.analytics
         setState({
           decided: true,
-          consentId: state.consentId,
           analytics: choices.analytics,
           marketing: choices.marketing,
           decidedAt: Date.now(),
@@ -134,7 +141,7 @@ export function ConsentProvider({
         setSubmitting(false)
       }
     },
-    [router, state.analytics, state.consentId],
+    [router, state.analytics],
   )
 
   const value = useMemo<ConsentContextValue>(

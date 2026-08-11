@@ -2,6 +2,7 @@ import { CONSENT_MAX_AGE_MS } from './types'
 import type {
   ConsentAction,
   ConsentChoices,
+  ConsentClientState,
   ConsentSettingsStatus,
   ConsentState,
   StoredConsent,
@@ -70,12 +71,30 @@ export function evaluateConsent(
 }
 
 /**
+ * 서버 상태에서 클라이언트에 내려도 되는 부분만 추린다.
+ *
+ * 필드를 하나씩 명시적으로 꺼낸다. `ConsentState`에 새 필드가 생기면 여기서
+ * 타입 오류가 나므로, 모르는 사이에 클라이언트로 새어 나가지 않는다.
+ */
+export function toClientState(state: ConsentState): ConsentClientState {
+  return {
+    decided: state.decided,
+    analytics: state.analytics,
+    marketing: state.marketing,
+    decidedAt: state.decidedAt,
+  }
+}
+
+/**
  * 설정 다이얼로그 저장 시 기록할 action을 정한다.
  *
  * 켜져 있던 카테고리를 끄는 변경이 하나라도 있으면 withdraw다. 철회 이력이
  * 증빙에서 별도로 조회 가능해야 하기 때문에 save_custom과 구분한다.
  */
-export function decideAction(previous: ConsentState, next: ConsentChoices): ConsentAction {
+export function decideAction(
+  previous: Pick<ConsentState, 'analytics' | 'marketing'>,
+  next: ConsentChoices,
+): ConsentAction {
   const turnedOff =
     (previous.analytics && !next.analytics) || (previous.marketing && !next.marketing)
   return turnedOff ? 'withdraw' : 'save_custom'
