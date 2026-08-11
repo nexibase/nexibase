@@ -20,6 +20,7 @@ export const seedKo: SeedData = {
     { position: 'header', label: '로그인', url: '/login', sortOrder: 2 },
     { position: 'footer', groupName: '정책', label: '이용약관', url: '/policies/terms', sortOrder: 0 },
     { position: 'footer', groupName: '정책', label: '개인정보처리방침', url: '/policies/privacy', sortOrder: 1 },
+    { position: 'footer', groupName: '정책', label: '쿠키 정책', url: '/policies/cookie', sortOrder: 2 },
   ],
   widgets: [
     {

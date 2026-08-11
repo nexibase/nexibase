@@ -20,6 +20,7 @@ export const seedEn: SeedData = {
     { position: 'header', label: 'Login', url: '/login', sortOrder: 2 },
     { position: 'footer', groupName: 'Policies', label: 'Terms of Service', url: '/policies/terms', sortOrder: 0 },
     { position: 'footer', groupName: 'Policies', label: 'Privacy Policy', url: '/policies/privacy', sortOrder: 1 },
+    { position: 'footer', groupName: 'Policies', label: 'Cookie Policy', url: '/policies/cookie', sortOrder: 2 },
   ],
   widgets: [
     {
