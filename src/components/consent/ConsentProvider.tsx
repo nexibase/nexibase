@@ -54,7 +54,24 @@ function revokeAnalyticsClientSide() {
   // `^_ga|^_gid$` 처럼 쓰면 교차가 잘못 묶여 _gadget 같은 이름까지 지운다.
   const GA_COOKIE = /^_ga($|_)|^_gid$/
   const host = window.location.hostname
-  const domains = [host, `.${host}`, `.${host.split('.').slice(-2).join('.')}`]
+  // 등록 가능 도메인(registrable domain)을 정확히 구하려면 public suffix list가
+  // 필요하다. 대신 host 자신과, 호스트명 레이블을 앞에서부터 하나씩 줄여나간
+  // 모든 dotted 접미사(마지막 두 레이블까지)를 전부 시도한다 — 예:
+  // sub.example.co.uk → .sub.example.co.uk, .example.co.uk, .co.uk.
+  // 브라우저는 현재 호스트에 허용되지 않는 Domain 값(예: public suffix인
+  // .co.uk)은 조용히 무시하므로 과도하게 시도해도 안전하다. 반대로
+  // 등록 가능 도메인을 잘못 추측해 너무 짧게 자르면(예: 옛 코드의
+  // 마지막 두 레이블 고정 방식) 쿠키가 지워지지 않고 남는다.
+  // IP 주소나 점이 없는 호스트(localhost 등)는 Domain 지정이 의미 없으므로
+  // dotted 변형 자체를 만들지 않는다.
+  const isIpAddress = /^\d{1,3}(\.\d{1,3}){3}$/.test(host) || host.includes(':')
+  const labels = host.split('.')
+  const domains = [host]
+  if (!isIpAddress && labels.length > 1) {
+    for (let i = 0; i < labels.length - 1; i++) {
+      domains.push(`.${labels.slice(i).join('.')}`)
+    }
+  }
   for (const raw of document.cookie.split(';')) {
     const name = raw.split('=')[0]?.trim()
     if (!name || !GA_COOKIE.test(name)) continue
