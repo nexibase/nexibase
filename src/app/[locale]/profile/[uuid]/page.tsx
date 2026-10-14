@@ -1,5 +1,6 @@
 "use client"
 
+import { VerifiedAdminBadge } from "@/components/VerifiedAdminBadge"
 import { useState, useEffect } from "react"
 import { use } from "react"
 import { useTranslations } from "next-intl"
@@ -75,7 +76,7 @@ export default function ProfilePage({ params }: { params: Promise<{ uuid: string
               )}
             </div>
             <div className="text-center">
-              <h1 className="text-xl font-bold">{profile.nickname}</h1>
+              <h1 className="text-xl font-bold">{profile.nickname} <VerifiedAdminBadge userId={profile.id} /></h1>
               <span className="text-sm text-muted-foreground">Lv.{profile.level}</span>
             </div>
           </div>

@@ -1,5 +1,6 @@
 "use client"
 
+import { VerifiedAdminBadge } from "@/components/VerifiedAdminBadge"
 import { useState, useEffect, useCallback } from "react"
 import { useTranslations } from "next-intl"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
@@ -84,7 +85,7 @@ export function UserProfileModal({ userId, onClose }: UserProfileModalProps) {
                   )}
                 </div>
                 <div className="text-center">
-                  <div className="font-semibold text-lg">{profile.nickname}</div>
+                  <div className="font-semibold text-lg">{profile.nickname} <VerifiedAdminBadge userId={profile.id} /></div>
                   <div className="text-xs text-muted-foreground">Lv.{profile.level}</div>
                 </div>
               </div>

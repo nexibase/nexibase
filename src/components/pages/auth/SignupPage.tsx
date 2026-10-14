@@ -1,5 +1,6 @@
 "use client";
 
+import { nicknamePolicyError, NICKNAME_POLICY_MESSAGE } from "@/lib/nickname-policy";
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
@@ -76,7 +77,7 @@ export default function SignupPage() {
         const data = await response.json();
         if (data.isFirst) {
           setIsFirstUser(true);
-          setNickname("관리자");
+          setNickname("첫회원");
           setNicknameStatus({
             available: true,
             message: t("adminAutoSet"),
@@ -130,7 +131,7 @@ export default function SignupPage() {
       } else {
         setEmailStatus({
           available: false,
-          message: t("checkingError"),
+          message: data.message || data.error || t("checkingError"),
           checking: false
         });
       }
@@ -146,6 +147,11 @@ export default function SignupPage() {
 
   // Nickname availability check
   const checkNicknameAvailability = async (nicknameValue: string) => {
+    const policyError = nicknamePolicyError(nicknameValue);
+    if (policyError && nicknameValue) {
+      setNicknameStatus({ available: false, message: policyError, checking: false });
+      return;
+    }
     if (!nicknameValue || nicknameValue.length < 2) {
       setNicknameStatus({ available: null, message: "", checking: false });
       return;
@@ -167,13 +173,13 @@ export default function SignupPage() {
       if (response.ok) {
         setNicknameStatus({
           available: data.available,
-          message: data.available ? t("nicknameAvailable") : t("nicknameTaken"),
+          message: data.message || (data.available ? t("nicknameAvailable") : t("nicknameTaken")),
           checking: false
         });
       } else {
         setNicknameStatus({
           available: false,
-          message: t("checkingError"),
+          message: data.message || data.error || t("checkingError"),
           checking: false
         });
       }
@@ -263,6 +269,9 @@ export default function SignupPage() {
     //   return;
     // }
     
+    const policyError = nicknamePolicyError(nickname);
+    if (policyError) { alert(policyError); return; }
+
     if (!nickname) {
       alert(t("nicknameRequired"));
       return;
@@ -429,6 +438,7 @@ export default function SignupPage() {
                     </div>
                   )}
                 </div>
+                <p className="text-xs text-muted-foreground">{NICKNAME_POLICY_MESSAGE}</p>
                 {nicknameStatus.message && (
                   <p className={`text-sm ${
                     nicknameStatus.available ? 'text-green-600' : 'text-red-600'

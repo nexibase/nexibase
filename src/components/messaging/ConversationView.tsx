@@ -1,5 +1,6 @@
 "use client"
 
+import { VerifiedAdminBadge } from "@/components/VerifiedAdminBadge"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useTranslations, useLocale } from "next-intl"
@@ -241,7 +242,7 @@ export function ConversationView({ conversationUuid, self }: Props) {
               <span className="text-sm font-medium text-primary">{(meta.opponent.nickname || '?').charAt(0)}</span>
             )}
           </div>
-          <span className="font-medium truncate">{meta.opponent.nickname}</span>
+          <span className="font-medium truncate">{meta.opponent.nickname} <VerifiedAdminBadge userId={meta.opponent.id} /></span>
         </div>
         <Button variant="ghost" size="icon" onClick={toggleHide} title={meta.hiddenByMe ? tMessages('unhideAction') : tMessages('hideAction')}>
           {meta.hiddenByMe ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}

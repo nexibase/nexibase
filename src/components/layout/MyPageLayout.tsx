@@ -1,5 +1,6 @@
 "use client"
 
+import { VerifiedAdminBadge } from "@/components/VerifiedAdminBadge"
 import { useState, useEffect } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import Link from "next/link"
@@ -142,7 +143,7 @@ export function MyPageLayout({ children }: { children: React.ReactNode }) {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-lg font-bold">{user.nickname}</h1>
+              <h1 className="text-lg font-bold">{user.nickname} <VerifiedAdminBadge userId={user.id} /></h1>
               {user.role === 'admin' && <Badge className="text-xs">{ta('roleAdmin')}</Badge>}
             </div>
             <p className="text-sm text-muted-foreground">{user.email}</p>

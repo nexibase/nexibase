@@ -1,5 +1,6 @@
 "use client"
 
+import { VerifiedAdminBadge } from "@/components/VerifiedAdminBadge"
 import { useState, useEffect, useCallback } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
@@ -257,8 +258,8 @@ export default function BoardListPage() {
                     "hidden md:grid gap-x-3 items-center px-2 py-2 bg-muted/50 border-b border-border",
                     "text-[12px] font-semibold text-muted-foreground",
                     board.showPostNumber
-                      ? "md:[grid-template-columns:50px_1fr_90px_60px_50px_50px] md:[grid-template-areas:'num_title_author_date_views_likes']"
-                      : "md:[grid-template-columns:1fr_90px_60px_50px_50px] md:[grid-template-areas:'title_author_date_views_likes']",
+                      ? "md:[grid-template-columns:50px_1fr_120px_60px_50px_50px] md:[grid-template-areas:'num_title_author_date_views_likes']"
+                      : "md:[grid-template-columns:1fr_120px_60px_50px_50px] md:[grid-template-areas:'title_author_date_views_likes']",
                   ].join(" ")}
                 >
                   {board.showPostNumber && (
@@ -350,7 +351,7 @@ export default function BoardListPage() {
                           )}
                         </h3>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <span className="truncate">{post.author.nickname}</span>
+                          <span className="truncate">{post.author.nickname} <VerifiedAdminBadge userId={post.author.id} /></span>
                           <span className="flex items-center gap-0.5">
                             <Eye className="h-3 w-3" />
                             {post.viewCount}

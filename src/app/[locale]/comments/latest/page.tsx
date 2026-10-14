@@ -1,5 +1,6 @@
 "use client"
 
+import { VerifiedAdminBadge } from "@/components/VerifiedAdminBadge"
 import { useState, useEffect, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
@@ -65,6 +66,7 @@ function NewCommentsPage() {
           <MessageSquare className="h-5 w-5 text-primary" />
           <h1 className="text-lg font-bold">
             {member ? `${member.nickname}님의 작성댓글` : '최신 댓글'}
+            {uuid && member && <VerifiedAdminBadge userId={uuid} />}
           </h1>
         </div>
         {uuid && (

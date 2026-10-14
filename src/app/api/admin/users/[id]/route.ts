@@ -1,3 +1,4 @@
+import { nicknamePolicyError } from '@/lib/nickname-policy'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
@@ -110,6 +111,11 @@ export async function PUT(
         { success: false, message: '사용자를 찾을 수 없습니다.' },
         { status: 404 }
       )
+    }
+
+    if (nickname !== undefined && nickname !== existingUser.nickname) {
+      const nicknameError = nicknamePolicyError(nickname)
+      if (nicknameError) return NextResponse.json({ success: false, error: nicknameError, message: nicknameError }, { status: 400 })
     }
 
     // Guard: keep at least one admin

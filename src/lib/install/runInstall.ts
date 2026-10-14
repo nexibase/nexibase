@@ -1,3 +1,4 @@
+import { nicknamePolicyError } from '@/lib/nickname-policy'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 import { localeRegistry } from './_generated-registry'
@@ -18,6 +19,8 @@ export class InstallError extends Error {
 }
 
 export async function runInstall(params: InstallParams): Promise<void> {
+  const nicknameError = nicknamePolicyError(params.adminNickname)
+  if (nicknameError) throw new Error(nicknameError)
   const entry = localeRegistry[params.locale]
   if (!entry) {
     throw new InstallError('UNKNOWN_LOCALE', `Unknown locale: ${params.locale}`)

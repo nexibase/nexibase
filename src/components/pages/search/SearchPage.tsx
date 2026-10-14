@@ -1,5 +1,6 @@
 "use client"
 
+import { VerifiedAdminBadge } from "@/components/VerifiedAdminBadge"
 import { useState, useEffect, useCallback, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useTranslations, useLocale } from "next-intl"
@@ -429,7 +430,7 @@ function SearchContent() {
                         </div>
                         <p className="text-xs text-muted-foreground line-clamp-1" dangerouslySetInnerHTML={{ __html: highlightText(post.excerpt, data.query) }} />
                         <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
-                          <span>{post.author.nickname}</span>
+                          <span>{post.author.nickname} <VerifiedAdminBadge userId={post.author.id} /></span>
                           <span>{formatTimeAgo(post.createdAt)}</span>
                           <span className="flex items-center gap-1"><Eye className="h-3 w-3" />{post.viewCount}</span>
                         </div>
@@ -578,7 +579,7 @@ function SearchContent() {
                               </div>
                               <p className="text-sm text-muted-foreground line-clamp-2 mb-2" dangerouslySetInnerHTML={{ __html: highlightText(post.excerpt, data.query) }} />
                               <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                                <span>{post.author.nickname}</span>
+                                <span>{post.author.nickname} <VerifiedAdminBadge userId={post.author.id} /></span>
                                 <span>{formatTimeAgo(post.createdAt)}</span>
                                 <span className="flex items-center gap-1"><Eye className="h-3 w-3" />{post.viewCount}</span>
                                 <span className="flex items-center gap-1"><ThumbsUp className="h-3 w-3" />{post.likeCount}</span>

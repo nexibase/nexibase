@@ -1,3 +1,4 @@
+import { nicknamePolicyError } from '@/lib/nickname-policy'
 import { NextRequest, NextResponse } from 'next/server'
 import { runInstall, InstallError, InstallParams } from '@/lib/install/runInstall'
 import { localeRegistry } from '@/lib/install/_generated-registry'
@@ -41,6 +42,9 @@ function validateBody(body: unknown): ValidationResult {
   if (!adminNickname || adminNickname.length < 2 || adminNickname.length > 50) {
     errors.adminNickname = 'Nickname must be 2-50 characters'
   }
+
+  const nicknameError = nicknamePolicyError(adminNickname)
+  if (nicknameError) errors.adminNickname = nicknameError
 
   const siteName = typeof b.siteName === 'string' ? b.siteName.trim() : ''
   if (!siteName || siteName.length < 1 || siteName.length > 100) {

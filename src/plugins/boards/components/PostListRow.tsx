@@ -96,8 +96,8 @@ export function PostListRow({
   //                     1fr 90px 60px 50px 50px       (hide-number)
   const showNumberCol = board.showPostNumber
   const gridDesktop = showNumberCol
-    ? "md:[grid-template-columns:50px_1fr_90px_60px_50px_50px] md:[grid-template-areas:'num_title_author_date_views_likes']"
-    : "md:[grid-template-columns:1fr_90px_60px_50px_50px] md:[grid-template-areas:'title_author_date_views_likes']"
+    ? "md:[grid-template-columns:50px_1fr_120px_60px_50px_50px] md:[grid-template-areas:'num_title_author_date_views_likes']"
+    : "md:[grid-template-columns:1fr_120px_60px_50px_50px] md:[grid-template-areas:'title_author_date_views_likes']"
 
   return (
     <Link

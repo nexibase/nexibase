@@ -1,3 +1,4 @@
+import { nicknamePolicyError, hasReservedNickname } from '@/lib/nickname-policy'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
@@ -19,6 +20,9 @@ export async function GET(request: NextRequest) {
     const role = searchParams.get('role') || ''
 
     const skip = (page - 1) * limit
+    const nicknamePolicy = searchParams.get('nicknamePolicy')
+    const nicknameCandidates = await prisma.user.findMany({ where: { deletedAt: null }, select: { id: true, nickname: true } })
+    const reservedIds = nicknameCandidates.filter(user => hasReservedNickname(user.nickname)).map(user => user.id)
 
     // Search conditions
     const where: Record<string, unknown> = {}
@@ -48,6 +52,8 @@ export async function GET(request: NextRequest) {
     if (role) {
       where.role = role
     }
+
+    if (nicknamePolicy === 'reserved') where.id = { in: reservedIds }
 
     // Fetch user list
     const [users, total] = await Promise.all([
@@ -81,9 +87,11 @@ export async function GET(request: NextRequest) {
       success: true,
       users: users.map(user => ({
         ...user,
+        reservedNickname: hasReservedNickname(user.nickname),
         password: undefined, // 비밀번호 제외
         providers: user.accounts.map(acc => acc.provider)
       })),
+      nicknamePolicy: { reservedCount: reservedIds.length },
       pagination: {
         page,
         limit,
@@ -118,6 +126,9 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const { email, nickname, password, role, status, adminNote } = body
+    const nicknameError = nicknamePolicyError(nickname)
+    if (nicknameError) return NextResponse.json({ error: nicknameError, message: nicknameError, available: false }, { status: 400 })
+
 
     // Email uniqueness check (against non-deleted users)
     const existingUser = await prisma.user.findFirst({

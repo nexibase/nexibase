@@ -1,5 +1,6 @@
 "use client"
 
+import { VerifiedAdminBadge } from "@/components/VerifiedAdminBadge"
 import { useState, useEffect, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { useTranslations, useLocale } from "next-intl"
@@ -66,6 +67,7 @@ function NewPostsPage() {
           <FileText className="h-5 w-5 text-primary" />
           <h1 className="text-lg font-bold">
             {member ? t('userPostsTitle', { nickname: member.nickname }) : t('newPosts')}
+            {uuid && member && <VerifiedAdminBadge userId={uuid} />}
           </h1>
         </div>
         {uuid && (

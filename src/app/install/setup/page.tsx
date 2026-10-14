@@ -1,5 +1,6 @@
 "use client"
 
+import { nicknamePolicyError, NICKNAME_POLICY_MESSAGE } from "@/lib/nickname-policy"
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { localeRegistry } from '@/lib/install/_generated-registry'
@@ -70,6 +71,8 @@ function SetupForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    const nicknameError = nicknamePolicyError(form.adminNickname)
+    if (nicknameError) { setErrors({ adminNickname: nicknameError }); return }
     setSubmitting(true)
     setErrors({})
 
@@ -168,6 +171,7 @@ function SetupForm() {
             onChange={e => handleChange('adminNickname', e.target.value)}
             className="w-full px-3 py-2 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800"
           />
+          <p className="mt-1 text-xs text-slate-500">{NICKNAME_POLICY_MESSAGE}</p>
           {errors.adminNickname && <p className="mt-1 text-xs text-red-600">{errors.adminNickname}</p>}
         </div>
 

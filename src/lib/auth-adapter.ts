@@ -1,22 +1,23 @@
+import { nicknamePolicyError, safeSocialNickname } from '@/lib/nickname-policy'
 import { Adapter, AdapterUser, AdapterAccount } from "next-auth/adapters"
 import { prisma } from "./prisma"
 
 // Custom Prisma adapter that uses Int user IDs
-export function CustomPrismaAdapter(): Adapter {
+export function CustomPrismaAdapter(client: Pick<typeof prisma, 'user' | 'account'> = prisma): Adapter {
   return {
     // Create user (new user from social login)
     async createUser(user: Omit<AdapterUser, "id">): Promise<AdapterUser> {
-      const nickname = user.name || `user_${Date.now()}`
+      const nickname = safeSocialNickname(user.name, `회원${Date.now()}`)
 
       // Ensure nickname uniqueness
       let finalNickname = nickname
       let counter = 1
-      while (await prisma.user.findFirst({ where: { nickname: finalNickname } })) {
+      while (await client.user.findFirst({ where: { nickname: finalNickname } })) {
         finalNickname = `${nickname}_${counter}`
         counter++
       }
 
-      const created = await prisma.user.create({
+      const created = await client.user.create({
         data: {
           email: user.email,
           nickname: finalNickname,
@@ -37,7 +38,7 @@ export function CustomPrismaAdapter(): Adapter {
 
     // Lookup user by ID
     async getUser(id: string): Promise<AdapterUser | null> {
-      const user = await prisma.user.findUnique({
+      const user = await client.user.findUnique({
         where: { id: parseInt(id) },
       })
 
@@ -54,7 +55,7 @@ export function CustomPrismaAdapter(): Adapter {
 
     // Lookup user by email
     async getUserByEmail(email: string): Promise<AdapterUser | null> {
-      const user = await prisma.user.findUnique({
+      const user = await client.user.findUnique({
         where: { email },
       })
 
@@ -71,7 +72,7 @@ export function CustomPrismaAdapter(): Adapter {
 
     // Lookup user by Account
     async getUserByAccount({ providerAccountId, provider }: Pick<AdapterAccount, "provider" | "providerAccountId">): Promise<AdapterUser | null> {
-      const account = await prisma.account.findUnique({
+      const account = await client.account.findUnique({
         where: {
           provider_providerAccountId: {
             provider,
@@ -95,10 +96,11 @@ export function CustomPrismaAdapter(): Adapter {
 
     // Update user
     async updateUser(user: Partial<AdapterUser> & Pick<AdapterUser, "id">): Promise<AdapterUser> {
-      const updated = await prisma.user.update({
+      const updated = await client.user.update({
         where: { id: parseInt(user.id) },
         data: {
-          nickname: user.name ?? undefined,
+          // Preserve an existing nickname when an OAuth provider supplies a reserved name.
+          nickname: user.name && !nicknamePolicyError(user.name) ? user.name : undefined,
           email: user.email ?? undefined,
           image: user.image ?? undefined,
           emailVerified: user.emailVerified ?? undefined,
@@ -116,14 +118,14 @@ export function CustomPrismaAdapter(): Adapter {
 
     // Delete user
     async deleteUser(userId: string): Promise<void> {
-      await prisma.user.delete({
+      await client.user.delete({
         where: { id: parseInt(userId) },
       })
     },
 
     // Link an Account (social login integration)
     async linkAccount(account: AdapterAccount): Promise<void> {
-      await prisma.account.create({
+      await client.account.create({
         data: {
           userId: parseInt(account.userId),
           type: account.type,
@@ -142,7 +144,7 @@ export function CustomPrismaAdapter(): Adapter {
 
     // Unlink Account
     async unlinkAccount({ providerAccountId, provider }: Pick<AdapterAccount, "provider" | "providerAccountId">): Promise<void> {
-      await prisma.account.delete({
+      await client.account.delete({
         where: {
           provider_providerAccountId: {
             provider,

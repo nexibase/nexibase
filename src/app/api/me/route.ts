@@ -1,3 +1,4 @@
+import { nicknamePolicyError } from '@/lib/nickname-policy'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
@@ -99,7 +100,9 @@ export async function PUT(request: NextRequest) {
     }
 
     // Update nickname
-    if (nickname !== undefined) {
+    if (nickname !== undefined && nickname !== user.nickname) {
+      const nicknameError = nicknamePolicyError(nickname)
+      if (nicknameError) return NextResponse.json({ error: nicknameError }, { status: 400 })
       if (nickname.trim().length < 2) {
         return NextResponse.json(
           { error: '닉네임은 2자 이상 입력해주세요.' },

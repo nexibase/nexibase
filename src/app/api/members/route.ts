@@ -1,3 +1,4 @@
+import { nicknamePolicyError } from '@/lib/nickname-policy'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
@@ -6,7 +7,11 @@ import bcrypt from 'bcryptjs'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { email, password, nickname } = body
+    const { email, password } = body
+    const nickname = typeof body.nickname === 'string' ? body.nickname.trim() : body.nickname
+    const nicknameError = nicknamePolicyError(nickname)
+    if (nicknameError) return NextResponse.json({ error: nicknameError, message: nicknameError, available: false }, { status: 400 })
+
 
     // Validate required fields
     if (!email || !password || !nickname) {

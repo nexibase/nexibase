@@ -1,10 +1,14 @@
+import { nicknamePolicyError } from '@/lib/nickname-policy'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { nickname } = body
+    const nickname = typeof body.nickname === 'string' ? body.nickname.trim() : body.nickname
+    const nicknameError = nicknamePolicyError(nickname)
+    if (nicknameError) return NextResponse.json({ error: nicknameError, message: nicknameError, available: false }, { status: 400 })
+
 
     if (!nickname) {
       return NextResponse.json(

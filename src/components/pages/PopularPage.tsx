@@ -1,5 +1,6 @@
 "use client"
 
+import { VerifiedAdminBadge } from "@/components/VerifiedAdminBadge"
 import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useTranslations, useLocale } from "next-intl"
@@ -18,6 +19,7 @@ interface Post {
   likeCount: number
   commentCount: number
   author: {
+    id: number
     nickname: string | null
   }
   board: {
@@ -184,7 +186,7 @@ export default function PopularPage() {
                         {getContentPreview(post.content)}
                       </p>
                       <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                        <span>{post.author.nickname || tc('anonymous')}</span>
+                        <span>{post.author.nickname || tc('anonymous')} <VerifiedAdminBadge userId={post.author.id} /></span>
                         <span className="flex items-center gap-1">
                           <ThumbsUp className="h-3 w-3" />
                           {post.likeCount}

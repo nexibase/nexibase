@@ -1,5 +1,6 @@
 "use client"
 
+import { nicknamePolicyError, NICKNAME_POLICY_MESSAGE } from "@/lib/nickname-policy"
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
@@ -51,6 +52,10 @@ export default function EditProfilePage() {
   }, [router])
 
   const handleSave = async () => {
+    if (nickname !== user?.nickname) {
+      const error = nicknamePolicyError(nickname)
+      if (error) { setMessage(error); return }
+    }
     setSaving(true)
     try {
       const res = await fetch('/api/me', {
@@ -185,6 +190,7 @@ export default function EditProfilePage() {
             <div>
               <Label>{t('nickname')}</Label>
               <Input value={nickname} onChange={e => setNickname(e.target.value)} />
+              <p className="mt-1 text-xs text-muted-foreground">{NICKNAME_POLICY_MESSAGE}</p>
             </div>
             <div>
               <Label>{t('name')}</Label>

@@ -1,5 +1,7 @@
 "use client"
 
+import { nicknamePolicyError, hasReservedNickname, NICKNAME_POLICY_MESSAGE } from "@/lib/nickname-policy"
+import { VerifiedAdminBadge } from "@/components/VerifiedAdminBadge"
 import { useState, useEffect, useCallback, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
@@ -130,6 +132,10 @@ function UserModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!user || formData.nickname !== user.nickname) {
+      const error = nicknamePolicyError(formData.nickname)
+      if (error) { alert(error); return }
+    }
     setLoading(true)
     await onSave(formData)
     setLoading(false)
@@ -186,6 +192,7 @@ function UserModal({
                   required
                 />
                 <p className="text-xs text-muted-foreground">{t('nicknameDesc')}</p>
+                <p className="text-xs text-muted-foreground">{NICKNAME_POLICY_MESSAGE}</p>
               </div>
 
               <div className="space-y-2">
@@ -326,6 +333,8 @@ function UsersPageContent() {
   const editUserId = searchParams.get('edit')
 
   const [users, setUsers] = useState<User[]>([])
+  const [reservedCount, setReservedCount] = useState(0)
+  const [reservedOnly, setReservedOnly] = useState(searchParams.get('nicknamePolicy') === 'reserved')
   const [stats, setStats] = useState<UserStats>({
     totalUsers: 0,
     activeUsers: 0,
@@ -391,6 +400,7 @@ function UsersPageContent() {
         search,
         status: statusFilter,
         role: roleFilter,
+        nicknamePolicy: reservedOnly ? 'reserved' : '',
       })
 
       const response = await fetch(`/api/admin/users?${params}`)
@@ -398,6 +408,7 @@ function UsersPageContent() {
 
       if (data.success) {
         setUsers(data.users)
+        setReservedCount(data.nicknamePolicy?.reservedCount || 0)
         setStats(data.stats)
         setTotalPages(data.pagination.totalPages)
       }
@@ -406,7 +417,7 @@ function UsersPageContent() {
     } finally {
       setLoading(false)
     }
-  }, [currentPage, search, statusFilter, roleFilter])
+  }, [currentPage, search, statusFilter, roleFilter, reservedOnly])
 
   useEffect(() => {
     fetchUsers()
@@ -536,6 +547,12 @@ function UsersPageContent() {
         <Sidebar activeMenu="users" />
 
         <main className="flex-1 p-6">
+          <div className="mb-4 rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-sm">
+            <p>닉네임 정책 확인 대상: {reservedCount}명. 기존 닉네임은 유지되며, 변경 시 새 규칙이 적용됩니다.</p>
+            <Button variant="outline" size="sm" className="mt-2" onClick={() => { setReservedOnly(!reservedOnly); setCurrentPage(1) }}>
+              {reservedOnly ? "전체 회원 보기" : "확인 대상만 보기"}
+            </Button>
+          </div>
           {/* Header */}
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
             <div>
@@ -699,7 +716,8 @@ function UsersPageContent() {
                               </Avatar>
                               <div className="flex flex-col">
                                 <span className="font-medium">
-                                  {user.nickname || '-'}
+                                  {user.nickname || '-'} <VerifiedAdminBadge userId={user.id} />
+                                  {hasReservedNickname(user.nickname) && <span className="ml-1 text-xs text-amber-700 dark:text-amber-300">닉네임 확인 필요</span>}
                                 </span>
                                 <span className="text-sm text-muted-foreground">
                                   {user.email}

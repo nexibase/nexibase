@@ -1,5 +1,6 @@
 "use client"
 
+import { VerifiedAdminBadge } from "@/components/VerifiedAdminBadge"
 import { useCallback, useEffect, useState } from "react"
 import Link from "next/link"
 import { useTranslations, useLocale } from "next-intl"
@@ -94,7 +95,7 @@ export function ConversationList() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-medium truncate">{c.opponent.nickname}</p>
+                    <p className="text-sm font-medium truncate">{c.opponent.nickname} <VerifiedAdminBadge userId={c.opponent.id} /></p>
                     {c.lastMessageAt && (
                       <span
                         className="text-xs text-muted-foreground shrink-0"

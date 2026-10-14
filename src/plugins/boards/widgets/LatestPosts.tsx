@@ -1,5 +1,6 @@
 "use client"
 
+import { VerifiedAdminBadge } from "@/components/VerifiedAdminBadge"
 import { useState, useEffect } from "react"
 import { useTranslations, useLocale } from 'next-intl'
 import { Card, CardContent } from "@/components/ui/card"
@@ -14,7 +15,7 @@ interface LatestPost {
   createdAt: string
   viewCount: number
   commentCount?: number
-  author: { nickname: string | null; name: string | null }
+  author: { id: number; nickname: string | null; name: string | null }
   board: { slug: string; name: string }
 }
 
@@ -118,7 +119,7 @@ export default function LatestPosts({ settings }: { settings?: Record<string, an
                       </span>
                     </div>
                     <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                      <span>{post.author.nickname}</span>
+                      <span>{post.author.nickname} <VerifiedAdminBadge userId={post.author.id} /></span>
                       <span className="flex items-center gap-1">
                         <Eye className="h-3 w-3" />
                         {post.viewCount}

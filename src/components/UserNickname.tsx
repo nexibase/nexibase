@@ -1,5 +1,6 @@
 "use client"
 
+import { VerifiedAdminBadge } from "@/components/VerifiedAdminBadge"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
@@ -82,7 +83,7 @@ export function UserNickname({
         <button
           type="button"
           data-user-nickname
-          className={`inline-flex items-center gap-1.5 hover:text-primary transition-colors ${className}`}
+          className={`inline-flex min-w-0 max-w-full items-center gap-1.5 hover:text-primary transition-colors ${className}`}
         >
           {showAvatar && (
             <span className={`${sizeClass} rounded-full bg-primary/10 flex items-center justify-center overflow-hidden shrink-0`}>
@@ -95,7 +96,8 @@ export function UserNickname({
               )}
             </span>
           )}
-          <span className={`${textClass} truncate`}>{nickname || tc('anonymous')}</span>
+          <span className={`${textClass} min-w-0 truncate`}>{nickname || tc('anonymous')}</span>
+          <VerifiedAdminBadge userId={userId} />
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-40 p-1" align="start" onClick={(e) => e.stopPropagation()}>
