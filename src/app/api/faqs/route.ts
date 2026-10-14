@@ -36,13 +36,16 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const type = searchParams.get('type')
-    if (type === 'feedback') {
+    if (type === 'feedback' || type === 'activity') {
       const voter = await getFeedbackVoter(request)
       const votes = await prisma.faqFeedback.findMany({
         where: { voterKey: voter.voterKey, faq: { published: true } },
         select: { faqId: true, helpful: true },
       })
-      return withVoterCookie(NextResponse.json({ votes, guest: voter.userId === undefined }), voter, request)
+      const views = type === 'activity' ? await prisma.faqView.findMany({
+        where: { viewerKey: voter.voterKey, faq: { published: true } }, select: { faqId: true },
+      }) : []
+      return withVoterCookie(NextResponse.json({ votes, viewedIds: views.map(view => view.faqId), guest: voter.userId === undefined }), voter, request)
     }
     if (type !== 'random') {
       return NextResponse.json({ error: 'Invalid type' }, { status: 400 })
@@ -68,22 +71,25 @@ export async function PATCH(request: NextRequest) {
     }
 
     if (body.type === 'view') {
-      // Session cookies also protect legacy clients that track every toggle.
-      const cookieName = `nexibase-faq-viewed-${id}`
-      if (request.cookies.get(cookieName)?.value === '1') {
-        return NextResponse.json({ views: faq.views })
+      const viewer = await getFeedbackVoter(request)
+      if (viewer.cookie) {
+        return withVoterCookie(NextResponse.json({ error: 'visitor_required' }, { status: 400 }), viewer, request)
       }
-      const updated = await prisma.faq.update({
-        where: { id },
-        data: { views: { increment: 1 } },
-        select: { views: true },
-      })
-      const response = NextResponse.json(updated)
-      response.cookies.set(cookieName, '1', {
-        httpOnly: true, sameSite: 'lax', path: '/',
-        secure: request.nextUrl.protocol === 'https:',
-      })
-      return response
+      try {
+        const counts = await prisma.$transaction(async tx => {
+          // Serialize first inserts before taking FK locks and updating totals.
+          await tx.$queryRaw`SELECT id FROM faqs WHERE id = ${id} FOR UPDATE`
+          await tx.faqView.create({ data: { faqId: id, viewerKey: viewer.voterKey, userId: viewer.userId } })
+          return tx.faq.update({ where: { id }, data: { views: { increment: 1 } }, select: { views: true } })
+        })
+        return withVoterCookie(NextResponse.json({ ...counts, alreadyViewed: false }), viewer, request)
+      } catch (error) {
+        if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') throw error
+        const view = await prisma.faqView.findUnique({ where: { faqId_viewerKey: { faqId: id, viewerKey: viewer.voterKey } } })
+        const counts = await prisma.faq.findUnique({ where: { id }, select: { views: true } })
+        if (!view || !counts) throw error
+        return withVoterCookie(NextResponse.json({ ...counts, alreadyViewed: true }), viewer, request)
+      }
     }
 
     if (body.type === 'feedback') {

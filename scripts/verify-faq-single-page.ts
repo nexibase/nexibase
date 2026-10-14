@@ -22,17 +22,14 @@ async function main() {
   const admin = await prisma.user.findFirst({ where: { role:'admin', status:'active', deletedAt:null } })
   assert.ok(admin)
   const token = await encode({ secret:process.env.NEXTAUTH_SECRET!, token:{ id:String(admin.id),sub:String(admin.id),email:admin.email },maxAge:600 })
-  const viewCookies = new Map<number, string>()
+  let visitorCookie = ''
   let requests = 0
   async function request(path:string, expected=200, method='GET', body?:unknown, redirect:RequestRedirect='follow') {
     requests++
-    const response = await fetch(base+path,{ method,redirect,headers:{ 'Content-Type':'application/json',...(method === 'PATCH' && (body as {type?: string})?.type === 'view' ? {Cookie: [...viewCookies.values()].join('; ')} : {}),...(path.startsWith('/api/admin/')?{Cookie:`next-auth.session-token=${token}; __Secure-next-auth.session-token=${token}`}:{}) },...(body===undefined?{}:{body:JSON.stringify(body)}) })
+    const response = await fetch(base+path,{ method,redirect,headers:{ 'Content-Type':'application/json',...(method === 'PATCH' && (body as {type?: string})?.type === 'view' ? {Cookie: visitorCookie} : {}),...(path.startsWith('/api/admin/')?{Cookie:`next-auth.session-token=${token}; __Secure-next-auth.session-token=${token}`}:{}) },...(body===undefined?{}:{body:JSON.stringify(body)}) })
     assert.equal(response.status,expected,`${method} ${path}: ${response.status}`)
     const setCookie = response.headers.get('set-cookie')
-    if (setCookie?.startsWith('nexibase-faq-viewed-')) {
-      const entry = setCookie.split(';')[0]
-      viewCookies.set(Number(entry.split('=')[0].replace('nexibase-faq-viewed-', '')), entry)
-    }
+    if (setCookie?.startsWith('nexibase-faq-voter=')) visitorCookie = setCookie.split(';')[0]
     const text = await response.text()
     return {response,text,data:response.headers.get('content-type')?.includes('application/json')&&text?JSON.parse(text):null}
   }
@@ -56,18 +53,7 @@ async function main() {
     assert.ok(menus.some((menu:{url:string;label:string})=>menu.url==='/faqs'&&menu.label==='FAQ'))
   }
   const faqs = await prisma.faq.findMany({where:{published:true}})
-  for(const faq of faqs) {
-    // Existing questions must not be changed by a deployment check.
-    viewCookies.set(faq.id, `nexibase-faq-viewed-${faq.id}=1`)
-    for(const path of ['/api/faqs','/api/faq','/api/faq-accordion']) {
-      for(let repeat=0;repeat<3;repeat++) {
-        assert.equal((await request(path,200,'PATCH',{type:'view',id:faq.id})).data.views,faq.views)
-      }
-    }
-    const current = await prisma.faq.findUnique({where:{id:faq.id}})
-    assert.equal(current?.views,faq.views)
-    assert.equal(current?.updatedAt.toISOString(),faq.updatedAt.toISOString())
-  }
+  // The dedicated ledger verifier checks repeats on temporary questions.
   if(crud) {
     const slug = `single-faq-check-${Date.now()}`
     let categoryId:number|undefined,faqId:number|undefined
@@ -75,6 +61,8 @@ async function main() {
       categoryId = (await request('/api/admin/faqs',201,'POST',{type:'category',name:slug,slug})).data.id
       faqId = (await request('/api/admin/faqs',201,'POST',{type:'faq',question:slug,answer:'<p>Temporary FAQ verification</p>',categoryId,published:true})).data.id
       assert.ok((await request('/faqs')).text.includes(slug))
+      const identity = await request('/api/faqs?type=activity')
+      assert.equal(identity.data.guest, true)
       for(let repeat=0;repeat<10;repeat++) {
         assert.equal((await request('/api/faqs',200,'PATCH',{type:'view',id:faqId})).data.views,1)
       }
@@ -91,6 +79,6 @@ async function main() {
     }
   }
   assert.deepEqual(await fingerprint(),before,'Verification changed existing database rows')
-  console.log(JSON.stringify({base,requestsPassed:requests,singlePageVerified:true,repeatedViewsDoNotAccumulate:true,publicMenuVerified:requireMenu,existingDataUnchanged:true,viewCounts:faqs.map(faq=>({id:faq.id,views:faq.views}))}))
+  console.log(JSON.stringify({base,requestsPassed:requests,singlePageVerified:true,repeatedViewsDoNotAccumulate:crud,publicMenuVerified:requireMenu,existingDataUnchanged:true,viewCounts:faqs.map(faq=>({id:faq.id,views:faq.views}))}))
 }
 main().catch(error=>{console.error(error.message);process.exitCode=1}).finally(()=>prisma.$disconnect())

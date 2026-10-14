@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Search, Eye, ThumbsUp, ThumbsDown } from 'lucide-react'
 import { Accordion, AccordionItem } from './Accordion'
+import { loadFaqActivityStatus } from '@/features/faqs/lib/activity-status'
 import { trackFaqView } from '@/features/faqs/lib/view-tracking'
 import { sanitizeHtml, stripHtml } from '@/features/faqs/lib/sanitize'
 
@@ -49,9 +50,7 @@ export function FaqAccordion({ categories, faqs, topFaqs }: Props) {
     let cancelled = false
     async function loadFeedback() {
       try {
-        const response = await fetch('/api/faqs?type=feedback', { cache: 'no-store' })
-        if (!response.ok) return
-        const data: { votes: { faqId: number; helpful: boolean }[]; guest: boolean } = await response.json()
+        const data = await loadFaqActivityStatus()
         const ids = new Set(data.votes.map(vote => vote.faqId))
         // Keep receipts for legacy anonymous evaluations whose identity was
         // never stored in the database. Logged-in accounts use server records.

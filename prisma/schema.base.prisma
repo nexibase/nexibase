@@ -29,6 +29,7 @@ model User {
   provider      String?         @db.VarChar(50)
   providerId    String?         @db.VarChar(255)
   faqFeedback   FaqFeedback[]
+  faqViews      FaqView[]
   posts         Post[]
   comments      Comment[]
   reactions     Reaction[]
@@ -472,6 +473,7 @@ model Faq {
   updatedAt   DateTime @updatedAt
 
   feedback    FaqFeedback[]
+  viewRecords FaqView[]
   category    FaqCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   @@index([categoryId])
@@ -496,4 +498,21 @@ model FaqFeedback {
   @@unique([faqId, voterKey])
   @@index([userId])
   @@map("faq_feedback")
+}
+
+
+// One recorded view per question and authenticated user or signed visitor.
+model FaqView {
+  id        Int      @id @default(autoincrement())
+  faqId     Int
+  viewerKey String   @db.VarChar(64)
+  userId    Int?
+  createdAt DateTime @default(now())
+
+  faq       Faq      @relation(fields: [faqId], references: [id], onDelete: Cascade)
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([faqId, viewerKey])
+  @@index([userId])
+  @@map("faq_views")
 }

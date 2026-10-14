@@ -78,6 +78,7 @@ async function main() {
       const random = (await request('/api/faqs?type=random&limit=10')).data.faqs
       assert.ok(Array.isArray(random))
       assert.ok(!random.some((item: { id: number }) => item.id === draft.id))
+      await request('/api/faqs?type=activity', 200, 'GET', undefined, false)
       assert.equal((await request('/api/faq-accordion', 200, 'PATCH', { type: 'view', id: faq.id }, false)).data.views, 1)
       await request('/api/faqs?type=feedback', 200, 'GET', undefined, false)
       assert.equal((await request('/api/faqs', 200, 'PATCH', { type: 'feedback', id: faq.id, helpful: true }, false)).data.helpful, 1)

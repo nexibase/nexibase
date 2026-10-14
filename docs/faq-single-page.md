@@ -4,7 +4,7 @@ The public FAQ is served at `/faqs`. Categories filter locally inside that page 
 
 The visible admin name and heading are `FAQ`. The admin heading area contains a public `/faqs` link labeled `FAQ`. A header menu entry labeled `FAQ` is created or reused on the authorized development site; existing unrelated menu entries are preserved. Categories remain editable, but no category-specific public link or URL slug input is exposed.
 
-Opening a question adds one view per question in a browser session. Repeated toggles, category changes, reloads and opening the same question in the widget do not add more views in that session. Shared client tracking uses sessionStorage and an in-flight request guard; the API uses an HTTP-only session cookie for each question, including legacy API aliases. A new browser session can count a new view. Existing counts are preserved, and the displayed count updates after the first open. Feedback continues to work as before.
+Opening a question adds one view per signed-in account or signed guest-browser identity, recorded in the `faq_views` database ledger. Its unique `(faqId, viewerKey)` constraint and a transaction protect repeated opens, reloads, new tabs, page/widget opens and simultaneous requests. Old per-question session cookies and sessionStorage receipts no longer decide whether a view counts. The page and widget share guest initialization with feedback; old API aliases enforce the same database rule. Existing totals are preserved; historical views without identity records cannot be attributed retroactively. Guest identity uses the same signed one-year cookie as feedback. Clearing that cookie or switching browsers creates a different anonymous identity.
 
 ## Validation
 
@@ -28,3 +28,8 @@ FAQ를 `/faqs` 한 페이지로 통합하고 분류는 페이지 안에서만 �
 Feedback totals and individual evaluations are stored in MySQL. The additive `faq_feedback` table has a unique `(faqId, voterKey)` constraint. Creating an evaluation and incrementing its chosen total occur in one transaction; simultaneous requests, opposite choices and legacy API aliases cannot increment again. Existing totals are preserved; earlier evaluations did not store voter identities and cannot be retroactively attributed.
 
 Signed-in users are identified by their account, independent of cookies or browser. Guests use a server-signed, HTTP-only browser ID cookie lasting one year. The cookie identifies the browser; the evaluation remains in the database. Clearing that cookie or using a different browser creates a different anonymous identity. `GET /api/faqs?type=feedback` reloads the evaluation state on refresh. Existing localStorage receipts are retained only for anonymous legacy evaluations.
+
+
+## Durable view validation
+
+`scripts/verify-faq-view-ledger.ts` creates temporary questions, preserves an existing baseline count, verifies same-account requests without browser cookies, signed-guest reloads, legacy aliases and concurrent first views, then removes its test records. Existing FAQ data and ledgers are checked before and after. View rows follow the existing anonymized-user retention policy.

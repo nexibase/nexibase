@@ -1,34 +1,32 @@
-// Shared by the public FAQ page and widget for the current browser session.
-const viewed = new Set<number>()
+import { ensureFaqVisitor } from './activity-status'
+
+// The database is authoritative; browser memory only joins in-flight requests.
+// Every open checks the current account/cookie, including after account changes.
 const pending = new Map<number, Promise<number | undefined>>()
 
 export function trackFaqView(id: number): Promise<number | undefined> {
   if (pending.has(id)) return pending.get(id)!
-  const key = `faq-viewed:${id}`
-  if (viewed.has(id)) return Promise.resolve(undefined)
-  try {
-    if (sessionStorage.getItem(key) === '1') return Promise.resolve(undefined)
-  } catch {}
-
-  const request = (async () => {
+  const request = Promise.resolve().then(async () => {
     try {
-      const response = await fetch('/api/faqs', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+      await ensureFaqVisitor()
+      const send = () => fetch('/api/faqs', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type: 'view', id }),
       })
+      let response = await send()
+      if (response.status === 400) {
+        const error = await response.json()
+        if (error.error !== 'visitor_required') return undefined
+        await ensureFaqVisitor(true)
+        response = await send()
+      }
       if (!response.ok) return undefined
       const data: { views?: number } = await response.json()
-      if (!Number.isInteger(data.views) || data.views! < 0) return undefined
-      viewed.add(id)
-      try { sessionStorage.setItem(key, '1') } catch {}
-      return data.views
+      return Number.isInteger(data.views) && data.views! >= 0 ? data.views : undefined
     } catch {
       return undefined
-    } finally {
-      pending.delete(id)
     }
-  })()
+  }).finally(() => { pending.delete(id) })
   pending.set(id, request)
   return request
 }
