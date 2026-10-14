@@ -94,20 +94,25 @@ function getIcon(iconName: string): LucideIcon {
   return iconMap[iconName] || FileText
 }
 
-// Core menu items that are always shown (labels are translation keys)
-const coreMenuItems = [
+// Frequent operational tasks come before configuration tasks.
+const operationMenuItems = [
   { id: "dashboard", labelKey: "dashboard", icon: LayoutDashboard, path: "/admin" },
+  { id: "users", labelKey: "users", icon: Users, path: "/admin/users" },
   { id: "boards", labelKey: "boards", icon: MessageSquare, path: "/admin/boards" },
   { id: "contents", labelKey: "contents", icon: FileText, path: "/admin/contents" },
   { id: "faqs", labelKey: "faqs", icon: MessageCircleQuestion, path: "/admin/faqs" },
-  { id: "policies", labelKey: "policies", icon: ScrollText, path: "/admin/policies" },
-  { id: "users", labelKey: "users", icon: Users, path: "/admin/users" },
-  { id: "settings", labelKey: "settings", icon: Settings, path: "/admin/settings" },
-  { id: "plugins", labelKey: "plugins", icon: Puzzle, path: "/admin/plugins" },
-  { id: "menus", labelKey: "menus", icon: MenuIcon, path: "/admin/menus" },
   { id: "pages", labelKey: "pages", icon: LayoutGrid, path: "/admin/pages" },
   { id: "login-logs", labelKey: "loginLogs", icon: ClipboardList, path: "/admin/login-logs" },
 ] as const
+
+const configurationMenuItems = [
+  { id: "menus", labelKey: "menus", icon: MenuIcon, path: "/admin/menus" },
+  { id: "policies", labelKey: "policies", icon: ScrollText, path: "/admin/policies" },
+  { id: "plugins", labelKey: "plugins", icon: Puzzle, path: "/admin/plugins" },
+  { id: "settings", labelKey: "settings", icon: Settings, path: "/admin/settings" },
+] as const
+
+const coreMenuItems = [...operationMenuItems, ...configurationMenuItems] as const
 
 // Returns cached user info (session-storage backed)
 const getCachedUser = (): UserInfo | null => {
@@ -361,6 +366,21 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
 
   const currentActiveMenu = activeMenu || getActiveMenu()
 
+  const renderCoreMenuItem = (item: typeof coreMenuItems[number]) => {
+    const Icon = item.icon
+    return (
+      <Button
+        key={item.id}
+        variant={currentActiveMenu === item.id ? "default" : "ghost"}
+        className="w-full justify-start"
+        onClick={() => handleMenuClick(item)}
+      >
+        <Icon className="mr-2 h-4 w-4" />
+        {t(item.labelKey)}
+      </Button>
+    )
+  }
+
   return (
     <>
       {/* Mobile menu button */}
@@ -420,41 +440,8 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
               </Button>
             </div>
 
-            {/* Core menu items */}
-            {coreMenuItems.map((item) => {
-              const Icon = item.icon
-              return (
-                <Button
-                  key={item.id}
-                  variant={currentActiveMenu === item.id ? "default" : "ghost"}
-                  className="w-full justify-start"
-                  onClick={() => handleMenuClick(item)}
-                >
-                  <Icon className="mr-2 h-4 w-4" />
-                  {t(item.labelKey)}
-                </Button>
-              )
-            })}
-
-            {/* Plugin flat menu items */}
-            {pluginFlatMenuItems.length > 0 && (
-              <div className="pt-2 border-t border-border mt-2 space-y-2">
-                {pluginFlatMenuItems.map((item) => {
-                  const Icon = item.icon
-                  return (
-                    <Button
-                      key={item.id}
-                      variant={currentActiveMenu === item.id ? "default" : "ghost"}
-                      className="w-full justify-start"
-                      onClick={() => handleMenuClick(item)}
-                    >
-                      <Icon className="mr-2 h-4 w-4" />
-                      {item.label}
-                    </Button>
-                  )
-                })}
-              </div>
-            )}
+            {/* Frequent core operations */}
+            {operationMenuItems.map(renderCoreMenuItem)}
 
             {/* Plugin group menus */}
             {pluginGroupMenus.map((group) => {
@@ -499,6 +486,31 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
                 </div>
               )
             })}
+
+            {/* Plugin flat menu items */}
+            {pluginFlatMenuItems.length > 0 && (
+              <div className="pt-2 border-t border-border mt-2 space-y-2">
+                {pluginFlatMenuItems.map((item) => {
+                  const Icon = item.icon
+                  return (
+                    <Button
+                      key={item.id}
+                      variant={currentActiveMenu === item.id ? "default" : "ghost"}
+                      className="w-full justify-start"
+                      onClick={() => handleMenuClick(item)}
+                    >
+                      <Icon className="mr-2 h-4 w-4" />
+                      {item.label}
+                    </Button>
+                  )
+                })}
+              </div>
+            )}
+
+            {/* Less frequent configuration tasks */}
+            <div className="pt-2 border-t border-border mt-2 space-y-2">
+              {configurationMenuItems.map(renderCoreMenuItem)}
+            </div>
 
             {/* User info */}
             <div className="pt-3 mt-2 border-t border-border">
