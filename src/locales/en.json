@@ -1361,11 +1361,6 @@
     "no": "No",
     "thanksForFeedback": "Thanks for your feedback!",
       "feedbackFailed": "Could not save your feedback. Please try again.",
-      "shareQuestion": "Share this question",
-      "shareAddress": "Share address",
-      "copyAddress": "Copy address",
-      "copied": "Copied",
-      "copyManual": "Select and copy the address manually.",
     "empty": "No FAQs available yet.",
     "widget": {
       "viewAll": "View all FAQs"

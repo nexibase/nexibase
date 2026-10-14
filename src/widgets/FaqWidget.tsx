@@ -5,15 +5,11 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { Card, CardContent } from '@/components/ui/card'
 import { ArrowRight } from 'lucide-react'
-import { FaqShareLink } from '@/features/faqs/components/FaqShareLink'
-import { Accordion, AccordionItem } from '@/features/faqs/components/Accordion'
-import { trackFaqView } from '@/features/faqs/lib/view-tracking'
-import { sanitizeHtml } from '@/features/faqs/lib/sanitize'
+import { faqSharePath } from '@/features/faqs/lib/share'
 
 interface Faq {
   id: number
   question: string
-  answer: string
 }
 
 interface Props {
@@ -26,7 +22,6 @@ export default function FaqWidget({ settings }: Props) {
 
   const [faqs, setFaqs] = useState<Faq[]>([])
   const [loading, setLoading] = useState(true)
-  const [expandedId, setExpandedId] = useState<number | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -52,11 +47,6 @@ export default function FaqWidget({ settings }: Props) {
     }
   }, [limit])
 
-  function onToggle(id: number) {
-    if (expandedId !== id) void trackFaqView(id)
-    setExpandedId(current => current === id ? null : id)
-  }
-
   return (
     <Card>
       <CardContent className="p-5 space-y-3">
@@ -73,26 +63,14 @@ export default function FaqWidget({ settings }: Props) {
             {t('empty')}
           </div>
         ) : (
-          <Accordion>
-            {faqs.map((faq) => {
-              const expanded = faq.id === expandedId
-              return (
-                <AccordionItem
-                  key={faq.id}
-                  id={`faq-widget-item-${faq.id}`}
-                  expanded={expanded}
-                  onToggle={() => onToggle(faq.id)}
-                  trigger={<span className="font-medium text-sm">{faq.question}</span>}
-                >
-                  <FaqShareLink faqId={faq.id} />
-                  <div
-                    className="prose prose-sm max-w-none dark:prose-invert"
-                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(faq.answer) }}
-                  />
-                </AccordionItem>
-              )
-            })}
-          </Accordion>
+          <ul className="divide-y rounded-md border">
+            {faqs.map(faq => <li key={faq.id}>
+              <Link href={faqSharePath(faq.id)} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-muted/50">
+                <span className="font-medium text-sm">{faq.question}</span>
+                <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+              </Link>
+            </li>)}
+          </ul>
         )}
 
         <div className="pt-1">

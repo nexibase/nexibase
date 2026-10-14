@@ -7,7 +7,6 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Search, Eye, ThumbsUp, ThumbsDown } from 'lucide-react'
-import { FaqShareLink } from './FaqShareLink'
 import { faqHash, faqIdFromHash } from '../lib/share'
 import { Accordion, AccordionItem } from './Accordion'
 import { loadFaqActivityStatus } from '@/features/faqs/lib/activity-status'
@@ -109,7 +108,7 @@ export function FaqAccordion({ categories, faqs, topFaqs }: Props) {
         setExpandedId(null)
         return
       }
-      setSelectedCat('all')
+      if (!document.getElementById(`faq-${id}`)) setSelectedCat('all')
       setRawSearch('')
       setDebouncedSearch('')
       setExpandedId(id)
@@ -126,24 +125,6 @@ export function FaqAccordion({ categories, faqs, topFaqs }: Props) {
       if (frame !== undefined) cancelAnimationFrame(frame)
     }
   }, [faqs, recordView])
-
-  function openFaq(id: number, scroll = false) {
-    setExpandedId(id)
-    recordView(id)
-    if (window.location.hash !== faqHash(id)) {
-      window.history.pushState(window.history.state, '', `${window.location.pathname}${window.location.search}${faqHash(id)}`)
-    }
-    if (scroll) requestAnimationFrame(() => document.getElementById(`faq-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
-  }
-
-  function onToggle(id: number) {
-    if (expandedId !== id) {
-      openFaq(id)
-    } else {
-      setExpandedId(null)
-      if (faqIdFromHash(window.location.hash) === id) window.history.replaceState(window.history.state, '', `${window.location.pathname}${window.location.search}`)
-    }
-  }
 
   async function vote(id: number, helpful: boolean) {
     if (!feedbackReady || votedIds.has(id) || votingIds.current.has(id)) return
@@ -194,17 +175,16 @@ export function FaqAccordion({ categories, faqs, topFaqs }: Props) {
           <ol className="space-y-1">
             {topFaqs.map((f, i) => (
               <li key={f.id}>
-                <button
-                  type="button"
+                <a
+                  href={faqHash(f.id)}
                   className="text-left hover:underline text-sm flex items-center gap-2 w-full"
-                  onClick={() => openFaq(f.id, true)}
                 >
                   <span className="text-muted-foreground w-4">{i + 1}.</span>
                   <span className="flex-1 truncate">{f.question}</span>
                   <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                     <Eye className="h-3 w-3" /> {viewCounts[f.id] ?? f.views}
                   </span>
-                </button>
+                </a>
               </li>
             ))}
           </ol>
@@ -248,7 +228,7 @@ export function FaqAccordion({ categories, faqs, topFaqs }: Props) {
                 key={faq.id}
                 id={`faq-${faq.id}`}
                 expanded={expanded}
-                onToggle={() => onToggle(faq.id)}
+                href={faqHash(faq.id)}
                 trigger={
                   <div className="flex items-center justify-between gap-3">
                     <span className="font-medium">{faq.question}</span>
@@ -258,7 +238,6 @@ export function FaqAccordion({ categories, faqs, topFaqs }: Props) {
                   </div>
                 }
               >
-                <FaqShareLink faqId={faq.id} />
                 <div
                   className="prose prose-sm max-w-none dark:prose-invert"
                   dangerouslySetInnerHTML={{ __html: sanitizeHtml(faq.answer) }}

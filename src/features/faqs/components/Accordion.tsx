@@ -15,30 +15,28 @@ export function Accordion({ children, className }: AccordionProps) {
 
 interface AccordionItemProps {
   expanded: boolean
-  onToggle: () => void
+  onToggle?: () => void
+  href?: string
   trigger: ReactNode
   children: ReactNode
   id?: string
 }
 
-export function AccordionItem({ expanded, onToggle, trigger, children, id }: AccordionItemProps) {
+export function AccordionItem({ expanded, onToggle, href, trigger, children, id }: AccordionItemProps) {
   const triggerId = id ? `${id}-trigger` : undefined
   const panelId = id ? `${id}-panel` : undefined
+  const content = <>
+    <div className="flex-1 min-w-0">{trigger}</div>
+    <ChevronDown className={cn('h-5 w-5 shrink-0 text-muted-foreground transition-transform', expanded && 'rotate-180')} />
+  </>
+  const triggerClass = "w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-muted/50 transition-colors"
   return (
     <div id={id} className="overflow-hidden scroll-mt-28">
-      <button
-        type="button"
-        id={triggerId}
-        onClick={onToggle}
-        aria-expanded={expanded}
-        aria-controls={panelId}
-        className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-muted/50 transition-colors"
-      >
-        <div className="flex-1 min-w-0">{trigger}</div>
-        <ChevronDown
-          className={cn('h-5 w-5 shrink-0 text-muted-foreground transition-transform', expanded && 'rotate-180')}
-        />
-      </button>
+      {href ? (
+        <a href={href} id={triggerId} aria-expanded={expanded} aria-controls={panelId} className={triggerClass}>{content}</a>
+      ) : (
+        <button type="button" id={triggerId} onClick={onToggle} aria-expanded={expanded} aria-controls={panelId} className={triggerClass}>{content}</button>
+      )}
       <div
         id={panelId}
         role="region"

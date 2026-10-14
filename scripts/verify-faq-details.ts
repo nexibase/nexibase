@@ -73,7 +73,7 @@ async function main() {
     await request(administrator, '/api/admin/faqs/invalid/activity', 400)
     await request(administrator, '/api/admin/faqs/2147483647/activity', 404)
     const html = (await request(guest, `/faqs#faq-${faqId}`)).text
-    assert.ok(html.includes(`id="faq-${faqId}"`) && html.includes(`/faqs#faq-${faqId}`))
+    assert.ok(html.includes(`id="faq-${faqId}"`) && html.includes(`href="#faq-${faqId}"`))
     assert.deepEqual([(await prisma.faq.findUniqueOrThrow({ where: { id: faqId } })).views, (await prisma.faq.findUniqueOrThrow({ where: { id: faqId } })).helpful, (await prisma.faq.findUniqueOrThrow({ where: { id: faqId } })).notHelpful], [7, 4, 5], 'Reading history must not change totals')
   } finally {
     if (faqId) {
