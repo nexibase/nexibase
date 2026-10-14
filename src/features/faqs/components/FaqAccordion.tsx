@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Search, Eye, ThumbsUp, ThumbsDown } from 'lucide-react'
 import { Accordion, AccordionItem } from './Accordion'
+import { trackFaqView } from '@/features/faqs/lib/view-tracking'
 import { sanitizeHtml, stripHtml } from '@/features/faqs/lib/sanitize'
 
 interface Category { id: number; name: string; slug: string; _count?: { faqs: number } }
@@ -36,7 +37,7 @@ export function FaqAccordion({ categories, faqs, topFaqs }: Props) {
   const [rawSearch, setRawSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [expandedId, setExpandedId] = useState<number | null>(null)
-  const viewCounts = useMemo(() => Object.fromEntries(faqs.map(faq => [faq.id, faq.views])), [faqs])
+  const [viewCounts, setViewCounts] = useState<Record<number, number>>({})
   const [votedIds, setVotedIds] = useState<Set<number>>(new Set())
 
   useEffect(() => {
@@ -74,11 +75,19 @@ export function FaqAccordion({ categories, faqs, topFaqs }: Props) {
 
   function scrollToFaq(id: number) {
     setExpandedId(id)
+    recordView(id)
     const el = document.getElementById(`faq-item-${id}`)
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }
 
+  function recordView(id: number) {
+    void trackFaqView(id).then(views => {
+      if (views !== undefined) setViewCounts(current => ({ ...current, [id]: views }))
+    })
+  }
+
   function onToggle(id: number) {
+    if (expandedId !== id) recordView(id)
     setExpandedId(current => current === id ? null : id)
   }
 

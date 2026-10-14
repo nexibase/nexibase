@@ -22,11 +22,17 @@ async function main() {
   const admin = await prisma.user.findFirst({ where: { role:'admin', status:'active', deletedAt:null } })
   assert.ok(admin)
   const token = await encode({ secret:process.env.NEXTAUTH_SECRET!, token:{ id:String(admin.id),sub:String(admin.id),email:admin.email },maxAge:600 })
+  const viewCookies = new Map<number, string>()
   let requests = 0
   async function request(path:string, expected=200, method='GET', body?:unknown, redirect:RequestRedirect='follow') {
     requests++
-    const response = await fetch(base+path,{ method,redirect,headers:{ 'Content-Type':'application/json',...(path.startsWith('/api/admin/')?{Cookie:`next-auth.session-token=${token}; __Secure-next-auth.session-token=${token}`}:{}) },...(body===undefined?{}:{body:JSON.stringify(body)}) })
+    const response = await fetch(base+path,{ method,redirect,headers:{ 'Content-Type':'application/json',...(method === 'PATCH' && (body as {type?: string})?.type === 'view' ? {Cookie: [...viewCookies.values()].join('; ')} : {}),...(path.startsWith('/api/admin/')?{Cookie:`next-auth.session-token=${token}; __Secure-next-auth.session-token=${token}`}:{}) },...(body===undefined?{}:{body:JSON.stringify(body)}) })
     assert.equal(response.status,expected,`${method} ${path}: ${response.status}`)
+    const setCookie = response.headers.get('set-cookie')
+    if (setCookie?.startsWith('nexibase-faq-viewed-')) {
+      const entry = setCookie.split(';')[0]
+      viewCookies.set(Number(entry.split('=')[0].replace('nexibase-faq-viewed-', '')), entry)
+    }
     const text = await response.text()
     return {response,text,data:response.headers.get('content-type')?.includes('application/json')&&text?JSON.parse(text):null}
   }
@@ -51,6 +57,8 @@ async function main() {
   }
   const faqs = await prisma.faq.findMany({where:{published:true}})
   for(const faq of faqs) {
+    // Existing questions must not be changed by a deployment check.
+    viewCookies.set(faq.id, `nexibase-faq-viewed-${faq.id}=1`)
     for(const path of ['/api/faqs','/api/faq','/api/faq-accordion']) {
       for(let repeat=0;repeat<3;repeat++) {
         assert.equal((await request(path,200,'PATCH',{type:'view',id:faq.id})).data.views,faq.views)
@@ -68,9 +76,9 @@ async function main() {
       faqId = (await request('/api/admin/faqs',201,'POST',{type:'faq',question:slug,answer:'<p>Temporary FAQ verification</p>',categoryId,published:true})).data.id
       assert.ok((await request('/faqs')).text.includes(slug))
       for(let repeat=0;repeat<10;repeat++) {
-        assert.equal((await request('/api/faqs',200,'PATCH',{type:'view',id:faqId})).data.views,0)
+        assert.equal((await request('/api/faqs',200,'PATCH',{type:'view',id:faqId})).data.views,1)
       }
-      assert.equal((await prisma.faq.findUnique({where:{id:faqId}}))?.views,0)
+      assert.equal((await prisma.faq.findUnique({where:{id:faqId}}))?.views,1)
     } finally {
       if(faqId) {
         assert.equal((await prisma.faq.findUnique({where:{id:faqId}}))?.question,slug)

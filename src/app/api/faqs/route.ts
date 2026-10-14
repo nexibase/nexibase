@@ -58,8 +58,22 @@ export async function PATCH(request: NextRequest) {
     }
 
     if (body.type === 'view') {
-      // Old clients still receive the historical count without changing it.
-      return NextResponse.json({ views: faq.views })
+      // Session cookies also protect legacy clients that track every toggle.
+      const cookieName = `nexibase-faq-viewed-${id}`
+      if (request.cookies.get(cookieName)?.value === '1') {
+        return NextResponse.json({ views: faq.views })
+      }
+      const updated = await prisma.faq.update({
+        where: { id },
+        data: { views: { increment: 1 } },
+        select: { views: true },
+      })
+      const response = NextResponse.json(updated)
+      response.cookies.set(cookieName, '1', {
+        httpOnly: true, sameSite: 'lax', path: '/',
+        secure: request.nextUrl.protocol === 'https:',
+      })
+      return response
     }
 
     if (body.type === 'feedback') {

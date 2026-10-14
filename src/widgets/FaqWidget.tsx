@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl'
 import { Card, CardContent } from '@/components/ui/card'
 import { ArrowRight } from 'lucide-react'
 import { Accordion, AccordionItem } from '@/features/faqs/components/Accordion'
+import { trackFaqView } from '@/features/faqs/lib/view-tracking'
 import { sanitizeHtml } from '@/features/faqs/lib/sanitize'
 
 interface Faq {
@@ -51,6 +52,7 @@ export default function FaqWidget({ settings }: Props) {
   }, [limit])
 
   function onToggle(id: number) {
+    if (expandedId !== id) void trackFaqView(id)
     setExpandedId(current => current === id ? null : id)
   }
 
