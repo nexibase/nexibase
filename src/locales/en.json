@@ -1360,6 +1360,7 @@
     "yes": "Yes",
     "no": "No",
     "thanksForFeedback": "Thanks for your feedback!",
+      "feedbackFailed": "Could not save your feedback. Please try again.",
     "empty": "No FAQs available yet.",
     "widget": {
       "viewAll": "View all FAQs"

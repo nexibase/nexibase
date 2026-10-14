@@ -28,6 +28,7 @@ model User {
   level         Int             @default(1)
   provider      String?         @db.VarChar(50)
   providerId    String?         @db.VarChar(255)
+  faqFeedback   FaqFeedback[]
   posts         Post[]
   comments      Comment[]
   reactions     Reaction[]
@@ -470,10 +471,29 @@ model Faq {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  feedback    FaqFeedback[]
   category    FaqCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   @@index([categoryId])
   @@index([views])
   @@index([published])
   @@map("faqs")
+}
+
+
+// One immutable evaluation per question and authenticated user or signed visitor.
+model FaqFeedback {
+  id        Int      @id @default(autoincrement())
+  faqId     Int
+  voterKey  String   @db.VarChar(64)
+  userId    Int?
+  helpful   Boolean
+  createdAt DateTime @default(now())
+
+  faq       Faq      @relation(fields: [faqId], references: [id], onDelete: Cascade)
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([faqId, voterKey])
+  @@index([userId])
+  @@map("faq_feedback")
 }

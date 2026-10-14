@@ -22,11 +22,14 @@ async function main() {
   assert.ok(admin)
   const token = await encode({ secret: process.env.NEXTAUTH_SECRET!, token: { id: String(admin.id), sub: String(admin.id), email: admin.email }, maxAge: 600 })
   const cookie = `next-auth.session-token=${token}; __Secure-next-auth.session-token=${token}`
+  let guestCookie = ''
   let requests = 0
   async function request(path: string, expected = 200, method = 'GET', body?: unknown, auth = true, redirect: RequestRedirect = 'follow') {
     requests++
-    const response = await fetch(base + path, { method, redirect, headers: { 'Content-Type': 'application/json', ...(auth ? { Cookie: cookie } : {}) }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) })
+    const response = await fetch(base + path, { method, redirect, headers: { 'Content-Type': 'application/json', ...(auth ? { Cookie: cookie } : guestCookie ? { Cookie: guestCookie } : {}) }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) })
     assert.equal(response.status, expected, `${method} ${path}: expected ${expected}, got ${response.status}`)
+    const setCookie = response.headers.get('set-cookie')
+    if (setCookie?.startsWith('nexibase-faq-voter=')) guestCookie = setCookie.split(';')[0]
     const text = await response.text()
     return { response, text, data: response.headers.get('content-type')?.includes('application/json') && text ? JSON.parse(text) : null }
   }
@@ -76,8 +79,9 @@ async function main() {
       assert.ok(Array.isArray(random))
       assert.ok(!random.some((item: { id: number }) => item.id === draft.id))
       assert.equal((await request('/api/faq-accordion', 200, 'PATCH', { type: 'view', id: faq.id }, false)).data.views, 1)
+      await request('/api/faqs?type=feedback', 200, 'GET', undefined, false)
       assert.equal((await request('/api/faqs', 200, 'PATCH', { type: 'feedback', id: faq.id, helpful: true }, false)).data.helpful, 1)
-      assert.equal((await request('/api/faq', 200, 'PATCH', { type: 'feedback', id: faq.id, helpful: false }, false)).data.notHelpful, 1)
+      assert.equal((await request('/api/faq', 200, 'PATCH', { type: 'feedback', id: faq.id, helpful: false }, false)).data.notHelpful, 0)
       await request('/api/faqs', 404, 'PATCH', { type: 'view', id: draft.id }, false)
       await request('/api/admin/faqs', 401, 'PATCH', { type: 'faq', id: faq.id, question: 'Must not save' }, false)
       await request('/api/admin/faq-accordion', 200, 'PATCH', { type: 'reorder-faqs', items: faqIds.map((id, sortOrder) => ({ id, sortOrder })) })

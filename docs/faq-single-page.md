@@ -21,3 +21,10 @@ Rollback restores the saved development service units and restarts them. The new
 ## 검증 기록
 
 FAQ를 `/faqs` 한 페이지로 통합하고 분류는 페이지 안에서만 선택합니다. 기존 조회수는 유지하며 질문은 같은 브라우저 세션에서 처음 열 때만 1회 증가합니다. 반복 토글과 새로고침에는 추가로 증가하지 않습니다. 관리자 표시명과 사용자 링크는 FAQ로 통일합니다. 빌드, 자동 테스트 61개, 임시 데이터 포함 단일 페이지/조회 검증 53건, 기존 FAQ/코어 검증 79건이 통과했습니다.
+
+
+## Feedback identity and duplicate protection
+
+Feedback totals and individual evaluations are stored in MySQL. The additive `faq_feedback` table has a unique `(faqId, voterKey)` constraint. Creating an evaluation and incrementing its chosen total occur in one transaction; simultaneous requests, opposite choices and legacy API aliases cannot increment again. Existing totals are preserved; earlier evaluations did not store voter identities and cannot be retroactively attributed.
+
+Signed-in users are identified by their account, independent of cookies or browser. Guests use a server-signed, HTTP-only browser ID cookie lasting one year. The cookie identifies the browser; the evaluation remains in the database. Clearing that cookie or using a different browser creates a different anonymous identity. `GET /api/faqs?type=feedback` reloads the evaluation state on refresh. Existing localStorage receipts are retained only for anonymous legacy evaluations.

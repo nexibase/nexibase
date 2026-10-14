@@ -3,6 +3,7 @@
 // any User-referencing model.
 
 export default [
+  { model: 'FaqFeedback', policy: 'retain', field: 'userId', reason: 'FAQ 평가 집계 보존; 탈퇴 사용자는 User 조인으로 익명화' },
   { model: 'UserAddress',            policy: 'delete' },
   { model: 'Notification',           policy: 'delete' },
   { model: 'NotificationPreference', policy: 'delete' },

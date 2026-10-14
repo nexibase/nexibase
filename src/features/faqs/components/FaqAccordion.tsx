@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -40,19 +40,40 @@ export function FaqAccordion({ categories, faqs, topFaqs }: Props) {
   const [viewCounts, setViewCounts] = useState<Record<number, number>>({})
   const [votedIds, setVotedIds] = useState<Set<number>>(new Set())
 
+  const [feedbackReady, setFeedbackReady] = useState(false)
+  const [pendingVotes, setPendingVotes] = useState<Set<number>>(new Set())
+  const votingIds = useRef(new Set<number>())
+  const guestVoter = useRef(false)
+
   useEffect(() => {
-    try {
-      const stored = new Set<number>()
-      for (const k of Object.keys(localStorage)) {
-        if (k.startsWith('faq-voted:')) {
-          const id = parseInt(k.slice('faq-voted:'.length), 10)
-          if (Number.isInteger(id)) stored.add(id)
+    let cancelled = false
+    async function loadFeedback() {
+      try {
+        const response = await fetch('/api/faqs?type=feedback', { cache: 'no-store' })
+        if (!response.ok) return
+        const data: { votes: { faqId: number; helpful: boolean }[]; guest: boolean } = await response.json()
+        const ids = new Set(data.votes.map(vote => vote.faqId))
+        // Keep receipts for legacy anonymous evaluations whose identity was
+        // never stored in the database. Logged-in accounts use server records.
+        if (data.guest) {
+          try {
+            for (const key of Object.keys(localStorage)) {
+              if (key.startsWith('faq-voted:')) {
+                const id = Number(key.slice('faq-voted:'.length))
+                if (Number.isInteger(id)) ids.add(id)
+              }
+            }
+          } catch {}
         }
-      }
-      setVotedIds(stored)
-    } catch {
-      // localStorage unavailable — no-op
+        if (!cancelled) {
+          guestVoter.current = data.guest
+          setVotedIds(ids)
+          setFeedbackReady(true)
+        }
+      } catch {}
     }
+    void loadFeedback()
+    return () => { cancelled = true }
   }, [])
 
   useEffect(() => {
@@ -92,7 +113,9 @@ export function FaqAccordion({ categories, faqs, topFaqs }: Props) {
   }
 
   async function vote(id: number, helpful: boolean) {
-    if (votedIds.has(id)) return
+    if (!feedbackReady || votedIds.has(id) || votingIds.current.has(id)) return
+    votingIds.current.add(id)
+    setPendingVotes(current => new Set(current).add(id))
     try {
       const res = await fetch('/api/faqs', {
         method: 'PATCH',
@@ -100,14 +123,23 @@ export function FaqAccordion({ categories, faqs, topFaqs }: Props) {
         body: JSON.stringify({ type: 'feedback', id, helpful }),
       })
       if (res.ok) {
-        try { localStorage.setItem(`faq-voted:${id}`, helpful ? 'y' : 'n') } catch {}
+        if (guestVoter.current) {
+          try { localStorage.setItem(`faq-voted:${id}`, helpful ? 'y' : 'n') } catch {}
+        }
         setVotedIds((prev) => {
           const n = new Set(prev)
           n.add(id)
           return n
         })
+      } else {
+        alert(t('feedbackFailed'))
       }
-    } catch {}
+    } catch {
+      alert(t('feedbackFailed'))
+    } finally {
+      votingIds.current.delete(id)
+      setPendingVotes(current => { const next = new Set(current); next.delete(id); return next })
+    }
   }
 
   return (
@@ -203,10 +235,10 @@ export function FaqAccordion({ categories, faqs, topFaqs }: Props) {
                   </span>
                   {!voted && (
                     <>
-                      <Button size="sm" variant="outline" onClick={() => vote(faq.id, true)}>
+                      <Button size="sm" variant="outline" disabled={!feedbackReady || pendingVotes.has(faq.id)} onClick={() => vote(faq.id, true)}>
                         <ThumbsUp className="h-4 w-4 mr-1" /> {t('yes')}
                       </Button>
-                      <Button size="sm" variant="outline" onClick={() => vote(faq.id, false)}>
+                      <Button size="sm" variant="outline" disabled={!feedbackReady || pendingVotes.has(faq.id)} onClick={() => vote(faq.id, false)}>
                         <ThumbsDown className="h-4 w-4 mr-1" /> {t('no')}
                       </Button>
                     </>

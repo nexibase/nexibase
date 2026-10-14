@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { unstable_cache } from 'next/cache'
+import { Prisma } from '@prisma/client'
+import { getFeedbackVoter, withVoterCookie } from '@/features/faqs/lib/feedback-voter'
 import { prisma } from '@/lib/prisma'
 
 function clampLimit(raw: string | null): number {
@@ -34,6 +36,14 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const type = searchParams.get('type')
+    if (type === 'feedback') {
+      const voter = await getFeedbackVoter(request)
+      const votes = await prisma.faqFeedback.findMany({
+        where: { voterKey: voter.voterKey, faq: { published: true } },
+        select: { faqId: true, helpful: true },
+      })
+      return withVoterCookie(NextResponse.json({ votes, guest: voter.userId === undefined }), voter, request)
+    }
     if (type !== 'random') {
       return NextResponse.json({ error: 'Invalid type' }, { status: 400 })
     }
@@ -79,12 +89,31 @@ export async function PATCH(request: NextRequest) {
     if (body.type === 'feedback') {
       const field = body.helpful === true ? 'helpful' : body.helpful === false ? 'notHelpful' : null
       if (!field) return NextResponse.json({ error: 'helpful boolean required' }, { status: 400 })
-      const updated = await prisma.faq.update({
-        where: { id },
-        data: { [field]: { increment: 1 } },
-        select: { helpful: true, notHelpful: true },
-      })
-      return NextResponse.json(updated)
+      const voter = await getFeedbackVoter(request)
+      // Establish a signed identity before accepting an anonymous vote. This
+      // prevents concurrent first requests from creating different identities.
+      if (voter.cookie) {
+        return withVoterCookie(NextResponse.json({ error: 'visitor_required' }, { status: 400 }), voter, request)
+      }
+      try {
+        const result = await prisma.$transaction(async tx => {
+          // Lock the parent before inserting the FK child. Concurrent first
+          // votes otherwise hold shared FK locks while upgrading the count.
+          await tx.$queryRaw`SELECT id FROM faqs WHERE id = ${id} FOR UPDATE`
+          await tx.faqFeedback.create({ data: { faqId: id, voterKey: voter.voterKey, userId: voter.userId, helpful: body.helpful } })
+          return tx.faq.update({
+            where: { id }, data: { [field]: { increment: 1 } },
+            select: { helpful: true, notHelpful: true },
+          })
+        })
+        return withVoterCookie(NextResponse.json({ ...result, voted: true, choice: body.helpful, alreadyVoted: false }), voter, request)
+      } catch (error) {
+        if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') throw error
+        const vote = await prisma.faqFeedback.findUnique({ where: { faqId_voterKey: { faqId: id, voterKey: voter.voterKey } } })
+        const counts = await prisma.faq.findUnique({ where: { id }, select: { helpful: true, notHelpful: true } })
+        if (!vote || !counts) throw error
+        return withVoterCookie(NextResponse.json({ ...counts, voted: true, choice: vote.helpful, alreadyVoted: true }), voter, request)
+      }
     }
 
     return NextResponse.json({ error: 'Invalid type' }, { status: 400 })
