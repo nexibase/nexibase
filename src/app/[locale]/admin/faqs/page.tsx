@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
+import { ExternalLink } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { CategoryList } from '@/features/faqs/components/admin/CategoryList'
 import { FaqList } from '@/features/faqs/components/admin/FaqList'
@@ -48,7 +49,12 @@ export default function FaqAdminPage() {
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">{t('title')}</h1>
+      <div className="mb-6 flex items-center justify-between gap-4">
+        <h1 className="text-2xl font-bold">{t('title')}</h1>
+        <a href="/faqs" target="_blank" rel="noopener noreferrer" aria-label={t('openPublicFaq')} className="inline-flex items-center gap-1 text-sm text-primary hover:underline">
+          {t('publicFaq')} <ExternalLink className="h-4 w-4" />
+        </a>
+      </div>
       <Tabs defaultValue="faqs">
         <TabsList>
           <TabsTrigger value="faqs">{t('tabs.faqs')}</TabsTrigger>

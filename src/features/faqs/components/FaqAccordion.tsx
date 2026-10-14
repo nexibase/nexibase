@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import Link from 'next/link'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -10,7 +9,6 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Search, Eye, ThumbsUp, ThumbsDown } from 'lucide-react'
 import { Accordion, AccordionItem } from './Accordion'
 import { sanitizeHtml, stripHtml } from '@/features/faqs/lib/sanitize'
-import { faqCategoryPath } from '../lib/urls'
 
 interface Category { id: number; name: string; slug: string; _count?: { faqs: number } }
 interface Faq {
@@ -28,20 +26,17 @@ interface Props {
   categories: Category[]
   faqs: Faq[]
   topFaqs: Faq[]
-  activeCategory?: Category | null
 }
 
-export function FaqAccordion({ categories, faqs, topFaqs, activeCategory }: Props) {
+export function FaqAccordion({ categories, faqs, topFaqs }: Props) {
   const t = useTranslations('faqs')
 
-  const selectedCat = activeCategory?.id.toString() ?? 'all'
+  const [selectedCat, setSelectedCat] = useState<string>('all')
   const totalFaqs = categories.reduce((total, category) => total + (category._count?.faqs ?? 0), 0)
   const [rawSearch, setRawSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [expandedId, setExpandedId] = useState<number | null>(null)
-  const [viewCounts, setViewCounts] = useState<Record<number, number>>(
-    () => Object.fromEntries(faqs.map((f) => [f.id, f.views]))
-  )
+  const viewCounts = useMemo(() => Object.fromEntries(faqs.map(faq => [faq.id, faq.views])), [faqs])
   const [votedIds, setVotedIds] = useState<Set<number>>(new Set())
 
   useEffect(() => {
@@ -69,9 +64,11 @@ export function FaqAccordion({ categories, faqs, topFaqs, activeCategory }: Prop
     let list = faqs
     if (q) {
       list = list.filter((f) => f.question.toLowerCase().includes(q) || stripHtml(f.answer).toLowerCase().includes(q))
+    } else if (selectedCat !== 'all') {
+      list = list.filter(faq => faq.categoryId.toString() === selectedCat)
     }
     return list
-  }, [faqs, debouncedSearch])
+  }, [faqs, debouncedSearch, selectedCat])
 
   const showMostViewed = selectedCat === 'all' && debouncedSearch.trim() === '' && topFaqs.length > 0
 
@@ -81,24 +78,8 @@ export function FaqAccordion({ categories, faqs, topFaqs, activeCategory }: Prop
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }
 
-  async function onToggle(id: number) {
-    const next = expandedId === id ? null : id
-    setExpandedId(next)
-    if (next !== null) {
-      try {
-        const res = await fetch('/api/faqs', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ type: 'view', id }),
-        })
-        if (res.ok) {
-          const d = await res.json()
-          setViewCounts((prev) => ({ ...prev, [id]: d.views }))
-        }
-      } catch {
-        // network error — ignore, optimistic increment not required
-      }
-    }
+  function onToggle(id: number) {
+    setExpandedId(current => current === id ? null : id)
   }
 
   async function vote(id: number, helpful: boolean) {
@@ -157,33 +138,25 @@ export function FaqAccordion({ categories, faqs, topFaqs, activeCategory }: Prop
       )}
 
       {debouncedSearch.trim() === '' && (
-        <Tabs value={selectedCat} activationMode="manual">
+        <Tabs value={selectedCat} onValueChange={setSelectedCat}>
           <TabsList className="flex-wrap h-auto bg-transparent p-0 gap-2">
             <TabsTrigger
               value="all"
-              asChild
               className="rounded-full border px-3 h-8 flex-none data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:border-primary data-[state=active]:shadow-none"
             >
-              <Link href="/faqs">
-                {t('all')}
-                <Badge variant="secondary" className="ml-1.5">{totalFaqs}</Badge>
-              </Link>
+              {t('all')}
+              <Badge variant="secondary" className="ml-1.5">{totalFaqs}</Badge>
             </TabsTrigger>
-            {categories
-              .filter((c) => (c._count?.faqs ?? 0) > 0 || c.id.toString() === selectedCat)
-              .map((c) => (
-                <TabsTrigger
-                  key={c.id}
-                  value={c.id.toString()}
-                  asChild
-                  className="rounded-full border px-3 h-8 flex-none data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:border-primary data-[state=active]:shadow-none"
-                >
-                  <Link href={faqCategoryPath(c.slug)}>
-                    {c.name}
-                    <Badge variant="secondary" className="ml-1.5">{c._count?.faqs ?? 0}</Badge>
-                  </Link>
-                </TabsTrigger>
-              ))}
+            {categories.filter(category => (category._count?.faqs ?? 0) > 0).map(category => (
+              <TabsTrigger
+                key={category.id}
+                value={category.id.toString()}
+                className="rounded-full border px-3 h-8 flex-none data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:border-primary data-[state=active]:shadow-none"
+              >
+                {category.name}
+                <Badge variant="secondary" className="ml-1.5">{category._count?.faqs ?? 0}</Badge>
+              </TabsTrigger>
+            ))}
           </TabsList>
         </Tabs>
       )}

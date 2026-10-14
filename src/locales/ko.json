@@ -895,7 +895,7 @@
     "backToSettings": "설정으로 돌아가기",
     "screenshotPending": "스크린샷 대기 중",
     "goToHomeWidgets": "홈 위젯으로 이동",
-    "faqs": "FAQ 관리"
+    "faqs": "FAQ"
   },
   "widgets": {
     "welcome": "환영합니다",
@@ -1365,7 +1365,7 @@
       "viewAll": "전체 FAQ 보기"
     },
     "admin": {
-      "title": "FAQ 관리",
+      "title": "FAQ",
       "tabs": {
         "faqs": "FAQ 목록",
         "categories": "카테고리"
@@ -1400,9 +1400,8 @@
       "statsViews": "조회수",
       "statsHelpful": "도움됨",
       "statsNotHelpful": "도움 안 됨",
-      "openCategory": "{category} 사용자용 FAQ 열기",
-      "categorySlugHint": "예: general → /faqs/general. 비워두면 자동으로 생성됩니다."
-    },
-    "categoryTitle": "{category} FAQ"
+      "publicFaq": "FAQ",
+      "openPublicFaq": "사용자 FAQ 열기"
+    }
   }
 }

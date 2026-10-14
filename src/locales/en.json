@@ -1365,7 +1365,7 @@
       "viewAll": "View all FAQs"
     },
     "admin": {
-      "title": "FAQ Management",
+      "title": "FAQ",
       "tabs": {
         "faqs": "FAQs",
         "categories": "Categories"
@@ -1400,9 +1400,8 @@
       "statsViews": "Views",
       "statsHelpful": "Helpful",
       "statsNotHelpful": "Not helpful",
-      "openCategory": "Open public FAQ for {category}",
-      "categorySlugHint": "Example: general → /faqs/general. Leave blank to generate automatically."
-    },
-    "categoryTitle": "{category} FAQ"
+      "publicFaq": "FAQ",
+      "openPublicFaq": "Open public FAQ"
+    }
   }
 }

@@ -52,18 +52,14 @@ export async function PATCH(request: NextRequest) {
     const id = body.id
     if (!Number.isInteger(id)) return NextResponse.json({ error: 'id required' }, { status: 400 })
 
-    const faq = await prisma.faq.findUnique({ where: { id }, select: { published: true } })
+    const faq = await prisma.faq.findUnique({ where: { id }, select: { published: true, views: true } })
     if (!faq || !faq.published) {
       return NextResponse.json({ error: 'not_found' }, { status: 404 })
     }
 
     if (body.type === 'view') {
-      const updated = await prisma.faq.update({
-        where: { id },
-        data: { views: { increment: 1 } },
-        select: { views: true },
-      })
-      return NextResponse.json(updated)
+      // Old clients still receive the historical count without changing it.
+      return NextResponse.json({ views: faq.views })
     }
 
     if (body.type === 'feedback') {

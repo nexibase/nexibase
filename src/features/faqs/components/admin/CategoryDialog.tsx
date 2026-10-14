@@ -76,17 +76,6 @@ export function CategoryDialog({ open, initial, onClose, onSaved }: Props) {
               maxLength={100}
             />
           </div>
-          <div>
-            <Label htmlFor="category-slug">{t('categorySlug')}</Label>
-            <Input
-              id="category-slug"
-              value={slug}
-              onChange={(e) => setSlug(e.target.value)}
-              maxLength={100}
-              placeholder="auto"
-            />
-            <p className="mt-1 text-xs text-muted-foreground">{t('categorySlugHint')}</p>
-          </div>
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={onClose} disabled={saving}>{t('cancel')}</Button>
             <Button onClick={handleSave} disabled={saving || !name.trim()}>{t('save')}</Button>

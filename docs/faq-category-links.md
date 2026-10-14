@@ -1,3 +1,5 @@
+> Superseded by [FAQ single page](faq-single-page.md). Public categories now filter within `/faqs`.
+
 # Public FAQ category links
 
 Each category has a public page at `/faqs/{slug}`. Existing names, IDs, and slugs are preserved; no schema or data migration is required. For example, a category whose slug is `general` is accessible at `/faqs/general`.
