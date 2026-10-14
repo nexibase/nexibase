@@ -104,8 +104,8 @@ const coreMenuItems = [
   { id: "faqs", labelKey: "faqs", icon: MessageCircleQuestion, path: "/admin/faqs" },
   { id: "policies", labelKey: "policies", icon: ScrollText, path: "/admin/policies" },
   { id: "pages", labelKey: "pages", icon: LayoutGrid, path: "/admin/pages" },
-  { id: "login-logs", labelKey: "loginLogs", icon: ClipboardList, path: "/admin/login-logs" },
   { id: "menus", labelKey: "menus", icon: MenuIcon, path: "/admin/menus" },
+  { id: "login-logs", labelKey: "loginLogs", icon: ClipboardList, path: "/admin/login-logs" },
   { id: "plugins", labelKey: "plugins", icon: Puzzle, path: "/admin/plugins" },
 ] as const
 
