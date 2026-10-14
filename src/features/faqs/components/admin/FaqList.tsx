@@ -22,7 +22,7 @@ import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Plus, Pencil, Trash2, GripVertical, Eye, Search } from 'lucide-react'
+import { Plus, Pencil, Trash2, GripVertical, Eye, Search, ThumbsUp, ThumbsDown } from 'lucide-react'
 import Link from 'next/link'
 import { stripHtml } from '@/features/faqs/lib/sanitize'
 
@@ -36,6 +36,8 @@ interface Faq {
   category: Category
   sortOrder: number
   views: number
+  helpful: number
+  notHelpful: number
   published: boolean
 }
 
@@ -60,9 +62,11 @@ function Row({ faq, onDelete }: { faq: Faq; onDelete: () => void }) {
       </button>
       <div className="flex-1 min-w-0">
         <div className="font-medium truncate">{faq.question}</div>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground mt-0.5">
           <Badge variant="outline">{faq.category.name}</Badge>
           <span className="inline-flex items-center gap-1"><Eye className="h-3 w-3" /> {faq.views}</span>
+          <span className="inline-flex items-center gap-1"><ThumbsUp className="h-3 w-3" aria-hidden="true" /> {t('statsHelpful')} {faq.helpful}</span>
+          <span className="inline-flex items-center gap-1"><ThumbsDown className="h-3 w-3" aria-hidden="true" /> {t('statsNotHelpful')} {faq.notHelpful}</span>
           {!faq.published && <Badge variant="secondary">{t('draft')}</Badge>}
         </div>
       </div>
