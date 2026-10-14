@@ -81,7 +81,7 @@ docker compose down -v       # stop + wipe data
 - Sidebar widgets (left / right, all pages)
 - Plugin widgets auto-registered
 
-### 📋 Board System (Built-in Plugin)
+### 📋 Board System (Core)
 - Unlimited boards with custom permissions
 - Rich text editor (Tiptap) with image drag & drop
 - Comments, threaded replies, reactions
@@ -91,7 +91,7 @@ docker compose down -v       # stop + wipe data
 
 ### 🔔 Notifications
 - In-app + email delivery, per-user preferences
-- Triggered by comments / replies / @mentions from the boards plugin
+- Triggered by comments / replies / @mentions from core boards
 - Admin can send a free-form notification to any user
 - Direct-message arrivals surface as notifications
 - Bell icon tints when unread; refresh on route change (no background polling)
@@ -252,11 +252,10 @@ npm run dev
 
 ### Available Plugins
 
+Boards, content pages, and versioned policies are always available as core features. They keep their existing URLs and are managed directly from the admin sidebar.
+
 | Plugin | Description | Status |
 |--------|------------|--------|
-| `boards` | Community boards, posts, comments | Built-in |
-| `contents` | Content pages (about, FAQ) | Built-in |
-| `policies` | Terms, privacy policy | Built-in |
 | `shop` | E-commerce (products, cart, orders) | Submodule |
 
 ---
@@ -266,10 +265,8 @@ npm run dev
 ```
 src/
 ├── app/              # Core routes + auto-generated wrappers
+├── features/         # Core boards, content pages, policies
 ├── plugins/          # Plugin system
-│   ├── boards/       # Community (built-in)
-│   ├── contents/     # Content pages (built-in)
-│   ├── policies/     # Policies (built-in)
 │   └── shop/         # E-commerce (submodule)
 ├── layouts/          # Layout system (Header, HomePage, Footer)
 ├── themes/           # Theme system (CSS variables)
@@ -378,7 +375,7 @@ docker compose down -v       # 중지 + 데이터 삭제
 - 사이드바 위젯 (좌측/우측, 모든 페이지)
 - 플러그인 위젯 자동 등록
 
-### 📋 게시판 시스템 (기본 플러그인)
+### 📋 게시판 시스템 (기본 기능)
 - 무제한 게시판 생성, 권한별 접근 제어
 - 리치 텍스트 에디터 (Tiptap) + 이미지 드래그&드롭
 - 댓글, 대댓글, 리액션
@@ -546,11 +543,10 @@ npm run dev
 
 ### 제공 플러그인
 
+게시판·콘텐츠·버전별 약관은 항상 제공되는 기본 기능입니다. 기존 URL을 유지하며 관리자 기본 메뉴에서 관리합니다.
+
 | 플러그인 | 설명 | 상태 |
 |---------|------|------|
-| `boards` | 게시판, 게시글, 댓글 | 기본 내장 |
-| `contents` | 콘텐츠 페이지 (소개, FAQ) | 기본 내장 |
-| `policies` | 이용약관, 개인정보처리방침 | 기본 내장 |
 | `shop` | 쇼핑몰 (상품, 장바구니, 주문) | Submodule |
 
 ---
@@ -560,10 +556,8 @@ npm run dev
 ```
 src/
 ├── app/              # 코어 라우트 + 자동생성 래퍼
+├── features/         # 기본 게시판·콘텐츠·약관
 ├── plugins/          # 플러그인 시스템
-│   ├── boards/       # 커뮤니티 (기본 내장)
-│   ├── contents/     # 콘텐츠 (기본 내장)
-│   ├── policies/     # 약관 (기본 내장)
 │   └── shop/         # 쇼핑몰 (submodule)
 ├── layouts/          # 레이아웃 시스템 (Header, HomePage, Footer)
 ├── themes/           # 테마 시스템 (CSS 변수)

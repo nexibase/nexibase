@@ -1,11 +1,8 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { isPluginEnabled } from "@/lib/plugins"
 
 export async function GET() {
   try {
-    const boardsEnabled = await isPluginEnabled('boards')
-
     // Date math
     const now = new Date()
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
@@ -41,50 +38,41 @@ export async function GET() {
       `
     ])
 
-    // === Board stats (when the boards plugin is enabled) ===
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let totalPosts = 0, lastWeekPosts = 0, recentPosts: any[] = [], popularPosts: any[] = [], recentComments: any[] = []
-
-    if (boardsEnabled) {
-      const boardsResults = await Promise.all([
-        prisma.post.count({ where: { status: { not: "deleted" } } }),
-        prisma.post.count({ where: { status: { not: "deleted" }, createdAt: { lt: lastWeekStart } } }),
-        prisma.post.findMany({
-          where: { status: { not: "deleted" } },
-          orderBy: { createdAt: "desc" },
-          take: 5,
-          select: {
-            id: true, title: true, createdAt: true,
-            author: { select: { nickname: true } },
-            board: { select: { slug: true } }
-          }
-        }),
-        prisma.post.findMany({
-          where: { status: { not: "deleted" } },
-          orderBy: [{ viewCount: 'desc' }, { likeCount: 'desc' }],
-          take: 5,
-          select: {
-            id: true, title: true, viewCount: true, likeCount: true, commentCount: true,
-            board: { select: { slug: true, name: true } }
-          }
-        })
-      ])
-      totalPosts = boardsResults[0]
-      lastWeekPosts = boardsResults[1]
-      recentPosts = boardsResults[2]
-      popularPosts = boardsResults[3]
-
-      recentComments = await prisma.comment.findMany({
+    // Board stats are always available as part of core.
+    const [totalPosts, lastWeekPosts, recentPosts, popularPosts] = await Promise.all([
+      prisma.post.count({ where: { status: { not: "deleted" } } }),
+      prisma.post.count({ where: { status: { not: "deleted" }, createdAt: { lt: lastWeekStart } } }),
+      prisma.post.findMany({
         where: { status: { not: "deleted" } },
         orderBy: { createdAt: "desc" },
         take: 5,
         select: {
-          id: true, content: true, createdAt: true,
+          id: true, title: true, createdAt: true,
           author: { select: { nickname: true } },
-          post: { select: { id: true, title: true, board: { select: { slug: true } } } }
+          board: { select: { slug: true } }
+        }
+      }),
+      prisma.post.findMany({
+        where: { status: { not: "deleted" } },
+        orderBy: [{ viewCount: 'desc' }, { likeCount: 'desc' }],
+        take: 5,
+        select: {
+          id: true, title: true, viewCount: true, likeCount: true, commentCount: true,
+          board: { select: { slug: true, name: true } }
         }
       })
-    }
+    ])
+
+    const recentComments = await prisma.comment.findMany({
+      where: { status: { not: "deleted" } },
+      orderBy: { createdAt: "desc" },
+      take: 5,
+      select: {
+        id: true, content: true, createdAt: true,
+        author: { select: { nickname: true } },
+        post: { select: { id: true, title: true, board: { select: { slug: true } } } }
+      }
+    })
 
     // === Growth calculations ===
     const userGrowth = lastMonthUsers > 0
@@ -112,7 +100,6 @@ export async function GET() {
     }))
 
     return NextResponse.json({
-      pluginStatus: { boards: boardsEnabled },
       stats: {
         totalUsers,
         userGrowth: parseFloat(userGrowth),
@@ -122,7 +109,7 @@ export async function GET() {
         activeUserGrowth: parseFloat(activeUserGrowth)
       },
       recentUsers,
-      ...(boardsEnabled ? { recentPosts, popularPosts, recentComments } : {}),
+      recentPosts, popularPosts, recentComments,
       trends: { users: userTrend }
     })
   } catch (error) {

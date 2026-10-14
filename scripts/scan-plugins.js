@@ -1,5 +1,6 @@
 const fs = require('fs')
 const path = require('path')
+const coreFeatures = require('../src/lib/core-features.json')
 
 const PLUGINS_DIR = path.join(__dirname, '..', 'src', 'plugins')
 const OUTPUT_FILE = path.join(PLUGINS_DIR, '_generated.ts')
@@ -23,7 +24,7 @@ function scanPlugins() {
     .map(e => e.name)
 
   const plugins = []
-  const slugs = new Map()
+  const slugs = new Map(coreFeatures.map(slug => [slug, null]))
 
   for (const folder of folders) {
     const pluginFile = path.join(PLUGINS_DIR, folder, 'plugin.ts')
@@ -53,7 +54,9 @@ function scanPlugins() {
 
     if (slugs.has(slug)) {
       console.error(`ERROR: slug '${slug}' conflict!`)
-      console.error(`  - src/plugins/${slugs.get(slug)}/plugin.ts`)
+      console.error(slugs.get(slug) === null
+        ? `  - reserved core feature: ${slug}`
+        : `  - src/plugins/${slugs.get(slug)}/plugin.ts`)
       console.error(`  - src/plugins/${folder}/plugin.ts`)
       console.error(`Change one of the slugs to resolve.`)
       process.exit(1)

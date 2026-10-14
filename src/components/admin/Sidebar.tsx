@@ -96,6 +96,9 @@ function getIcon(iconName: string): LucideIcon {
 // Core menu items that are always shown (labels are translation keys)
 const coreMenuItems = [
   { id: "dashboard", labelKey: "dashboard", icon: LayoutDashboard, path: "/admin" },
+  { id: "boards", labelKey: "boards", icon: MessageSquare, path: "/admin/boards" },
+  { id: "contents", labelKey: "contents", icon: FileText, path: "/admin/contents" },
+  { id: "policies", labelKey: "policies", icon: ScrollText, path: "/admin/policies" },
   { id: "users", labelKey: "users", icon: Users, path: "/admin/users" },
   { id: "login-logs", labelKey: "loginLogs", icon: ClipboardList, path: "/admin/login-logs" },
   { id: "settings", labelKey: "settings", icon: Settings, path: "/admin/settings" },
@@ -145,9 +148,6 @@ function resolvePluginLabel(label: string, translate: (key: string) => string): 
 export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
   const t = useTranslations('admin')
   const ts = useTranslations('shop')
-  const tb = useTranslations('boards')
-  const tcon = useTranslations('contents')
-  const tpol = useTranslations('policies')
   const locale = useLocale()
   const [isOpen, setIsOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
@@ -262,9 +262,6 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
   // Map of plugin folder → label translator (add entries for each i18n-enabled plugin)
   const pluginTranslators: Record<string, (key: string) => string> = {
     shop: ts as unknown as (key: string) => string,
-    boards: tb as unknown as (key: string) => string,
-    contents: tcon as unknown as (key: string) => string,
-    policies: tpol as unknown as (key: string) => string,
   }
 
   const translatePluginLabel = (folder: string, label: string) =>

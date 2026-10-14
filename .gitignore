@@ -74,22 +74,10 @@ next-env.d.ts
 /src/messages/en.json
 
 # 플러그인 라우트 래퍼 (scan-plugins가 자동 생성)
-/src/app/\[locale\]/boards/
-/src/app/api/boards/
-/src/app/\[locale\]/admin/boards/
-/src/app/api/admin/boards/
 /src/app/\[locale\]/shop/
 /src/app/api/shop/
 /src/app/\[locale\]/admin/shop/
 /src/app/api/admin/shop/
-/src/app/\[locale\]/contents/
-/src/app/api/contents/
-/src/app/\[locale\]/admin/contents/
-/src/app/api/admin/contents/
-/src/app/\[locale\]/policies/
-/src/app/api/policies/
-/src/app/\[locale\]/admin/policies/
-/src/app/api/admin/policies/
 /src/app/\[locale\]/community/
 /src/app/\[locale\]/auction/
 /src/app/api/auction/
