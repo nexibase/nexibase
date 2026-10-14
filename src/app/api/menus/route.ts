@@ -27,10 +27,10 @@ export async function GET(request: NextRequest) {
       include: {
         children: {
           where: { isActive: true },
-          orderBy: { sortOrder: 'asc' },
+          orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }],
         },
       },
-      orderBy: { sortOrder: 'asc' },
+      orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }],
     })
 
     // Filter out menus belonging to disabled plugins

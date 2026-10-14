@@ -28,10 +28,10 @@ export async function GET() {
       where: { parentId: null },
       include: {
         children: {
-          orderBy: { sortOrder: 'asc' },
+          orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }],
         },
       },
-      orderBy: [{ position: 'asc' }, { sortOrder: 'asc' }],
+      orderBy: [{ position: 'asc' }, { sortOrder: 'asc' }, { id: 'asc' }],
     })
 
     // Attach plugin-enabled state to each menu
