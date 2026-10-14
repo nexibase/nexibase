@@ -1,6 +1,7 @@
 const fs = require('fs')
 const path = require('path')
 const coreFeatures = require('../src/lib/core-features.json')
+const coreRouteAliases = require('../src/lib/core-route-aliases.json')
 
 const PLUGINS_DIR = path.join(__dirname, '..', 'src', 'plugins')
 const OUTPUT_FILE = path.join(PLUGINS_DIR, '_generated.ts')
@@ -24,7 +25,7 @@ function scanPlugins() {
     .map(e => e.name)
 
   const plugins = []
-  const slugs = new Map(coreFeatures.map(slug => [slug, null]))
+  const slugs = new Map([...coreFeatures, ...Object.keys(coreRouteAliases)].map(slug => [slug, null]))
 
   for (const folder of folders) {
     const pluginFile = path.join(PLUGINS_DIR, folder, 'plugin.ts')

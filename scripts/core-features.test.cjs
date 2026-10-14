@@ -7,7 +7,7 @@ const { before, after, test } = require('node:test')
 
 const root = path.resolve(__dirname, '..')
 const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'nexibase-core-test-'))
-const features = ['boards', 'contents', 'policies']
+const features = require('../src/lib/core-features.json')
 const routeFiles = []
 function walk(dir) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -30,6 +30,7 @@ before(() => {
       walk(path.join(root, prefix, feature))
     }
   }
+  routeFiles.push('src/app/api/faq/route.ts', 'src/app/api/admin/faq/route.ts', 'src/app/api/faq-accordion/route.ts', 'src/app/api/admin/faq-accordion/route.ts')
 })
 after(() => {
   assert.ok(fixture.startsWith(path.join(os.tmpdir(), 'nexibase-core-test-')))
@@ -50,10 +51,11 @@ test('repeated plugin scans leave every core page and API unchanged', () => {
 test('core publishing is absent from plugin metadata while optional plugins remain', () => {
   const manifest = fs.readFileSync(path.join(fixture, 'src/plugins/_generated.ts'), 'utf8')
   for (const feature of features) assert.ok(!manifest.includes(`'${feature}': {`), feature)
-  for (const plugin of ['shop', 'faq-accordion', 'polls', 'weather-widget']) assert.ok(manifest.includes(`'${plugin}': {`), plugin)
+  assert.ok(!manifest.includes("'faq-accordion': {"))
+  for (const plugin of ['shop', 'polls', 'weather-widget']) assert.ok(manifest.includes(`'${plugin}': {`), plugin)
   const core = fs.readFileSync(path.join(fixture, 'prisma/schema.base.prisma'), 'utf8')
   const generated = fs.readFileSync(path.join(fixture, 'prisma/schema.prisma'), 'utf8')
-  for (const model of ['Board', 'Post', 'PostAttachment', 'Comment', 'Reaction', 'Content', 'Policy']) {
+  for (const model of ['Board', 'Post', 'PostAttachment', 'Comment', 'Reaction', 'Content', 'Policy', 'FaqCategory', 'Faq']) {
     assert.match(core, new RegExp(`model ${model} \\{`))
     assert.equal((generated.match(new RegExp(`model ${model} \\{`, 'g')) || []).length, 1)
   }
@@ -61,7 +63,7 @@ test('core publishing is absent from plugin metadata while optional plugins rema
 
 test('saved widget keys, translations, and withdrawal retention remain available', () => {
   const registry = fs.readFileSync(path.join(fixture, 'src/lib/widgets/_generated-registry.ts'), 'utf8')
-  for (const key of ['latest-posts', 'board-cards', 'popular-boards']) assert.ok(registry.includes(`'${key}': {`))
+  for (const key of ['latest-posts', 'board-cards', 'popular-boards', 'faq-widget']) assert.ok(registry.includes(`'${key}': {`))
   assert.ok(!registry.includes('@/plugins/boards/'))
   for (const locale of ['ko', 'en']) {
     const messages = JSON.parse(fs.readFileSync(path.join(fixture, `src/messages/${locale}.json`), 'utf8'))
@@ -73,12 +75,14 @@ test('saved widget keys, translations, and withdrawal retention remain available
     assert.equal(policies.core.find(entry => entry.model === model)?.policy, 'retain')
   }
   assert.ok(!policies.boards)
+  assert.ok(!policies['faq-accordion'])
+  assert.ok(!registry.includes('@/plugins/faq-accordion/'))
 })
 
 test('plugins cannot overwrite reserved core route slugs', () => {
   const plugin = path.join(fixture, 'src/plugins/core-collision-test')
   fs.mkdirSync(plugin)
-  for (const slug of features) {
+  for (const slug of [...features, ...Object.keys(require('../src/lib/core-route-aliases.json'))]) {
     fs.writeFileSync(path.join(plugin, 'plugin.ts'), `export default { name: 'Collision', slug: '${slug}' }`)
     const result = scan()
     assert.equal(result.status, 1)

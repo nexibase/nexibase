@@ -252,7 +252,7 @@ npm run dev
 
 ### Available Plugins
 
-Boards, content pages, and versioned policies are always available as core features. They keep their existing URLs and are managed directly from the admin sidebar.
+Boards, content pages, FAQ, and versioned policies are always available as core features. They keep their existing URLs and are managed directly from the admin sidebar.
 
 | Plugin | Description | Status |
 |--------|------------|--------|
@@ -265,7 +265,7 @@ Boards, content pages, and versioned policies are always available as core featu
 ```
 src/
 ├── app/              # Core routes + auto-generated wrappers
-├── features/         # Core boards, content pages, policies
+├── features/         # Core boards, content pages, FAQ, policies
 ├── plugins/          # Plugin system
 │   └── shop/         # E-commerce (submodule)
 ├── layouts/          # Layout system (Header, HomePage, Footer)
@@ -543,7 +543,7 @@ npm run dev
 
 ### 제공 플러그인
 
-게시판·콘텐츠·버전별 약관은 항상 제공되는 기본 기능입니다. 기존 URL을 유지하며 관리자 기본 메뉴에서 관리합니다.
+게시판·콘텐츠·FAQ·버전별 약관은 항상 제공되는 기본 기능입니다. 기존 URL을 유지하며 관리자 기본 메뉴에서 관리합니다.
 
 | 플러그인 | 설명 | 상태 |
 |---------|------|------|
@@ -556,7 +556,7 @@ npm run dev
 ```
 src/
 ├── app/              # 코어 라우트 + 자동생성 래퍼
-├── features/         # 기본 게시판·콘텐츠·약관
+├── features/         # 기본 게시판·콘텐츠·FAQ·약관
 ├── plugins/          # 플러그인 시스템
 │   └── shop/         # 쇼핑몰 (submodule)
 ├── layouts/          # 레이아웃 시스템 (Header, HomePage, Footer)

@@ -34,7 +34,7 @@ async function main() {
   }
   const plugins = (await request('/api/admin/plugins')).data.plugins
   for (const feature of ['boards', 'contents', 'policies']) assert.ok(!plugins.some((plugin: { folder: string }) => plugin.folder === feature))
-  assert.equal(plugins.length, 6)
+  assert.equal(plugins.length, 5)
   const settings = (await request('/api/settings')).data
   for (const feature of ['boards', 'contents', 'policies']) assert.ok(!settings.enabledPlugins.includes(feature))
   for (const path of ['/api/admin/boards', '/api/admin/contents', '/api/admin/policies']) {
