@@ -48,7 +48,7 @@ export default function FaqAdminPage() {
   }, [refetch])
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
+    <div className="w-full p-6">
       <div className="mb-6 flex items-center justify-between gap-4">
         <h1 className="text-2xl font-bold">{t('title')}</h1>
         <a href="/faqs" target="_blank" rel="noopener noreferrer" aria-label={t('openPublicFaq')} className="inline-flex items-center gap-1 text-sm text-primary hover:underline">
