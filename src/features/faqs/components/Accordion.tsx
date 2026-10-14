@@ -25,7 +25,7 @@ export function AccordionItem({ expanded, onToggle, trigger, children, id }: Acc
   const triggerId = id ? `${id}-trigger` : undefined
   const panelId = id ? `${id}-panel` : undefined
   return (
-    <div id={id} className="overflow-hidden">
+    <div id={id} className="overflow-hidden scroll-mt-28">
       <button
         type="button"
         id={triggerId}
@@ -42,6 +42,8 @@ export function AccordionItem({ expanded, onToggle, trigger, children, id }: Acc
       <div
         id={panelId}
         role="region"
+        inert={!expanded}
+        aria-hidden={!expanded}
         aria-labelledby={triggerId}
         className={cn(
           'grid transition-[grid-template-rows] duration-300 ease-out',

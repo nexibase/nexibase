@@ -24,6 +24,8 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Plus, Pencil, Trash2, GripVertical, Eye, Search, ThumbsUp, ThumbsDown } from 'lucide-react'
 import Link from 'next/link'
+import { FaqActivityDialog } from './FaqActivityDialog'
+import type { FaqActivityKind } from '../../lib/activity-types'
 import { stripHtml } from '@/features/faqs/lib/sanitize'
 
 interface Category { id: number; name: string; slug: string }
@@ -41,7 +43,7 @@ interface Faq {
   published: boolean
 }
 
-function Row({ faq, onDelete }: { faq: Faq; onDelete: () => void }) {
+function Row({ faq, onDelete, onDetails }: { faq: Faq; onDelete: () => void; onDetails: (kind: FaqActivityKind) => void }) {
   const t = useTranslations('faqs.admin')
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: faq.id })
   const style = {
@@ -64,9 +66,9 @@ function Row({ faq, onDelete }: { faq: Faq; onDelete: () => void }) {
         <div className="font-medium truncate">{faq.question}</div>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground mt-0.5">
           <Badge variant="outline">{faq.category.name}</Badge>
-          <span className="inline-flex items-center gap-1"><Eye className="h-3 w-3" /> {faq.views}</span>
-          <span className="inline-flex items-center gap-1"><ThumbsUp className="h-3 w-3" aria-hidden="true" /> {t('statsHelpful')} {faq.helpful}</span>
-          <span className="inline-flex items-center gap-1"><ThumbsDown className="h-3 w-3" aria-hidden="true" /> {t('statsNotHelpful')} {faq.notHelpful}</span>
+          <button type="button" className="inline-flex items-center gap-1 rounded-sm hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label={t('activity.detailsLabel', { stat: t('statsViews'), question: faq.question })} onClick={() => onDetails('views')}><Eye className="h-3 w-3" aria-hidden="true" /> {faq.views}</button>
+          <button type="button" className="inline-flex items-center gap-1 rounded-sm hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label={t('activity.detailsLabel', { stat: t('statsHelpful'), question: faq.question })} onClick={() => onDetails('helpful')}><ThumbsUp className="h-3 w-3" aria-hidden="true" /> {t('statsHelpful')} {faq.helpful}</button>
+          <button type="button" className="inline-flex items-center gap-1 rounded-sm hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label={t('activity.detailsLabel', { stat: t('statsNotHelpful'), question: faq.question })} onClick={() => onDetails('notHelpful')}><ThumbsDown className="h-3 w-3" aria-hidden="true" /> {t('statsNotHelpful')} {faq.notHelpful}</button>
           {!faq.published && <Badge variant="secondary">{t('draft')}</Badge>}
         </div>
       </div>
@@ -92,6 +94,7 @@ export function FaqList({
   onChanged: () => void
 }) {
   const t = useTranslations('faqs.admin')
+  const [details, setDetails] = useState<{ faq: Faq; kind: FaqActivityKind } | null>(null)
   const [selectedCat, setSelectedCat] = useState<string>('all')
   const [search, setSearch] = useState('')
 
@@ -189,13 +192,14 @@ export function FaqList({
           <SortableContext items={display.map((i) => i.id)} strategy={verticalListSortingStrategy}>
             <div className="space-y-2">
               {display.map((faq) => (
-                <Row key={faq.id} faq={faq} onDelete={() => handleDelete(faq)} />
+                <Row key={faq.id} faq={faq} onDelete={() => handleDelete(faq)} onDetails={kind => setDetails({ faq, kind })} />
               ))}
             </div>
           </SortableContext>
         </DndContext>
       )}
 
+      {details && <FaqActivityDialog key={`${details.faq.id}:${details.kind}`} faq={details.faq} kind={details.kind} onClose={() => { setDetails(null); onChanged() }} />}
     </div>
   )
 }

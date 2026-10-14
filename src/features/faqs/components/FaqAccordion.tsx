@@ -1,12 +1,14 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Search, Eye, ThumbsUp, ThumbsDown } from 'lucide-react'
+import { FaqShareLink } from './FaqShareLink'
+import { faqHash, faqIdFromHash } from '../lib/share'
 import { Accordion, AccordionItem } from './Accordion'
 import { loadFaqActivityStatus } from '@/features/faqs/lib/activity-status'
 import { trackFaqView } from '@/features/faqs/lib/view-tracking'
@@ -93,22 +95,54 @@ export function FaqAccordion({ categories, faqs, topFaqs }: Props) {
 
   const showMostViewed = selectedCat === 'all' && debouncedSearch.trim() === '' && topFaqs.length > 0
 
-  function scrollToFaq(id: number) {
-    setExpandedId(id)
-    recordView(id)
-    const el = document.getElementById(`faq-item-${id}`)
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-  }
-
-  function recordView(id: number) {
+  const recordView = useCallback((id: number) => {
     void trackFaqView(id).then(views => {
       if (views !== undefined) setViewCounts(current => ({ ...current, [id]: views }))
     })
+  }, [])
+
+  useEffect(() => {
+    let frame: number | undefined
+    function followAddress() {
+      const id = faqIdFromHash(window.location.hash)
+      if (id === null || !faqs.some(faq => faq.id === id)) {
+        setExpandedId(null)
+        return
+      }
+      setSelectedCat('all')
+      setRawSearch('')
+      setDebouncedSearch('')
+      setExpandedId(id)
+      recordView(id)
+      if (frame !== undefined) cancelAnimationFrame(frame)
+      frame = requestAnimationFrame(() => document.getElementById(`faq-${id}`)?.scrollIntoView({ block: 'start' }))
+    }
+    followAddress()
+    window.addEventListener('hashchange', followAddress)
+    window.addEventListener('popstate', followAddress)
+    return () => {
+      window.removeEventListener('hashchange', followAddress)
+      window.removeEventListener('popstate', followAddress)
+      if (frame !== undefined) cancelAnimationFrame(frame)
+    }
+  }, [faqs, recordView])
+
+  function openFaq(id: number, scroll = false) {
+    setExpandedId(id)
+    recordView(id)
+    if (window.location.hash !== faqHash(id)) {
+      window.history.pushState(window.history.state, '', `${window.location.pathname}${window.location.search}${faqHash(id)}`)
+    }
+    if (scroll) requestAnimationFrame(() => document.getElementById(`faq-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
   }
 
   function onToggle(id: number) {
-    if (expandedId !== id) recordView(id)
-    setExpandedId(current => current === id ? null : id)
+    if (expandedId !== id) {
+      openFaq(id)
+    } else {
+      setExpandedId(null)
+      if (faqIdFromHash(window.location.hash) === id) window.history.replaceState(window.history.state, '', `${window.location.pathname}${window.location.search}`)
+    }
   }
 
   async function vote(id: number, helpful: boolean) {
@@ -163,7 +197,7 @@ export function FaqAccordion({ categories, faqs, topFaqs }: Props) {
                 <button
                   type="button"
                   className="text-left hover:underline text-sm flex items-center gap-2 w-full"
-                  onClick={() => scrollToFaq(f.id)}
+                  onClick={() => openFaq(f.id, true)}
                 >
                   <span className="text-muted-foreground w-4">{i + 1}.</span>
                   <span className="flex-1 truncate">{f.question}</span>
@@ -212,7 +246,7 @@ export function FaqAccordion({ categories, faqs, topFaqs }: Props) {
             return (
               <AccordionItem
                 key={faq.id}
-                id={`faq-item-${faq.id}`}
+                id={`faq-${faq.id}`}
                 expanded={expanded}
                 onToggle={() => onToggle(faq.id)}
                 trigger={
@@ -224,6 +258,7 @@ export function FaqAccordion({ categories, faqs, topFaqs }: Props) {
                   </div>
                 }
               >
+                <FaqShareLink faqId={faq.id} />
                 <div
                   className="prose prose-sm max-w-none dark:prose-invert"
                   dangerouslySetInnerHTML={{ __html: sanitizeHtml(faq.answer) }}

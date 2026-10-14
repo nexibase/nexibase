@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { Card, CardContent } from '@/components/ui/card'
 import { ArrowRight } from 'lucide-react'
+import { FaqShareLink } from '@/features/faqs/components/FaqShareLink'
 import { Accordion, AccordionItem } from '@/features/faqs/components/Accordion'
 import { trackFaqView } from '@/features/faqs/lib/view-tracking'
 import { sanitizeHtml } from '@/features/faqs/lib/sanitize'
@@ -83,6 +84,7 @@ export default function FaqWidget({ settings }: Props) {
                   onToggle={() => onToggle(faq.id)}
                   trigger={<span className="font-medium text-sm">{faq.question}</span>}
                 >
+                  <FaqShareLink faqId={faq.id} />
                   <div
                     className="prose prose-sm max-w-none dark:prose-invert"
                     dangerouslySetInnerHTML={{ __html: sanitizeHtml(faq.answer) }}

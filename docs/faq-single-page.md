@@ -33,3 +33,10 @@ Signed-in users are identified by their account, independent of cookies or brows
 ## Durable view validation
 
 `scripts/verify-faq-view-ledger.ts` creates temporary questions, preserves an existing baseline count, verifies same-account requests without browser cookies, signed-guest reloads, legacy aliases and concurrent first views, then removes its test records. Existing FAQ data and ledgers are checked before and after. View rows follow the existing anonymized-user retention policy.
+
+
+## Activity details and question sharing
+
+Admin FAQ counts open a paginated activity dialog. `/api/admin/faqs/{id}/activity` accepts `kind=views|helpful|notHelpful` and `audience=all|user|guest`; only admins/managers can read it. It shows recorded account or anonymous-browser activity and timestamps. Guest IDs are opaque display labels; raw visitor/cookie keys and email addresses are not returned. Historical aggregate counts without ledger entries are shown as unavailable details.
+
+Public FAQ opens update the fragment to `/faqs#faq-{id}` and show an absolute address with a copy button. Direct links, reloads and browser history open the published target question and retain the existing account/cookie view deduplication. Categories stay on one collection page. The FAQ widget also provides the canonical question link. Unknown, malformed or unpublished targets do not open or count a question. No schema or stored-data changes are needed.

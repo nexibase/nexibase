@@ -1361,6 +1361,11 @@
     "no": "아니오",
     "thanksForFeedback": "피드백 감사합니다!",
       "feedbackFailed": "평가를 저장하지 못했습니다. 다시 시도해 주세요.",
+      "shareQuestion": "이 질문 공유하기",
+      "shareAddress": "공유 주소",
+      "copyAddress": "주소 복사",
+      "copied": "복사 완료",
+      "copyManual": "주소를 선택해 복사해 주세요.",
     "empty": "아직 등록된 FAQ가 없습니다.",
     "widget": {
       "viewAll": "전체 FAQ 보기"
@@ -1401,6 +1406,29 @@
       "statsViews": "조회수",
       "statsHelpful": "도움됨",
       "statsNotHelpful": "도움 안 됨",
+      "activity": {
+        "detailsLabel": "{question} — {stat} 상세 내역",
+        "viewsTitle": "조회 내역",
+        "helpfulTitle": "도움됨 평가 내역",
+        "notHelpfulTitle": "도움 안 됨 평가 내역",
+        "total": "전체 집계",
+        "recorded": "기록된 내역",
+        "user": "로그인 사용자",
+        "guest": "비로그인 사용자",
+        "all": "전체",
+        "historical": "기존 집계 {count}건은 사용자 기록이 없어 상세 내역을 확인할 수 없습니다.",
+        "type": "구분",
+        "actor": "사용자 / 브라우저 식별자",
+        "time": "시각",
+        "withdrawn": "탈퇴한 사용자",
+        "empty": "기록된 내역이 없습니다.",
+        "loading": "내역을 불러오는 중…",
+        "error": "내역을 불러오지 못했습니다. 다시 시도해 주세요.",
+        "refresh": "새로고침",
+        "page": "{page} / {pages} 페이지",
+        "previous": "이전",
+        "next": "다음"
+      },
       "publicFaq": "FAQ",
       "openPublicFaq": "사용자 FAQ 열기"
     }

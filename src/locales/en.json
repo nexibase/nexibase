@@ -1361,6 +1361,11 @@
     "no": "No",
     "thanksForFeedback": "Thanks for your feedback!",
       "feedbackFailed": "Could not save your feedback. Please try again.",
+      "shareQuestion": "Share this question",
+      "shareAddress": "Share address",
+      "copyAddress": "Copy address",
+      "copied": "Copied",
+      "copyManual": "Select and copy the address manually.",
     "empty": "No FAQs available yet.",
     "widget": {
       "viewAll": "View all FAQs"
@@ -1401,6 +1406,29 @@
       "statsViews": "Views",
       "statsHelpful": "Helpful",
       "statsNotHelpful": "Not helpful",
+      "activity": {
+        "detailsLabel": "{question} — {stat} details",
+        "viewsTitle": "View history",
+        "helpfulTitle": "Helpful evaluations",
+        "notHelpfulTitle": "Not helpful evaluations",
+        "total": "Total count",
+        "recorded": "Recorded entries",
+        "user": "Signed-in users",
+        "guest": "Guest users",
+        "all": "All",
+        "historical": "{count} historical entries have no user records, so their details are unavailable.",
+        "type": "Type",
+        "actor": "User / browser identifier",
+        "time": "Time",
+        "withdrawn": "Withdrawn user",
+        "empty": "No recorded entries.",
+        "loading": "Loading history…",
+        "error": "Could not load history. Please try again.",
+        "refresh": "Refresh",
+        "page": "Page {page} of {pages}",
+        "previous": "Previous",
+        "next": "Next"
+      },
       "publicFaq": "FAQ",
       "openPublicFaq": "Open public FAQ"
     }
