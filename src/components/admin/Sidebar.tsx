@@ -102,11 +102,11 @@ const coreMenuItems = [
   { id: "faqs", labelKey: "faqs", icon: MessageCircleQuestion, path: "/admin/faqs" },
   { id: "policies", labelKey: "policies", icon: ScrollText, path: "/admin/policies" },
   { id: "users", labelKey: "users", icon: Users, path: "/admin/users" },
-  { id: "login-logs", labelKey: "loginLogs", icon: ClipboardList, path: "/admin/login-logs" },
   { id: "settings", labelKey: "settings", icon: Settings, path: "/admin/settings" },
   { id: "plugins", labelKey: "plugins", icon: Puzzle, path: "/admin/plugins" },
   { id: "menus", labelKey: "menus", icon: MenuIcon, path: "/admin/menus" },
   { id: "pages", labelKey: "pages", icon: LayoutGrid, path: "/admin/pages" },
+  { id: "login-logs", labelKey: "loginLogs", icon: ClipboardList, path: "/admin/login-logs" },
 ] as const
 
 // Returns cached user info (session-storage backed)
