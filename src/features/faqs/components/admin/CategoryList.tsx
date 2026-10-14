@@ -20,7 +20,8 @@ import { CSS } from '@dnd-kit/utilities'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Pencil, Trash2, GripVertical } from 'lucide-react'
+import { Plus, Pencil, Trash2, GripVertical, ExternalLink } from 'lucide-react'
+import { faqCategoryPath } from '../../lib/urls'
 import { CategoryDialog } from './CategoryDialog'
 
 interface Category {
@@ -50,9 +51,18 @@ function Row({ cat, onEdit, onDelete }: { cat: Category; onEdit: () => void; onD
       >
         <GripVertical className="h-5 w-5" />
       </button>
-      <div className="flex-1">
+      <div className="min-w-0 flex-1">
         <div className="font-medium">{cat.name}</div>
-        <div className="text-xs text-muted-foreground">/{cat.slug}</div>
+        <a
+          href={faqCategoryPath(cat.slug)}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={t('openCategory', { category: cat.name })}
+          className="inline-flex max-w-full items-center gap-1 text-xs text-muted-foreground hover:text-primary hover:underline"
+        >
+          <span className="break-all">{faqCategoryPath(cat.slug)}</span>
+          <ExternalLink className="h-3 w-3 shrink-0" />
+        </a>
       </div>
       <Badge variant="secondary">{cat._count.faqs}</Badge>
       <Button size="sm" variant="ghost" onClick={onEdit} aria-label={t('editCategory')}>

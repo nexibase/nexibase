@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
+import Link from 'next/link'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -9,6 +10,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Search, Eye, ThumbsUp, ThumbsDown } from 'lucide-react'
 import { Accordion, AccordionItem } from './Accordion'
 import { sanitizeHtml, stripHtml } from '@/features/faqs/lib/sanitize'
+import { faqCategoryPath } from '../lib/urls'
 
 interface Category { id: number; name: string; slug: string; _count?: { faqs: number } }
 interface Faq {
@@ -26,12 +28,14 @@ interface Props {
   categories: Category[]
   faqs: Faq[]
   topFaqs: Faq[]
+  activeCategory?: Category | null
 }
 
-export function FaqAccordion({ categories, faqs, topFaqs }: Props) {
+export function FaqAccordion({ categories, faqs, topFaqs, activeCategory }: Props) {
   const t = useTranslations('faqs')
 
-  const [selectedCat, setSelectedCat] = useState<string>('all')
+  const selectedCat = activeCategory?.id.toString() ?? 'all'
+  const totalFaqs = categories.reduce((total, category) => total + (category._count?.faqs ?? 0), 0)
   const [rawSearch, setRawSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [expandedId, setExpandedId] = useState<number | null>(null)
@@ -65,11 +69,9 @@ export function FaqAccordion({ categories, faqs, topFaqs }: Props) {
     let list = faqs
     if (q) {
       list = list.filter((f) => f.question.toLowerCase().includes(q) || stripHtml(f.answer).toLowerCase().includes(q))
-    } else if (selectedCat !== 'all') {
-      list = list.filter((f) => f.categoryId.toString() === selectedCat)
     }
     return list
-  }, [faqs, debouncedSearch, selectedCat])
+  }, [faqs, debouncedSearch])
 
   const showMostViewed = selectedCat === 'all' && debouncedSearch.trim() === '' && topFaqs.length > 0
 
@@ -118,10 +120,6 @@ export function FaqAccordion({ categories, faqs, topFaqs }: Props) {
     } catch {}
   }
 
-  if (faqs.length === 0) {
-    return <div className="py-12 text-center text-muted-foreground">{t('empty')}</div>
-  }
-
   return (
     <div className="space-y-6">
       <div className="relative max-w-md">
@@ -159,25 +157,31 @@ export function FaqAccordion({ categories, faqs, topFaqs }: Props) {
       )}
 
       {debouncedSearch.trim() === '' && (
-        <Tabs value={selectedCat} onValueChange={setSelectedCat}>
+        <Tabs value={selectedCat} activationMode="manual">
           <TabsList className="flex-wrap h-auto bg-transparent p-0 gap-2">
             <TabsTrigger
               value="all"
+              asChild
               className="rounded-full border px-3 h-8 flex-none data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:border-primary data-[state=active]:shadow-none"
             >
-              {t('all')}
-              <Badge variant="secondary" className="ml-1.5">{faqs.length}</Badge>
+              <Link href="/faqs">
+                {t('all')}
+                <Badge variant="secondary" className="ml-1.5">{totalFaqs}</Badge>
+              </Link>
             </TabsTrigger>
             {categories
-              .filter((c) => (c._count?.faqs ?? 0) > 0)
+              .filter((c) => (c._count?.faqs ?? 0) > 0 || c.id.toString() === selectedCat)
               .map((c) => (
                 <TabsTrigger
                   key={c.id}
                   value={c.id.toString()}
+                  asChild
                   className="rounded-full border px-3 h-8 flex-none data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:border-primary data-[state=active]:shadow-none"
                 >
-                  {c.name}
-                  <Badge variant="secondary" className="ml-1.5">{c._count?.faqs ?? 0}</Badge>
+                  <Link href={faqCategoryPath(c.slug)}>
+                    {c.name}
+                    <Badge variant="secondary" className="ml-1.5">{c._count?.faqs ?? 0}</Badge>
+                  </Link>
                 </TabsTrigger>
               ))}
           </TabsList>
@@ -185,7 +189,7 @@ export function FaqAccordion({ categories, faqs, topFaqs }: Props) {
       )}
 
       {filtered.length === 0 ? (
-        <div className="py-8 text-center text-muted-foreground">{t('noResults')}</div>
+        <div className="py-8 text-center text-muted-foreground">{t(faqs.length === 0 ? 'empty' : 'noResults')}</div>
       ) : (
         <Accordion>
           {filtered.map((faq) => {

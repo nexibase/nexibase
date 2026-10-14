@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next'
 import { prisma } from '@/lib/prisma'
 import { loadSiteSettings } from '@/lib/site-settings'
+import { faqCategoryPath } from '@/features/faqs/lib/urls'
 
 const FALLBACK_BASE = 'https://nexibase.com'
 
@@ -24,7 +25,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${base}/search`, lastModified: now, changeFrequency: 'weekly', priority: 0.4 },
   ]
 
-  const [boards, posts, contents, policies] = await Promise.all([
+  const [boards, posts, contents, policies, faqCategories] = await Promise.all([
     prisma.board.findMany({
       where: { readMemberOnly: false },
       select: { slug: true, updatedAt: true },
@@ -48,6 +49,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }),
     prisma.policy.findMany({
       where: { isActive: true },
+      select: { slug: true, updatedAt: true },
+    }),
+    prisma.faqCategory.findMany({
+      where: { faqs: { some: { published: true } } },
       select: { slug: true, updatedAt: true },
     }),
   ])
@@ -86,5 +91,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...postEntries,
     ...contentEntries,
     ...policyEntries,
+    ...faqCategories.map(category => ({
+      url: `${base}${faqCategoryPath(category.slug)}`,
+      lastModified: category.updatedAt,
+      changeFrequency: 'weekly' as const,
+      priority: 0.6,
+    })),
   ]
 }

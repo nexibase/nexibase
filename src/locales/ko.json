@@ -1399,7 +1399,10 @@
       "statsTitle": "통계",
       "statsViews": "조회수",
       "statsHelpful": "도움됨",
-      "statsNotHelpful": "도움 안 됨"
-    }
+      "statsNotHelpful": "도움 안 됨",
+      "openCategory": "{category} 사용자용 FAQ 열기",
+      "categorySlugHint": "예: general → /faqs/general. 비워두면 자동으로 생성됩니다."
+    },
+    "categoryTitle": "{category} FAQ"
   }
 }
