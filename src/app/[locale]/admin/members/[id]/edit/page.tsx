@@ -22,7 +22,7 @@ export default function EditMemberPage() {
       <div className="flex">
         <Sidebar activeMenu="members" onMenuChange={() => {}} />
         <main className="flex-1 lg:ml-0 p-6">
-          <div className="max-w-7xl mx-auto">
+          <div className="w-full">
             <MemberForm 
               mode="edit"
               memberId={memberId}

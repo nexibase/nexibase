@@ -119,7 +119,7 @@ function GuideContentKo() {
         </CardContent>
       </Card>
 
-      <div className="space-y-6 max-w-4xl">
+      <div className="w-full space-y-6">
         {/* Step 1 */}
         <Step number={1} title="Google Cloud 프로젝트 만들기">
           <p className="text-sm">
@@ -528,7 +528,7 @@ function GuideContentEn() {
         </CardContent>
       </Card>
 
-      <div className="space-y-6 max-w-4xl">
+      <div className="w-full space-y-6">
         {/* Step 1 */}
         <Step number={1} title="Create a Google Cloud project">
           <p className="text-sm">
@@ -930,7 +930,7 @@ export default function GaGuidePage() {
 
           {locale === 'ko' ? <GuideContentKo /> : <GuideContentEn />}
 
-          <div className="max-w-4xl flex justify-center gap-2 mt-6">
+          <div className="w-full flex gap-2 mt-6">
             <Link href="/admin/settings">
               <Button variant="outline">{t('backToSettings')}</Button>
             </Link>

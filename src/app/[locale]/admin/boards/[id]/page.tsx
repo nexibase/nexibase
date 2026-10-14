@@ -160,7 +160,7 @@ export default function BoardEditPage({ params }: { params: Promise<{ id: string
     <div className="flex min-h-screen bg-background">
       <Sidebar />
       <main className="flex-1 p-6">
-        <div className="max-w-3xl mx-auto">
+        <div className="w-full">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">

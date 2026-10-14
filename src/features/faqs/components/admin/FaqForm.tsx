@@ -108,7 +108,7 @@ export function FaqForm({ initial, categories, stats }: Props) {
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-4">
+    <div className="w-full p-6 space-y-4">
       <div>
         <Link
           href="/admin/faqs"
