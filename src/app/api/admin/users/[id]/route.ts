@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 import { getAdminUser } from '@/lib/auth'
+import { userReferenceWhere } from '@/lib/admin/user-reference'
 
 // Fetch user detail
 export async function GET(
@@ -16,10 +17,16 @@ export async function GET(
     }
 
     const { id } = await params
-    const userId = parseInt(id)
+    const reference = userReferenceWhere(id)
+    if (!reference) {
+      return NextResponse.json(
+        { success: false, message: '올바른 사용자 ID 또는 UUID가 필요합니다.' },
+        { status: 400 }
+      )
+    }
 
     const user = await prisma.user.findFirst({
-      where: { id: userId, deletedAt: null },
+      where: { ...reference, deletedAt: null },
       include: {
         accounts: {
           select: {

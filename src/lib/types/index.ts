@@ -4,7 +4,6 @@
 export * from './common'
 
 // Domain-specific types
-export * from './member'
 // export * from './board'
 // export * from './product'
 
