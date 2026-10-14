@@ -1,4 +1,5 @@
 export default {
+  ssr: true,
   title: 'Welcome Banner',
   description: 'Welcome message and CTA for logged-in users',
   defaultZone: 'top',

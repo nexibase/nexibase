@@ -3,6 +3,8 @@
 // any User-referencing model.
 
 export default [
+  { model: 'FaqView', policy: 'retain', field: 'userId', reason: 'FAQ 조회 집계 보존; 탈퇴 사용자는 User 조인으로 익명화' },
+  { model: 'FaqFeedback', policy: 'retain', field: 'userId', reason: 'FAQ 평가 집계 보존; 탈퇴 사용자는 User 조인으로 익명화' },
   { model: 'UserAddress',            policy: 'delete' },
   { model: 'Notification',           policy: 'delete' },
   { model: 'NotificationPreference', policy: 'delete' },
@@ -11,4 +13,11 @@ export default [
   { model: 'Message',                policy: 'retain', field: 'senderId', reason: '대화 기록 보존; 발신자는 User 조인으로 익명화' },
   { model: 'WithdrawalJob',          policy: 'retain', reason: '탈퇴 감사 기록 자체이므로 보존이 맞음' },
   { model: 'ConsentLog',             policy: 'retain', reason: '동의 이력 감사 기록(append-only); consentId(익명 UUID)가 주 식별자이고 IP/UA도 저장하지 않으므로 탈퇴 후에도 그대로 보존. userId는 관계가 없는 단순 스칼라라 익명화된 User row를 계속 가리켜도 문제없음' },
+  // Core board activity keeps the existing retention and anonymization policy.
+  { model: 'Post',     policy: 'retain', field: 'authorId',
+    reason: '공개 콘텐츠; User 조인으로 작성자 익명화' },
+  { model: 'Comment',  policy: 'retain', field: 'authorId',
+    reason: '공개 콘텐츠; User 조인으로 작성자 익명화' },
+  { model: 'Reaction', policy: 'retain', field: 'userId',
+    reason: '집계 좋아요 수에 영향; User 조인으로 익명화' },
 ]

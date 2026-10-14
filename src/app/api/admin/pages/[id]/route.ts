@@ -3,8 +3,8 @@ import { prisma } from '@/lib/prisma'
 import { getAdminUser } from '@/lib/auth'
 import { isValidTemplate } from '@/lib/widgets/layout-templates'
 import { pluginManifest } from '@/plugins/_generated'
+import { SYSTEM_SLUGS } from '@/lib/system-routes'
 
-const SYSTEM_SLUGS = ['admin', 'login', 'signup', 'mypage', 'api', 'install', 'setup-required', 'verify-email', 'profile', 'search', 'new']
 const PLUGIN_SLUGS = Object.values(pluginManifest).map(p => p.slug)
 const RESERVED_SLUGS = [...SYSTEM_SLUGS, ...PLUGIN_SLUGS]
 

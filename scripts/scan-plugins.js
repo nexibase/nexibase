@@ -1,5 +1,7 @@
 const fs = require('fs')
 const path = require('path')
+const coreFeatures = require('../src/lib/core-features.json')
+const coreRouteAliases = require('../src/lib/core-route-aliases.json')
 
 const PLUGINS_DIR = path.join(__dirname, '..', 'src', 'plugins')
 const OUTPUT_FILE = path.join(PLUGINS_DIR, '_generated.ts')
@@ -23,7 +25,7 @@ function scanPlugins() {
     .map(e => e.name)
 
   const plugins = []
-  const slugs = new Map()
+  const slugs = new Map([...coreFeatures, ...Object.keys(coreRouteAliases)].map(slug => [slug, null]))
 
   for (const folder of folders) {
     const pluginFile = path.join(PLUGINS_DIR, folder, 'plugin.ts')
@@ -53,7 +55,9 @@ function scanPlugins() {
 
     if (slugs.has(slug)) {
       console.error(`ERROR: slug '${slug}' conflict!`)
-      console.error(`  - src/plugins/${slugs.get(slug)}/plugin.ts`)
+      console.error(slugs.get(slug) === null
+        ? `  - reserved core feature: ${slug}`
+        : `  - src/plugins/${slugs.get(slug)}/plugin.ts`)
       console.error(`  - src/plugins/${folder}/plugin.ts`)
       console.error(`Change one of the slugs to resolve.`)
       process.exit(1)
@@ -200,7 +204,10 @@ function parseWidgetMeta(metaPath, baseName) {
   const defaultColSpan = parseInt((mContent.match(/defaultColSpan:\s*(\d+)/) || [])[1] || '1')
   const defaultRowSpan = parseInt((mContent.match(/defaultRowSpan:\s*(\d+)/) || [])[1] || '1')
   const settingsSchema = extractSettingsSchema(mContent) || 'null'
-  return { key: kebabKey, title, description, defaultZone, defaultColSpan, defaultRowSpan, settingsSchema }
+  // Widgets that provide a stable initial render can opt into server rendering.
+  // Browser-only third-party widgets keep their existing client-only behavior.
+  const ssr = /\bssr:\s*true\b/.test(mContent)
+  return { key: kebabKey, title, description, defaultZone, defaultColSpan, defaultRowSpan, settingsSchema, ssr }
 }
 
 function collectWidgetEntries(plugins) {
@@ -246,7 +253,7 @@ function generateWidgetRegistry(plugins) {
 
   // Generate the file
   const dynamicImports = widgetEntries.map(w =>
-    `const ${w.varName} = dynamic(() => import('${w.importPath}'), { ssr: false })`
+    `const ${w.varName} = dynamic(() => import('${w.importPath}'), { ssr: ${w.ssr} })`
   ).join('\n')
 
   const registryEntries = widgetEntries.map(w =>

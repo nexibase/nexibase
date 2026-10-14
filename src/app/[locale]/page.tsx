@@ -1,6 +1,8 @@
 import { prisma } from '@/lib/prisma'
 import WidgetRenderer from '@/lib/widgets/renderer'
 import type { Metadata } from 'next'
+import { prepareHomeImages } from '@/lib/widgets/prepare-home-images'
+import { prepareHomeData } from '@/lib/widgets/prepare-home-data'
 
 async function getHomePage() {
   return prisma.widgetPage.findUnique({
@@ -26,7 +28,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function HomePage() {
   const page = await getHomePage()
-  const allWidgets = page?.widgets ?? []
+  const allWidgets = await prepareHomeImages(await prepareHomeData(page?.widgets ?? []))
 
   // Render sidebars directly from server-side data to avoid layout shift
   // (UserLayout fetches sidebar widgets client-side, which causes the center

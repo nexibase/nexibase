@@ -1,5 +1,4 @@
-// NOTE: Placeholder component — boards feature is provided by a plugin.
-// See src/app/[locale]/admin/boards/** (auto-generated, gitignored).
+// Legacy placeholder; the core board admin pages live in src/app/[locale]/admin/boards/.
 // Kept as a stub to avoid breaking imports. Not translated intentionally.
 "use client"
 

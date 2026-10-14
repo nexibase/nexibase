@@ -14,9 +14,6 @@ import Link from "next/link"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 
 interface DashboardData {
-  pluginStatus?: {
-    boards?: boolean
-  }
   stats: {
     totalUsers: number
     userGrowth: number
@@ -155,7 +152,7 @@ export function DashboardContent() {
           </Card>
         </Link>
 
-        {data.pluginStatus?.boards && (
+        {(
           <Link href="/admin/boards">
             <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -315,7 +312,7 @@ export function DashboardContent() {
         </Card>
 
         {/* Popular posts */}
-        {data.pluginStatus?.boards && data.popularPosts && data.popularPosts.length > 0 && (
+        {data.popularPosts && data.popularPosts.length > 0 && (
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-base">{t('popularPosts')}</CardTitle>
@@ -355,7 +352,7 @@ export function DashboardContent() {
       {/* Recent posts + recent comments */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent posts */}
-        {data.pluginStatus?.boards && data.recentPosts && (
+        {data.recentPosts && (
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-base">{t('recentPosts')}</CardTitle>
@@ -384,7 +381,7 @@ export function DashboardContent() {
         )}
 
         {/* Recent comments */}
-        {data.pluginStatus?.boards && data.recentComments && (
+        {data.recentComments && (
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-base">{t('recentComments')}</CardTitle>

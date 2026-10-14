@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   Users,
   MessageSquare,
+  MessageCircleQuestion,
   Settings,
   Menu,
   X,
@@ -93,15 +94,19 @@ function getIcon(iconName: string): LucideIcon {
   return iconMap[iconName] || FileText
 }
 
-// Core menu items that are always shown (labels are translation keys)
+// Core features always appear before plugin-provided menus.
 const coreMenuItems = [
   { id: "dashboard", labelKey: "dashboard", icon: LayoutDashboard, path: "/admin" },
-  { id: "users", labelKey: "users", icon: Users, path: "/admin/users" },
-  { id: "login-logs", labelKey: "loginLogs", icon: ClipboardList, path: "/admin/login-logs" },
   { id: "settings", labelKey: "settings", icon: Settings, path: "/admin/settings" },
-  { id: "plugins", labelKey: "plugins", icon: Puzzle, path: "/admin/plugins" },
-  { id: "menus", labelKey: "menus", icon: MenuIcon, path: "/admin/menus" },
+  { id: "users", labelKey: "users", icon: Users, path: "/admin/users" },
+  { id: "boards", labelKey: "boards", icon: MessageSquare, path: "/admin/boards" },
+  { id: "contents", labelKey: "contents", icon: FileText, path: "/admin/contents" },
+  { id: "policies", labelKey: "policies", icon: ScrollText, path: "/admin/policies" },
+  { id: "faqs", labelKey: "faqs", icon: MessageCircleQuestion, path: "/admin/faqs" },
   { id: "pages", labelKey: "pages", icon: LayoutGrid, path: "/admin/pages" },
+  { id: "menus", labelKey: "menus", icon: MenuIcon, path: "/admin/menus" },
+  { id: "login-logs", labelKey: "loginLogs", icon: ClipboardList, path: "/admin/login-logs" },
+  { id: "plugins", labelKey: "plugins", icon: Puzzle, path: "/admin/plugins" },
 ] as const
 
 // Returns cached user info (session-storage backed)
@@ -145,9 +150,6 @@ function resolvePluginLabel(label: string, translate: (key: string) => string): 
 export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
   const t = useTranslations('admin')
   const ts = useTranslations('shop')
-  const tb = useTranslations('boards')
-  const tcon = useTranslations('contents')
-  const tpol = useTranslations('policies')
   const locale = useLocale()
   const [isOpen, setIsOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
@@ -262,9 +264,6 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
   // Map of plugin folder → label translator (add entries for each i18n-enabled plugin)
   const pluginTranslators: Record<string, (key: string) => string> = {
     shop: ts as unknown as (key: string) => string,
-    boards: tb as unknown as (key: string) => string,
-    contents: tcon as unknown as (key: string) => string,
-    policies: tpol as unknown as (key: string) => string,
   }
 
   const translatePluginLabel = (folder: string, label: string) =>
@@ -362,6 +361,21 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
 
   const currentActiveMenu = activeMenu || getActiveMenu()
 
+  const renderCoreMenuItem = (item: typeof coreMenuItems[number]) => {
+    const Icon = item.icon
+    return (
+      <Button
+        key={item.id}
+        variant={currentActiveMenu === item.id ? "default" : "ghost"}
+        className="w-full justify-start"
+        onClick={() => handleMenuClick(item)}
+      >
+        <Icon className="mr-2 h-4 w-4" />
+        {t(item.labelKey)}
+      </Button>
+    )
+  }
+
   return (
     <>
       {/* Mobile menu button */}
@@ -422,40 +436,7 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
             </div>
 
             {/* Core menu items */}
-            {coreMenuItems.map((item) => {
-              const Icon = item.icon
-              return (
-                <Button
-                  key={item.id}
-                  variant={currentActiveMenu === item.id ? "default" : "ghost"}
-                  className="w-full justify-start"
-                  onClick={() => handleMenuClick(item)}
-                >
-                  <Icon className="mr-2 h-4 w-4" />
-                  {t(item.labelKey)}
-                </Button>
-              )
-            })}
-
-            {/* Plugin flat menu items */}
-            {pluginFlatMenuItems.length > 0 && (
-              <div className="pt-2 border-t border-border mt-2 space-y-2">
-                {pluginFlatMenuItems.map((item) => {
-                  const Icon = item.icon
-                  return (
-                    <Button
-                      key={item.id}
-                      variant={currentActiveMenu === item.id ? "default" : "ghost"}
-                      className="w-full justify-start"
-                      onClick={() => handleMenuClick(item)}
-                    >
-                      <Icon className="mr-2 h-4 w-4" />
-                      {item.label}
-                    </Button>
-                  )
-                })}
-              </div>
-            )}
+            {coreMenuItems.map(renderCoreMenuItem)}
 
             {/* Plugin group menus */}
             {pluginGroupMenus.map((group) => {
@@ -500,6 +481,26 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
                 </div>
               )
             })}
+
+            {/* Plugin flat menu items */}
+            {pluginFlatMenuItems.length > 0 && (
+              <div className="pt-2 border-t border-border mt-2 space-y-2">
+                {pluginFlatMenuItems.map((item) => {
+                  const Icon = item.icon
+                  return (
+                    <Button
+                      key={item.id}
+                      variant={currentActiveMenu === item.id ? "default" : "ghost"}
+                      className="w-full justify-start"
+                      onClick={() => handleMenuClick(item)}
+                    >
+                      <Icon className="mr-2 h-4 w-4" />
+                      {item.label}
+                    </Button>
+                  )
+                })}
+              </div>
+            )}
 
             {/* User info */}
             <div className="pt-3 mt-2 border-t border-border">

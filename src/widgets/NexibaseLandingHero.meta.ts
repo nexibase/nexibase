@@ -1,4 +1,5 @@
 export default {
+  ssr: true,
   title: 'NexiBase Landing Hero',
   description: 'nexibase.com only — full-width marketing hero with install command and CTAs',
   defaultZone: 'top',

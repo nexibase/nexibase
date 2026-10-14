@@ -12,13 +12,13 @@ interface UserInfo {
   nickname: string | null
 }
 
-export default function WelcomeBanner() {
+export default function WelcomeBanner({ settings }: { settings?: Record<string, any> }) {
   const t = useTranslations('widgets')
   const [user, setUser] = useState<UserInfo | null>(null)
-  const [siteName, setSiteName] = useState('NexiBase')
-  const [siteDescription, setSiteDescription] = useState('')
-  const [firstBoardSlug, setFirstBoardSlug] = useState('')
-  const [loading, setLoading] = useState(true)
+  const [siteName, setSiteName] = useState(settings?.initialWelcome?.siteName || 'NexiBase')
+  const [siteDescription, setSiteDescription] = useState(settings?.initialWelcome?.siteDescription || '')
+  const [firstBoardSlug, setFirstBoardSlug] = useState(settings?.initialWelcome?.firstBoardSlug || '')
+  const [loading, setLoading] = useState(!settings?.initialWelcome)
 
   const fetchData = useCallback(async () => {
     try {

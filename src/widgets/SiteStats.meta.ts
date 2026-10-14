@@ -1,4 +1,5 @@
 export default {
+  ssr: true,
   title: 'Site Stats',
   description: 'Members, posts, comments, and board stats cards',
   defaultZone: 'top',

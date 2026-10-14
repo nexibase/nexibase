@@ -18,7 +18,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticEntries: MetadataRoute.Sitemap = [
     { url: `${base}/`, lastModified: now, changeFrequency: 'daily', priority: 1.0 },
     { url: `${base}/boards`, lastModified: now, changeFrequency: 'daily', priority: 0.9 },
-    { url: `${base}/faq-accordion`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
+    { url: `${base}/faqs`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
     { url: `${base}/posts/latest`, lastModified: now, changeFrequency: 'daily', priority: 0.7 },
     { url: `${base}/posts/popular`, lastModified: now, changeFrequency: 'daily', priority: 0.7 },
     { url: `${base}/search`, lastModified: now, changeFrequency: 'weekly', priority: 0.4 },

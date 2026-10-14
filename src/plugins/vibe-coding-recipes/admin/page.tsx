@@ -77,7 +77,7 @@ export default function VibeRecipesAdminPage() {
     <div className="flex h-screen">
       <Sidebar />
       <div className="flex-1 overflow-auto">
-        <div className="p-6 max-w-7xl mx-auto">
+        <div className="w-full p-6">
           <div className="mb-6">
             <h1 className="text-2xl font-bold">{t('title')}</h1>
             <p className="text-muted-foreground text-sm">{t('headerDesc')}</p>

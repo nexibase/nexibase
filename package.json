@@ -9,7 +9,7 @@
     "build": "node scripts/scan-plugins.js && node scripts/scan-layouts.js && node scripts/scan-themes.js && prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "tsx --test \"src/**/*.test.ts\"",
+    "test": "tsx --test \"src/**/*.test.ts\" && node --test scripts/core-features.test.cjs",
     "cron:shop-auto-confirm": "tsx scripts/cron/shop-auto-confirm.ts",
     "cron:withdrawal-retry": "tsx scripts/cron/withdrawal-retry.ts",
     "cron:withdrawal-verify": "tsx scripts/cron/withdrawal-verify.ts",

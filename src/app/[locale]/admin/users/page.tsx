@@ -137,8 +137,11 @@ function UserModal({
       if (error) { alert(error); return }
     }
     setLoading(true)
-    await onSave(formData)
-    setLoading(false)
+    try {
+      await onSave(formData)
+    } finally {
+      setLoading(false)
+    }
   }
 
   if (!isOpen) return null
@@ -331,6 +334,7 @@ function UsersPageContent() {
   const initialRole = searchParams.get('role') || ''
   const initialPage = parseInt(searchParams.get('page') || '1')
   const editUserId = searchParams.get('edit')
+  const newUserRequested = searchParams.get('new') === '1'
 
   const [users, setUsers] = useState<User[]>([])
   const [reservedCount, setReservedCount] = useState(0)
@@ -351,35 +355,52 @@ function UsersPageContent() {
   const [roleFilter, setRoleFilter] = useState(initialRole)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
+  const [editError, setEditError] = useState('')
 
-  // If an edit param is present, open the matching user modal
+  // Compatibility routes open the current editor, even outside the list's page/filter.
   useEffect(() => {
-    if (editUserId && !loading) {
-      const userToEdit = users.find(u => String(u.id) === String(editUserId))
-      if (userToEdit) {
-        setEditingUser(userToEdit)
-        setIsModalOpen(true)
-        router.replace('/admin/users')
-      } else {
-        // Not in the list → fetch directly via the API
-        fetch(`/api/admin/users/${editUserId}`)
-          .then(res => res.json())
-          .then(data => {
-            if (data.success && data.user) {
-              // Add providers field
-              const userWithProviders = {
-                ...data.user,
-                providers: data.user.accounts?.map((acc: { provider: string }) => acc.provider) || []
-              }
-              setEditingUser(userWithProviders)
-              setIsModalOpen(true)
-            }
-            router.replace('/admin/users')
+    if (!editUserId && !newUserRequested) return
+    let cancelled = false
+    const params = new URLSearchParams(searchParams.toString())
+    params.delete('edit')
+    params.delete('new')
+    const returnToList = () => {
+      const query = params.toString()
+      router.replace(`/admin/users${query ? `?${query}` : ''}`, { scroll: false })
+    }
+    setEditError('')
+    setEditingUser(null)
+    setIsModalOpen(false)
+
+    if (!editUserId) {
+      setIsModalOpen(true)
+      returnToList()
+      return
+    }
+
+    async function openEditor() {
+      try {
+        const response = await fetch(`/api/admin/users/${encodeURIComponent(editUserId!)}`)
+        const data = await response.json()
+        if (cancelled) return
+        if (response.ok && data.success && data.user) {
+          setEditingUser({
+            ...data.user,
+            providers: data.user.accounts?.map((account: { provider: string }) => account.provider) || [],
           })
-          .catch(console.error)
+          setIsModalOpen(true)
+        } else {
+          setEditError(data.message || t('memberLoadError'))
+        }
+      } catch {
+        if (!cancelled) setEditError(t('memberLoadError'))
+      } finally {
+        if (!cancelled) returnToList()
       }
     }
-  }, [editUserId, users, loading, router])
+    void openEditor()
+    return () => { cancelled = true }
+  }, [editUserId, newUserRequested, router, searchParams, t])
 
   // URL updater
   const updateURL = useCallback((status: string, role: string, page: number) => {
@@ -445,6 +466,7 @@ function UsersPageContent() {
       }
     } catch (error) {
       console.error('failed to save user:', error)
+      alert(t('saveFailed'))
     }
   }
 
@@ -547,6 +569,7 @@ function UsersPageContent() {
         <Sidebar activeMenu="users" />
 
         <main className="flex-1 p-6">
+          {editError && <p role="alert" className="mb-4 rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">{editError}</p>}
           <div className="mb-4 rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-sm">
             <p>닉네임 정책 확인 대상: {reservedCount}명. 기존 닉네임은 유지되며, 변경 시 새 규칙이 적용됩니다.</p>
             <Button variant="outline" size="sm" className="mt-2" onClick={() => { setReservedOnly(!reservedOnly); setCurrentPage(1) }}>
@@ -793,6 +816,7 @@ function UsersPageContent() {
                                   variant="ghost"
                                   size="icon"
                                   className="h-8 w-8"
+                                  aria-label={t('editUser')}
                                   onClick={() => { setEditingUser(user); setIsModalOpen(true) }}
                                 >
                                   <Pencil className="h-4 w-4" />

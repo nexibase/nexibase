@@ -1,4 +1,5 @@
 export default {
+  ssr: true,
   title: 'Community Guide',
   description: 'Guide to using the community',
   defaultZone: 'sidebar',

@@ -180,11 +180,12 @@ export default function Header() {
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex items-center justify-between h-14">
             {/* Logo */}
-            <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+            <Link href="/" aria-label={settings.site_name} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
               {isLoading ? (
                 <div className="w-7 h-7" />
               ) : settings.site_logo ? (
                 <Image
+                  unoptimized
                   src={settings.site_logo}
                   alt={settings.site_name}
                   width={28}
@@ -393,6 +394,8 @@ export default function Header() {
                 )}
                 {/* Hamburger menu button */}
                 <Button
+                  aria-label={t('more')}
+                  aria-expanded={mobileMenuOpen}
                   variant="ghost"
                   size="icon"
                   onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
