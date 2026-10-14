@@ -1,4 +1,5 @@
 export default {
+  ssr: true,
   title: 'Popular Boards',
   defaultZone: 'right',
   defaultColSpan: 1,

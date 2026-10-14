@@ -1,4 +1,5 @@
 export default {
+  ssr: true,
   title: 'Latest Posts',
   defaultZone: 'center',
   defaultColSpan: 2,

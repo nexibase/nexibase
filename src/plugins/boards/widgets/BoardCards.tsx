@@ -17,11 +17,16 @@ interface Board {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function BoardCards({ settings }: { settings?: Record<string, any> }) {
-  const [boards, setBoards] = useState<Board[]>([])
-  const [loading, setLoading] = useState(true)
+  const [boards, setBoards] = useState<Board[]>(settings?.initialBoards ?? [])
+  const [loading, setLoading] = useState(!Array.isArray(settings?.initialBoards))
   const limit = settings?.limit || 4
 
   useEffect(() => {
+    if (Array.isArray(settings?.initialBoards)) {
+      setBoards(settings.initialBoards)
+      setLoading(false)
+      return
+    }
     const fetchBoards = async () => {
       try {
         const res = await fetch(`/api/boards?limit=${limit}`)
@@ -36,7 +41,7 @@ export default function BoardCards({ settings }: { settings?: Record<string, any
       }
     }
     fetchBoards()
-  }, [limit])
+  }, [limit, settings?.initialBoards])
 
   if (loading) {
     return (

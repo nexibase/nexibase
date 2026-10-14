@@ -23,11 +23,16 @@ interface LatestPost {
 export default function LatestPosts({ settings }: { settings?: Record<string, any> }) {
   const t = useTranslations('boards')
   const locale = useLocale()
-  const [posts, setPosts] = useState<LatestPost[]>([])
-  const [loading, setLoading] = useState(true)
+  const [posts, setPosts] = useState<LatestPost[]>(settings?.initialPosts ?? [])
+  const [loading, setLoading] = useState(!Array.isArray(settings?.initialPosts))
   const limit = settings?.limit || 6
 
   useEffect(() => {
+    if (Array.isArray(settings?.initialPosts)) {
+      setPosts(settings.initialPosts)
+      setLoading(false)
+      return
+    }
     const fetchPosts = async () => {
       try {
         const res = await fetch(`/api/posts/latest?limit=${limit + 2}`)
@@ -42,7 +47,7 @@ export default function LatestPosts({ settings }: { settings?: Record<string, an
       }
     }
     fetchPosts()
-  }, [limit])
+  }, [limit, settings?.initialPosts])
 
   const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString)
@@ -118,7 +123,7 @@ export default function LatestPosts({ settings }: { settings?: Record<string, an
                         {post.title}
                       </span>
                     </div>
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                    <div className="flex min-h-5 items-center gap-3 text-xs text-muted-foreground">
                       <span>{post.author.nickname} <VerifiedAdminBadge userId={post.author.id} /></span>
                       <span className="flex items-center gap-1">
                         <Eye className="h-3 w-3" />
@@ -132,7 +137,7 @@ export default function LatestPosts({ settings }: { settings?: Record<string, an
                       )}
                     </div>
                   </div>
-                  <span className="text-xs text-muted-foreground shrink-0">
+                  <span suppressHydrationWarning className="text-xs text-muted-foreground shrink-0">
                     {formatTimeAgo(post.createdAt)}
                   </span>
                 </div>

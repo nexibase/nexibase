@@ -200,7 +200,10 @@ function parseWidgetMeta(metaPath, baseName) {
   const defaultColSpan = parseInt((mContent.match(/defaultColSpan:\s*(\d+)/) || [])[1] || '1')
   const defaultRowSpan = parseInt((mContent.match(/defaultRowSpan:\s*(\d+)/) || [])[1] || '1')
   const settingsSchema = extractSettingsSchema(mContent) || 'null'
-  return { key: kebabKey, title, description, defaultZone, defaultColSpan, defaultRowSpan, settingsSchema }
+  // Widgets that provide a stable initial render can opt into server rendering.
+  // Browser-only third-party widgets keep their existing client-only behavior.
+  const ssr = /\bssr:\s*true\b/.test(mContent)
+  return { key: kebabKey, title, description, defaultZone, defaultColSpan, defaultRowSpan, settingsSchema, ssr }
 }
 
 function collectWidgetEntries(plugins) {
@@ -246,7 +249,7 @@ function generateWidgetRegistry(plugins) {
 
   // Generate the file
   const dynamicImports = widgetEntries.map(w =>
-    `const ${w.varName} = dynamic(() => import('${w.importPath}'), { ssr: false })`
+    `const ${w.varName} = dynamic(() => import('${w.importPath}'), { ssr: ${w.ssr} })`
   ).join('\n')
 
   const registryEntries = widgetEntries.map(w =>

@@ -487,6 +487,7 @@ function SearchContent() {
                         {product.thumbnail ? (
                           <div className="relative w-12 h-12 rounded overflow-hidden bg-muted shrink-0">
                             <Image
+                  unoptimized
                               src={product.thumbnail}
                               alt={product.name}
                               fill
@@ -671,6 +672,7 @@ function SearchContent() {
                           <div className="relative aspect-square bg-muted">
                             {product.thumbnail ? (
                               <Image
+                  unoptimized
                                 src={product.thumbnail}
                                 alt={product.name}
                                 fill

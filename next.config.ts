@@ -21,6 +21,8 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   experimental: {
+    // Keep HMR in memory; /home has limited free space.
+    turbopackFileSystemCacheForDev: false,
     serverActions: {
       bodySizeLimit: '10mb',
     },
@@ -33,7 +35,9 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'phinf.pstatic.net' },
       { protocol: 'https', hostname: 'images.unsplash.com' },
     ],
-    unoptimized: true,
+    // Uploaded banners use the built-in responsive image optimizer.
+    // External avatars retain their existing URLs below.
+    unoptimized: false,
   },
 };
 

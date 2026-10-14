@@ -1,4 +1,5 @@
 export default {
+  ssr: true,
   title: 'Visitor Stats',
   description: 'Current visitors and today/yesterday/7-day counts (Google Analytics)',
   defaultZone: 'sidebar',
