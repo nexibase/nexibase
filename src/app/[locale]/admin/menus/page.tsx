@@ -1,33 +1,16 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useTranslations } from "next-intl"
 import { Sidebar } from "@/components/admin/Sidebar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { MenuTree } from "@/components/admin/MenuTree"
+import { changedMenuOrder, menuOrder, type MenuItem } from "@/lib/menus/tree"
 import {
-  ChevronUp, ChevronDown, ChevronRight, Plus, Trash2, Save, Eye, EyeOff, ExternalLink, Pencil, X, GripVertical
+  Plus, Save, X
 } from "lucide-react"
-
-interface MenuItem {
-  id: number
-  parentId: number | null
-  position: string
-  groupName: string | null
-  label: string
-  url: string
-  icon: string | null
-  target: string
-  visibility: string
-  isActive: boolean
-  sortOrder: number
-  children: MenuItem[]
-  pluginFolder: string | null
-  pluginEnabled: boolean
-  pluginName: string | null
-}
 
 interface MenuForm {
   id?: number
@@ -63,6 +46,8 @@ export default function MenusAdminPage() {
   const [isCreating, setIsCreating] = useState(false)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
+  const [savingOrder, setSavingOrder] = useState(false)
+  const orderInFlight = useRef(false)
 
   const fetchMenus = useCallback(async () => {
     try {
@@ -161,60 +146,35 @@ export default function MenusAdminPage() {
     }
   }
 
-  const handleMoveUp = async (menu: MenuItem, list: MenuItem[]) => {
-    const idx = list.findIndex(m => m.id === menu.id)
-    if (idx <= 0) return
-    const items = list.map((m, i) => ({
-      id: m.id,
-      sortOrder: i === idx ? list[idx - 1].sortOrder : i === idx - 1 ? list[idx].sortOrder : m.sortOrder,
-      parentId: m.parentId,
-    }))
-    await fetch('/api/admin/menus/reorder', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ items }),
-    })
-    await fetchMenus()
-  }
-
-  const handleMoveDown = async (menu: MenuItem, list: MenuItem[]) => {
-    const idx = list.findIndex(m => m.id === menu.id)
-    if (idx >= list.length - 1) return
-    const items = list.map((m, i) => ({
-      id: m.id,
-      sortOrder: i === idx ? list[idx + 1].sortOrder : i === idx + 1 ? list[idx].sortOrder : m.sortOrder,
-      parentId: m.parentId,
-    }))
-    await fetch('/api/admin/menus/reorder', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ items }),
-    })
-    await fetchMenus()
-  }
-
-  const handleIndent = async (menu: MenuItem, list: MenuItem[]) => {
-    // Make this menu a child of the previous sibling
-    const idx = list.findIndex(m => m.id === menu.id)
-    if (idx <= 0) return
-    const newParentId = list[idx - 1].id
-    await fetch(`/api/admin/menus/${menu.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ parentId: newParentId }),
-    })
-    await fetchMenus()
-  }
-
-  const handleOutdent = async (menu: MenuItem) => {
-    // Move from child to top level
-    if (!menu.parentId) return
-    await fetch(`/api/admin/menus/${menu.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ parentId: null }),
-    })
-    await fetchMenus()
+  const handleReorder = async (next: MenuItem[]) => {
+    const items = changedMenuOrder(currentMenus, next)
+    if (orderInFlight.current || items.length === 0) return
+    orderInFlight.current = true
+    setSavingOrder(true)
+    const previous = currentMenus
+    const setMenus = activeTab === 'header' ? setHeaderMenus : setFooterMenus
+    setMenus(next)
+    try {
+      const response = await fetch('/api/admin/menus/reorder', {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ position: activeTab, items, expected: menuOrder(previous) }),
+      })
+      if (!response.ok) {
+        setMenus(previous)
+        showMessage(t(response.status === 409 ? 'menuOrderConflict' : 'menuOrderFailed'))
+        await fetchMenus()
+        return
+      }
+      showMessage(t('menuOrderSaved'))
+      await fetchMenus()
+    } catch {
+      setMenus(previous)
+      showMessage(t('menuOrderFailed'))
+      await fetchMenus()
+    } finally {
+      orderInFlight.current = false
+      setSavingOrder(false)
+    }
   }
 
   const handleSeed = async () => {
@@ -229,95 +189,6 @@ export default function MenusAdminPage() {
     }
   }
 
-  const renderMenuItem = (menu: MenuItem, list: MenuItem[], depth: number = 0) => {
-    const isPluginDisabled = menu.pluginFolder && !menu.pluginEnabled
-    return (
-      <div key={menu.id}>
-        <div className={`flex items-center gap-2 px-3 py-2 border-b ${
-          isPluginDisabled
-            ? 'opacity-50 bg-muted/30'
-            : 'hover:bg-muted/50'
-        } ${depth > 0 ? 'ml-8 border-l' : ''}`}>
-          <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              {menu.icon && <span className="text-sm">{menu.icon}</span>}
-              <span className="text-sm font-medium truncate">{menu.label}</span>
-              <span className="text-xs text-muted-foreground truncate">{menu.url}</span>
-              {menu.groupName && <Badge variant="outline" className="text-xs">{menu.groupName}</Badge>}
-              {isPluginDisabled && (
-                <Badge variant="destructive" className="text-xs">
-                  {t('pluginDisabled', { name: menu.pluginName ?? '' })}
-                </Badge>
-              )}
-              {!menu.isActive && !isPluginDisabled && <Badge variant="secondary" className="text-xs">{t('inactive')}</Badge>}
-              {menu.visibility !== 'all' && (
-                <Badge variant="secondary" className="text-xs">
-                  {menu.visibility === 'member' ? t('memberOnly') : t('roleAdmin')}
-                </Badge>
-              )}
-              {menu.target === '_blank' && <ExternalLink className="h-3 w-3 text-muted-foreground" />}
-            </div>
-          </div>
-          {!isPluginDisabled && (
-            <div className="flex items-center gap-1">
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleMoveUp(menu, list)} title={t('moveUp')}>
-                <ChevronUp className="h-4 w-4" />
-              </Button>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleMoveDown(menu, list)} title={t('moveDown')}>
-                <ChevronDown className="h-4 w-4" />
-              </Button>
-              {depth === 0 && (
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleIndent(menu, list)} title={t('moveToChild')}>
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              )}
-              {depth > 0 && (
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleOutdent(menu)} title={t('moveToParent')}>
-                  <ChevronRight className="h-4 w-4 rotate-180" />
-                </Button>
-              )}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7"
-                onClick={() => {
-                  setIsCreating(false)
-                  setEditingForm({
-                    id: menu.id,
-                    parentId: menu.parentId,
-                    position: menu.position,
-                    groupName: menu.groupName || '',
-                    label: menu.label,
-                    url: menu.url,
-                    icon: menu.icon || '',
-                    target: menu.target,
-                    visibility: menu.visibility,
-                    isActive: menu.isActive,
-                  })
-                }}
-              >
-                <Pencil className="h-4 w-4" />
-              </Button>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleToggleActive(menu)} title={menu.isActive ? t('hide') : t('show')}>
-                {menu.isActive ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4 text-muted-foreground" />}
-              </Button>
-              <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500" onClick={() => handleDelete(menu.id)}>
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          )}
-        </div>
-        {/* Render children */}
-        {menu.children && menu.children.length > 0 && (
-          <div>
-            {menu.children.map(child => renderMenuItem(child, menu.children, depth + 1))}
-          </div>
-        )}
-      </div>
-    )
-  }
-
   return (
     <div className="flex h-screen bg-background">
       <Sidebar />
@@ -326,11 +197,12 @@ export default function MenusAdminPage() {
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-2xl font-bold">{t('menusTitle')}</h1>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={handleSeed}>
+              <Button variant="outline" size="sm" onClick={handleSeed} disabled={savingOrder}>
                 {t('seedInitData')}
               </Button>
               <Button
                 size="sm"
+                disabled={savingOrder}
                 onClick={() => {
                   setIsCreating(true)
                   setEditingForm(emptyForm(activeTab))
@@ -343,7 +215,7 @@ export default function MenusAdminPage() {
           </div>
 
           {message && (
-            <div className="mb-4 px-4 py-2 bg-primary/10 text-primary rounded-md text-sm">
+            <div role="status" className="mb-4 px-4 py-2 bg-primary/10 text-primary rounded-md text-sm">
               {message}
             </div>
           )}
@@ -353,6 +225,7 @@ export default function MenusAdminPage() {
             <Button
               variant={activeTab === 'header' ? 'default' : 'outline'}
               size="sm"
+              disabled={savingOrder}
               onClick={() => { setActiveTab('header'); setEditingForm(null); setIsCreating(false) }}
             >
               {t('headerMenu')}
@@ -360,6 +233,7 @@ export default function MenusAdminPage() {
             <Button
               variant={activeTab === 'footer' ? 'default' : 'outline'}
               size="sm"
+              disabled={savingOrder}
               onClick={() => { setActiveTab('footer'); setEditingForm(null); setIsCreating(false) }}
             >
               {t('footerMenu')}
@@ -466,12 +340,19 @@ export default function MenusAdminPage() {
           )}
 
           {/* Menu List */}
+          <p className="mb-3 text-sm text-muted-foreground">{savingOrder ? t('savingText') : t('menuDragHint')}</p>
           <Card>
             <CardContent className="p-0">
               {currentMenus.length > 0 ? (
-                <div>
-                  {currentMenus.map(menu => renderMenuItem(menu, currentMenus))}
-                </div>
+                <MenuTree menus={currentMenus} disabled={savingOrder || saving} dragDisabled={editingForm !== null}
+                  onReorder={handleReorder}
+                  onEdit={menu => {
+                    setIsCreating(false)
+                    setEditingForm({ id: menu.id, parentId: menu.parentId, position: menu.position,
+                      groupName: menu.groupName || '', label: menu.label, url: menu.url, icon: menu.icon || '',
+                      target: menu.target, visibility: menu.visibility, isActive: menu.isActive })
+                  }}
+                  onToggle={handleToggleActive} onDelete={handleDelete} />
               ) : (
                 <div className="py-12 text-center text-muted-foreground">
                   <p>{t('noMenus')}</p>

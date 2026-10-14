@@ -895,7 +895,15 @@
     "backToSettings": "Back to settings",
     "screenshotPending": "Screenshot pending",
     "goToHomeWidgets": "Go to home widgets",
-    "faqs": "FAQ"
+    "faqs": "FAQ",
+    "menuReorder": "Move {label}",
+    "menuDelete": "Delete {label}",
+    "menuDragHint": "Drag the left handle up or down to reorder. Drag right to make a submenu, or left to move it back to the top level. Changes save automatically.",
+    "menuDragKeyboard": "Press Space to pick up a menu. Use Up and Down to reorder, Right to nest and Left to unnest. Press Space again to save or Escape to cancel.",
+    "menuChildCount": "{count} submenus",
+    "menuOrderSaved": "Menu order saved.",
+    "menuOrderFailed": "Could not save the menu order. The saved order has been restored.",
+    "menuOrderConflict": "The menus changed elsewhere. The latest order has been loaded; please try again."
   },
   "widgets": {
     "welcome": "Welcome",
