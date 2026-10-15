@@ -7,40 +7,30 @@ export class BoardDailyLimitError extends Error {
   }
 }
 
-// Lock before consistent reads so requests see the previous committed usage.
-// Do not lock users: notification fan-out references other members' user rows.
-export async function consumeBoardDailyUsage(tx: Prisma.TransactionClient, boardId: number, authorId: number, kind: 'post' | 'comment', postId?: number) {
-  await tx.$executeRaw`INSERT INTO board_write_locks (authorId) VALUES (${authorId}) ON DUPLICATE KEY UPDATE id = id`
-  // Post creation later increments boards.postCount. Acquire its exclusive
-  // lock before FK checks take shared locks, avoiding lock-upgrade deadlocks.
+// Count existing content directly. The caller holds the member's advisory lock
+// until this transaction commits, so concurrent requests cannot reuse a slot.
+export async function checkBoardDailyLimit(tx: Prisma.TransactionClient, boardId: number, authorId: number, kind: 'post' | 'comment', postId?: number) {
+  // Lock counters before snapshot reads and insertion's shared FK locks.
   if (kind === 'post') await tx.$queryRaw`SELECT id FROM boards WHERE id = ${boardId} FOR UPDATE`
-  // Comment insertion also increments posts.commentCount. Lock before any
-  // snapshot reads or FK checks, including the initial usage backfill query.
   if (kind === 'comment' && postId !== undefined) await tx.$queryRaw`SELECT id FROM posts WHERE id = ${postId} FOR UPDATE`
-  const { day, start, end } = getKoreaDay()
+  const { start, end } = getKoreaDay()
   const board = await tx.board.findUniqueOrThrow({ where: { id: boardId } })
   const key = kind === 'post' ? 'board_daily_post_limit' : 'board_daily_comment_limit'
   const setting = await tx.setting.findUnique({ where: { key } })
   const globalLimit = parseDailyLimit(setting?.value) ?? 0
   const boardLimit = kind === 'post' ? board.dailyPostLimit : board.dailyCommentLimit
-  const where = { boardId_authorId_day: { boardId, authorId, day } }
-  let usage = await tx.boardDailyUsage.findUnique({ where })
-  if (!usage) {
-    // Include existing content on the first write after upgrading, including
-    // soft-deleted posts. Later deletions never give consumed quota back.
-    const createdAt = { gte: start, lt: end }
-    const postCount = await tx.post.count({ where: { boardId, authorId, createdAt } })
-    const commentCount = await tx.comment.count({ where: { authorId, createdAt, post: { boardId } } })
-    usage = await tx.boardDailyUsage.create({ data: { boardId, authorId, day, postCount, commentCount } })
-  }
-  // The site-wide cap is checked first, across every board. A board's zero
-  // only disables its own cap; it never overrides the site-wide restriction.
+  const where = { authorId, createdAt: { gte: start, lt: end } }
+
+  // Global limit first, then this board's additional limit. Zero disables only
+  // that particular cap. No usage counters or other persistent records are kept.
   if (globalLimit > 0) {
-    const totals = await tx.boardDailyUsage.aggregate({ where: { authorId, day }, _sum: { postCount: true, commentCount: true } })
-    const total = (kind === 'post' ? totals._sum.postCount : totals._sum.commentCount) ?? 0
+    const total = kind === 'post' ? await tx.post.count({ where }) : await tx.comment.count({ where })
     if (total >= globalLimit) throw new BoardDailyLimitError(kind, globalLimit, end, 'global')
   }
-  const used = kind === 'post' ? usage.postCount : usage.commentCount
-  if (boardLimit > 0 && used >= boardLimit) throw new BoardDailyLimitError(kind, boardLimit, end, 'board')
-  await tx.boardDailyUsage.update({ where, data: kind === 'post' ? { postCount: { increment: 1 } } : { commentCount: { increment: 1 } } })
+  if (boardLimit > 0) {
+    const count = kind === 'post'
+      ? await tx.post.count({ where: { ...where, boardId } })
+      : await tx.comment.count({ where: { ...where, post: { boardId } } })
+    if (count >= boardLimit) throw new BoardDailyLimitError(kind, boardLimit, end, 'board')
+  }
 }

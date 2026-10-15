@@ -3,8 +3,6 @@
 // any User-referencing model.
 
 export default [
-  { model: 'BoardWriteLock', policy: 'delete', field: 'authorId', reason: '회원별 게시판 작성 잠금은 탈퇴 시 삭제' },
-  { model: 'BoardDailyUsage', policy: 'delete', field: 'authorId', reason: '회원별 일일 작성 횟수는 탈퇴 시 삭제' },
   { model: 'FaqView', policy: 'retain', field: 'userId', reason: 'FAQ 조회 집계 보존; 탈퇴 사용자는 User 조인으로 익명화' },
   { model: 'FaqFeedback', policy: 'retain', field: 'userId', reason: 'FAQ 평가 집계 보존; 탈퇴 사용자는 User 조인으로 익명화' },
   { model: 'UserAddress',            policy: 'delete' },

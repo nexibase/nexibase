@@ -996,7 +996,7 @@
       "comments": "Comments per member per day",
       "zeroDefaultHelp": "0 means no site-wide cap; 1 or more sets the daily maximum. Individual board limits still apply.",
       "zeroBoardHelp": "0 means no additional cap on this board; 1 or more sets the daily maximum. Site-wide limits still apply even when this is 0.",
-      "dayHelp": "Counts reset every day at midnight Korea Standard Time (Asia/Seoul). Replies count as comments. Edits do not count, and deleting content does not restore the quota.",
+      "dayHelp": "Counts use posts and comments created since midnight Korea Standard Time (Asia/Seoul). Replies count as comments; edits do not count. Soft-deleted posts remain counted, while permanently deleted comments are excluded.",
       "defaultsLink": "View site-wide board defaults",
       "boardsLink": "Configure individual board limits",
       "invalid": "Daily limits must be whole numbers from 0 to 2,147,483,647."

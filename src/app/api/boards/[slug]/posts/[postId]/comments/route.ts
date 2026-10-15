@@ -7,7 +7,8 @@ import {
   createMentionNotification,
 } from '@/lib/notification'
 import { parseMentions, resolveMentions } from '@/lib/mentions'
-import { BoardDailyLimitError, consumeBoardDailyUsage } from '@/lib/board-daily-usage'
+import { BoardDailyLimitError, checkBoardDailyLimit } from '@/lib/board-daily-usage'
+import { BoardWriteBusyError, withBoardWriteLock } from '@/lib/board-write-lock'
 
 // Write comment
 export async function POST(
@@ -92,8 +93,8 @@ export async function POST(
     }
 
     // Create comment
-    const comment = await prisma.$transaction(async tx => {
-    await consumeBoardDailyUsage(tx, board.id, user.id, 'comment', postId)
+    const comment = await withBoardWriteLock(user.id, () => prisma.$transaction(async tx => {
+    await checkBoardDailyLimit(tx, board.id, user.id, 'comment', postId)
     const comment = await tx.comment.create({
       data: {
         content: content.trim(),
@@ -170,7 +171,7 @@ export async function POST(
     }
     // --- end fan-out -----------------------------------------------------
     return comment
-    }, { timeout: 20000 })
+    }, { timeout: 20000 }))
 
     return NextResponse.json({
       success: true,
@@ -179,6 +180,9 @@ export async function POST(
     }, { status: 201 })
 
   } catch (error) {
+    if (error instanceof BoardWriteBusyError) {
+      return NextResponse.json({ error: error.message, code: 'BOARD_WRITE_BUSY' }, { status: 503 })
+    }
     if (error instanceof BoardDailyLimitError) {
       return NextResponse.json({ error: error.message, code: 'BOARD_DAILY_LIMIT_REACHED', scope: error.scope, kind: error.kind, limit: error.limit, resetAt: error.resetAt }, { status: 429 })
     }

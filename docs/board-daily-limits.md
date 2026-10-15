@@ -15,20 +15,26 @@ For example, global posts = 5 and board A posts = 2 lets a member write at most
 the global total capped at 5.
 
 The day runs from 00:00 inclusive to the next 00:00 exclusive in **Asia/Seoul**,
-independent of the host timezone. Posts and comments have separate counters.
-Replies count as comments; edits do not consume quota. Deleted content does not
-refund quota. The limits apply to all signed-in members, including administrators.
+independent of the host timezone. Posts and comments are counted separately from
+the existing `posts` and `comments` tables by author and creation time. Replies
+count as comments; edits do not count. Soft-deleted posts remain in the table and
+are counted; permanently deleted comments are no longer counted. These limits
+apply to all signed-in members, including administrators.
 
-Run the normal plugin/schema scan and `prisma generate`, then apply migration
-`20261015030000_board_daily_limits` and `20261015031000_board_write_locks`
-before starting the updated application.
-It adds two board columns and a `board_daily_usage` ledger and backfills today's
-existing posts and comments, including soft-deleted posts. Previously hard-deleted
-comments cannot be reconstructed. Content is otherwise unchanged.
+Run the normal plugin/schema scan and `prisma generate`. On an existing install,
+start the direct-count application before applying migration
+`20261015032000_direct_board_daily_limits`, which adds author/date indexes to the
+existing content tables and removes the previous `board_daily_usage` and
+`board_write_locks` tables. Existing content is unchanged. Earlier migrations
+remain in the migration history for upgrade compatibility; no additional limit
+tables remain in the final schema.
 
-Creation locks a dedicated member mutex row, checks both caps, records usage, and creates the
-content in one transaction. Failures roll back the consumed slot. Serializing
-writes for each member prevents simultaneous requests across boards from exceeding
-the global cap. A quota rejection returns HTTP 429 with code
+Creation holds a per-member MySQL advisory lock through the content transaction's
+commit or rollback, checks the global count first and then the board count, and
+creates the content. The lock uses server memory, with no table or persistent
+counter records. A separate connection pool holds these locks so waiting requests
+cannot exhaust Prisma's content connections. Failures release the lock; uncertain
+connections are destroyed. Serializing writes per member prevents simultaneous
+requests across boards from exceeding the global cap. A quota rejection returns HTTP 429 with code
 `BOARD_DAILY_LIMIT_REACHED`, `scope` (`global` or `board`), `kind`, `limit`, and
 `resetAt` (an absolute ISO timestamp). The existing writing UI displays the error.
