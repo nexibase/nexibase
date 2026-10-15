@@ -1,0 +1,21 @@
+[Unit]
+Description=Nexibase notification delivery worker
+After=network.target
+
+[Service]
+Type=simple
+User=nexibase
+Group=nexibase
+WorkingDirectory=/srv/nexibase
+Environment=NODE_ENV=production
+# Set development for dev deployments even when using a production Next build.
+Environment=NOTIFICATION_ENVIRONMENT=production
+ExecStart=/usr/bin/node --import tsx scripts/notification-worker.ts
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=45
+UMask=0077
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
