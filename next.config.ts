@@ -29,9 +29,6 @@ const nextConfig: NextConfig = {
   },
   // next dev를 https://dev.nexibase.com (Apache 프록시)으로 열 때 dev 리소스/HMR 허용
   allowedDevOrigins: ['dev.nexibase.com'],
-  typescript: {
-    ignoreBuildErrors: true,
-  },
   experimental: {
     // Keep HMR in memory; /home has limited free space.
     turbopackFileSystemCacheForDev: false,

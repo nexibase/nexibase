@@ -25,12 +25,12 @@ import {
   Vote,
   ListChecks,
 } from "lucide-react"
-import PollForm from "@/plugins/polls/components/PollForm"
+import PollForm, { type PollFormData } from "@/plugins/polls/components/PollForm"
 
 interface PollOption {
   id: number
   label: string
-  emoji?: string
+  emoji?: string | null
   votes: number
 }
 
@@ -103,7 +103,7 @@ export default function PollsAdminPage() {
     fetchPolls()
   }
 
-  const handleCreate = async (data: Record<string, unknown>) => {
+  const handleCreate = async (data: PollFormData) => {
     setSaving(true)
     try {
       const res = await fetch("/api/admin/polls", {
@@ -126,7 +126,7 @@ export default function PollsAdminPage() {
     }
   }
 
-  const handleUpdate = async (data: Record<string, unknown>) => {
+  const handleUpdate = async (data: PollFormData) => {
     if (!editingPoll) return
     setSaving(true)
     try {

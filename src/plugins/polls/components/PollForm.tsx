@@ -12,7 +12,7 @@ interface PollOption {
   emoji: string
 }
 
-interface PollFormData {
+export interface PollFormData {
   question: string
   description: string
   category: string
@@ -23,7 +23,7 @@ interface PollFormData {
 }
 
 interface PollFormProps {
-  initial?: Partial<PollFormData & { options: Array<{ label: string; emoji?: string }> }>
+  initial?: Partial<Omit<PollFormData, "options">> & { options?: Array<{ label: string; emoji?: string | null }> }
   onSubmit: (data: PollFormData) => Promise<void>
   onCancel: () => void
   saving: boolean

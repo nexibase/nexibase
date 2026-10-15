@@ -16,7 +16,8 @@
     "db:setup": "prisma migrate deploy && prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:push": "prisma db push",
-    "postinstall": "node scripts/scan-plugins.js && node scripts/scan-layouts.js && node scripts/scan-themes.js && prisma generate && node scripts/setup-custom-css.js"
+    "postinstall": "node scripts/scan-plugins.js && node scripts/scan-layouts.js && node scripts/scan-themes.js && prisma generate && node scripts/setup-custom-css.js",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.89.0",

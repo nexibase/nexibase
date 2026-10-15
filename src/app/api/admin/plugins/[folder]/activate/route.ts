@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getAdminUser } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { pluginManifest } from '@/plugins/_generated'
+import { seedHomeWidgets } from '@/lib/widgets/seed-home'
 
 // POST /api/admin/plugins/[folder]/activate
 // Called when plugin is enabled — seeds menus and widgets into DB
@@ -34,74 +35,65 @@ export async function POST(
       shop: { 'Refund Policy': '/shop/policy' },
     }
 
-    let menuCount = 0
-    let widgetCount = 0
+    return await prisma.$transaction(async tx => {
+      let menuCount = 0
+      let widgetCount = 0
 
-    // Seed header menus
-    for (const menu of menus) {
-      const existing = await prisma.menu.findFirst({
-        where: { url: `/${slug}`, position: 'header' }
-      })
-      if (!existing) {
-        await prisma.menu.create({
-          data: {
-            position: 'header',
-            label: menu.label,
-            url: `/${slug}`,
-            icon: menu.icon || null,
-            sortOrder: menu.sortOrder || 0,
-          }
+      // Seed header menus
+      for (const menu of menus) {
+        const existing = await tx.menu.findFirst({
+          where: { url: `/${slug}`, position: 'header' }
         })
-        menuCount++
+        if (!existing) {
+          await tx.menu.create({
+            data: {
+              position: 'header',
+              label: menu.label,
+              url: `/${slug}`,
+              icon: menu.icon || null,
+              sortOrder: menu.sortOrder || 0,
+            }
+          })
+          menuCount++
+        }
       }
-    }
 
-    // Seed footer menus
-    for (const fMenu of footerMenus) {
-      const urlMap = footerUrlMap[folder] || {}
-      const url = urlMap[fMenu.label] || `/${slug}`
-      const existing = await prisma.menu.findFirst({
-        where: { url, position: 'footer', label: fMenu.label }
-      })
-      if (!existing) {
-        await prisma.menu.create({
-          data: {
-            position: 'footer',
-            groupName: fMenu.groupName || null,
-            label: fMenu.label,
-            url,
-            sortOrder: fMenu.sortOrder || 0,
-          }
+      // Seed footer menus
+      for (const fMenu of footerMenus) {
+        const urlMap = footerUrlMap[folder] || {}
+        const url = urlMap[fMenu.label] || `/${slug}`
+        const existing = await tx.menu.findFirst({
+          where: { url, position: 'footer', label: fMenu.label }
         })
-        menuCount++
+        if (!existing) {
+          await tx.menu.create({
+            data: {
+              position: 'footer',
+              groupName: fMenu.groupName || null,
+              label: fMenu.label,
+              url,
+              sortOrder: fMenu.sortOrder || 0,
+            }
+          })
+          menuCount++
+        }
       }
-    }
 
-    // Seed widgets
-    for (const widget of widgets) {
-      const existing = await prisma.homeWidget.findFirst({
-        where: { widgetKey: widget.widgetKey }
+      // Seed only missing widgets on the home page; other pages have independent layouts.
+      widgetCount = await seedHomeWidgets(tx, widgets.map(widget => ({
+        widgetKey: widget.widgetKey,
+        zone: widget.defaultZone,
+        title: widget.title,
+        colSpan: widget.defaultColSpan || 1,
+        rowSpan: widget.defaultRowSpan || 1,
+        settings: widget.settingsSchema ? JSON.stringify(widget.settingsSchema) : null,
+        sortOrder: 0,
+      })))
+
+      return NextResponse.json({
+        success: true,
+        message: `메뉴 ${menuCount}개, 위젯 ${widgetCount}개 등록됨`,
       })
-      if (!existing) {
-        await prisma.homeWidget.create({
-          data: {
-            widgetKey: widget.widgetKey,
-            zone: widget.defaultZone,
-            title: widget.title,
-            colSpan: widget.defaultColSpan || 1,
-            rowSpan: widget.defaultRowSpan || 1,
-            settings: widget.settingsSchema ? JSON.stringify(widget.settingsSchema) : null,
-            isActive: true,
-            sortOrder: 0,
-          }
-        })
-        widgetCount++
-      }
-    }
-
-    return NextResponse.json({
-      success: true,
-      message: `메뉴 ${menuCount}개, 위젯 ${widgetCount}개 등록됨`,
     })
   } catch (error) {
     console.error('failed to activate plugin:', error)
