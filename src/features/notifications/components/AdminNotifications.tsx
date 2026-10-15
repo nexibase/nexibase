@@ -119,7 +119,7 @@ export function NotificationSettingsAdmin() {
         <p className="text-sm text-muted-foreground">끄면 메일은 모의 처리하고, 문자·알림톡은 알리고 테스트 모드를 사용합니다. {data.environment === 'development' && 'dev에서는 켜더라도 아래 허용 목록의 수신자에게만 실제로 발송합니다.'}</p>
         <div className="space-y-2"><Label htmlFor="notification-allowlist">dev 실발송 테스트 수신자</Label><Textarea id="notification-allowlist" value={allowlist} placeholder="이메일 또는 전화번호를 한 줄에 하나씩 입력" onChange={e => { setAllowlist(e.target.value); setting('testRecipients', e.target.value.split(/[\n,]/).map(v => v.trim()).filter(Boolean)) }} /></div>
       </Section>
-      <div className="grid gap-5 xl:grid-cols-2"><Section title="메일 · SMTP"><div className="grid sm:grid-cols-2 gap-4">
+      <div className="grid gap-5"><Section title="메일 · SMTP"><div className="grid sm:grid-cols-2 gap-4">
         <div className="space-y-2"><Label htmlFor="notification-smtp-provider">SMTP 호스트</Label><select id="notification-smtp-provider" className={`${fieldClass} w-full h-10`} value={smtpProvider} onChange={e => selectSmtpProvider(e.target.value as SmtpProvider)}>{Object.entries(smtpProviders).map(([key, provider]) => <option key={key} value={key}>{provider.label}</option>)}<option value="custom">직접 입력</option></select>
           {smtpProvider === 'custom' ? <><Label htmlFor="notification-smtpHost" className="sr-only">SMTP 호스트 직접 입력</Label><Input id="notification-smtpHost" value={data.settings.smtpHost} onChange={e => setting('smtpHost', e.target.value)} placeholder="smtp.example.com" autoComplete="off" /></> : <p className="text-xs text-muted-foreground break-all">{data.settings.smtpHost}</p>}
         </div>
