@@ -32,7 +32,13 @@ external canonical target. A single sitemap is capped at 50,000 URLs, with up to
 40,000 recently updated posts; very large installations should add sitemap
 pagination before exceeding those bounds.
 
-`/robots.txt` references the same installation's sitemap and excludes account,
+`/robots.txt` is bundled by default as the Next.js metadata route
+`src/app/robots.ts`, including in the Docker build. No file creation, domain
+replacement or admin switch is required after installation. It resolves the
+configured site URL or the request's public origin on each request; do not add a
+second `public/robots.txt` to the same application.
+
+It references the same installation's sitemap and excludes account,
 admin, API, search and commerce transaction paths. Those application paths also
 send `X-Robots-Tag: noindex, nofollow`. Robots rules are indexing controls, not
 access control; application authorization remains in effect.
@@ -50,6 +56,11 @@ already does). For example, change that exclusion's negative lookahead from
 `(?!sitemap\.xml$)` to `(?!sitemap\.xml$|robots\.txt$)`, then validate the Apache
 configuration before reloading. Do not leave a stale static robots file masking
 the dynamic route. Confirm both endpoints over the public HTTPS domain.
+
+For the legacy main installation, a compatibility file was placed in Apache's
+document root at `/home/kagla/_nexibase.com/public/robots.txt` on 2026-10-16.
+Both its robots file and sitemap return HTTP 200. Remove that compatibility file
+when switching this vhost to the bundled dynamic route above.
 
 Submit the production sitemap in the site's existing Google Search Console and
 Naver Search Advisor properties after deployment. Verification tags configured
