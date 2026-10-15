@@ -18,11 +18,12 @@ if (!process.argv.includes('--confirm')) {
 }
 
 async function main() {
-  const [userCount, boardCount, menuCount, widgetCount, contentCount, policyCount, settingCount] = await Promise.all([
+  const [userCount, boardCount, menuCount, widgetCount, pageCount, contentCount, policyCount, settingCount] = await Promise.all([
     prisma.user.count(),
     prisma.board.count(),
     prisma.menu.count(),
-    prisma.homeWidget.count(),
+    prisma.pageWidget.count(),
+    prisma.widgetPage.count(),
     prisma.content.count(),
     prisma.policy.count(),
     prisma.setting.count(),
@@ -36,6 +37,7 @@ async function main() {
   console.log(`  - boards:   ${boardCount}개`)
   console.log(`  - menus:    ${menuCount}개`)
   console.log(`  - widgets:  ${widgetCount}개`)
+  console.log(`  - pages:    ${pageCount}개`)
   console.log(`  - contents: ${contentCount}개`)
   console.log(`  - policies: ${policyCount}개`)
   console.log(`  - settings: ${settingCount}개`)
@@ -61,7 +63,8 @@ async function main() {
   await prisma.policy.deleteMany({})
   console.log('✓ policies 삭제')
 
-  await prisma.homeWidget.deleteMany({})
+  await prisma.pageWidget.deleteMany({})
+  await prisma.widgetPage.deleteMany({})
   console.log('✓ widgets 삭제')
 
   await prisma.menu.deleteMany({})

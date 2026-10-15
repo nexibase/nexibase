@@ -1,6 +1,4 @@
-import type { Plugin } from '@/types/plugin';
-
-const plugin: Plugin = {
+const plugin = {
   name: 'Countdown Timer',
   description: 'Display countdown timers for important events',
   version: '1.0.0',
