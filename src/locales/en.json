@@ -903,7 +903,8 @@
     "menuChildCount": "{count} submenus",
     "menuOrderSaved": "Menu order saved.",
     "menuOrderFailed": "Could not save the menu order. The saved order has been restored.",
-    "menuOrderConflict": "The menus changed elsewhere. The latest order has been loaded; please try again."
+    "menuOrderConflict": "The menus changed elsewhere. The latest order has been loaded; please try again.",
+    "versionAhead": "The installed version is ahead of the latest release"
   },
   "widgets": {
     "welcome": "Welcome",

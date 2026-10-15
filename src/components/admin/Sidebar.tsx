@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation"
 import { useTheme } from "next-themes"
 import { useTranslations, useLocale } from "next-intl"
 import { Button } from "@/components/ui/button"
+import { getVersionStatus, normalizeVersion } from "@/lib/releases/version"
 import {
   LayoutDashboard,
   Users,
@@ -157,6 +158,9 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
   const [user, setUser] = useState<UserInfo | null>(getCachedUser)
   const [plugins, setPlugins] = useState<PluginInfo[]>(getCachedPlugins)
   const [latestVersion, setLatestVersion] = useState<string>('')
+  const [releaseUrl, setReleaseUrl] = useState('https://github.com/nexibase/nexibase/releases/latest')
+  const versionStatus = getVersionStatus(CURRENT_VERSION, latestVersion)
+  const updateAvailable = versionStatus === 'update'
   const router = useRouter()
   const pathname = usePathname()
   const { theme, setTheme } = useTheme()
@@ -209,31 +213,28 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
 
     fetchPlugins()
 
-    // Fetch the latest NexiBase core version (tag) from GitHub (session-cached for 10 min)
+    // Ignore old session caches, including values saved before an app update.
+    try {
+      sessionStorage.removeItem('nexibase_latest_version')
+      sessionStorage.removeItem('nexibase_latest_version_at')
+    } catch { /* Storage may be unavailable; version checks still work. */ }
+    let cancelled = false
     const fetchLatestVersion = async () => {
       try {
-        const cachedVersion = sessionStorage.getItem('nexibase_latest_version')
-        const cachedAt = sessionStorage.getItem('nexibase_latest_version_at')
-        const TEN_MIN = 10 * 60 * 1000
-        if (cachedVersion && cachedAt && Date.now() - Number(cachedAt) < TEN_MIN) {
-          setLatestVersion(cachedVersion)
-          return
+        const res = await fetch('/api/admin/version', { cache: 'no-store' })
+        if (!res.ok || cancelled) return
+        const data = await res.json()
+        if (cancelled) return
+        const version = normalizeVersion(data.latestVersion)
+        setLatestVersion(version ?? '')
+        if (version && typeof data.releaseUrl === 'string' && data.releaseUrl.startsWith('https://github.com/nexibase/nexibase/releases/tag/')) {
+          setReleaseUrl(data.releaseUrl)
         }
-        const res = await fetch('https://api.github.com/repos/nexibase/nexibase/tags')
-        if (!res.ok) return
-        const tags = await res.json()
-        const tag = tags?.[0]?.name || ''
-        const normalized = tag.startsWith('v') ? tag.slice(1) : tag
-        if (normalized) {
-          setLatestVersion(normalized)
-          sessionStorage.setItem('nexibase_latest_version', normalized)
-          sessionStorage.setItem('nexibase_latest_version_at', String(Date.now()))
-        }
-      } catch {
-        // Ignore network failures
-      }
+      } catch { /* Do not turn a network failure into an update notification. */ }
     }
-    fetchLatestVersion()
+    void fetchLatestVersion()
+    const versionTimer = window.setInterval(fetchLatestVersion, 5 * 60 * 1000)
+    window.addEventListener('focus', fetchLatestVersion)
 
     // Listen for plugin status change events
     const handlePluginChange = () => {
@@ -241,7 +242,12 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
       fetchPlugins()
     }
     window.addEventListener('pluginStatusChanged', handlePluginChange)
-    return () => window.removeEventListener('pluginStatusChanged', handlePluginChange)
+    return () => {
+      cancelled = true
+      window.clearInterval(versionTimer)
+      window.removeEventListener('focus', fetchLatestVersion)
+      window.removeEventListener('pluginStatusChanged', handlePluginChange)
+    }
   }, [fetchPlugins])
 
   // Auto-open group menus based on current path
@@ -542,15 +548,15 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
                         {t('latestVersion')}
                       </span>
                       <a
-                        href="https://github.com/nexibase/nexibase/tags"
+                        href={releaseUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className={`font-mono font-medium ${
-                          latestVersion !== CURRENT_VERSION
+                          updateAvailable
                             ? 'text-amber-600 dark:text-amber-400 underline'
-                            : 'text-green-600 dark:text-green-400'
+                            : versionStatus === 'current' ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'
                         }`}
-                        title={latestVersion !== CURRENT_VERSION ? t('updateAvailable') : t('latestVersion')}
+                        title={updateAvailable ? t('updateAvailable') : versionStatus === 'ahead' ? t('versionAhead') : t('latestVersion')}
                       >
                         v{latestVersion}
                       </a>
