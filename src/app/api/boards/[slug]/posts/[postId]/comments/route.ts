@@ -94,29 +94,29 @@ export async function POST(
     // Create comment
     const comment = await prisma.$transaction(async tx => {
       await reserveBoardDailyWrite(tx, user, board.id, 'comment')
-    const created = await tx.comment.create({
-      data: {
-        content: content.trim(),
-        authorId: user.id,
-        postId,
-        parentId: parentId ? parseInt(parentId) : null
-      },
-      include: {
-        author: {
-          select: {
-            id: true,
-            nickname: true,
-            image: true
+      const created = await tx.comment.create({
+        data: {
+          content: content.trim(),
+          authorId: user.id,
+          postId,
+          parentId: parentId ? parseInt(parentId) : null
+        },
+        include: {
+          author: {
+            select: {
+              id: true,
+              nickname: true,
+              image: true
+            }
           }
         }
-      }
-    })
+      })
 
-    // Increment the post's comment count
-    await tx.post.update({
-      where: { id: postId },
-      data: { commentCount: { increment: 1 } }
-    })
+      // Increment the post's comment count
+      await tx.post.update({
+        where: { id: postId },
+        data: { commentCount: { increment: 1 } }
+      })
 
       return created
     })
