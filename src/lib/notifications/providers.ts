@@ -43,6 +43,19 @@ export function smtpTransport(settings: NotificationSettings, secrets: Secrets) 
     ...(settings.smtpUser ? { auth: { user: settings.smtpUser, pass: secrets.smtpPass } } : {}),
     connectionTimeout: 10000, greetingTimeout: 10000, socketTimeout: 15000, logger: false, debug: false })
 }
+export function smtpFailure(error: unknown, mayHaveSent = true): ProviderResult {
+  const result = networkFailure(error)
+  const err = error as { code?: string; responseCode?: number }
+  const code = err.code || result.code
+  const reason = code === 'EAUTH' ? 'SMTP 인증 실패: 계정과 비밀번호를 확인하세요. Gmail 등에서 2단계 인증을 사용하면 앱 비밀번호가 필요합니다.'
+    : code === 'ENOTFOUND' || code === 'EAI_AGAIN' ? 'SMTP 호스트를 찾을 수 없습니다. 서버 주소와 DNS 설정을 확인하세요.'
+    : code === 'ECONNREFUSED' ? 'SMTP 연결 거부: 포트 번호와 서버 방화벽을 확인하세요.'
+    : code === 'ETIMEDOUT' ? 'SMTP 응답 시간 초과: 서버 주소·포트와 방화벽을 확인하세요.'
+    : ['ETLS', 'EPROTO', 'ESOCKET', 'CERT_HAS_EXPIRED', 'DEPTH_ZERO_SELF_SIGNED_CERT', 'ERR_TLS_CERT_ALTNAME_INVALID'].includes(code || '') ? 'SMTP 보안 연결 실패: 포트·TLS 설정과 서버 인증서를 확인하세요. 465는 연결 시 TLS를 켜고, 587은 끄세요.'
+    : err.responseCode && err.responseCode >= 500 ? 'SMTP 서버가 발송을 거부했습니다. 발신 주소·수신 주소와 메일 계정의 발송 제한을 확인하세요.'
+    : result.reason
+  return { ...result, code: [code, err.responseCode].filter(Boolean).join('/'), reason: `${reason}${mayHaveSent && result.status === 'unknown' ? ' 접수 여부가 불명확하여 자동 재발송하지 않습니다.' : ''}` }
+}
 export async function sendViaProvider(channel: Channel, payload: DeliveryPayload, settings: NotificationSettings,
   secrets: Secrets, live: boolean, fetcher = fetch): Promise<ProviderResult> {
   if (channel === 'email') {
@@ -52,7 +65,7 @@ export async function sendViaProvider(channel: Channel, payload: DeliveryPayload
         subject: payload.subject, text: payload.text, html: payload.html })
       return result.accepted.length ? { status: 'accepted', providerId: result.messageId, reason: 'SMTP 서버 접수 완료. 수신함 도착 여부는 확인되지 않습니다.' }
         : { status: 'failed', reason: 'SMTP 서버가 수신자를 거부했습니다.' }
-    } catch (error) { return networkFailure(error) }
+    } catch (error) { return smtpFailure(error) }
   }
   try {
     const result = channel === 'sms'

@@ -39,8 +39,8 @@ function Navigation({ settings }: { settings?: boolean }) {
   return <div className="flex flex-wrap items-center justify-between gap-3 mb-6"><h1 className="text-2xl font-bold flex gap-2 items-center"><Bell className="h-6 w-6" />{settings ? t('settings') : t('history')}</h1>
     <nav className="flex gap-2"><Button asChild variant={settings ? 'default' : 'outline'}><Link href="/admin/notifications/settings">{t('settings')}</Link></Button><Button asChild variant={settings ? 'outline' : 'default'}><Link href="/admin/notifications">{t('history')}</Link></Button></nav></div>
 }
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return <section className="border rounded-lg p-5 space-y-4"><h2 className="font-semibold text-lg">{title}</h2>{children}</section>
+function Section({ title, children, action }: { title: string; children: React.ReactNode; action?: React.ReactNode }) {
+  return <section className="border rounded-lg p-5 space-y-4"><div className="flex flex-wrap items-center justify-between gap-3"><h2 className="font-semibold text-lg">{title}</h2>{action}</div>{children}</section>
 }
 function SmtpTest({ data, dirty, busy }: { data: Configuration; dirty: boolean; busy: boolean }) {
   const [recipientEmail, setRecipientEmail] = useState('')
@@ -48,8 +48,26 @@ function SmtpTest({ data, dirty, busy }: { data: Configuration; dirty: boolean; 
   const [eventId, setEventId] = useState('')
   const [result, setResult] = useState('')
   const [waiting, setWaiting] = useState(false)
+  const [checking, setChecking] = useState(false)
+  const [recipientStatus, setRecipientStatus] = useState<{ ready: boolean; message: string } | null>(null)
   const unavailable = dirty ? '변경한 설정을 먼저 저장하세요.' : !data.settings.liveEnabled ? '상단의 실제 외부 발송 허용을 켜고 저장하세요.'
     : data.missing.email.length ? `SMTP 설정 필요: ${data.missing.email.join(', ')}` : !data.encryptionReady ? '서버 알림 암호화 키 설정이 필요합니다.' : ''
+  useEffect(() => {
+    setRecipientStatus(null)
+    if (dirty) return
+    const controller = new AbortController()
+    const timer = setTimeout(async () => {
+      try {
+        const response = await fetch(`/api/admin/notifications/test?checkRecipient=1&recipientEmail=${encodeURIComponent(recipientEmail.trim())}`, { cache: 'no-store', signal: controller.signal })
+        const body = await response.json()
+        if (!response.ok) throw new Error(body.error || '수신 조건을 확인하지 못했습니다.')
+        setRecipientStatus(body)
+      } catch (error) {
+        if (!controller.signal.aborted) setRecipientStatus({ ready: false, message: error instanceof Error ? error.message : '수신 조건 조회 실패' })
+      }
+    }, 300)
+    return () => { clearTimeout(timer); controller.abort() }
+  }, [recipientEmail, dirty, data.settings.liveEnabled, data.settings.testRecipients])
   useEffect(() => {
     if (!eventId) return
     const controller = new AbortController()
@@ -90,14 +108,25 @@ function SmtpTest({ data, dirty, busy }: { data: Configuration; dirty: boolean; 
     } catch (error) { setResult(error instanceof Error ? error.message : '테스트 메일 요청 실패') }
     finally { setSending(false) }
   }
+  async function checkConnection() {
+    setChecking(true); setResult('저장한 SMTP 설정으로 서버 연결과 인증을 확인하고 있습니다.'); setEventId('')
+    try {
+      const response = await fetch('/api/admin/notifications/test', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'smtp_check' }) })
+      const body = await response.json()
+      if (!response.ok) throw new Error(body.error || 'SMTP 연결 확인 실패')
+      setResult(body.message)
+    } catch (error) { setResult(error instanceof Error ? error.message : 'SMTP 연결 확인 실패') }
+    finally { setChecking(false) }
+  }
   return <div className="border-t pt-4 space-y-3">
-    <h3 className="font-medium">테스트 메일 발송</h3>
+    <div className="flex flex-wrap items-center justify-between gap-3"><h3 className="font-medium">테스트 메일 발송</h3><Button type="button" variant="outline" disabled={dirty || busy || checking || sending || waiting} onClick={checkConnection}>{checking ? 'SMTP 연결 확인 중…' : 'SMTP 연결 확인'}</Button></div>
     <p className="text-xs text-muted-foreground">저장한 SMTP 설정으로 실제 테스트 메일을 보냅니다. 비워두면 내 계정의 이메일로 보냅니다. dev에서는 수신 이메일을 상단의 실발송 테스트 수신자에 등록하고 저장하세요.</p>
-    <form className="flex flex-wrap gap-3 items-end" onSubmit={e => { e.preventDefault(); if (!unavailable && !busy && !sending && !waiting) void send() }}>
+    <form className="flex flex-wrap gap-3 items-end" onSubmit={e => { e.preventDefault(); if (!unavailable && recipientStatus?.ready && !busy && !checking && !sending && !waiting) void send() }}>
       <div className="space-y-2 flex-1 min-w-0 sm:min-w-64"><Label htmlFor="smtp-test-recipient">수신 회원 이메일</Label><Input id="smtp-test-recipient" type="email" maxLength={254} value={recipientEmail} onChange={e => setRecipientEmail(e.target.value)} placeholder="비워두면 내 이메일" autoComplete="off" disabled={sending || waiting} /></div>
-      <Button type="submit" disabled={!!unavailable || busy || sending || waiting}><Mail className="h-4 w-4 mr-2" />{sending ? '요청 중…' : waiting ? '발송 결과 확인 중…' : '테스트 메일 보내기'}</Button>
+      <Button type="submit" disabled={!!unavailable || !recipientStatus?.ready || busy || checking || sending || waiting}><Mail className="h-4 w-4 mr-2" />{sending ? '요청 중…' : waiting ? '발송 결과 확인 중…' : '테스트 메일 보내기'}</Button>
     </form>
     {unavailable && <p className="text-sm text-muted-foreground">{unavailable}</p>}
+    {!dirty && <p className={`text-sm ${recipientStatus?.ready ? 'text-muted-foreground' : 'text-amber-600 dark:text-amber-400'}`}>{recipientStatus?.message || '수신 조건을 확인하고 있습니다…'}</p>}
     {result && <div role="status" className="border rounded-md p-3 text-sm whitespace-pre-wrap">{result}</div>}
     <p className="text-xs text-muted-foreground">SMTP 서버 접수 후 수신함·스팸함에서 도착 여부를 확인하세요. <Link href="/admin/notifications" className="text-primary underline">발송 내역 보기</Link></p>
   </div>
@@ -186,7 +215,8 @@ export function NotificationSettingsAdmin() {
   }
   return <div className="w-full p-6 space-y-5"><Navigation settings />
     <p className="text-sm text-muted-foreground">사이트 내 알림은 항상 기록합니다. 알림톡과 문자를 함께 켜면 알림톡 최종 실패 시에만 문자를 보냅니다. 외부 발송은 회원의 수신 설정을 따릅니다.</p>
-    {message && <div role="status" className="border rounded-md p-3 text-sm whitespace-pre-wrap break-all">{message}</div>}
+    {data && <div className="sticky top-0 z-20 border rounded-lg bg-background/95 p-3 shadow-sm space-y-2" aria-label="알림 설정 저장 영역"><div className="flex flex-wrap items-center justify-between gap-3"><span className="text-sm text-muted-foreground">{dirty ? '저장하지 않은 변경사항이 있습니다.' : '저장된 설정입니다.'}</span><Button onClick={save} disabled={busy || !dirty}><Save className="h-4 w-4 mr-2" />{busy ? '저장 중…' : '설정 저장'}</Button></div>{message && <div role="status" className="text-sm whitespace-pre-wrap break-words">{message}</div>}</div>}
+    {!data && message && <div role="status" className="border rounded-md p-3 text-sm whitespace-pre-wrap break-words">{message}</div>}
     {!data ? <p>설정을 불러오는 중입니다.</p> : <>
       {!data.encryptionReady && <p className="text-destructive">서버 알림 암호화 키 설정이 필요합니다. 외부 발송 정보를 저장할 수 없습니다.</p>}
       <Section title="발송 채널"><div className="grid gap-4 md:grid-cols-3">{Object.entries(channels).map(([channel, label]) => <div key={channel} className="border rounded-lg p-4 space-y-3">
@@ -197,7 +227,7 @@ export function NotificationSettingsAdmin() {
         <p className="text-sm text-muted-foreground">끄면 메일은 모의 처리하고, 문자·알림톡은 알리고 테스트 모드를 사용합니다. {data.environment === 'development' && 'dev에서는 켜더라도 아래 허용 목록의 수신자에게만 실제로 발송합니다.'}</p>
         <div className="space-y-2"><Label htmlFor="notification-allowlist">dev 실발송 테스트 수신자</Label><Textarea id="notification-allowlist" value={allowlist} placeholder="이메일 또는 전화번호를 한 줄에 하나씩 입력" onChange={e => { setAllowlist(e.target.value); setting('testRecipients', e.target.value.split(/[\n,]/).map(v => v.trim()).filter(Boolean)) }} /></div>
       </Section>
-      <div className="grid gap-5"><Section title="메일 · SMTP"><div className="grid sm:grid-cols-2 gap-4">
+      <div className="grid gap-5"><Section title="메일 · SMTP" action={<Button onClick={save} disabled={busy || !dirty} aria-label="SMTP 카드 설정 저장"><Save className="h-4 w-4 mr-2" />설정 저장</Button>}><div className="grid sm:grid-cols-2 gap-4">
         <div className="space-y-2"><Label htmlFor="notification-smtp-provider">SMTP 호스트</Label><select id="notification-smtp-provider" className={`${fieldClass} w-full h-10`} value={smtpProvider} onChange={e => selectSmtpProvider(e.target.value as SmtpProvider)}>{Object.entries(smtpProviders).map(([key, provider]) => <option key={key} value={key}>{provider.label}</option>)}<option value="custom">직접 입력</option></select>
           <Label htmlFor="notification-smtpHost" className="sr-only">SMTP 서버 주소</Label><Input id="notification-smtpHost" value={data.settings.smtpHost} onChange={e => { setting('smtpHost', e.target.value); setSmtpProvider('custom') }} placeholder="smtp.example.com" autoComplete="off" />
         </div>
@@ -218,7 +248,6 @@ export function NotificationSettingsAdmin() {
             <div className="grid lg:grid-cols-2 gap-4"><label className="space-y-2 text-sm">알림톡 버튼 정보 · JSON<Textarea value={r.buttonsText} onChange={e => rule(r.eventType, { buttonsText: e.target.value })} placeholder={'{"button": []}'} rows={3} /></label><label className="space-y-2 text-sm">변수 매핑 · JSON<Textarea value={r.mappingText} onChange={e => rule(r.eventType, { mappingText: e.target.value })} placeholder={'{"고객명": "name", "주문번호": "orderNo"}'} rows={3} /></label></div>
           </div></details></div>)}
       </Section>
-      <div className="flex items-center gap-3"><Button onClick={save} disabled={busy || !dirty}><Save className="h-4 w-4 mr-2" />설정 저장</Button>{dirty && <span className="text-sm text-muted-foreground">저장하지 않은 변경사항이 있습니다.</span>}</div>
       <Section title="테스트 발송"><p className="text-sm text-muted-foreground">선택한 회원의 등록된 연락처를 사용합니다. 테스트는 해당 회원의 수신 설정과 채널 켜기 여부에 관계없이 요청하며, 사이트 내 테스트 알림도 기록합니다.</p>
         <div className="flex flex-wrap gap-3 items-end"><label className="text-sm space-y-2">테스트 회원 ID<Input type="number" min={1} placeholder="비워두면 내 계정" value={test.userId} onChange={e => setTest(v => ({ ...v, userId: e.target.value }))} /></label>
           <label className="text-sm grid gap-2">채널<select className={fieldClass} value={test.channel} onChange={e => setTest(v => ({ ...v, channel: e.target.value }))}>{Object.entries(channels).map(([key,label]) => <option key={key} value={key}>{label}</option>)}</select></label>

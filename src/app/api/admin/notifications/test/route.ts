@@ -3,11 +3,25 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { notificationAdmin, sameOrigin } from '@/lib/notifications/admin'
 import { configReadiness, getNotificationConfig } from '@/lib/notifications/config'
-import { CHANNELS, canUseLiveDelivery, type Channel } from '@/lib/notifications/policy'
+import { CHANNELS, canUseLiveDelivery, maskRecipient, type Channel } from '@/lib/notifications/policy'
 import { emitNotification } from '@/lib/notifications/service'
+import { smtpFailure, smtpTransport } from '@/lib/notifications/providers'
 
 export async function GET(request: NextRequest) {
-  if (!await notificationAdmin()) return NextResponse.json({ error: '관리자 권한이 필요합니다.' }, { status: 401 })
+  const admin = await notificationAdmin()
+  if (!admin) return NextResponse.json({ error: '관리자 권한이 필요합니다.' }, { status: 401 })
+  if (request.nextUrl.searchParams.get('checkRecipient') === '1') {
+    const email = (request.nextUrl.searchParams.get('recipientEmail') || '').trim()
+    if (email.length > 254 || (email && !/^[^\s@<>;,]+@[^\s@<>;,]+\.[^\s@<>;,]+$/.test(email))) return NextResponse.json({ ready: false, message: '올바른 수신 회원 이메일을 입력하세요.' })
+    const user = email ? await prisma.user.findFirst({ where: { email, deletedAt: null, status: 'active' }, select: { email: true } }) : admin
+    if (!user) return NextResponse.json({ ready: false, message: '등록된 활성 회원의 이메일이 아닙니다. 수신 회원 이메일을 입력하세요. 메일은 발송되지 않았습니다.' })
+    const { settings } = await getNotificationConfig()
+    const recipientMasked = maskRecipient(user.email, 'email')
+    if (!canUseLiveDelivery(settings, user.email, 'email')) return NextResponse.json({ ready: false, message: !settings.liveEnabled
+      ? '실제 외부 발송 허용이 꺼져 있습니다. 켠 뒤 설정을 저장하세요.'
+      : `${email ? '수신 회원' : '내 계정'} ${recipientMasked}이 dev 실발송 허용 목록에 없습니다. 상단의 테스트 수신자에 해당 이메일을 추가하고 저장하세요.`, recipientMasked })
+    return NextResponse.json({ ready: true, message: `수신자 ${recipientMasked} · 실제 테스트 메일 발송 가능`, recipientMasked })
+  }
   const eventId = request.nextUrl.searchParams.get('eventId') || ''
   if (!/^[a-f0-9-]{36}$/i.test(eventId)) return NextResponse.json({ error: '테스트 발송 ID를 확인하세요.' }, { status: 400 })
   const delivery = await prisma.notificationDelivery.findFirst({ where: { eventId, channel: 'email', event: { type: 'notification_test' } },
@@ -22,6 +36,19 @@ export async function POST(request: NextRequest) {
   if (!sameOrigin(request)) return NextResponse.json({ error: '허용되지 않은 요청입니다.' }, { status: 403 })
   try {
     const body = await request.json()
+    if (body.action === 'smtp_check') {
+      const { settings, secrets } = await getNotificationConfig()
+      const missing = configReadiness(settings, secrets).email
+      if (missing.length) throw new Error(`SMTP 설정 필요: ${missing.join(', ')}`)
+      const transport = smtpTransport(settings, secrets)
+      try {
+        await transport.verify()
+        return NextResponse.json({ success: true, message: 'SMTP 서버 연결과 인증에 성공했습니다. 메일은 발송하지 않았습니다. 실제 수신 확인은 아래 테스트 메일 보내기를 이용하세요.' })
+      } catch (error) {
+        const result = smtpFailure(error, false)
+        return NextResponse.json({ error: `${result.reason}${result.code ? ` (${result.code})` : ''}` }, { status: 400 })
+      } finally { transport.close() }
+    }
     if (!CHANNELS.includes(body.channel) || !['test', 'live'].includes(body.mode)) throw new Error('테스트 채널과 모드를 확인하세요.')
     const recipientEmail = typeof body.recipientEmail === 'string' ? body.recipientEmail.trim() : ''
     if (body.recipientEmail !== undefined && (body.channel !== 'email' || typeof body.recipientEmail !== 'string' || recipientEmail.length > 254 || (recipientEmail && !/^[^\s@<>;,]+@[^\s@<>;,]+\.[^\s@<>;,]+$/.test(recipientEmail)))) throw new Error('수신 회원 이메일을 확인하세요.')

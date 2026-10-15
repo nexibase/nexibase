@@ -1,11 +1,24 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { sendViaProvider, parseFinalResult, networkFailure, safeProviderReason } from './providers'
+import { sendViaProvider, parseFinalResult, networkFailure, safeProviderReason, smtpFailure } from './providers'
 import { DEFAULT_SETTINGS } from './config'
 
 const settings = { ...DEFAULT_SETTINGS, aligoUserId: 'test-user', sender: '0212345678' }
 const secrets = { aligoKey: 'key-private', senderKey: 'profile-private' }
 const payload = { to: '01000000000', subject: '제목', text: '본문', templateCode: 'TPL_TEST' }
+
+test('SMTP failures explain authentication, DNS, TLS and uncertain outcomes without revealing raw errors', () => {
+  const auth = smtpFailure({ code: 'EAUTH', responseCode: 535, message: 'private-password member@example.invalid' })
+  assert.equal(auth.status, 'failed'); assert.equal(auth.code, 'EAUTH/535')
+  assert.ok(auth.reason?.includes('앱 비밀번호'))
+  assert.ok(!auth.reason?.includes('private-password') && !auth.reason?.includes('example.invalid'))
+  assert.equal(smtpFailure({ code: 'ENOTFOUND' }).status, 'retry')
+  assert.ok(smtpFailure({ code: 'ENOTFOUND' }).reason?.includes('DNS'))
+  assert.ok(smtpFailure({ code: 'ETLS' }, false).reason?.includes('포트·TLS'))
+  assert.ok(!smtpFailure({ code: 'ETLS' }, false).reason?.includes('자동 재발송'))
+  assert.equal(smtpFailure({ code: 'ETIMEDOUT' }).status, 'unknown')
+  assert.ok(smtpFailure({ code: 'ETIMEDOUT' }).reason?.includes('자동 재발송하지 않습니다'))
+})
 test('SMS uses SMS credentials and the documented non-billing test flag', async () => {
   let called = false
   const fetcher: typeof fetch = async (input, init) => {

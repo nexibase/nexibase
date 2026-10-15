@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { createServer, type Socket } from 'node:net'
 import { once } from 'node:events'
-import { sendViaProvider } from './providers'
+import { sendViaProvider, smtpTransport } from './providers'
 import { DEFAULT_SETTINGS } from './config'
 
 for (const rejectRecipient of [false, true]) {
@@ -43,8 +43,12 @@ for (const rejectRecipient of [false, true]) {
     try {
       const address = server.address()
       assert.ok(address && typeof address !== 'string')
-      const result = await sendViaProvider('email', { to: 'recipient@example.invalid', subject: 'SMTP test', text: 'SMTP test body' },
-        { ...DEFAULT_SETTINGS, smtpHost: '127.0.0.1', smtpPort: address.port, smtpSecure: false, smtpUser: '', smtpFrom: 'sender@example.invalid' }, {}, true)
+      const settings = { ...DEFAULT_SETTINGS, smtpHost: '127.0.0.1', smtpPort: address.port, smtpSecure: false, smtpUser: '', smtpFrom: 'sender@example.invalid' }
+      const transport = smtpTransport(settings, {})
+      try { assert.equal(await transport.verify(), true) } finally { transport.close() }
+      assert.equal(recipients, 0, 'Connection checking must not attempt to send mail')
+      assert.equal(messages.length, 0)
+      const result = await sendViaProvider('email', { to: 'recipient@example.invalid', subject: 'SMTP test', text: 'SMTP test body' }, settings, {}, true)
       assert.equal(result.status, rejectRecipient ? 'failed' : 'accepted')
       assert.equal(recipients, 1)
       assert.equal(messages.length, rejectRecipient ? 0 : 1)
