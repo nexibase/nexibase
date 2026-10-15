@@ -22,6 +22,11 @@ const smtpProviders = {
 type SmtpProvider = keyof typeof smtpProviders | 'custom'
 const smtpProviderForHost = (host: string): SmtpProvider => (Object.entries(smtpProviders).find(([, provider]) => provider.host === host.trim().toLowerCase())?.[0] as keyof typeof smtpProviders | undefined) || 'custom'
 const smtpPorts = [465, 587, 25] as const
+const smtpPortDescriptions = {
+  465: 'SSL/TLS · 연결부터 암호화',
+  587: 'STARTTLS · 일반 메일 발송',
+  25: 'SMTP · 서버 간 메일 전달',
+} as const
 type SmtpPortSelection = `${typeof smtpPorts[number]}` | 'custom'
 const smtpPortSelectionFor = (port: number): SmtpPortSelection => smtpPorts.some(value => value === port) ? String(port) as SmtpPortSelection : 'custom'
 const statuses: Record<string, string> = { pending: '발송 대기', waiting: '알림톡 실패 시 발송', processing: '요청 중', accepted: '접수 완료 · 결과 대기', delivered: '전달 완료', failed: '실패', unknown: '결과 확인 필요', skipped: '발송 안 함', tested: '테스트 처리' }
@@ -196,7 +201,7 @@ export function NotificationSettingsAdmin() {
         <div className="space-y-2"><Label htmlFor="notification-smtp-provider">SMTP 호스트</Label><select id="notification-smtp-provider" className={`${fieldClass} w-full h-10`} value={smtpProvider} onChange={e => selectSmtpProvider(e.target.value as SmtpProvider)}>{Object.entries(smtpProviders).map(([key, provider]) => <option key={key} value={key}>{provider.label}</option>)}<option value="custom">직접 입력</option></select>
           <Label htmlFor="notification-smtpHost" className="sr-only">SMTP 서버 주소</Label><Input id="notification-smtpHost" value={data.settings.smtpHost} onChange={e => { setting('smtpHost', e.target.value); setSmtpProvider('custom') }} placeholder="smtp.example.com" autoComplete="off" />
         </div>
-        <div className="space-y-2"><Label htmlFor="notification-port-selection">SMTP 포트</Label><select id="notification-port-selection" className={`${fieldClass} w-full h-10`} value={smtpPortSelection} onChange={e => selectSmtpPort(e.target.value as SmtpPortSelection)}>{smtpPorts.map(port => <option key={port} value={String(port)}>{port}</option>)}<option value="custom">직접 입력</option></select>
+        <div className="space-y-2"><Label htmlFor="notification-port-selection">SMTP 포트</Label><select id="notification-port-selection" className={`${fieldClass} w-full h-10`} value={smtpPortSelection} onChange={e => selectSmtpPort(e.target.value as SmtpPortSelection)}>{smtpPorts.map(port => <option key={port} value={String(port)}>{port} — {smtpPortDescriptions[port]}</option>)}<option value="custom">직접 입력</option></select>
           {smtpPortSelection === 'custom' && <><Label htmlFor="notification-port" className="sr-only">SMTP 포트 직접 입력</Label><Input id="notification-port" type="number" min={1} max={65535} value={data.settings.smtpPort} onChange={e => setting('smtpPort', Number(e.target.value))} /></>}
         </div>
         {textField('smtpUser', 'SMTP 계정')}{secretField('smtpPass', 'SMTP 비밀번호')}{textField('smtpFrom', '발신 이메일')}
