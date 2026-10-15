@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import { Sidebar } from "@/components/admin/Sidebar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import BoardDailyLimitFields from "@/components/admin/BoardDailyLimitFields"
 import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -43,6 +44,8 @@ interface Board {
   useReaction: boolean
   useFile: boolean
   useSecret: boolean
+  dailyPostLimit: number
+  dailyCommentLimit: number
   postsPerPage: number
   sortOrder: string
   displayType: string
@@ -103,6 +106,8 @@ function BoardModal({
     useReaction: true,
     useFile: true,
     useSecret: false,
+    dailyPostLimit: 0,
+    dailyCommentLimit: 0,
     postsPerPage: 20,
     sortOrder: 'latest',
     displayType: 'list',
@@ -125,6 +130,8 @@ function BoardModal({
         useReaction: board.useReaction ?? true,
         useFile: board.useFile ?? true,
         useSecret: board.useSecret ?? false,
+        dailyPostLimit: board.dailyPostLimit ?? 0,
+        dailyCommentLimit: board.dailyCommentLimit ?? 0,
         postsPerPage: board.postsPerPage ?? 20,
         sortOrder: board.sortOrder || 'latest',
         displayType: board.displayType || 'list',
@@ -144,7 +151,9 @@ function BoardModal({
         useReaction: true,
         useFile: true,
         useSecret: false,
-        postsPerPage: 20,
+        dailyPostLimit: 0,
+    dailyCommentLimit: 0,
+    postsPerPage: 20,
         sortOrder: 'latest',
         displayType: 'list',
         isActive: true,
@@ -300,6 +309,8 @@ function BoardModal({
           </div>
 
           <Separator />
+
+          <div className="border-t pt-5"><BoardDailyLimitFields value={formData} onChange={limits => setFormData({ ...formData, ...limits })} /></div>
 
           {/* Feature settings */}
           <div>
