@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation"
 import { Sidebar } from "@/components/admin/Sidebar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import BoardDailyLimitFields from "@/components/admin/BoardDailyLimitFields"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
@@ -27,6 +28,8 @@ interface Board {
   useReaction: boolean
   useFile: boolean
   useSecret: boolean
+  dailyPostLimit: number
+  dailyCommentLimit: number
   postsPerPage: number
   sortOrder: string
   displayType: string
@@ -54,6 +57,8 @@ export default function BoardEditPage({ params }: { params: Promise<{ id: string
     useReaction: true,
     useFile: true,
     useSecret: false,
+    dailyPostLimit: 0,
+    dailyCommentLimit: 0,
     postsPerPage: 20,
     sortOrder: 'latest',
     displayType: 'list',
@@ -80,6 +85,8 @@ export default function BoardEditPage({ params }: { params: Promise<{ id: string
             useReaction: b.useReaction ?? true,
             useFile: b.useFile ?? true,
             useSecret: b.useSecret ?? false,
+            dailyPostLimit: b.dailyPostLimit ?? 0,
+            dailyCommentLimit: b.dailyCommentLimit ?? 0,
             postsPerPage: b.postsPerPage ?? 20,
             sortOrder: b.sortOrder || 'latest',
             displayType: b.displayType || 'list',
@@ -245,6 +252,8 @@ export default function BoardEditPage({ params }: { params: Promise<{ id: string
               </div>
             </CardContent>
           </Card>
+
+          <Card className="mb-6"><CardContent className="pt-6"><BoardDailyLimitFields value={formData} onChange={limits => setFormData({ ...formData, ...limits })} /></CardContent></Card>
 
           {/* Feature settings */}
           <Card className="mb-6">

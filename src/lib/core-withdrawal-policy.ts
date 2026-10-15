@@ -3,6 +3,7 @@
 // any User-referencing model.
 
 export default [
+  { model: 'BoardDailyUsage', policy: 'delete', reason: '일일 게시판 등록 횟수; 탈퇴 시 삭제' },
   { model: 'FaqView', policy: 'retain', field: 'userId', reason: 'FAQ 조회 집계 보존; 탈퇴 사용자는 User 조인으로 익명화' },
   { model: 'FaqFeedback', policy: 'retain', field: 'userId', reason: 'FAQ 평가 집계 보존; 탈퇴 사용자는 User 조인으로 익명화' },
   { model: 'UserAddress',            policy: 'delete' },

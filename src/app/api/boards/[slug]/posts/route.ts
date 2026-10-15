@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAuthUser } from '@/lib/auth'
+import { BoardDailyLimitError, reserveBoardDailyWrite } from '@/features/boards/lib/daily-limits'
 import { sanitizeHtml } from '@/lib/sanitize'
 
 // Fetch post list
@@ -155,6 +156,8 @@ export async function GET(
         writeMemberOnly: board.writeMemberOnly,
         useComment: board.useComment,
         useReaction: board.useReaction,
+        dailyPostLimit: board.dailyPostLimit,
+        dailyCommentLimit: board.dailyCommentLimit,
         postsPerPage: board.postsPerPage,
         displayType: board.displayType,
         showPostNumber: board.showPostNumber,
@@ -264,6 +267,7 @@ export async function POST(
 
     // Create the post and attachments within a transaction
     const post = await prisma.$transaction(async (tx) => {
+      await reserveBoardDailyWrite(tx, user, board.id, 'post')
       // Create post
       const newPost = await tx.post.create({
         data: {
@@ -313,6 +317,10 @@ export async function POST(
     }, { status: 201 })
 
   } catch (error) {
+    if (error instanceof BoardDailyLimitError) return NextResponse.json(
+      { error: error.message, code: 'BOARD_DAILY_LIMIT', resetAt: error.resetAt.toISOString() },
+      { status: 429, headers: { 'Retry-After': String(Math.max(1, Math.ceil((error.resetAt.getTime() - Date.now()) / 1000))) } },
+    )
     console.error('failed to create post:', error)
     return NextResponse.json(
       { error: '서버 오류가 발생했습니다.' },
