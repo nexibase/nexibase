@@ -1,6 +1,6 @@
 export const CHANNELS = ['email', 'sms', 'alimtalk'] as const
 export type Channel = typeof CHANNELS[number]
-export type DeliveryStatus = 'pending' | 'processing' | 'accepted' | 'delivered' | 'failed' | 'unknown' | 'skipped' | 'tested'
+export type DeliveryStatus = 'pending' | 'waiting' | 'processing' | 'accepted' | 'delivered' | 'failed' | 'unknown' | 'skipped' | 'tested'
 export const CORE_EVENTS = {
   post_comment: '게시글 댓글', comment_reply: '댓글 답글', mention: '멘션',
   direct_message: '쪽지', order_status: '주문 알림',

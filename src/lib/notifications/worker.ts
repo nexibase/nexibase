@@ -33,20 +33,23 @@ export async function runNotificationWorkerOnce(options: WorkerOptions = {}) {
   const stale = await prisma.notificationDelivery.updateMany({ where: { ...scope, status: 'processing', lockedAt: { lt: new Date(Date.now() - 5 * 60000) } },
     data: { status: 'unknown', reason: '작업 중단 후 접수 여부 불명확. 중복 방지를 위해 자동 재발송하지 않습니다.', lockToken: null } })
   const { settings, secrets } = await getConfig()
-  const jobs = await prisma.notificationDelivery.findMany({ where: { ...scope, status: 'pending', nextAttemptAt: { lte: now } }, orderBy: { createdAt: 'asc' }, take: 50 })
+  const jobs = await prisma.notificationDelivery.findMany({ where: { ...scope, status: 'pending', attempts: { lt: MAX_ATTEMPTS }, nextAttemptAt: { lte: now } }, orderBy: { createdAt: 'asc' }, take: 50 })
   let processed = 0
   for (const job of jobs) {
     const token = randomUUID()
-    const claimed = await prisma.notificationDelivery.updateMany({ where: { id: job.id, status: 'pending' },
+    const claimed = await prisma.notificationDelivery.updateMany({ where: { id: job.id, status: 'pending', attempts: { lt: MAX_ATTEMPTS }, nextAttemptAt: { lte: new Date() } },
       data: { status: 'processing', lockToken: token, lockedAt: new Date(), attempts: { increment: 1 } } })
     if (!claimed.count) continue
+    const claimedJob = await prisma.notificationDelivery.findUnique({ where: { id: job.id }, select: { attempts: true, lockToken: true } })
+    if (!claimedJob || claimedJob.lockToken !== token) continue
+    const attempt = claimedJob.attempts
     const update = async (result: ProviderResult | { status: 'skipped'; reason: string }) => {
-      const retry = result.status === 'retry' && job.attempts + 1 < MAX_ATTEMPTS
+      const retry = result.status === 'retry' && attempt < MAX_ATTEMPTS
       await prisma.notificationDelivery.updateMany({ where: { id: job.id, lockToken: token, status: 'processing' }, data: {
         status: result.status === 'retry' ? (retry ? 'pending' : 'failed') : result.status,
         reason: result.reason, providerId: 'providerId' in result ? result.providerId : undefined,
         providerCode: 'code' in result ? result.code?.slice(0, 50) : undefined, lockToken: null,
-        nextAttemptAt: new Date(Date.now() + Math.pow(2, job.attempts) * 60000),
+        nextAttemptAt: new Date(Date.now() + Math.pow(2, attempt - 1) * 60000),
         ...(result.status === 'accepted' ? { acceptedAt: new Date() } : {}),
         ...(['failed', 'delivered', 'tested', 'skipped'].includes(result.status) || (result.status === 'retry' && !retry) ? { completedAt: new Date() } : {}),
       } })

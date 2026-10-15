@@ -100,6 +100,17 @@ async function main() {
       await Promise.all([runNotificationWorkerOnce(options), runNotificationWorkerOnce(options)])
       assert.equal(calls, 1); cases++
     }
+    {
+      const eventId = await fixture('concurrent-retry-backoff', 'sms'); let calls = 0
+      const options = { eventIds: [eventId], getConfig: async () => fakeConfig, send: async () => { calls++; await new Promise(r => setTimeout(r, 20)); return { status: 'retry' as const } } }
+      for (let round = 0; round < 3; round++) {
+        await prisma.notificationDelivery.updateMany({ where: { eventId }, data: { nextAttemptAt: new Date(0) } })
+        await Promise.all(Array.from({ length: 3 }, () => runNotificationWorkerOnce(options)))
+        assert.equal(calls, round + 1, 'Concurrent workers must honor the new backoff date before reclaiming a retry')
+      }
+      await runNotificationWorkerOnce(options)
+      assert.equal(calls, 3); assert.equal(await state(eventId, 'sms'), 'failed'); cases++
+    }
     for (const condition of ['opt-out', 'disabled', 'missing-contact', 'interrupted'] as const) {
       const eventId = await fixture(condition, 'sms'); let calls = 0
       if (condition === 'opt-out') await prisma.notificationPreference.update({ where: { userId: member.id }, data: { mobilePreferences: { direct_message: { sms: false, alimtalk: true } } } })
