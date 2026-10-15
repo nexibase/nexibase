@@ -21,6 +21,9 @@ const smtpProviders = {
 } as const
 type SmtpProvider = keyof typeof smtpProviders | 'custom'
 const smtpProviderForHost = (host: string): SmtpProvider => (Object.entries(smtpProviders).find(([, provider]) => provider.host === host.trim().toLowerCase())?.[0] as keyof typeof smtpProviders | undefined) || 'custom'
+const smtpPorts = [465, 587, 25] as const
+type SmtpPortSelection = `${typeof smtpPorts[number]}` | 'custom'
+const smtpPortSelectionFor = (port: number): SmtpPortSelection => smtpPorts.some(value => value === port) ? String(port) as SmtpPortSelection : 'custom'
 const statuses: Record<string, string> = { pending: '발송 대기', waiting: '알림톡 실패 시 발송', processing: '요청 중', accepted: '접수 완료 · 결과 대기', delivered: '전달 완료', failed: '실패', unknown: '결과 확인 필요', skipped: '발송 안 함', tested: '테스트 처리' }
 type Rule = { eventType: string; label: string; owner: string; emailEnabled: boolean; smsEnabled: boolean; alimtalkEnabled: boolean; smsTemplate: string; alimtalkCode: string; alimtalkTemplate: string; alimtalkButtons: unknown; variableMapping: unknown; buttonsText: string; mappingText: string }
 type Configuration = { settings: NotificationSettings; configuredSecrets: Record<keyof Secrets, boolean>; environment: string; encryptionReady: boolean; missing: Record<keyof typeof channels, string[]>; rules: Rule[] }
@@ -102,6 +105,7 @@ export function NotificationSettingsAdmin() {
   const [dirty, setDirty] = useState(false)
   const [allowlist, setAllowlist] = useState('')
   const [smtpProvider, setSmtpProvider] = useState<SmtpProvider>('custom')
+  const [smtpPortSelection, setSmtpPortSelection] = useState<SmtpPortSelection>('custom')
   const [test, setTest] = useState({ channel: 'email', userId: '', mode: 'test', eventType: 'post_comment' })
   const load = useCallback(async () => {
     try {
@@ -111,6 +115,7 @@ export function NotificationSettingsAdmin() {
       result.rules = result.rules.map((r: Rule) => ({ ...r, buttonsText: r.alimtalkButtons ? JSON.stringify(r.alimtalkButtons, null, 2) : '', mappingText: r.variableMapping ? JSON.stringify(r.variableMapping, null, 2) : '' }))
       setData(result); setAllowlist(result.settings.testRecipients.join('\n')); setSecrets({}); setDirty(false)
       setSmtpProvider(smtpProviderForHost(result.settings.smtpHost))
+      setSmtpPortSelection(smtpPortSelectionFor(result.settings.smtpPort))
     } catch (error) { setMessage(error instanceof Error ? error.message : '설정 조회 실패') }
   }, [])
   useEffect(() => { void load() }, [load])
@@ -124,7 +129,15 @@ export function NotificationSettingsAdmin() {
     setSmtpProvider(provider)
     if (provider === 'custom') return
     const preset = smtpProviders[provider]
+    setSmtpPortSelection(smtpPortSelectionFor(preset.port))
     setData(previous => previous ? { ...previous, settings: { ...previous.settings, smtpHost: preset.host, smtpPort: preset.port, smtpSecure: preset.secure } } : previous)
+    setDirty(true)
+  }
+  function selectSmtpPort(selection: SmtpPortSelection) {
+    setSmtpPortSelection(selection)
+    if (selection === 'custom') return
+    const port = Number(selection)
+    setData(previous => previous ? { ...previous, settings: { ...previous.settings, smtpPort: port, smtpSecure: port === 465 } } : previous)
     setDirty(true)
   }
   async function save() {
@@ -183,7 +196,9 @@ export function NotificationSettingsAdmin() {
         <div className="space-y-2"><Label htmlFor="notification-smtp-provider">SMTP 호스트</Label><select id="notification-smtp-provider" className={`${fieldClass} w-full h-10`} value={smtpProvider} onChange={e => selectSmtpProvider(e.target.value as SmtpProvider)}>{Object.entries(smtpProviders).map(([key, provider]) => <option key={key} value={key}>{provider.label}</option>)}<option value="custom">직접 입력</option></select>
           <Label htmlFor="notification-smtpHost" className="sr-only">SMTP 서버 주소</Label><Input id="notification-smtpHost" value={data.settings.smtpHost} onChange={e => { setting('smtpHost', e.target.value); setSmtpProvider('custom') }} placeholder="smtp.example.com" autoComplete="off" />
         </div>
-        <div className="space-y-2"><Label htmlFor="notification-port">SMTP 포트</Label><Input id="notification-port" type="number" min={1} max={65535} value={data.settings.smtpPort} onChange={e => setting('smtpPort', Number(e.target.value))} /></div>
+        <div className="space-y-2"><Label htmlFor="notification-port-selection">SMTP 포트</Label><select id="notification-port-selection" className={`${fieldClass} w-full h-10`} value={smtpPortSelection} onChange={e => selectSmtpPort(e.target.value as SmtpPortSelection)}>{smtpPorts.map(port => <option key={port} value={String(port)}>{port}</option>)}<option value="custom">직접 입력</option></select>
+          {smtpPortSelection === 'custom' && <><Label htmlFor="notification-port" className="sr-only">SMTP 포트 직접 입력</Label><Input id="notification-port" type="number" min={1} max={65535} value={data.settings.smtpPort} onChange={e => setting('smtpPort', Number(e.target.value))} /></>}
+        </div>
         {textField('smtpUser', 'SMTP 계정')}{secretField('smtpPass', 'SMTP 비밀번호')}{textField('smtpFrom', '발신 이메일')}
         <div className="flex gap-3 items-center"><Switch id="notification-tls" checked={data.settings.smtpSecure} onCheckedChange={v => setting('smtpSecure', v)} /><Label htmlFor="notification-tls">연결 시 TLS 사용 · 보통 465 포트</Label></div>
       </div><p className="text-xs text-muted-foreground">인증 메일은 일반 알림의 메일 켜기·끄기와 별개로 동작하며, 발송 모드와 dev 허용 목록은 동일하게 적용합니다.</p><SmtpTest data={data} dirty={dirty} busy={busy} /></Section>
