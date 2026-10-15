@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { notificationAdmin, sameOrigin } from '@/lib/notifications/admin'
 import { getNotificationConfig, publicNotificationConfig, saveNotificationConfig, type NotificationSettings, type Secrets } from '@/lib/notifications/config'
 import { ensureCoreRules } from '@/lib/notifications/service'
-import { isNotificationDevelopment, validPhone } from '@/lib/notifications/policy'
+import { validPhone } from '@/lib/notifications/policy'
 
 export async function GET() {
   if (!await notificationAdmin()) return NextResponse.json({ error: '관리자 권한이 필요합니다.' }, { status: 401 })
@@ -32,7 +32,6 @@ export async function PUT(request: NextRequest) {
     if (settings.sender && !validPhone(settings.sender)) throw new Error('발신번호를 확인하세요.')
     if (!Array.isArray(body.settings.testRecipients) || body.settings.testRecipients.length > 50 || body.settings.testRecipients.some((v: unknown) => typeof v !== 'string' || v.length > 255 || (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) && !validPhone(v)))) throw new Error('테스트 수신자는 이메일 또는 전화번호로 입력하세요. 최대 50개입니다.')
     settings.testRecipients = [...new Set(body.settings.testRecipients as string[])].map(v => v.trim())
-    if (settings.liveEnabled && isNotificationDevelopment() && !settings.testRecipients.length) throw new Error('dev 실발송은 테스트 수신자 목록을 먼저 등록해야 합니다.')
     const secrets: Secrets = {}
     for (const key of ['smtpPass', 'aligoKey', 'senderKey'] as const) {
       if (body.secrets?.[key] !== undefined && (typeof body.secrets[key] !== 'string' || body.secrets[key].length > 2048)) throw new Error('인증 정보 형식을 확인하세요.')

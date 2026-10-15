@@ -148,7 +148,12 @@ async function main() {
       await request('/api/admin/notifications/settings', 403, 'PUT', {}, adminCookie, 'https://outside.example.invalid')
       await request('/api/admin/notifications/settings', 200, 'PUT', { settings: settings.settings, rules: settings.rules, secrets: {} })
       assert.deepEqual((await getNotificationConfig()).secrets, config.secrets)
-      await request('/api/admin/notifications/settings', 400, 'PUT', { settings: { ...settings.settings, liveEnabled: true, testRecipients: [] }, rules: settings.rules })
+      try {
+        await request('/api/admin/notifications/settings', 200, 'PUT', { settings: { ...settings.settings, liveEnabled: true, testRecipients: [] }, rules: settings.rules })
+        const emptyAllowlist = await getNotificationConfig()
+        const { canUseLiveDelivery } = await import('../src/lib/notifications/policy')
+        for (const channel of ['email', 'sms', 'alimtalk'] as const) assert.equal(canUseLiveDelivery(emptyAllowlist.settings, channel === 'email' ? member.email : member.phone!, channel), false)
+      } finally { await request('/api/admin/notifications/settings', 200, 'PUT', { settings: settings.settings, rules: settings.rules, secrets: {} }) }
       await request('/api/admin/notifications/test', 400, 'POST', { channel: 'email', userId: member.id, mode: 'live' })
       await request('/api/admin/notifications/test', 403, 'POST', { channel: 'email', recipientEmail: member.email, mode: 'live' }, adminCookie, 'https://outside.example.invalid')
       await request('/api/admin/notifications/test', 400, 'POST', { channel: 'email', recipientEmail: member.email, mode: 'live' })

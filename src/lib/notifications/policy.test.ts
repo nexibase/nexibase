@@ -26,6 +26,8 @@ test('dev requires an enabled live switch AND an exact allowlisted recipient', (
     assert.equal(canUseLiveDelivery({ liveEnabled: true, testRecipients: ['x@example.invalid'] }, 'other@example.invalid', 'email'), false)
     assert.equal(canUseLiveDelivery({ liveEnabled: true, testRecipients: ['01012345678@example.invalid'] }, '01012345678', 'sms'), false)
     assert.equal(canUseLiveDelivery({ liveEnabled: true, testRecipients: [] }, '01012345678', 'alimtalk'), false)
+    assert.equal(canUseLiveDelivery({ liveEnabled: true, testRecipients: [] }, 'member@example.invalid', 'email'), false)
+    assert.equal(canUseLiveDelivery({ liveEnabled: true, testRecipients: [] }, '01012345678', 'sms'), false)
   } finally { if (previous === undefined) delete process.env.NOTIFICATION_ENVIRONMENT; else process.env.NOTIFICATION_ENVIRONMENT = previous }
 })
 test('contact masking, Korean phone normalization and strict variable replacement', () => {
