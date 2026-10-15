@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button"
 import { getVersionStatus, normalizeVersion } from "@/lib/releases/version"
 import {
   LayoutDashboard,
+  Bell,
+  Send,
   Users,
   MessageSquare,
   MessageCircleQuestion,
@@ -99,6 +101,8 @@ function getIcon(iconName: string): LucideIcon {
 const coreMenuItems = [
   { id: "dashboard", labelKey: "dashboard", icon: LayoutDashboard, path: "/admin" },
   { id: "settings", labelKey: "settings", icon: Settings, path: "/admin/settings" },
+  { id: "notification-settings", labelKey: "notificationSettings", icon: Bell, path: "/admin/notifications/settings" },
+  { id: "notification-history", labelKey: "notificationHistory", icon: Send, path: "/admin/notifications" },
   { id: "users", labelKey: "users", icon: Users, path: "/admin/users" },
   { id: "boards", labelKey: "boards", icon: MessageSquare, path: "/admin/boards" },
   { id: "contents", labelKey: "contents", icon: FileText, path: "/admin/contents" },

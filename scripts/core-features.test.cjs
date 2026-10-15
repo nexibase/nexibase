@@ -27,7 +27,8 @@ before(() => {
   }
   for (const feature of features) {
     for (const prefix of ['src/app/[locale]', 'src/app/[locale]/admin', 'src/app/api', 'src/app/api/admin']) {
-      walk(path.join(root, prefix, feature))
+      const featurePath = feature === 'notifications' && prefix === 'src/app/[locale]' ? 'mypage/notifications' : feature
+      walk(path.join(root, prefix, featurePath))
     }
   }
   routeFiles.push('src/app/api/faq/route.ts', 'src/app/api/admin/faq/route.ts', 'src/app/api/faq-accordion/route.ts', 'src/app/api/admin/faq-accordion/route.ts')
@@ -55,7 +56,7 @@ test('core publishing is absent from plugin metadata while optional plugins rema
   for (const plugin of ['shop', 'polls', 'weather-widget']) assert.ok(manifest.includes(`'${plugin}': {`), plugin)
   const core = fs.readFileSync(path.join(fixture, 'prisma/schema.base.prisma'), 'utf8')
   const generated = fs.readFileSync(path.join(fixture, 'prisma/schema.prisma'), 'utf8')
-  for (const model of ['Board', 'Post', 'PostAttachment', 'Comment', 'Reaction', 'Content', 'Policy', 'FaqCategory', 'Faq']) {
+  for (const model of ['Board', 'Post', 'PostAttachment', 'Comment', 'Reaction', 'Content', 'Policy', 'FaqCategory', 'Faq', 'Notification', 'NotificationEvent', 'NotificationDelivery']) {
     assert.match(core, new RegExp(`model ${model} \\{`))
     assert.equal((generated.match(new RegExp(`model ${model} \\{`, 'g')) || []).length, 1)
   }
@@ -77,6 +78,23 @@ test('saved widget keys, translations, and withdrawal retention remain available
   assert.ok(!policies.boards)
   assert.ok(!policies['faq-accordion'])
   assert.ok(!registry.includes('@/plugins/faq-accordion/'))
+})
+
+test('core notifications remain available when Shop is not installed', () => {
+  const shop = path.join(fixture, 'src/plugins/shop')
+  const snapshot = path.join(fixture, 'optional-shop-snapshot')
+  assert.ok(path.resolve(shop).startsWith(path.resolve(fixture) + path.sep))
+  fs.renameSync(shop, snapshot)
+  try {
+    const result = scan()
+    assert.equal(result.status, 0, result.stderr)
+    const schema = fs.readFileSync(path.join(fixture, 'prisma/schema.prisma'), 'utf8')
+    assert.ok(schema.includes('model NotificationDelivery {'))
+    for (const file of ['notification.ts', 'email.ts', ...fs.readdirSync(path.join(root, 'src/lib/notifications')).filter(f => f.endsWith('.ts')).map(f => `notifications/${f}`)]) {
+      const source = fs.readFileSync(path.join(root, 'src/lib', file), 'utf8')
+      assert.ok(!source.includes('@/plugins/shop') && !source.includes('prisma.shopSetting'), file)
+    }
+  } finally { fs.renameSync(snapshot, shop); assert.equal(scan().status, 0) }
 })
 
 test('plugins cannot overwrite reserved core route slugs', () => {

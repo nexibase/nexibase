@@ -153,11 +153,16 @@ function scanPlugins() {
       }
     }
 
+    const notificationFile = path.join(PLUGINS_DIR, folder, 'notification-events.json')
+    const notificationEvents = fs.existsSync(notificationFile) ? JSON.parse(fs.readFileSync(notificationFile, 'utf8')) : []
+    if (!Array.isArray(notificationEvents) || notificationEvents.some(e => !e.eventType?.startsWith(folder + '.') || !/^[a-z][a-z0-9_.-]{0,49}$/.test(e.eventType) || typeof e.label !== 'string')) {
+      throw new Error(`Invalid notification-events.json for ${folder}`)
+    }
     plugins.push({
       folder, name, slug, version, author, authorDomain, repository,
       description, defaultEnabled, hasRoutes, hasApi, hasAdmin,
       hasWidgets, hasMenus, hasSchema, hasUserSchema, hasHeaderWidget,
-      headerMenus, footerMenus, widgetMetas, adminMenus, myPageMenus,
+      headerMenus, footerMenus, widgetMetas, adminMenus, myPageMenus, notificationEvents,
     })
   }
 
@@ -355,6 +360,7 @@ function generateManifest(plugins) {
     footerMenus: ${JSON.stringify(p.footerMenus)},
     widgetMetas: ${JSON.stringify(p.widgetMetas)},
     adminMenus: ${JSON.stringify(p.adminMenus)},
+    notificationEvents: ${JSON.stringify(p.notificationEvents)},
     myPageMenus: ${JSON.stringify(p.myPageMenus)},
   }`
   })
@@ -409,6 +415,7 @@ export interface PluginMeta {
   footerMenus: PluginFooterMenu[]
   widgetMetas: PluginWidgetMeta[]
   adminMenus: PluginAdminMenuItem[]
+  notificationEvents: { eventType: string; label: string; preferenceType?: string; emailEnabled?: boolean }[]
   myPageMenus: PluginMyPageMenu[]
 }
 

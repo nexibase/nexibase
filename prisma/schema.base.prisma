@@ -36,6 +36,7 @@ model User {
   accounts      Account[]
   withdrawalJobs         WithdrawalJob[]
   notifications          Notification[]
+  notificationEvents     NotificationEvent[]
   notificationPreference NotificationPreference?
   conversationsAsUser1   Conversation[] @relation("ConversationUser1")
   conversationsAsUser2   Conversation[] @relation("ConversationUser2")
@@ -129,6 +130,8 @@ model Notification {
   isRead    Boolean   @default(false)
   createdAt DateTime  @default(now())
   deletedAt DateTime?
+  eventId   String?   @unique @db.VarChar(36)
+  event     NotificationEvent? @relation(fields: [eventId], references: [id], onDelete: SetNull)
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
@@ -149,10 +152,76 @@ model NotificationPreference {
   emailMention      Boolean  @default(false)
   emailOrderStatus    Boolean  @default(true)
   emailDirectMessage  Boolean  @default(false)
+  mobilePreferences   Json?
   updatedAt           DateTime @updatedAt
   user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("notification_preferences")
+}
+
+model NotificationConfig {
+  id               String   @id @db.VarChar(20)
+  settings         Json
+  secretsEncrypted String?  @db.Text
+  updatedAt        DateTime @updatedAt
+  @@map("notification_config")
+}
+
+model NotificationRule {
+  eventType       String  @id @db.VarChar(50)
+  label           String  @db.VarChar(100)
+  preferenceType  String  @db.VarChar(50)
+  owner           String  @default("core") @db.VarChar(50)
+  emailEnabled    Boolean @default(true)
+  smsEnabled      Boolean @default(false)
+  alimtalkEnabled Boolean @default(false)
+  smsTemplate     String  @db.Text
+  alimtalkCode    String  @default("") @db.VarChar(100)
+  alimtalkTemplate String @db.Text
+  alimtalkButtons Json?
+  variableMapping Json?
+  updatedAt       DateTime @updatedAt
+  @@map("notification_rules")
+}
+
+model NotificationEvent {
+  id          String   @id @default(uuid()) @db.VarChar(36)
+  dedupeKey   String   @unique @db.Char(64)
+  userId      Int
+  type        String   @db.VarChar(50)
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notification Notification?
+  deliveries  NotificationDelivery[]
+  @@index([userId])
+  @@map("notification_events")
+}
+
+model NotificationDelivery {
+  id               String   @id @default(uuid()) @db.VarChar(36)
+  eventId          String   @db.VarChar(36)
+  channel          String   @db.VarChar(20)
+  status           String   @default("pending") @db.VarChar(20)
+  recipientMasked  String   @db.VarChar(255)
+  payloadEncrypted String?  @db.LongText
+  providerId       String?  @db.VarChar(100)
+  providerCode     String?  @db.VarChar(50)
+  reason           String?  @db.VarChar(500)
+  attempts         Int      @default(0)
+  nextAttemptAt    DateTime @default(now())
+  lockedAt         DateTime?
+  lockToken        String?  @db.VarChar(36)
+  acceptedAt       DateTime?
+  completedAt      DateTime?
+  lastCheckedAt    DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  event            NotificationEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  @@unique([eventId, channel])
+  @@index([status, nextAttemptAt])
+  @@index([status, lastCheckedAt])
+  @@index([createdAt])
+  @@map("notification_deliveries")
 }
 
 model Menu {

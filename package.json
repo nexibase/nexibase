@@ -17,7 +17,9 @@
     "db:migrate": "prisma migrate deploy",
     "db:push": "prisma db push",
     "postinstall": "node scripts/scan-plugins.js && node scripts/scan-layouts.js && node scripts/scan-themes.js && prisma generate && node scripts/setup-custom-css.js",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "notifications:setup": "tsx scripts/setup-notifications.ts",
+    "notifications:worker": "tsx scripts/notification-worker.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.89.0",
@@ -70,7 +72,8 @@
     "recharts": "^3.8.1",
     "remark-gfm": "^4.0.1",
     "sharp": "^0.34.5",
-    "tailwind-merge": "^3.3.1"
+    "tailwind-merge": "^3.3.1",
+    "tsx": "^4.21.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -86,7 +89,6 @@
     "nodemon": "^3.1.10",
     "prisma": "^6.12.0",
     "tailwindcss": "^4",
-    "tsx": "^4.21.0",
     "tw-animate-css": "^1.3.6",
     "typescript": "^5"
   }

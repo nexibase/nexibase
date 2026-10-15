@@ -1,4 +1,5 @@
 {
+  "notifications": { "settings": "Notification settings", "history": "Delivery history" },
   "editor": {
     "bold": "Bold",
     "italic": "Italic",
@@ -258,6 +259,14 @@
     "noContent": "No content",
     "settings": {
       "notifications": {
+        "mandatoryNote": "In-app notifications are always recorded. Choose external channels allowed by the administrator.",
+        "event": "Event",
+        "alimtalk": "Alimtalk",
+        "sms": "SMS",
+        "required": "Required",
+        "channelNote": "When both Alimtalk and SMS are selected, SMS is sent only after a confirmed Alimtalk failure. Disabled channels are not enabled by the administrator.",
+        "loadFailed": "Could not load notification settings.",
+        "saveFailed": "Could not save notification settings.",
         "title": "Notification preferences",
         "inApp": "In-app",
         "email": "Email",
@@ -396,6 +405,8 @@
     "colLikes": "Likes"
   },
   "admin": {
+    "notificationSettings": "Notification settings",
+    "notificationHistory": "Delivery history",
     "messages": {
       "send": {
         "title": "Send message",

@@ -1,4 +1,5 @@
 {
+  "notifications": { "settings": "알림 설정", "history": "발송 내역" },
   "editor": {
     "bold": "굵게",
     "italic": "기울임",
@@ -258,6 +259,14 @@
     "noContent": "내용 없음",
     "settings": {
       "notifications": {
+        "mandatoryNote": "사이트 내 알림은 항상 기록합니다. 외부 채널은 관리자가 허용한 범위에서 선택할 수 있습니다.",
+        "event": "알림 종류",
+        "alimtalk": "알림톡",
+        "sms": "문자",
+        "required": "필수",
+        "channelNote": "알림톡과 문자를 모두 선택하면 알림톡 최종 실패 시에만 문자를 보냅니다. 꺼진 채널은 관리자가 아직 허용하지 않은 채널입니다.",
+        "loadFailed": "알림 설정을 불러오지 못했습니다.",
+        "saveFailed": "알림 설정을 저장하지 못했습니다.",
         "title": "알림 수신 설정",
         "inApp": "인앱",
         "email": "이메일",
@@ -396,6 +405,8 @@
     "colLikes": "추천"
   },
   "admin": {
+    "notificationSettings": "알림 설정",
+    "notificationHistory": "발송 내역",
     "messages": {
       "send": {
         "title": "쪽지 보내기",

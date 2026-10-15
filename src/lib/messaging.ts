@@ -1,7 +1,6 @@
 import { prisma } from '@/lib/prisma'
-import { shouldEmail } from '@/lib/notification'
+import { emitNotification } from '@/lib/notifications/service'
 import { NotificationType } from '@/lib/notification-types'
-import { sendDirectMessageEmail } from '@/lib/email'
 
 const MAX_CONTENT = 2000
 
@@ -39,8 +38,7 @@ interface SendArgs {
   fromUserId: number
   toUserId: number
   content: string
-  /** Admin override: when true AND the sender is admin/manager, bypass
-   *  the recipient's emailDirectMessage preference and force an email. */
+  /** Legacy input retained for API compatibility. Global/member policy always applies. */
   sendEmailOverride?: boolean
   /** Sender display name used in the notification title. */
   fromUserName: string
@@ -56,7 +54,7 @@ interface SendArgs {
  *  - Updates Conversation.lastMessageAt.
  *  - Clears the recipient's hiddenAt (auto-resurface rule).
  *  - Creates a direct_message notification row for the recipient.
- *  - Dispatches email when appropriate (admin override OR recipient pref).
+ *  - Queues external channels according to global/event settings and recipient preferences.
  *
  * Caller is responsible for:
  *  - Validating session, content length, rate-limit, recipient existence.
@@ -69,7 +67,8 @@ export async function sendMessageTo(args: SendArgs) {
   const conversation = await findOrCreateConversation(args.fromUserId, args.toUserId)
   const recipientIsUser1 = conversation.user1Id === args.toUserId
 
-  const message = await prisma.message.create({
+  const message = await prisma.$transaction(async tx => {
+  const created = await tx.message.create({
     data: {
       conversationId: conversation.id,
       senderId: args.fromUserId,
@@ -77,33 +76,24 @@ export async function sendMessageTo(args: SendArgs) {
     },
   })
 
-  await prisma.conversation.update({
+  await tx.conversation.update({
     where: { id: conversation.id },
     data: {
-      lastMessageAt: message.createdAt,
+      lastMessageAt: created.createdAt,
       ...(recipientIsUser1 ? { user1HiddenAt: null } : { user2HiddenAt: null }),
     },
   })
 
-  // In-app notification (mandatory; DIRECT_MESSAGE bypasses shouldNotify)
-  await prisma.notification.create({
-    data: {
+  await emitNotification({
+      eventKey: `message:${created.id}`,
       userId: args.toUserId,
       type: NotificationType.DIRECT_MESSAGE,
       title: `💬 ${args.fromUserName}님의 쪽지`,
       message: args.content.slice(0, 80),
       link: `/mypage/messages/${conversation.uuid}`,
-    },
-  })
-
-  // Email (fire-and-forget)
-  const adminForcingEmail = args.sendEmailOverride === true && args.senderIsAdmin
-  if (args.recipientEmail) {
-    const shouldSend = adminForcingEmail || (await shouldEmail(args.toUserId, NotificationType.DIRECT_MESSAGE))
-    if (shouldSend) {
-      sendDirectMessageEmail(args.recipientEmail, args.fromUserName, args.content, conversation.uuid)
-    }
-  }
+  }, tx)
+  return created
+  }, { timeout: 15000 })
 
   return { conversation, message }
 }

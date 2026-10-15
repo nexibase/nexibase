@@ -91,7 +91,8 @@ export async function POST(
     }
 
     // Create comment
-    const comment = await prisma.comment.create({
+    const comment = await prisma.$transaction(async tx => {
+    const comment = await tx.comment.create({
       data: {
         content: content.trim(),
         authorId: user.id,
@@ -110,7 +111,7 @@ export async function POST(
     })
 
     // Increment the post's comment count
-    await prisma.post.update({
+    await tx.post.update({
       where: { id: postId },
       data: { commentCount: { increment: 1 } }
     })
@@ -121,7 +122,7 @@ export async function POST(
     const recipientKind = new Map<number, 'post_comment' | 'comment_reply'>()
 
     if (parentId) {
-      const parent = await prisma.comment.findUnique({
+      const parent = await tx.comment.findUnique({
         where: { id: parseInt(parentId) },
         select: { authorId: true },
       })
@@ -144,12 +145,12 @@ export async function POST(
     for (const [uid, kind] of recipientKind) {
       if (kind === 'comment_reply') {
         await createCommentReplyNotification({
-          userId: uid, fromUserName, postTitle: post.title, postLink, excerpt,
-        })
+          userId: uid, fromUserName, postTitle: post.title, postLink, excerpt, eventKey: `comment:${comment.id}`,
+        }, tx)
       } else {
         await createPostCommentNotification({
-          userId: uid, fromUserName, postTitle: post.title, postLink, excerpt,
-        })
+          userId: uid, fromUserName, postTitle: post.title, postLink, excerpt, eventKey: `comment:${comment.id}`,
+        }, tx)
       }
     }
 
@@ -161,11 +162,13 @@ export async function POST(
         if (m.id === user.id) continue
         if (recipientKind.has(m.id)) continue
         await createMentionNotification({
-          userId: m.id, fromUserName, postTitle: post.title, postLink, excerpt,
-        })
+          userId: m.id, fromUserName, postTitle: post.title, postLink, excerpt, eventKey: `comment:${comment.id}`,
+        }, tx)
       }
     }
     // --- end fan-out -----------------------------------------------------
+    return comment
+    }, { timeout: 20000 })
 
     return NextResponse.json({
       success: true,
