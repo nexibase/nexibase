@@ -121,7 +121,7 @@ export function NotificationSettingsAdmin() {
       </Section>
       <div className="grid gap-5"><Section title="메일 · SMTP"><div className="grid sm:grid-cols-2 gap-4">
         <div className="space-y-2"><Label htmlFor="notification-smtp-provider">SMTP 호스트</Label><select id="notification-smtp-provider" className={`${fieldClass} w-full h-10`} value={smtpProvider} onChange={e => selectSmtpProvider(e.target.value as SmtpProvider)}>{Object.entries(smtpProviders).map(([key, provider]) => <option key={key} value={key}>{provider.label}</option>)}<option value="custom">직접 입력</option></select>
-          {smtpProvider === 'custom' ? <><Label htmlFor="notification-smtpHost" className="sr-only">SMTP 호스트 직접 입력</Label><Input id="notification-smtpHost" value={data.settings.smtpHost} onChange={e => setting('smtpHost', e.target.value)} placeholder="smtp.example.com" autoComplete="off" /></> : <p className="text-xs text-muted-foreground break-all">{data.settings.smtpHost}</p>}
+          <Label htmlFor="notification-smtpHost" className="sr-only">SMTP 서버 주소</Label><Input id="notification-smtpHost" value={data.settings.smtpHost} onChange={e => { setting('smtpHost', e.target.value); setSmtpProvider('custom') }} placeholder="smtp.example.com" autoComplete="off" />
         </div>
         <div className="space-y-2"><Label htmlFor="notification-port">SMTP 포트</Label><Input id="notification-port" type="number" min={1} max={65535} value={data.settings.smtpPort} onChange={e => setting('smtpPort', Number(e.target.value))} /></div>
         {textField('smtpUser', 'SMTP 계정')}{secretField('smtpPass', 'SMTP 비밀번호')}{textField('smtpFrom', '발신 이메일')}
