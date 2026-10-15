@@ -13,6 +13,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import type { NotificationSettings, Secrets } from '@/lib/notifications/config'
 
 const channels = { email: '메일', alimtalk: '알림톡', sms: '문자' } as const
+const smtpProviders = {
+  gmail: { label: 'GMAIL', host: 'smtp.gmail.com', port: 587, secure: false },
+  naver: { label: '네이버', host: 'smtp.naver.com', port: 465, secure: true },
+  kakao: { label: '카카오', host: 'smtp.kakao.com', port: 465, secure: true },
+  daum: { label: '다음', host: 'smtp.daum.net', port: 465, secure: true },
+} as const
+type SmtpProvider = keyof typeof smtpProviders | 'custom'
+const smtpProviderForHost = (host: string): SmtpProvider => (Object.entries(smtpProviders).find(([, provider]) => provider.host === host.trim().toLowerCase())?.[0] as keyof typeof smtpProviders | undefined) || 'custom'
 const statuses: Record<string, string> = { pending: '발송 대기', waiting: '알림톡 실패 시 발송', processing: '요청 중', accepted: '접수 완료 · 결과 대기', delivered: '전달 완료', failed: '실패', unknown: '결과 확인 필요', skipped: '발송 안 함', tested: '테스트 처리' }
 type Rule = { eventType: string; label: string; owner: string; emailEnabled: boolean; smsEnabled: boolean; alimtalkEnabled: boolean; smsTemplate: string; alimtalkCode: string; alimtalkTemplate: string; alimtalkButtons: unknown; variableMapping: unknown; buttonsText: string; mappingText: string }
 type Configuration = { settings: NotificationSettings; configuredSecrets: Record<keyof Secrets, boolean>; environment: string; encryptionReady: boolean; missing: Record<keyof typeof channels, string[]>; rules: Rule[] }
@@ -33,6 +41,7 @@ export function NotificationSettingsAdmin() {
   const [busy, setBusy] = useState(false)
   const [dirty, setDirty] = useState(false)
   const [allowlist, setAllowlist] = useState('')
+  const [smtpProvider, setSmtpProvider] = useState<SmtpProvider>('custom')
   const [test, setTest] = useState({ channel: 'email', userId: '', mode: 'test', eventType: 'post_comment' })
   const load = useCallback(async () => {
     try {
@@ -41,6 +50,7 @@ export function NotificationSettingsAdmin() {
       if (!response.ok) throw new Error(result.error || '설정을 불러오지 못했습니다.')
       result.rules = result.rules.map((r: Rule) => ({ ...r, buttonsText: r.alimtalkButtons ? JSON.stringify(r.alimtalkButtons, null, 2) : '', mappingText: r.variableMapping ? JSON.stringify(r.variableMapping, null, 2) : '' }))
       setData(result); setAllowlist(result.settings.testRecipients.join('\n')); setSecrets({}); setDirty(false)
+      setSmtpProvider(smtpProviderForHost(result.settings.smtpHost))
     } catch (error) { setMessage(error instanceof Error ? error.message : '설정 조회 실패') }
   }, [])
   useEffect(() => { void load() }, [load])
@@ -49,6 +59,13 @@ export function NotificationSettingsAdmin() {
   }
   const rule = (eventType: string, patch: Partial<Rule>) => {
     setData(previous => previous ? { ...previous, rules: previous.rules.map(r => r.eventType === eventType ? { ...r, ...patch } : r) } : previous); setDirty(true)
+  }
+  function selectSmtpProvider(provider: SmtpProvider) {
+    setSmtpProvider(provider)
+    if (provider === 'custom') return
+    const preset = smtpProviders[provider]
+    setData(previous => previous ? { ...previous, settings: { ...previous.settings, smtpHost: preset.host, smtpPort: preset.port, smtpSecure: preset.secure } } : previous)
+    setDirty(true)
   }
   async function save() {
     if (!data) return
@@ -102,14 +119,17 @@ export function NotificationSettingsAdmin() {
         <p className="text-sm text-muted-foreground">끄면 메일은 모의 처리하고, 문자·알림톡은 알리고 테스트 모드를 사용합니다. {data.environment === 'development' && 'dev에서는 켜더라도 아래 허용 목록의 수신자에게만 실제로 발송합니다.'}</p>
         <div className="space-y-2"><Label htmlFor="notification-allowlist">dev 실발송 테스트 수신자</Label><Textarea id="notification-allowlist" value={allowlist} placeholder="이메일 또는 전화번호를 한 줄에 하나씩 입력" onChange={e => { setAllowlist(e.target.value); setting('testRecipients', e.target.value.split(/[\n,]/).map(v => v.trim()).filter(Boolean)) }} /></div>
       </Section>
-      <div className="grid gap-5 xl:grid-cols-2"><Section title="메일 · SMTP"><div className="grid sm:grid-cols-2 gap-4">{textField('smtpHost', 'SMTP 호스트')}
+      <div className="grid gap-5 xl:grid-cols-2"><Section title="메일 · SMTP"><div className="grid sm:grid-cols-2 gap-4">
+        <div className="space-y-2"><Label htmlFor="notification-smtp-provider">SMTP 호스트</Label><select id="notification-smtp-provider" className={`${fieldClass} w-full h-10`} value={smtpProvider} onChange={e => selectSmtpProvider(e.target.value as SmtpProvider)}>{Object.entries(smtpProviders).map(([key, provider]) => <option key={key} value={key}>{provider.label}</option>)}<option value="custom">직접 입력</option></select>
+          {smtpProvider === 'custom' ? <><Label htmlFor="notification-smtpHost" className="sr-only">SMTP 호스트 직접 입력</Label><Input id="notification-smtpHost" value={data.settings.smtpHost} onChange={e => setting('smtpHost', e.target.value)} placeholder="smtp.example.com" autoComplete="off" /></> : <p className="text-xs text-muted-foreground break-all">{data.settings.smtpHost}</p>}
+        </div>
         <div className="space-y-2"><Label htmlFor="notification-port">SMTP 포트</Label><Input id="notification-port" type="number" min={1} max={65535} value={data.settings.smtpPort} onChange={e => setting('smtpPort', Number(e.target.value))} /></div>
         {textField('smtpUser', 'SMTP 계정')}{secretField('smtpPass', 'SMTP 비밀번호')}{textField('smtpFrom', '발신 이메일')}
         <div className="flex gap-3 items-center"><Switch id="notification-tls" checked={data.settings.smtpSecure} onCheckedChange={v => setting('smtpSecure', v)} /><Label htmlFor="notification-tls">연결 시 TLS 사용 · 보통 465 포트</Label></div>
       </div><p className="text-xs text-muted-foreground">인증 메일은 일반 알림의 메일 켜기·끄기와 별개로 동작하며, 발송 모드와 dev 허용 목록은 동일하게 적용합니다.</p></Section>
         <Section title="문자·알림톡 · 알리고"><div className="grid sm:grid-cols-2 gap-4">{textField('aligoUserId', '알리고 아이디')}{secretField('aligoKey', '알리고 API 키')}{textField('sender', '등록된 발신번호')}{secretField('senderKey', '카카오 발신프로필 키')}</div><p className="text-xs text-muted-foreground">알리고의 발신번호 등록, API 서버 IP 허용, 카카오채널 연동 및 템플릿 승인이 필요합니다. 비밀값은 빈칸으로 저장하면 기존 값을 유지합니다.</p></Section></div>
-      <Section title="이벤트별 발송 설정"><p className="text-sm text-muted-foreground">사이트 내 알림은 필수입니다. 외부 채널은 전체 설정과 아래 이벤트 설정이 모두 켜져 있어야 합니다.</p>
-        {data.rules.filter(r => r.eventType !== 'notification_test').map(r => <div key={r.eventType} className="border rounded-lg p-4 space-y-3"><div className="flex flex-wrap gap-4 items-center justify-between"><div><h3 className="font-medium">{r.label}</h3><p className="text-xs text-muted-foreground">{r.eventType}</p></div><div className="flex flex-wrap gap-5">{Object.entries(channels).map(([channel,label]) => <label key={channel} className="flex gap-2 items-center text-sm"><Switch aria-label={`${r.label} ${label} 보내기`} checked={r[`${channel as keyof typeof channels}Enabled`]} onCheckedChange={v => rule(r.eventType, { [`${channel}Enabled`]: v })} />{label} 보내기</label>)}</div></div>
+      <Section title="이벤트별 발송 설정"><p className="text-sm text-muted-foreground">사이트 내 알림은 필수입니다. 상단 발송 채널에서 켠 채널만 아래에서 변경할 수 있습니다. 채널을 꺼도 이벤트별 설정값은 유지됩니다.</p>
+        {data.rules.filter(r => r.eventType !== 'notification_test').map(r => <div key={r.eventType} className="border rounded-lg p-4 space-y-3"><div className="flex flex-wrap gap-4 items-center justify-between"><div><h3 className="font-medium">{r.label}</h3><p className="text-xs text-muted-foreground">{r.eventType}</p></div><div className="flex flex-wrap gap-5">{Object.entries(channels).map(([channel,label]) => <label key={channel} className={`flex gap-2 items-center text-sm ${!data.settings[`${channel as keyof typeof channels}Enabled`] ? 'text-muted-foreground' : ''}`} title={!data.settings[`${channel as keyof typeof channels}Enabled`] ? `상단에서 ${label} 보내기를 켜세요.` : undefined}><Switch aria-label={`${r.label} ${label} 보내기`} disabled={!data.settings[`${channel as keyof typeof channels}Enabled`]} checked={r[`${channel as keyof typeof channels}Enabled`]} onCheckedChange={v => rule(r.eventType, { [`${channel}Enabled`]: v })} />{label} 보내기</label>)}</div></div>
           <details><summary className="text-sm cursor-pointer text-primary">문자·알림톡 템플릿</summary><div className="mt-4 space-y-4">
             <p className="text-xs text-muted-foreground">기본 변수: {'#{title}, #{message}, #{link}, #{name}, #{eventType}'}. 주문 이벤트: {'#{orderNo}, #{status}, #{totalAmount}, #{trackingNumber}, #{customerName}'}. 승인된 알림톡 본문의 줄바꿈을 유지하세요.</p>
             <div className="grid lg:grid-cols-2 gap-4"><label className="space-y-2 text-sm">문자 본문<Textarea value={r.smsTemplate} onChange={e => rule(r.eventType, { smsTemplate: e.target.value })} rows={4} /></label>
