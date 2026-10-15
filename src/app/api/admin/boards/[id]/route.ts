@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminUser } from '@/lib/auth'
+import { isBoardDailyLimit } from '@/lib/board-limits'
 
 // Fetch board detail
 export async function GET(
@@ -73,11 +74,17 @@ export async function PUT(
       useFile,
       useSecret,
       postsPerPage,
+      dailyPostLimit,
+      dailyCommentLimit,
       sortOrder,
       displayType,
       showPostNumber,
       isActive
     } = body
+
+    if (!isBoardDailyLimit(dailyPostLimit) || !isBoardDailyLimit(dailyCommentLimit)) {
+      return NextResponse.json({ error: '일일 작성 제한은 0 이상 2,147,483,647 이하의 정수로 입력해주세요.' }, { status: 400 })
+    }
 
     // Check whether the board exists
     const existingBoard = await prisma.board.findUnique({
@@ -131,6 +138,8 @@ export async function PUT(
         useFile: useFile ?? existingBoard.useFile,
         useSecret: useSecret ?? existingBoard.useSecret,
         postsPerPage: postsPerPage ?? existingBoard.postsPerPage,
+        dailyPostLimit: dailyPostLimit === undefined ? existingBoard.dailyPostLimit : dailyPostLimit,
+        dailyCommentLimit: dailyCommentLimit === undefined ? existingBoard.dailyCommentLimit : dailyCommentLimit,
         sortOrder: sortOrder || existingBoard.sortOrder,
         displayType: displayType || existingBoard.displayType,
         showPostNumber: showPostNumber ?? existingBoard.showPostNumber,

@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import { BoardDailyLimits } from '@/components/admin/BoardDailyLimits'
+import { parseDailyLimit } from '@/lib/board-limits'
 import {
   Search,
   Plus,
@@ -44,6 +46,8 @@ interface Board {
   useFile: boolean
   useSecret: boolean
   postsPerPage: number
+  dailyPostLimit: number
+  dailyCommentLimit: number
   sortOrder: string
   displayType: string
   isActive: boolean
@@ -104,6 +108,8 @@ function BoardModal({
     useFile: true,
     useSecret: false,
     postsPerPage: 20,
+    dailyPostLimit: 0,
+    dailyCommentLimit: 0,
     sortOrder: 'latest',
     displayType: 'list',
     isActive: true,
@@ -126,6 +132,8 @@ function BoardModal({
         useFile: board.useFile ?? true,
         useSecret: board.useSecret ?? false,
         postsPerPage: board.postsPerPage ?? 20,
+        dailyPostLimit: board.dailyPostLimit ?? 0,
+        dailyCommentLimit: board.dailyCommentLimit ?? 0,
         sortOrder: board.sortOrder || 'latest',
         displayType: board.displayType || 'list',
         isActive: board.isActive ?? true,
@@ -145,6 +153,8 @@ function BoardModal({
         useFile: true,
         useSecret: false,
         postsPerPage: 20,
+        dailyPostLimit: 0,
+        dailyCommentLimit: 0,
         sortOrder: 'latest',
         displayType: 'list',
         isActive: true,
@@ -154,6 +164,10 @@ function BoardModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (parseDailyLimit(formData.dailyPostLimit) === undefined || parseDailyLimit(formData.dailyCommentLimit) === undefined) {
+      alert(t('dailyLimits.invalid'))
+      return
+    }
     setLoading(true)
     await onSave(formData)
     setLoading(false)
@@ -251,6 +265,14 @@ function BoardModal({
                 />
               </div>
             </div>
+          </div>
+
+          <Separator />
+
+          <div>
+            <h3 className="text-sm font-medium text-muted-foreground mb-4">{t('dailyLimits.title')}</h3>
+            <BoardDailyLimits dailyPostLimit={formData.dailyPostLimit} dailyCommentLimit={formData.dailyCommentLimit}
+              onChange={(key, value) => setFormData(prev => ({ ...prev, [key]: value }))} />
           </div>
 
           <Separator />

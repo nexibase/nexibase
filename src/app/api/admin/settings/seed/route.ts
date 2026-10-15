@@ -12,6 +12,8 @@ const DEFAULT_SETTINGS = [
   // Member settings
   { key: 'signup_enabled', value: 'true' },
   { key: 'email_verification_required', value: 'false' },
+  { key: 'board_daily_post_limit', value: '0' },
+  { key: 'board_daily_comment_limit', value: '0' },
 
   // Footer settings
   { key: 'footer_copyright', value: '© 2025 NexiBase. All rights reserved.' },

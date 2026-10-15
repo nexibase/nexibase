@@ -7,6 +7,7 @@ import {
   createMentionNotification,
 } from '@/lib/notification'
 import { parseMentions, resolveMentions } from '@/lib/mentions'
+import { BoardDailyLimitError, consumeBoardDailyUsage } from '@/lib/board-daily-usage'
 
 // Write comment
 export async function POST(
@@ -61,7 +62,7 @@ export async function POST(
       where: { id: postId }
     })
 
-    if (!post || post.status !== 'published') {
+    if (!post || post.boardId !== board.id || post.status !== 'published') {
       return NextResponse.json(
         { error: '게시글을 찾을 수 없습니다.' },
         { status: 404 }
@@ -92,6 +93,7 @@ export async function POST(
 
     // Create comment
     const comment = await prisma.$transaction(async tx => {
+    await consumeBoardDailyUsage(tx, board.id, user.id, 'comment', postId)
     const comment = await tx.comment.create({
       data: {
         content: content.trim(),
@@ -177,6 +179,9 @@ export async function POST(
     }, { status: 201 })
 
   } catch (error) {
+    if (error instanceof BoardDailyLimitError) {
+      return NextResponse.json({ error: error.message, code: 'BOARD_DAILY_LIMIT_REACHED', scope: error.scope, kind: error.kind, limit: error.limit, resetAt: error.resetAt }, { status: 429 })
+    }
     console.error('failed to create comment:', error)
     return NextResponse.json(
       { error: '서버 오류가 발생했습니다.' },

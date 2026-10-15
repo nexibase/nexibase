@@ -12,6 +12,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { ArrowLeft, Loader2, Save, Trash2, ExternalLink } from "lucide-react"
 import Link from "next/link"
+import { BoardDailyLimits } from '@/components/admin/BoardDailyLimits'
+import { parseDailyLimit } from '@/lib/board-limits'
 
 interface Board {
   id: string
@@ -28,6 +30,8 @@ interface Board {
   useFile: boolean
   useSecret: boolean
   postsPerPage: number
+  dailyPostLimit: number
+  dailyCommentLimit: number
   sortOrder: string
   displayType: string
   showPostNumber: boolean
@@ -55,6 +59,8 @@ export default function BoardEditPage({ params }: { params: Promise<{ id: string
     useFile: true,
     useSecret: false,
     postsPerPage: 20,
+    dailyPostLimit: 0,
+    dailyCommentLimit: 0,
     sortOrder: 'latest',
     displayType: 'list',
     showPostNumber: false,
@@ -81,6 +87,8 @@ export default function BoardEditPage({ params }: { params: Promise<{ id: string
             useFile: b.useFile ?? true,
             useSecret: b.useSecret ?? false,
             postsPerPage: b.postsPerPage ?? 20,
+            dailyPostLimit: b.dailyPostLimit ?? 0,
+            dailyCommentLimit: b.dailyCommentLimit ?? 0,
             sortOrder: b.sortOrder || 'latest',
             displayType: b.displayType || 'list',
             showPostNumber: b.showPostNumber ?? false,
@@ -92,6 +100,10 @@ export default function BoardEditPage({ params }: { params: Promise<{ id: string
   }, [id])
 
   const handleSave = async () => {
+    if (parseDailyLimit(formData.dailyPostLimit) === undefined || parseDailyLimit(formData.dailyCommentLimit) === undefined) {
+      alert(t('dailyLimits.invalid'))
+      return
+    }
     setSaving(true)
     try {
       const res = await fetch(`/api/admin/boards/${id}`, {
@@ -217,6 +229,14 @@ export default function BoardEditPage({ params }: { params: Promise<{ id: string
                   <Input type="number" min={5} max={100} value={formData.postsPerPage} onChange={e => setFormData({ ...formData, postsPerPage: parseInt(e.target.value) || 20 })} />
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          <Card className="mb-6">
+            <CardHeader><CardTitle className="text-base">{t('dailyLimits.title')}</CardTitle></CardHeader>
+            <CardContent>
+              <BoardDailyLimits dailyPostLimit={formData.dailyPostLimit} dailyCommentLimit={formData.dailyCommentLimit}
+                onChange={(key, value) => setFormData(prev => ({ ...prev, [key]: value }))} />
             </CardContent>
           </Card>
 

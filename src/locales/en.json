@@ -987,6 +987,20 @@
     }
   },
   "boards": {
+    "dailyLimits": {
+      "title": "Daily writing limits",
+      "defaultsTitle": "Board defaults",
+      "defaultsDescription": "Daily post and comment limits per member across all boards. These site-wide limits are checked first, followed by each board's limits.",
+      "boardDescription": "Daily writing limits per member on this board. Members must pass the site-wide limit first, then this additional board limit.",
+      "posts": "Posts per member per day",
+      "comments": "Comments per member per day",
+      "zeroDefaultHelp": "0 means no site-wide cap; 1 or more sets the daily maximum. Individual board limits still apply.",
+      "zeroBoardHelp": "0 means no additional cap on this board; 1 or more sets the daily maximum. Site-wide limits still apply even when this is 0.",
+      "dayHelp": "Counts reset every day at midnight Korea Standard Time (Asia/Seoul). Replies count as comments. Edits do not count, and deleting content does not restore the quota.",
+      "defaultsLink": "View site-wide board defaults",
+      "boardsLink": "Configure individual board limits",
+      "invalid": "Daily limits must be whole numbers from 0 to 2,147,483,647."
+    },
     "title": "Boards",
     "loadMore": "Load more",
     "loading": "Loading...",

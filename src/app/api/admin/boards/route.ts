@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminUser } from '@/lib/auth'
+import { isBoardDailyLimit } from '@/lib/board-limits'
 
 // Fetch board list
 export async function GET(request: NextRequest) {
@@ -84,10 +85,16 @@ export async function POST(request: NextRequest) {
       useFile,
       useSecret,
       postsPerPage,
+      dailyPostLimit,
+      dailyCommentLimit,
       sortOrder,
       displayType,
       isActive
     } = body
+
+    if (!isBoardDailyLimit(dailyPostLimit) || !isBoardDailyLimit(dailyCommentLimit)) {
+      return NextResponse.json({ error: '일일 작성 제한은 0 이상 2,147,483,647 이하의 정수로 입력해주세요.' }, { status: 400 })
+    }
 
     // Validate required fields
     if (!slug || !name) {
@@ -135,6 +142,8 @@ export async function POST(request: NextRequest) {
         useFile: useFile ?? true,
         useSecret: useSecret ?? false,
         postsPerPage: postsPerPage ?? 20,
+        dailyPostLimit: dailyPostLimit ?? 0,
+        dailyCommentLimit: dailyCommentLimit ?? 0,
         sortOrder: sortOrder || 'latest',
         displayType: displayType || 'list',
         isActive: isActive ?? true

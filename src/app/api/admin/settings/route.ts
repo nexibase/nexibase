@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminUser } from '@/lib/auth'
+import { BOARD_LIMIT_SETTING_KEYS, parseDailyLimit } from '@/lib/board-limits'
 
 // Fetch settings
 export async function GET() {
@@ -57,6 +58,12 @@ export async function POST(request: NextRequest) {
       const v = typeof settings.site_url === 'string' ? settings.site_url.trim() : ''
       if (v !== '' && !/^https?:\/\//i.test(v)) {
         return NextResponse.json({ error: 'site_url_invalid' }, { status: 400 })
+      }
+    }
+
+    for (const key of BOARD_LIMIT_SETTING_KEYS) {
+      if (key in settings && parseDailyLimit(settings[key]) === undefined) {
+        return NextResponse.json({ error: '게시판 일일 작성 제한은 0 이상 2,147,483,647 이하의 정수로 입력해주세요.' }, { status: 400 })
       }
     }
 

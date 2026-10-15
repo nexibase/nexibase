@@ -35,6 +35,7 @@ import {
   Search,
 } from "lucide-react"
 import { SUPPORTED_LOCALES } from "@/i18n/_generated-locales"
+import { BOARD_LIMIT_SETTING_KEYS, MAX_DAILY_LIMIT, parseDailyLimit } from '@/lib/board-limits'
 
 const LOCALE_LABELS: Record<string, string> = {
   ko: '한국어',
@@ -58,6 +59,8 @@ interface SettingsData {
   // Member settings
   signup_enabled: string
   email_verification_required: string
+  board_daily_post_limit: string
+  board_daily_comment_limit: string
 
   // Footer settings
   footer_copyright: string
@@ -105,6 +108,8 @@ const DEFAULT_SETTINGS: SettingsData = {
   site_logo: '',
   signup_enabled: 'true',
   email_verification_required: 'false',
+  board_daily_post_limit: '0',
+  board_daily_comment_limit: '0',
   footer_copyright: '',
   footer_links: '[]',
   layout_folder: 'default',
@@ -121,6 +126,7 @@ const DEFAULT_SETTINGS: SettingsData = {
 
 export default function SettingsPage() {
   const t = useTranslations('admin')
+  const tLimits = useTranslations('boards.dailyLimits')
   const tMeta = (key: string, fallback: string) => (t.has(key) ? t(key) : fallback)
   const themeName = (folder: string, fallback: string) => tMeta(`themeMeta.${folder}-name`, fallback)
   const themeDesc = (folder: string, fallback: string) => tMeta(`themeMeta.${folder}-description`, fallback)
@@ -242,6 +248,10 @@ export default function SettingsPage() {
 
   // Save settings
   const handleSave = async () => {
+    if (BOARD_LIMIT_SETTING_KEYS.some(key => parseDailyLimit(settings[key]) === undefined)) {
+      alert(tLimits('invalid'))
+      return
+    }
     // Client-side validation
     if (!settings.site_name.trim()) {
       alert(t('siteNameRequired'))
@@ -756,6 +766,27 @@ export default function SettingsPage() {
                     onCheckedChange={(checked) => handleSwitchChange('consent_enabled', checked)}
                   />
                 </div>
+              </CardContent>
+            </Card>
+
+            <Card id="board-default-settings">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2"><FileText className="h-5 w-5" />{tLimits('defaultsTitle')}</CardTitle>
+                <CardDescription>{tLimits('defaultsDescription')}</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {BOARD_LIMIT_SETTING_KEYS.map(key => (
+                    <div className="grid gap-2" key={key}>
+                      <Label htmlFor={key}>{tLimits(key === 'board_daily_post_limit' ? 'posts' : 'comments')}</Label>
+                      <Input id={key} type="number" min={0} max={MAX_DAILY_LIMIT} step={1}
+                        value={settings[key]} onChange={e => handleChange(key, e.target.value)} />
+                    </div>
+                  ))}
+                </div>
+                <p className="text-sm text-muted-foreground">{tLimits('zeroDefaultHelp')}</p>
+                <p className="text-sm text-muted-foreground">{tLimits('dayHelp')}</p>
+                <Link href="/admin/boards" className="inline-block text-sm text-primary underline">{tLimits('boardsLink')}</Link>
               </CardContent>
             </Card>
 
