@@ -11,6 +11,18 @@ export const PREF_FIELDS = {
 } as const
 export type MobileMode = 'independent' | 'alimtalk_first'
 
+export function normalizeSmtpTestEmail(value: unknown) {
+  if (typeof value !== 'string') throw new Error('테스트 메일을 받을 이메일 주소를 입력하세요.')
+  const email = value.trim()
+  if (email.length > 254 || !/^[^\s@<>;,\x00-\x1f\x7f]+@[^\s@<>;,\x00-\x1f\x7f]+\.[^\s@<>;,\x00-\x1f\x7f]+$/.test(email)) throw new Error('올바른 이메일 주소 한 개를 입력하세요.')
+  return email
+}
+
+// Only the administrator's dedicated SMTP test queue may bypass automatic delivery restrictions.
+export function isManualSmtpTest(channel: string, eventType: string | undefined, role: string | undefined, payload: { smtpTest?: boolean } | null) {
+  return channel === 'email' && eventType === 'smtp_test' && role === 'admin' && payload?.smtpTest === true
+}
+
 export function normalizePhone(value: string) {
   return value.replace(/^\+82\s?0?/, '0').replace(/[^0-9]/g, '')
 }

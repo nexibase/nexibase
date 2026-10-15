@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { isPluginEnabled } from '@/lib/plugins'
 import { getNotificationConfig, configReadiness } from './config'
 import { decrypt } from './crypto'
-import { canUseLiveDelivery, normalizePhone, type Channel } from './policy'
+import { canUseLiveDelivery, isManualSmtpTest, normalizePhone, type Channel } from './policy'
 import { emailPreference, mobilePreference } from './service'
 import { sendViaProvider, queryDelivery, type DeliveryPayload, type ProviderResult } from './providers'
 
@@ -61,11 +61,12 @@ export async function runNotificationWorkerOnce(options: WorkerOptions = {}) {
       const rule = event ? await prisma.notificationRule.findUnique({ where: { eventType: event.type } }) : null
       const pref = event ? await prisma.notificationPreference.findUnique({ where: { userId: event.userId } }) : null
       const payload = job.payloadEncrypted ? decrypt<DeliveryPayload>(job.payloadEncrypted) : null
-      const testEvent = event?.type === 'notification_test'
+      const smtpTest = isManualSmtpTest(channel, event?.type, event?.user.role, payload)
+      const testEvent = event?.type === 'notification_test' || smtpTest
       const currentRecipient = channel === 'email' ? event?.user.email.toLowerCase() : normalizePhone(event?.user.phone || '')
       let reason = !event || event.user.deletedAt || event.user.status !== 'active' ? '수신 회원이 없거나 비활성 상태입니다.' : ''
       if (!reason && rule && rule.owner !== 'core' && !await isPluginEnabled(rule.owner)) reason = '알림을 요청한 플러그인이 비활성화되었습니다.'
-      if (!reason && (!payload || currentRecipient !== (channel === 'email' ? payload.to.toLowerCase() : normalizePhone(payload.to)))) reason = '회원 연락처가 변경되었거나 발송 정보가 없습니다.'
+      if (!reason && (!payload || (!smtpTest && currentRecipient !== (channel === 'email' ? payload.to.toLowerCase() : normalizePhone(payload.to))))) reason = '회원 연락처가 변경되었거나 발송 정보가 없습니다.'
       if (!reason && !testEvent && (!settings[`${channel}Enabled`] || !rule?.[`${channel}Enabled`])) reason = '관리자가 채널 또는 이벤트 발송을 껐습니다.'
       if (!reason && !testEvent && rule && !(channel === 'email' ? emailPreference(pref, rule.preferenceType) : mobilePreference(pref, rule.preferenceType, channel))) reason = '회원이 채널 수신을 해제했습니다.'
       if (!reason && !(channel === 'email' && payload?.test)) {
@@ -73,7 +74,7 @@ export async function runNotificationWorkerOnce(options: WorkerOptions = {}) {
         if (missing.length) reason = `설정 필요: ${missing.join(', ')}`
       }
       if (reason || !payload) await update({ status: 'skipped', reason: reason || '발송 정보 없음' })
-      else await update(await send(channel, payload, settings, secrets, payload.test !== true && canUseLiveDelivery(settings, payload.to, channel)))
+      else await update(await send(channel, payload, settings, secrets, payload.test !== true && (smtpTest || canUseLiveDelivery(settings, payload.to, channel))))
     } catch {
       // Once claimed, an unexpected exception may have happened after provider acceptance.
       await update({ status: 'unknown', reason: '처리 결과를 확인할 수 없어 자동 재발송하지 않습니다.' })

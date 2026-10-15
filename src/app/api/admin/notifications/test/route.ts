@@ -3,28 +3,24 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { notificationAdmin, sameOrigin } from '@/lib/notifications/admin'
 import { configReadiness, getNotificationConfig } from '@/lib/notifications/config'
-import { CHANNELS, canUseLiveDelivery, maskRecipient, type Channel } from '@/lib/notifications/policy'
+import { CHANNELS, canUseLiveDelivery, maskRecipient, normalizeSmtpTestEmail, type Channel } from '@/lib/notifications/policy'
 import { emitNotification } from '@/lib/notifications/service'
 import { smtpFailure, smtpTransport } from '@/lib/notifications/providers'
+import { enqueueSmtpTest } from '@/lib/notifications/smtp-test'
 
 export async function GET(request: NextRequest) {
   const admin = await notificationAdmin()
   if (!admin) return NextResponse.json({ error: '관리자 권한이 필요합니다.' }, { status: 401 })
   if (request.nextUrl.searchParams.get('checkRecipient') === '1') {
-    const email = (request.nextUrl.searchParams.get('recipientEmail') || '').trim()
-    if (email.length > 254 || (email && !/^[^\s@<>;,]+@[^\s@<>;,]+\.[^\s@<>;,]+$/.test(email))) return NextResponse.json({ ready: false, message: '올바른 수신 회원 이메일을 입력하세요.' })
-    const user = email ? await prisma.user.findFirst({ where: { email, deletedAt: null, status: 'active' }, select: { email: true } }) : admin
-    if (!user) return NextResponse.json({ ready: false, message: '등록된 활성 회원의 이메일이 아닙니다. 수신 회원 이메일을 입력하세요. 메일은 발송되지 않았습니다.' })
-    const { settings } = await getNotificationConfig()
-    const recipientMasked = maskRecipient(user.email, 'email')
-    if (!canUseLiveDelivery(settings, user.email, 'email')) return NextResponse.json({ ready: false, message: !settings.liveEnabled
-      ? '실제 외부 발송 허용이 꺼져 있습니다. 켠 뒤 설정을 저장하세요.'
-      : `${email ? '수신 회원' : '내 계정'} ${recipientMasked}이 dev 실발송 허용 목록에 없습니다. 상단의 테스트 수신자에 해당 이메일을 추가하고 저장하세요.`, recipientMasked })
-    return NextResponse.json({ ready: true, message: `수신자 ${recipientMasked} · 실제 테스트 메일 발송 가능`, recipientMasked })
+    try {
+      const email = normalizeSmtpTestEmail(request.nextUrl.searchParams.get('recipientEmail')?.trim() || admin.email)
+      const recipientMasked = maskRecipient(email, 'email')
+      return NextResponse.json({ ready: true, message: `수신자 ${recipientMasked} · 회원 여부와 허용 목록에 관계없이 테스트 메일 발송 가능`, recipientMasked })
+    } catch { return NextResponse.json({ ready: false, message: '올바른 이메일 주소 한 개를 입력하세요.' }) }
   }
   const eventId = request.nextUrl.searchParams.get('eventId') || ''
   if (!/^[a-f0-9-]{36}$/i.test(eventId)) return NextResponse.json({ error: '테스트 발송 ID를 확인하세요.' }, { status: 400 })
-  const delivery = await prisma.notificationDelivery.findFirst({ where: { eventId, channel: 'email', event: { type: 'notification_test' } },
+  const delivery = await prisma.notificationDelivery.findFirst({ where: { eventId, channel: 'email', event: { type: { in: ['notification_test', 'smtp_test'] } } },
     select: { status: true, reason: true, recipientMasked: true, attempts: true } })
   if (!delivery) return NextResponse.json({ error: '테스트 메일 발송 내역을 찾을 수 없습니다.' }, { status: 404 })
   return NextResponse.json({ delivery })
@@ -36,6 +32,13 @@ export async function POST(request: NextRequest) {
   if (!sameOrigin(request)) return NextResponse.json({ error: '허용되지 않은 요청입니다.' }, { status: 403 })
   try {
     const body = await request.json()
+    if (body.action === 'smtp_send') {
+      if (body.channel !== undefined && body.channel !== 'email') throw new Error('SMTP 테스트는 메일만 보낼 수 있습니다.')
+      if (body.userId !== undefined || body.eventType !== undefined || body.mode !== undefined) throw new Error('SMTP 테스트 요청 형식을 확인하세요.')
+      const recipient = body.recipientEmail === undefined || body.recipientEmail === '' ? admin.email : body.recipientEmail
+      const notification = await enqueueSmtpTest(admin.id, recipient, typeof body.requestId === 'string' ? body.requestId : randomUUID())
+      return NextResponse.json({ success: true, notificationId: notification.id, eventId: notification.eventId })
+    }
     if (body.action === 'smtp_check') {
       const { settings, secrets } = await getNotificationConfig()
       const missing = configReadiness(settings, secrets).email

@@ -4,7 +4,7 @@ import { normalizePhone, type Channel } from './policy'
 
 export interface DeliveryPayload {
   to: string; subject: string; text: string; html?: string
-  templateCode?: string; buttons?: unknown; test?: boolean
+  templateCode?: string; buttons?: unknown; test?: boolean; smtpTest?: boolean
 }
 export interface ProviderResult {
   status: 'accepted' | 'delivered' | 'failed' | 'unknown' | 'tested' | 'retry'

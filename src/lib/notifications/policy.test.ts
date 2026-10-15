@@ -1,7 +1,21 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { canUseLiveDelivery, normalizePhone, maskRecipient, renderTemplate, mobileChannels } from './policy'
+import { canUseLiveDelivery, isManualSmtpTest, normalizeSmtpTestEmail, normalizePhone, maskRecipient, renderTemplate, mobileChannels } from './policy'
 import { encrypt, decrypt } from './crypto'
+
+test('manual SMTP exception requires email, dedicated event, admin and encrypted payload marker together', () => {
+  assert.equal(isManualSmtpTest('email', 'smtp_test', 'admin', { smtpTest: true }), true)
+  for (const channel of ['sms', 'alimtalk']) assert.equal(isManualSmtpTest(channel, 'smtp_test', 'admin', { smtpTest: true }), false)
+  for (const event of ['post_comment', 'notification_test', 'direct_message']) assert.equal(isManualSmtpTest('email', event, 'admin', { smtpTest: true }), false)
+  assert.equal(isManualSmtpTest('email', 'smtp_test', 'user', { smtpTest: true }), false)
+  assert.equal(isManualSmtpTest('email', 'smtp_test', 'admin', null), false)
+  assert.equal(isManualSmtpTest('email', 'smtp_test', 'admin', {}), false)
+})
+
+test('manual SMTP accepts one non-member mailbox, never recipient lists or header injection', () => {
+  assert.equal(normalizeSmtpTestEmail(' nonmember@example.invalid '), 'nonmember@example.invalid')
+  for (const input of [null, [], '', 'bad-email', 'a@example.invalid,b@example.invalid', 'a@example.invalid;b@example.invalid', 'a@example.invalid\r\nBcc: b@example.invalid', 'a\0@example.invalid', 'Name <a@example.invalid>']) assert.throws(() => normalizeSmtpTestEmail(input))
+})
 
 test('dev requires an enabled live switch AND an exact allowlisted recipient', () => {
   const previous = process.env.NOTIFICATION_ENVIRONMENT

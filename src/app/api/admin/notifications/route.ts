@@ -32,5 +32,5 @@ export async function GET(request: NextRequest) {
       event: { select: { type: true, user: { select: { id: true, nickname: true } } } } },
   })])
   const rules = await prisma.notificationRule.findMany({ select: { eventType: true, label: true } })
-  return NextResponse.json({ total, page, pageSize: 30, deliveries, events: Object.fromEntries(rules.map(r => [r.eventType, r.label])) })
+  return NextResponse.json({ total, page, pageSize: 30, deliveries, events: { ...Object.fromEntries(rules.map(r => [r.eventType, r.label])), smtp_test: 'SMTP 테스트 메일' } })
 }
