@@ -15,10 +15,10 @@ interface Board {
   postCount: number
 }
 
-export default function BoardsPage() {
+export default function BoardsPage({ initialBoards }: { initialBoards?: Board[] }) {
   const t = useTranslations('boards')
-  const [boards, setBoards] = useState<Board[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [boards, setBoards] = useState<Board[]>(initialBoards ?? [])
+  const [isLoading, setIsLoading] = useState(!initialBoards)
 
   useEffect(() => {
     const fetchBoards = async () => {

@@ -3,8 +3,12 @@ import WidgetRenderer from '@/lib/widgets/renderer'
 import type { Metadata } from 'next'
 import { prepareHomeImages } from '@/lib/widgets/prepare-home-images'
 import { prepareHomeData } from '@/lib/widgets/prepare-home-data'
+import { cache } from 'react'
+import { loadSiteSettings, resolveSiteUrl } from '@/lib/site-settings'
+import { isNexibaseProfile, nexibaseSeo, pageMetadata } from '@/lib/seo'
+import { NexibaseIntroduction } from '@/components/seo/NexibaseIntroduction'
 
-async function getHomePage() {
+const getHomePage = cache(async () => {
   return prisma.widgetPage.findUnique({
     where: { slug: '' },
     include: {
@@ -14,20 +18,26 @@ async function getHomePage() {
       },
     },
   })
-}
+})
 
 export async function generateMetadata(): Promise<Metadata> {
-  const page = await getHomePage()
-  if (!page) return {}
-
-  const metadata: Metadata = {}
-  if (page.seoTitle) metadata.title = { absolute: page.seoTitle }
-  if (page.seoDescription) metadata.description = page.seoDescription
-  return metadata
+  const [page, settings] = await Promise.all([getHomePage(), loadSiteSettings()])
+  const product = isNexibaseProfile(settings.site_seo_profile, page?.widgets.map(widget => widget.widgetKey) ?? [])
+  const copy = nexibaseSeo(settings.site_locale)
+  const title = page?.seoTitle || (product ? `${settings.site_name} | ${copy.title}` : settings.site_name)
+  const description = page?.seoDescription || (product ? copy.description : settings.site_description)
+  const metadata = pageMetadata(title, description, page?.seoCanonical || '/', { noIndex: page?.seoNoIndex || page?.isActive === false, image: page?.seoOgImage || undefined })
+  return {
+    ...metadata, title: { absolute: title },
+    openGraph: { ...metadata.openGraph, title: page?.seoOgTitle || title, description: page?.seoOgDescription || description },
+    robots: { index: page?.isActive !== false && !page?.seoNoIndex, follow: !page?.seoNoFollow },
+  }
 }
 
 export default async function HomePage() {
-  const page = await getHomePage()
+  const [page, settings] = await Promise.all([getHomePage(), loadSiteSettings()])
+  const product = isNexibaseProfile(settings.site_seo_profile, page?.widgets.map(widget => widget.widgetKey) ?? [])
+  const introduction = product ? <NexibaseIntroduction locale={settings.site_locale} url={(await resolveSiteUrl(settings.site_url)).toString()} /> : null
   const allWidgets = await prepareHomeImages(await prepareHomeData(page?.widgets ?? []))
 
   // Render sidebars directly from server-side data to avoid layout shift
@@ -58,6 +68,7 @@ export default async function HomePage() {
             <WidgetRenderer zone="top" widgets={allWidgets} />
             <WidgetRenderer zone="center" widgets={allWidgets} />
             <WidgetRenderer zone="bottom" widgets={allWidgets} />
+            {introduction}
           </main>
           {hasRight && (
             <aside className={colSpanClass[rightCols]}>
@@ -71,6 +82,7 @@ export default async function HomePage() {
           <WidgetRenderer zone="top" widgets={allWidgets} />
           <WidgetRenderer zone="center" widgets={allWidgets} />
           <WidgetRenderer zone="bottom" widgets={allWidgets} />
+          {introduction}
         </main>
       )}
     </div>

@@ -1,5 +1,7 @@
 import { headers } from 'next/headers'
 import { prisma } from './prisma'
+import { cache } from 'react'
+import { publicBaseUrl } from './seo'
 
 export interface SiteMetadataSettings {
   site_name: string
@@ -7,6 +9,7 @@ export interface SiteMetadataSettings {
   site_url: string
   keywords_array: string[]
   site_locale: string
+  site_seo_profile: string
   google_site_verification: string
   naver_site_verification: string
   bing_site_verification: string
@@ -18,6 +21,7 @@ const SETTING_KEYS = [
   'site_url',
   'site_keywords',
   'site_locale',
+  'site_seo_profile',
   'google_site_verification',
   'naver_site_verification',
   'bing_site_verification',
@@ -29,12 +33,13 @@ const FALLBACK_SETTINGS: SiteMetadataSettings = {
   site_url: '',
   keywords_array: [],
   site_locale: 'ko',
+  site_seo_profile: 'auto',
   google_site_verification: '',
   naver_site_verification: '',
   bing_site_verification: '',
 }
 
-export async function loadSiteSettings(): Promise<SiteMetadataSettings> {
+export const loadSiteSettings = cache(async (): Promise<SiteMetadataSettings> => {
   try {
     const rows = await prisma.setting.findMany({
       where: { key: { in: [...SETTING_KEYS] } },
@@ -47,6 +52,7 @@ export async function loadSiteSettings(): Promise<SiteMetadataSettings> {
       site_url: (m.get('site_url') || '').trim(),
       keywords_array: rawKeywords.split(',').map((s) => s.trim()).filter(Boolean),
       site_locale: m.get('site_locale') || 'ko',
+      site_seo_profile: m.get('site_seo_profile') || 'auto',
       google_site_verification: (m.get('google_site_verification') || '').trim(),
       naver_site_verification: (m.get('naver_site_verification') || '').trim(),
       bing_site_verification: (m.get('bing_site_verification') || '').trim(),
@@ -56,13 +62,18 @@ export async function loadSiteSettings(): Promise<SiteMetadataSettings> {
     // Return safe fallbacks so metadata generation doesn't crash.
     return FALLBACK_SETTINGS
   }
-}
+})
 
 export async function fallbackUrlFromHeaders(): Promise<string> {
   const h = await headers()
-  const proto = h.get('x-forwarded-proto') || 'https'
-  const host = h.get('x-forwarded-host') || h.get('host') || 'localhost:3000'
+  const proto = h.get('x-forwarded-proto')?.split(',')[0].trim() === 'http' ? 'http' : 'https'
+  const host = (h.get('x-forwarded-host') || h.get('host') || 'localhost:3000').split(',')[0].trim()
   return `${proto}://${host}`
+}
+
+export async function resolveSiteUrl(settingsUrl?: string): Promise<URL> {
+  const configured = settingsUrl ?? (await loadSiteSettings()).site_url
+  return publicBaseUrl(configured, await fallbackUrlFromHeaders())
 }
 
 export function mapToOgLocale(siteLocale: string): string {

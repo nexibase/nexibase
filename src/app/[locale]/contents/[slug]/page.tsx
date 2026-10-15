@@ -1,22 +1,20 @@
-import type { Metadata } from "next"
-import { prisma } from "@/lib/prisma"
-import ContentPage from "@/features/contents/components/ContentPage"
+import { cache } from 'react'
+import { notFound } from 'next/navigation'
+import { prisma } from '@/lib/prisma'
+import ContentPage from '@/features/contents/components/ContentPage'
+import { pageMetadata, plainDescription } from '@/lib/seo'
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+const getContent = cache((slug: string) => prisma.content.findFirst({ where: { slug, isPublic: true }, select: { id: true, slug: true, title: true, content: true, updatedAt: true } }))
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const content = await prisma.content.findUnique({ where: { slug }, select: { title: true, content: true } })
-  if (!content) return {}
-  const title = content.title
-  const description = content.content.replace(/<[^>]*>/g, "").slice(0, 160)
-  return {
-    title,
-    description,
-    openGraph: { title, description, url: `https://nexibase.com/contents/${slug}` },
-    twitter: { title, description },
-    alternates: { canonical: `https://nexibase.com/contents/${slug}` },
-  }
+  const content = await getContent(slug)
+  if (!content) notFound()
+  return pageMetadata(content.title, plainDescription(content.content), `/contents/${encodeURIComponent(slug)}`)
 }
 
-export default function Page() {
-  return <ContentPage />
+export default async function Page({ params }: { params: Promise<{ slug: string }> }) {
+  const content = await getContent((await params).slug)
+  if (!content) notFound()
+  return <ContentPage initialContent={{ ...content, updatedAt: content.updatedAt.toISOString() }} />
 }

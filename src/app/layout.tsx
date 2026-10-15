@@ -3,7 +3,8 @@ import { Geist, Geist_Mono } from 'next/font/google'
 import { ThemeProvider } from '@/components/theme-provider'
 import { SessionProvider } from '@/components/providers/SessionProvider'
 import ThemeLoader from '@/components/theme-loader'
-import { loadSiteSettings, fallbackUrlFromHeaders, mapToOgLocale } from '@/lib/site-settings'
+import { loadSiteSettings, resolveSiteUrl, mapToOgLocale } from '@/lib/site-settings'
+import { jsonLd } from '@/lib/seo'
 import { getTranslations } from 'next-intl/server'
 import { getMeasurementId } from '@/components/GoogleAnalytics'
 import { ConsentProvider } from '@/components/consent/ConsentProvider'
@@ -21,25 +22,15 @@ const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin']
 // so every page must render dynamically (no static prerender).
 export const dynamic = 'force-dynamic'
 
-async function resolveBaseUrl(settingsUrl: string): Promise<URL> {
-  const raw = settingsUrl || (await fallbackUrlFromHeaders())
-  try {
-    return new URL(raw)
-  } catch {
-    return new URL(await fallbackUrlFromHeaders())
-  }
-}
-
 export async function generateMetadata(): Promise<Metadata> {
   const s = await loadSiteSettings()
-  const base = await resolveBaseUrl(s.site_url)
-  const baseStr = base.toString().replace(/\/$/, '')
+  const base = await resolveSiteUrl(s.site_url)
   const ogLocale = mapToOgLocale(s.site_locale)
 
   return {
     metadataBase: base,
     title: {
-      default: s.site_description ? `${s.site_name} - ${s.site_description}` : s.site_name,
+      default: s.site_name,
       template: `%s | ${s.site_name}`,
     },
     ...(s.site_description && { description: s.site_description }),
@@ -47,17 +38,17 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: {
       type: 'website',
       locale: ogLocale,
-      url: baseStr,
       siteName: s.site_name,
       title: s.site_name,
+      images: [{ url: '/opengraph-image', width: 1200, height: 630, alt: s.site_name }],
       ...(s.site_description && { description: s.site_description }),
     },
     twitter: {
       card: 'summary_large_image',
       title: s.site_name,
+      images: ['/opengraph-image'],
       ...(s.site_description && { description: s.site_description }),
     },
-    alternates: { canonical: baseStr },
     ...(() => {
       const other: Record<string, string> = {}
       if (s.naver_site_verification) other['naver-site-verification'] = s.naver_site_verification
@@ -89,7 +80,7 @@ export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   const s = await loadSiteSettings()
-  const base = await resolveBaseUrl(s.site_url)
+  const base = await resolveSiteUrl(s.site_url)
   const baseStr = base.toString().replace(/\/$/, '')
 
   const consent = await readConsentContext()
@@ -144,7 +135,7 @@ export default async function RootLayout({
         <ThemeLoader />
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }}
+          dangerouslySetInnerHTML={{ __html: jsonLd(ld) }}
         />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>

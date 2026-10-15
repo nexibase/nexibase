@@ -55,6 +55,7 @@ interface SettingsData {
   site_url: string
   site_keywords: string
   site_logo: string
+  site_seo_profile: string
 
   // Member settings
   signup_enabled: string
@@ -106,6 +107,7 @@ const DEFAULT_SETTINGS: SettingsData = {
   site_url: '',
   site_keywords: '',
   site_logo: '',
+  site_seo_profile: 'auto',
   signup_enabled: 'true',
   email_verification_required: 'false',
   board_daily_post_limit: '0',
@@ -466,6 +468,18 @@ export default function SettingsPage() {
                   <p className="text-sm text-muted-foreground">
                     {t('siteLocaleDescription')}
                   </p>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="site_seo_profile">{t('seoProfile')}</Label>
+                  <select id="site_seo_profile" value={settings.site_seo_profile}
+                    onChange={e => handleChange('site_seo_profile', e.target.value)}
+                    className="w-full h-10 px-3 border rounded-md bg-background text-sm">
+                    <option value="auto">{t('seoProfileAuto')}</option>
+                    <option value="nexibase">{t('seoProfileNexibase')}</option>
+                    <option value="custom">{t('seoProfileCustom')}</option>
+                  </select>
+                  <p className="text-sm text-muted-foreground">{t('seoProfileDescription')}</p>
                 </div>
 
                 <div className="grid gap-2">

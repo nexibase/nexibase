@@ -61,6 +61,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    if ('site_seo_profile' in settings && !['auto', 'nexibase', 'custom'].includes(settings.site_seo_profile)) {
+      return NextResponse.json({ error: '잘못된 검색 노출 프로필입니다.' }, { status: 400 })
+    }
+
     for (const key of BOARD_LIMIT_SETTING_KEYS) {
       if (key in settings && parseDailyLimit(settings[key]) === undefined) {
         return NextResponse.json({ error: '게시판 일일 작성 제한은 0 이상 2,147,483,647 이하의 정수로 입력해주세요.' }, { status: 400 })

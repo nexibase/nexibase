@@ -64,22 +64,30 @@ interface User {
   role?: string
 }
 
-export default function BoardListPage() {
+export interface BoardListInitialData {
+  board: Board
+  posts: Post[]
+  notices: Post[]
+  total: number
+  totalPages: number
+}
+
+export default function BoardListPage({ initialData }: { initialData?: BoardListInitialData }) {
   const params = useParams()
   const router = useRouter()
   const slug = params.slug as string
   const t = useTranslations('boards')
   const locale = useLocale()
 
-  const [board, setBoard] = useState<Board | null>(null)
-  const [posts, setPosts] = useState<Post[]>([])
-  const [notices, setNotices] = useState<Post[]>([])
+  const [board, setBoard] = useState<Board | null>(initialData?.board ?? null)
+  const [posts, setPosts] = useState<Post[]>(initialData?.posts ?? [])
+  const [notices, setNotices] = useState<Post[]>(initialData?.notices ?? [])
   const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(!initialData)
   const [error, setError] = useState<string | null>(null)
   const [page, setPage] = useState(1)
-  const [total, setTotal] = useState(0)
-  const [totalPages, setTotalPages] = useState(1)
+  const [total, setTotal] = useState(initialData?.total ?? 0)
+  const [totalPages, setTotalPages] = useState(initialData?.totalPages ?? 1)
   const [loadingMore, setLoadingMore] = useState(false)
   const isLoggedIn = !!user
   const isAdmin = user?.role === 'admin'
@@ -102,7 +110,7 @@ export default function BoardListPage() {
     if (append) {
       setLoadingMore(true)
     } else {
-      setLoading(true)
+      if (!initialData) setLoading(true)
     }
     setError(null)
     try {
@@ -135,7 +143,7 @@ export default function BoardListPage() {
       setLoading(false)
       setLoadingMore(false)
     }
-  }, [slug, t])
+  }, [slug, t, initialData])
 
   useEffect(() => {
     fetchUser()
@@ -152,21 +160,18 @@ export default function BoardListPage() {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
     const now = new Date()
-    const sameDay =
-      date.getFullYear() === now.getFullYear() &&
-      date.getMonth() === now.getMonth() &&
-      date.getDate() === now.getDate()
+    const koreaDay = (value: Date) => new Date(value.getTime() + 9 * 3600000).toISOString().slice(0, 10)
+    const sameDay = koreaDay(date) === koreaDay(now)
 
     if (sameDay) {
       return date.toLocaleTimeString(locale, {
+        timeZone: 'Asia/Seoul',
         hour: '2-digit',
         minute: '2-digit',
         hour12: false,
       })
     }
-    const mm = String(date.getMonth() + 1).padStart(2, '0')
-    const dd = String(date.getDate()).padStart(2, '0')
-    return `${mm}-${dd}`
+    return koreaDay(date).slice(5)
   }
 
   // Post click

@@ -316,7 +316,14 @@ interface User {
   role: string
 }
 
-export default function BoardPostPage() {
+export interface BoardPostInitialData {
+  board: Board
+  post: Post
+  prevPost: AdjacentPost | null
+  nextPost: AdjacentPost | null
+}
+
+export default function BoardPostPage({ initialData }: { initialData?: BoardPostInitialData }) {
   const params = useParams()
   const router = useRouter()
   const slug = params.slug as string
@@ -324,10 +331,10 @@ export default function BoardPostPage() {
   const t = useTranslations('boards')
   const locale = useLocale()
 
-  const [board, setBoard] = useState<Board | null>(null)
-  const [post, setPost] = useState<Post | null>(null)
+  const [board, setBoard] = useState<Board | null>(initialData?.board ?? null)
+  const [post, setPost] = useState<Post | null>(initialData?.post ?? null)
   const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(!initialData)
   const [error, setError] = useState<string | null>(null)
   const [isAuthor, setIsAuthor] = useState(false)
   const [reactions, setReactions] = useState<Record<string, number>>({})
@@ -337,8 +344,8 @@ export default function BoardPostPage() {
   const [replyTo, setReplyTo] = useState<{ id: string; nickname: string } | null>(null)
   const [editingComment, setEditingComment] = useState<{ id: string; content: string } | null>(null)
   const [editText, setEditText] = useState('')
-  const [prevPost, setPrevPost] = useState<AdjacentPost | null>(null)
-  const [nextPost, setNextPost] = useState<AdjacentPost | null>(null)
+  const [prevPost, setPrevPost] = useState<AdjacentPost | null>(initialData?.prevPost ?? null)
+  const [nextPost, setNextPost] = useState<AdjacentPost | null>(initialData?.nextPost ?? null)
   const [imageViewerOpen, setImageViewerOpen] = useState(false)
   const [imageViewerIndex, setImageViewerIndex] = useState(0)
   const [contentImageViewer, setContentImageViewer] = useState<{ images: Attachment[]; index: number } | null>(null)
@@ -376,7 +383,7 @@ export default function BoardPostPage() {
 
   // Fetch post
   const fetchPost = useCallback(async () => {
-    setLoading(true)
+    if (!initialData) setLoading(true)
     setError(null)
     try {
       const response = await fetch(`/api/boards/${slug}/posts/${postId}`)
@@ -406,7 +413,7 @@ export default function BoardPostPage() {
     } finally {
       setLoading(false)
     }
-  }, [slug, postId, t])
+  }, [slug, postId, t, initialData])
 
   useEffect(() => {
     fetchUser()
@@ -440,6 +447,7 @@ export default function BoardPostPage() {
   // Date format
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString(locale, {
+      timeZone: 'Asia/Seoul',
       year: 'numeric',
       month: 'long',
       day: 'numeric',

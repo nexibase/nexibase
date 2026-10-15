@@ -1,4 +1,5 @@
 export default {
+  ssr: true,
   title: 'NexiBase Hero',
   description: 'NexiBase intro + GitHub link + version badge',
   defaultZone: 'top',

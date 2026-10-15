@@ -3,6 +3,7 @@ import createMiddleware from 'next-intl/middleware'
 import { pluginManifest } from '@/plugins/_generated'
 import { routing } from '@/i18n/routing'
 import { prisma } from '@/lib/prisma'
+import { isNoIndexPath } from '@/lib/seo'
 
 const intlMiddleware = createMiddleware(routing)
 const allPluginSlugs = Object.values(pluginManifest).map(p => p.slug)
@@ -135,6 +136,9 @@ async function checkPluginBlocked(
 }
 
 function attachSessionCookie(response: NextResponse, request: NextRequest): NextResponse {
+  if (isNoIndexPath(stripLocale(request.nextUrl.pathname))) {
+    response.headers.set('X-Robots-Tag', 'noindex, nofollow')
+  }
   const sessionToken = request.cookies.get('next-auth.session-token')
   if (sessionToken) {
     response.cookies.set({
@@ -217,6 +221,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|uploads|themes|.*\\.(?:png|jpg|jpeg|gif|webp|svg|ico|css|js|txt|xml)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|opengraph-image|uploads|themes|.*\\.(?:png|jpg|jpeg|gif|webp|svg|ico|css|js|txt|xml)$).*)',
   ],
 }

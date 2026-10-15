@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import WidgetRenderer from '@/lib/widgets/renderer'
 import { getTemplateZones } from '@/lib/widgets/layout-templates'
 import type { Metadata } from 'next'
+import { pageMetadata } from '@/lib/seo'
 
 interface PageProps {
   params: Promise<{ locale: string; slug: string[] }>
@@ -25,12 +26,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const slug = segments.join('/')
   const page = await getWidgetPage(slug)
 
-  if (!page || !page.isActive) return {}
+  if (!page || !page.isActive) notFound()
 
   return {
+    ...pageMetadata(page.seoTitle || page.title, page.seoDescription || '', page.seoCanonical || `/${slug}`, { image: page.seoOgImage || undefined }),
     title: page.seoTitle || page.title,
     description: page.seoDescription || undefined,
     openGraph: {
+      url: `/${slug}`,
       title: page.seoOgTitle || page.seoTitle || page.title,
       description: page.seoOgDescription || page.seoDescription || undefined,
       images: page.seoOgImage ? [page.seoOgImage] : undefined,
@@ -39,7 +42,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       index: !page.seoNoIndex,
       follow: !page.seoNoFollow,
     },
-    alternates: page.seoCanonical ? { canonical: page.seoCanonical } : undefined,
+    alternates: { canonical: page.seoCanonical || `/${slug}` },
   }
 }
 

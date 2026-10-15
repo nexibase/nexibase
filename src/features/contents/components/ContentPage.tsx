@@ -9,7 +9,7 @@ import Link from "next/link"
 import { sanitizeHtml } from "@/lib/sanitize"
 import { useTranslations, useLocale } from 'next-intl'
 
-interface Content {
+export interface Content {
   id: number
   slug: string
   title: string
@@ -17,14 +17,14 @@ interface Content {
   updatedAt: string
 }
 
-export default function ContentPage() {
+export default function ContentPage({ initialContent }: { initialContent?: Content }) {
   const t = useTranslations('contents')
   const locale = useLocale()
   const params = useParams()
   const slug = params.slug as string
 
-  const [content, setContent] = useState<Content | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [content, setContent] = useState<Content | null>(initialContent ?? null)
+  const [loading, setLoading] = useState(!initialContent)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -86,9 +86,9 @@ export default function ContentPage() {
     <div className="container max-w-4xl mx-auto px-4 py-8">
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">{content.title}</CardTitle>
+          <h1 className="text-2xl font-semibold">{content.title}</h1>
           <p className="text-sm text-muted-foreground">
-            {t('lastModified')}: {new Date(content.updatedAt).toLocaleDateString(locale)}
+            {t('lastModified')}: {new Date(content.updatedAt).toLocaleDateString(locale, { timeZone: 'Asia/Seoul' })}
           </p>
         </CardHeader>
         <CardContent>

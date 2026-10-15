@@ -1,4 +1,5 @@
 export default {
+  ssr: true,
   title: 'NexiBase Home Hero',
   description: 'nexibase.com only — displays the site version (NEXT_PUBLIC_APP_VERSION)',
   defaultZone: 'top',

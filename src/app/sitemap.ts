@@ -1,90 +1,33 @@
 import type { MetadataRoute } from 'next'
 import { prisma } from '@/lib/prisma'
-import { loadSiteSettings } from '@/lib/site-settings'
+import { resolveSiteUrl } from '@/lib/site-settings'
 
-const FALLBACK_BASE = 'https://nexibase.com'
-
-function cleanBase(url: string): string {
-  return url.replace(/\/$/, '')
-}
-
-export const revalidate = 3600
+// Request-scoped origin prevents one installation's URLs leaking into another.
+export const dynamic = 'force-dynamic'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const settings = await loadSiteSettings()
-  const base = cleanBase(settings.site_url || FALLBACK_BASE)
-  const now = new Date()
-
-  const staticEntries: MetadataRoute.Sitemap = [
-    { url: `${base}/`, lastModified: now, changeFrequency: 'daily', priority: 1.0 },
-    { url: `${base}/boards`, lastModified: now, changeFrequency: 'daily', priority: 0.9 },
-    { url: `${base}/faqs`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
-    { url: `${base}/posts/latest`, lastModified: now, changeFrequency: 'daily', priority: 0.7 },
-    { url: `${base}/posts/popular`, lastModified: now, changeFrequency: 'daily', priority: 0.7 },
-    { url: `${base}/search`, lastModified: now, changeFrequency: 'weekly', priority: 0.4 },
-  ]
-
-  const [boards, posts, contents, policies] = await Promise.all([
-    prisma.board.findMany({
-      where: { readMemberOnly: false },
-      select: { slug: true, updatedAt: true },
-    }),
+  const base = await resolveSiteUrl()
+  const url = (path: string) => new URL(path, base).toString()
+  const [boards, posts, contents, policies, pages] = await Promise.all([
+    prisma.board.findMany({ where: { isActive: true, listMemberOnly: false, readMemberOnly: false }, select: { slug: true, updatedAt: true } }),
     prisma.post.findMany({
-      where: {
-        status: 'published',
-        isSecret: false,
-        board: { readMemberOnly: false },
-      },
-      select: {
-        id: true,
-        updatedAt: true,
-        board: { select: { slug: true } },
-      },
-      orderBy: { updatedAt: 'desc' },
+      where: { status: 'published', isSecret: false, board: { isActive: true, listMemberOnly: false, readMemberOnly: false } },
+      select: { id: true, updatedAt: true, board: { select: { slug: true } } },
+      orderBy: { updatedAt: 'desc' }, take: 40000,
     }),
-    prisma.content.findMany({
-      where: { isPublic: true },
-      select: { slug: true, updatedAt: true },
-    }),
-    prisma.policy.findMany({
-      where: { isActive: true },
-      select: { slug: true, updatedAt: true },
-    }),
+    prisma.content.findMany({ where: { isPublic: true }, select: { slug: true, updatedAt: true } }),
+    prisma.policy.findMany({ where: { isActive: true }, select: { slug: true, updatedAt: true } }),
+    prisma.widgetPage.findMany({ select: { slug: true, isActive: true, seoNoIndex: true, seoCanonical: true, updatedAt: true } }),
   ])
-
-  const boardEntries: MetadataRoute.Sitemap = boards.map((b) => ({
-    url: `${base}/boards/${b.slug}`,
-    lastModified: b.updatedAt,
-    changeFrequency: 'daily',
-    priority: 0.8,
-  }))
-
-  const postEntries: MetadataRoute.Sitemap = posts.map((p) => ({
-    url: `${base}/boards/${p.board.slug}/${p.id}`,
-    lastModified: p.updatedAt,
-    changeFrequency: 'weekly',
-    priority: 0.6,
-  }))
-
-  const contentEntries: MetadataRoute.Sitemap = contents.map((c) => ({
-    url: `${base}/contents/${c.slug}`,
-    lastModified: c.updatedAt,
-    changeFrequency: 'monthly',
-    priority: 0.6,
-  }))
-
-  const policyEntries: MetadataRoute.Sitemap = policies.map((p) => ({
-    url: `${base}/policies/${p.slug}`,
-    lastModified: p.updatedAt,
-    changeFrequency: 'monthly',
-    priority: 0.4,
-  }))
-
-  return [
-    ...staticEntries,
-    ...boardEntries,
-    ...postEntries,
-    ...contentEntries,
-    ...policyEntries,
+  const entries: MetadataRoute.Sitemap = [
+    { url: url('/boards'), changeFrequency: 'daily', priority: 0.8 },
+    { url: url('/faqs'), changeFrequency: 'weekly', priority: 0.7 },
+    ...pages.filter(page => page.isActive && !page.seoNoIndex && (!page.seoCanonical || url(page.seoCanonical) === url(`/${page.slug}`))).map(page => ({ url: url(`/${page.slug}`), lastModified: page.updatedAt, changeFrequency: 'weekly' as const, priority: page.slug === '' ? 1 : 0.7 })),
+    ...boards.map(board => ({ url: url(`/boards/${encodeURIComponent(board.slug)}`), lastModified: board.updatedAt, changeFrequency: 'daily' as const, priority: 0.8 })),
+    ...posts.map(post => ({ url: url(`/boards/${encodeURIComponent(post.board.slug)}/${post.id}`), lastModified: post.updatedAt, changeFrequency: 'weekly' as const, priority: 0.6 })),
+    ...contents.map(content => ({ url: url(`/contents/${encodeURIComponent(content.slug)}`), lastModified: content.updatedAt, changeFrequency: 'monthly' as const, priority: 0.6 })),
+    ...policies.map(policy => ({ url: url(`/policies/${encodeURIComponent(policy.slug)}`), lastModified: policy.updatedAt, changeFrequency: 'monthly' as const, priority: 0.3 })),
   ]
+  if (!pages.some(page => page.slug === '')) entries.unshift({ url: url('/'), priority: 1 })
+  return Array.from(new Map(entries.map(entry => [entry.url, entry])).values()).slice(0, 50000)
 }
