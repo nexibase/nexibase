@@ -34,6 +34,66 @@ function Navigation({ settings }: { settings?: boolean }) {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return <section className="border rounded-lg p-5 space-y-4"><h2 className="font-semibold text-lg">{title}</h2>{children}</section>
 }
+function SmtpTest({ data, dirty, busy }: { data: Configuration; dirty: boolean; busy: boolean }) {
+  const [recipientEmail, setRecipientEmail] = useState('')
+  const [sending, setSending] = useState(false)
+  const [eventId, setEventId] = useState('')
+  const [result, setResult] = useState('')
+  const [waiting, setWaiting] = useState(false)
+  const unavailable = dirty ? '변경한 설정을 먼저 저장하세요.' : !data.settings.liveEnabled ? '상단의 실제 외부 발송 허용을 켜고 저장하세요.'
+    : data.missing.email.length ? `SMTP 설정 필요: ${data.missing.email.join(', ')}` : !data.encryptionReady ? '서버 알림 암호화 키 설정이 필요합니다.' : ''
+  useEffect(() => {
+    if (!eventId) return
+    const controller = new AbortController()
+    const startedAt = Date.now()
+    let timer: ReturnType<typeof setTimeout>
+    const poll = async () => {
+      let pending = true
+      try {
+        const response = await fetch(`/api/admin/notifications/test?eventId=${encodeURIComponent(eventId)}`, { cache: 'no-store', signal: controller.signal })
+        const body = await response.json()
+        if (!response.ok) throw new Error(body.error || '발송 결과를 조회하지 못했습니다.')
+        const delivery = body.delivery
+        setResult(`${delivery.status === 'accepted' ? 'SMTP 서버 접수 완료' : statuses[delivery.status] || delivery.status} · ${delivery.recipientMasked}${delivery.reason ? `\n${delivery.reason}` : ''}`)
+        pending = ['pending', 'processing'].includes(delivery.status)
+      } catch (error) {
+        if (controller.signal.aborted) return
+        setResult(error instanceof Error ? error.message : '발송 결과 조회 실패')
+      }
+      if (controller.signal.aborted) return
+      if (pending && Date.now() - startedAt < 120000) timer = setTimeout(poll, 3000)
+      else {
+        setWaiting(false)
+        if (pending) setResult(previous => `${previous}\n처리가 계속되고 있습니다. 발송 내역에서 결과를 확인하세요.`)
+      }
+    }
+    void poll()
+    return () => { controller.abort(); clearTimeout(timer) }
+  }, [eventId])
+  async function send() {
+    setSending(true); setResult(''); setEventId('')
+    try {
+      const response = await fetch('/api/admin/notifications/test', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ channel: 'email', mode: 'live', recipientEmail: recipientEmail.trim() }) })
+      const body = await response.json()
+      if (!response.ok) throw new Error(body.error || '테스트 메일 요청 실패')
+      if (!body.eventId) throw new Error('테스트 발송 내역을 만들지 못했습니다.')
+      setResult('테스트 메일을 발송 대기열에 등록했습니다. 결과를 확인하고 있습니다.'); setWaiting(true); setEventId(body.eventId)
+    } catch (error) { setResult(error instanceof Error ? error.message : '테스트 메일 요청 실패') }
+    finally { setSending(false) }
+  }
+  return <div className="border-t pt-4 space-y-3">
+    <h3 className="font-medium">테스트 메일 발송</h3>
+    <p className="text-xs text-muted-foreground">저장한 SMTP 설정으로 실제 테스트 메일을 보냅니다. 비워두면 내 계정의 이메일로 보냅니다. dev에서는 수신 이메일을 상단의 실발송 테스트 수신자에 등록하고 저장하세요.</p>
+    <form className="flex flex-wrap gap-3 items-end" onSubmit={e => { e.preventDefault(); if (!unavailable && !busy && !sending && !waiting) void send() }}>
+      <div className="space-y-2 flex-1 min-w-0 sm:min-w-64"><Label htmlFor="smtp-test-recipient">수신 회원 이메일</Label><Input id="smtp-test-recipient" type="email" maxLength={254} value={recipientEmail} onChange={e => setRecipientEmail(e.target.value)} placeholder="비워두면 내 이메일" autoComplete="off" disabled={sending || waiting} /></div>
+      <Button type="submit" disabled={!!unavailable || busy || sending || waiting}><Mail className="h-4 w-4 mr-2" />{sending ? '요청 중…' : waiting ? '발송 결과 확인 중…' : '테스트 메일 보내기'}</Button>
+    </form>
+    {unavailable && <p className="text-sm text-muted-foreground">{unavailable}</p>}
+    {result && <div role="status" className="border rounded-md p-3 text-sm whitespace-pre-wrap">{result}</div>}
+    <p className="text-xs text-muted-foreground">SMTP 서버 접수 후 수신함·스팸함에서 도착 여부를 확인하세요. <Link href="/admin/notifications" className="text-primary underline">발송 내역 보기</Link></p>
+  </div>
+}
 export function NotificationSettingsAdmin() {
   const [data, setData] = useState<Configuration | null>(null)
   const [secrets, setSecrets] = useState<Secrets>({})
@@ -126,7 +186,7 @@ export function NotificationSettingsAdmin() {
         <div className="space-y-2"><Label htmlFor="notification-port">SMTP 포트</Label><Input id="notification-port" type="number" min={1} max={65535} value={data.settings.smtpPort} onChange={e => setting('smtpPort', Number(e.target.value))} /></div>
         {textField('smtpUser', 'SMTP 계정')}{secretField('smtpPass', 'SMTP 비밀번호')}{textField('smtpFrom', '발신 이메일')}
         <div className="flex gap-3 items-center"><Switch id="notification-tls" checked={data.settings.smtpSecure} onCheckedChange={v => setting('smtpSecure', v)} /><Label htmlFor="notification-tls">연결 시 TLS 사용 · 보통 465 포트</Label></div>
-      </div><p className="text-xs text-muted-foreground">인증 메일은 일반 알림의 메일 켜기·끄기와 별개로 동작하며, 발송 모드와 dev 허용 목록은 동일하게 적용합니다.</p></Section>
+      </div><p className="text-xs text-muted-foreground">인증 메일은 일반 알림의 메일 켜기·끄기와 별개로 동작하며, 발송 모드와 dev 허용 목록은 동일하게 적용합니다.</p><SmtpTest data={data} dirty={dirty} busy={busy} /></Section>
         <Section title="문자·알림톡 · 알리고"><div className="grid sm:grid-cols-2 gap-4">{textField('aligoUserId', '알리고 아이디')}{secretField('aligoKey', '알리고 API 키')}{textField('sender', '등록된 발신번호')}{secretField('senderKey', '카카오 발신프로필 키')}</div><p className="text-xs text-muted-foreground">알리고의 발신번호 등록, API 서버 IP 허용, 카카오채널 연동 및 템플릿 승인이 필요합니다. 비밀값은 빈칸으로 저장하면 기존 값을 유지합니다.</p></Section></div>
       <Section title="이벤트별 발송 설정"><p className="text-sm text-muted-foreground">사이트 내 알림은 필수입니다. 상단 발송 채널에서 켠 채널만 아래에서 변경할 수 있습니다. 채널을 꺼도 이벤트별 설정값은 유지됩니다.</p>
         {data.rules.filter(r => r.eventType !== 'notification_test').map(r => <div key={r.eventType} className="border rounded-lg p-4 space-y-3"><div className="flex flex-wrap gap-4 items-center justify-between"><div><h3 className="font-medium">{r.label}</h3><p className="text-xs text-muted-foreground">{r.eventType}</p></div><div className="flex flex-wrap gap-5">{Object.entries(channels).map(([channel,label]) => <label key={channel} className={`flex gap-2 items-center text-sm ${!data.settings[`${channel as keyof typeof channels}Enabled`] ? 'text-muted-foreground' : ''}`} title={!data.settings[`${channel as keyof typeof channels}Enabled`] ? `상단에서 ${label} 보내기를 켜세요.` : undefined}><Switch aria-label={`${r.label} ${label} 보내기`} disabled={!data.settings[`${channel as keyof typeof channels}Enabled`]} checked={r[`${channel as keyof typeof channels}Enabled`]} onCheckedChange={v => rule(r.eventType, { [`${channel}Enabled`]: v })} />{label} 보내기</label>)}</div></div>

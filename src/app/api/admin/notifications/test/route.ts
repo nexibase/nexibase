@@ -2,9 +2,19 @@ import { randomUUID } from 'node:crypto'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { notificationAdmin, sameOrigin } from '@/lib/notifications/admin'
-import { getNotificationConfig } from '@/lib/notifications/config'
+import { configReadiness, getNotificationConfig } from '@/lib/notifications/config'
 import { CHANNELS, canUseLiveDelivery, type Channel } from '@/lib/notifications/policy'
 import { emitNotification } from '@/lib/notifications/service'
+
+export async function GET(request: NextRequest) {
+  if (!await notificationAdmin()) return NextResponse.json({ error: '관리자 권한이 필요합니다.' }, { status: 401 })
+  const eventId = request.nextUrl.searchParams.get('eventId') || ''
+  if (!/^[a-f0-9-]{36}$/i.test(eventId)) return NextResponse.json({ error: '테스트 발송 ID를 확인하세요.' }, { status: 400 })
+  const delivery = await prisma.notificationDelivery.findFirst({ where: { eventId, channel: 'email', event: { type: 'notification_test' } },
+    select: { status: true, reason: true, recipientMasked: true, attempts: true } })
+  if (!delivery) return NextResponse.json({ error: '테스트 메일 발송 내역을 찾을 수 없습니다.' }, { status: 404 })
+  return NextResponse.json({ delivery })
+}
 
 export async function POST(request: NextRequest) {
   const admin = await notificationAdmin()
@@ -13,14 +23,22 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     if (!CHANNELS.includes(body.channel) || !['test', 'live'].includes(body.mode)) throw new Error('테스트 채널과 모드를 확인하세요.')
-    const userId = body.userId === undefined ? admin.id : Number(body.userId)
-    if (!Number.isSafeInteger(userId) || userId < 1) throw new Error('테스트 회원 ID를 확인하세요.')
-    const user = await prisma.user.findFirst({ where: { id: userId, deletedAt: null, status: 'active' }, select: { email: true, phone: true } })
+    const recipientEmail = typeof body.recipientEmail === 'string' ? body.recipientEmail.trim() : ''
+    if (body.recipientEmail !== undefined && (body.channel !== 'email' || typeof body.recipientEmail !== 'string' || recipientEmail.length > 254 || (recipientEmail && !/^[^\s@<>;,]+@[^\s@<>;,]+\.[^\s@<>;,]+$/.test(recipientEmail)))) throw new Error('수신 회원 이메일을 확인하세요.')
+    if (recipientEmail && body.userId !== undefined) throw new Error('수신 회원 이메일과 회원 ID 중 하나만 입력하세요.')
+    const requestedUserId = body.userId === undefined ? admin.id : Number(body.userId)
+    if (!Number.isSafeInteger(requestedUserId) || requestedUserId < 1) throw new Error('테스트 회원 ID를 확인하세요.')
+    const user = await prisma.user.findFirst({ where: { ...(recipientEmail ? { email: recipientEmail } : { id: requestedUserId }), deletedAt: null, status: 'active' }, select: { id: true, email: true, phone: true } })
     if (!user) throw new Error('테스트 수신 회원을 찾을 수 없습니다.')
-    const { settings } = await getNotificationConfig()
+    const userId = user.id
+    const { settings, secrets } = await getNotificationConfig()
     const recipient = body.channel === 'email' ? user.email : user.phone || ''
     if (!recipient) throw new Error('테스트 회원의 연락처가 없습니다.')
     if (body.mode === 'live' && !canUseLiveDelivery(settings, recipient, body.channel)) throw new Error('실발송 설정과 테스트 수신자 허용 목록을 확인하세요.')
+    if (body.mode === 'live' && body.channel === 'email') {
+      const missing = configReadiness(settings, secrets).email
+      if (missing.length) throw new Error(`SMTP 설정 필요: ${missing.join(', ')}`)
+    }
     // Alimtalk test uses an existing configured event template; the channel remains a test event to bypass member preferences.
     const sourceRule = body.eventType ? await prisma.notificationRule.findUnique({ where: { eventType: String(body.eventType) } }) : null
     if (body.channel === 'alimtalk' && (!sourceRule?.alimtalkCode || !sourceRule.alimtalkTemplate)) throw new Error('알림톡 템플릿이 설정된 이벤트를 선택하세요.')
