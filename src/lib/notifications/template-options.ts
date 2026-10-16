@@ -2,9 +2,9 @@ export type AligoTemplate = {
   code: string; name: string; content: string; status: string; approval: string
   buttons: { button: Record<string, string>[] } | null
 }
-export const usableAligoTemplate = (template: AligoTemplate) => template.approval === 'APR' && template.status === 'A'
+export const usableAligoTemplate = (template: AligoTemplate) => template.approval === 'APR'
 export function aligoTemplateLabel(template: AligoTemplate) {
-  if (usableAligoTemplate(template)) return template.name
+  if (template.approval === 'APR' && template.status === 'A') return template.name
   const approval = ({ APR: '승인됨', REG: '등록', REQ: '심사 중', REJ: '반려' } as Record<string, string>)[template.approval] || '승인 확인 필요'
   const status = ({ A: '정상', S: '중단', R: '대기' } as Record<string, string>)[template.status] || '상태 확인 필요'
   return `${template.name} (${approval} · ${status})`

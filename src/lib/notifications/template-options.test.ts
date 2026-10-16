@@ -20,9 +20,18 @@ test('template projection preserves the approved body and converts only sending 
   assert.equal(aligoTemplateLabel(template), '배송 안내')
 })
 
-test('approved but waiting, suspended, unreviewed and rejected templates remain visible with unavailable status', () => {
-  for (const fields of [{ status: 'R', inspStatus: 'APR' }, { status: 'S', inspStatus: 'APR' }, { status: 'A', inspStatus: 'REQ' }, { status: 'R', inspStatus: 'REJ' }]) {
-    const [template] = projectAligoTemplates([{ ...row, ...fields }])
+test('approved templates are selectable in waiting or suspended status while preserving their status labels', () => {
+  for (const status of ['R', 'S']) {
+    const [template] = projectAligoTemplates([{ ...row, status, inspStatus: 'APR' }])
+    assert.equal(usableAligoTemplate(template), true)
+    assert.ok(aligoTemplateLabel(template).includes('승인됨'))
+    assert.ok(aligoTemplateLabel(template).includes(status === 'R' ? '대기' : '중단'))
+  }
+})
+
+test('unreviewed and rejected templates cannot be selected even with a normal usage status', () => {
+  for (const inspStatus of ['REG', 'REQ', 'REJ']) {
+    const [template] = projectAligoTemplates([{ ...row, status: 'A', inspStatus }])
     assert.equal(usableAligoTemplate(template), false)
     assert.ok(aligoTemplateLabel(template).startsWith('배송 안내 ('))
   }
