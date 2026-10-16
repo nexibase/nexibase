@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Mail, MessageSquare, RefreshCw, Save } from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import { Bell, Mail, MessageSquare, RefreshCw, Save } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -10,7 +11,6 @@ import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import type { NotificationSettings, Secrets } from '@/lib/notifications/config'
-import { NotificationNavigation } from './NotificationNavigation'
 
 const channels = { email: '메일', alimtalk: '알림톡', sms: '문자' } as const
 const smtpProviders = {
@@ -34,6 +34,11 @@ type Rule = { eventType: string; label: string; owner: string; emailEnabled: boo
 type Configuration = { settings: NotificationSettings; configuredSecrets: Record<keyof Secrets, boolean>; environment: string; encryptionReady: boolean; missing: Record<keyof typeof channels, string[]>; rules: Rule[] }
 const fieldClass = 'rounded-md border bg-background px-3 py-2 text-sm'
 
+function Navigation({ settings }: { settings?: boolean }) {
+  const t = useTranslations('notifications')
+  return <div className="flex flex-wrap items-center justify-between gap-3 mb-6"><h1 className="text-2xl font-bold flex gap-2 items-center"><Bell className="h-6 w-6" />{settings ? t('settings') : t('history')}</h1>
+    <nav className="flex gap-2"><Button asChild variant={settings ? 'default' : 'outline'}><Link href="/admin/notifications/settings">{t('settings')}</Link></Button><Button asChild variant={settings ? 'outline' : 'default'}><Link href="/admin/notifications">{t('history')}</Link></Button></nav></div>
+}
 function Section({ title, children, action }: { title: string; children: React.ReactNode; action?: React.ReactNode }) {
   return <section className="border rounded-lg p-5 space-y-4"><div className="flex flex-wrap items-center justify-between gap-3"><h2 className="font-semibold text-lg">{title}</h2>{action}</div>{children}</section>
 }
@@ -164,7 +169,7 @@ export function NotificationSettingsAdmin() {
     setBusy(true); setMessage('')
     try {
       const rules = data.rules.map(r => ({ ...r, alimtalkButtons: r.buttonsText.trim() ? JSON.parse(r.buttonsText) : null, variableMapping: r.mappingText.trim() ? JSON.parse(r.mappingText) : {} }))
-      const response = await fetch('/api/admin/notifications/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ scope: 'general', settings: data.settings, secrets, rules }) })
+      const response = await fetch('/api/admin/notifications/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ settings: data.settings, secrets, rules }) })
       const result = await response.json()
       if (!response.ok) throw new Error(result.error || '설정 저장 실패')
       if (!await load()) throw new Error('설정은 저장했지만 다시 불러오지 못했습니다. 새로고침 후 확인하세요.')
@@ -194,13 +199,13 @@ export function NotificationSettingsAdmin() {
       setMessage(`테스트를 등록했습니다. 발송 내역에서 결과를 확인하세요. (${result.eventId})`)
     } catch (error) { setMessage(error instanceof Error ? error.message : '테스트 요청 실패') } finally { setBusy(false) }
   }
-  function textField(key: 'smtpHost' | 'smtpUser' | 'smtpFrom', label: string) {
+  function textField(key: 'smtpHost' | 'smtpUser' | 'smtpFrom' | 'aligoUserId' | 'sender', label: string) {
     return <div className="space-y-2"><Label htmlFor={`notification-${key}`}>{label}</Label><Input id={`notification-${key}`} value={data!.settings[key]} onChange={e => setting(key, e.target.value)} autoComplete="off" /></div>
   }
   function secretField(key: keyof Secrets, label: string) {
     return <div className="space-y-2"><Label htmlFor={`notification-${key}`}>{label}</Label><Input id={`notification-${key}`} type="password" value={secrets[key] || ''} autoComplete="new-password" placeholder={data!.configuredSecrets[key] ? '설정됨 · 변경할 때만 입력' : '미설정'} onChange={e => { setSecrets(s => ({ ...s, [key]: e.target.value })); setDirty(true) }} /></div>
   }
-  return <div className="w-full p-6 space-y-5"><NotificationNavigation page="settings" />
+  return <div className="w-full p-6 space-y-5"><Navigation settings />
     <p className="text-sm text-muted-foreground">사이트 내 알림은 항상 기록합니다. 알림톡과 문자를 함께 켜면 알림톡 최종 실패 시에만 문자를 보냅니다. 외부 발송은 회원의 수신 설정을 따릅니다.</p>
     {data && <div className="sticky top-0 z-20 border rounded-lg bg-background/95 p-3 shadow-sm space-y-2" aria-label="알림 설정 저장 영역"><div className="flex flex-wrap items-center justify-between gap-3"><span className="text-sm text-muted-foreground">{dirty ? '저장하지 않은 변경사항이 있습니다.' : '저장된 설정입니다.'}</span><Button onClick={save} disabled={busy || !dirty}><Save className="h-4 w-4 mr-2" />{busy ? '저장 중…' : '설정 저장'}</Button></div>{message && <div role="status" className="text-sm whitespace-pre-wrap break-words">{message}</div>}</div>}
     {!data && message && <div role="status" className="border rounded-md p-3 text-sm whitespace-pre-wrap break-words">{message}</div>}
@@ -209,7 +214,6 @@ export function NotificationSettingsAdmin() {
       <Section title="발송 채널"><div className="grid gap-4 md:grid-cols-3">{Object.entries(channels).map(([channel, label]) => <div key={channel} className="border rounded-lg p-4 space-y-3">
         <div className="flex items-center justify-between gap-2"><Label htmlFor={`channel-${channel}`}>{label} 보내기</Label><Switch id={`channel-${channel}`} checked={data.settings[`${channel as keyof typeof channels}Enabled`]} onCheckedChange={v => setting(`${channel as keyof typeof channels}Enabled`, v)} /></div>
         <p className="text-xs text-muted-foreground">{data.missing[channel as keyof typeof channels].length ? `설정 필요: ${data.missing[channel as keyof typeof channels].join(', ')}` : '연결 정보 설정됨 · 실제 연결은 테스트로 확인하세요.'}</p>
-        {channel !== 'email' && <Link href="/admin/notifications/settings/aligo" className="text-xs text-primary underline underline-offset-4">문자·알림톡 연결 설정</Link>}
       </div>)}</div></Section>
       <Section title="발송 모드"><div className="flex items-center gap-3"><Switch id="notification-live" checked={data.settings.liveEnabled} onCheckedChange={v => setting('liveEnabled', v)} /><Label htmlFor="notification-live">실제 외부 발송 허용</Label></div>
         <p className="text-sm text-muted-foreground">끄면 메일은 모의 처리하고, 문자·알림톡은 알리고 테스트 모드를 사용합니다. {data.environment === 'development' && 'dev에서는 켜더라도 아래 허용 목록의 수신자에게만 실제로 발송합니다.'}</p>
@@ -225,7 +229,7 @@ export function NotificationSettingsAdmin() {
         {textField('smtpUser', 'SMTP 계정')}{secretField('smtpPass', 'SMTP 비밀번호')}{textField('smtpFrom', '발신 이메일')}
         <div className="flex gap-3 items-center"><Switch id="notification-tls" checked={data.settings.smtpSecure} onCheckedChange={v => setting('smtpSecure', v)} /><Label htmlFor="notification-tls">연결 시 TLS 사용 · 보통 465 포트</Label></div>
       </div><p className="text-xs text-muted-foreground">인증 메일은 일반 알림의 메일 켜기·끄기와 별개로 동작하며, 발송 모드와 dev 허용 목록은 동일하게 적용합니다.</p><SmtpTest data={data} dirty={dirty} busy={busy} onSave={save} /></Section>
-      </div>
+        <Section title="문자·알림톡 · 알리고"><div className="grid sm:grid-cols-2 gap-4">{textField('aligoUserId', '알리고 아이디')}{secretField('aligoKey', '알리고 API 키')}{textField('sender', '등록된 발신번호')}{secretField('senderKey', '카카오 발신프로필 키')}</div><p className="text-xs text-muted-foreground">알리고의 발신번호 등록, API 서버 IP 허용, 카카오채널 연동 및 템플릿 승인이 필요합니다. 비밀값은 빈칸으로 저장하면 기존 값을 유지합니다.</p></Section></div>
       <Section title="이벤트별 발송 설정"><p className="text-sm text-muted-foreground">사이트 내 알림은 필수입니다. 상단 발송 채널에서 켠 채널만 아래에서 변경할 수 있습니다. 채널을 꺼도 이벤트별 설정값은 유지됩니다.</p>
         {data.rules.filter(r => r.eventType !== 'notification_test').map(r => <div key={r.eventType} className="border rounded-lg p-4 space-y-3"><div className="flex flex-wrap gap-4 items-center justify-between"><div><h3 className="font-medium">{r.label}</h3><p className="text-xs text-muted-foreground">{r.eventType}</p></div><div className="flex flex-wrap gap-5">{Object.entries(channels).map(([channel,label]) => <label key={channel} className={`flex gap-2 items-center text-sm ${!data.settings[`${channel as keyof typeof channels}Enabled`] ? 'text-muted-foreground' : ''}`} title={!data.settings[`${channel as keyof typeof channels}Enabled`] ? `상단에서 ${label} 보내기를 켜세요.` : undefined}><Switch aria-label={`${r.label} ${label} 보내기`} disabled={!data.settings[`${channel as keyof typeof channels}Enabled`]} checked={r[`${channel as keyof typeof channels}Enabled`]} onCheckedChange={v => rule(r.eventType, { [`${channel}Enabled`]: v })} />{label} 보내기</label>)}</div></div>
           <details><summary className="text-sm cursor-pointer text-primary">문자·알림톡 템플릿</summary><div className="mt-4 space-y-4">
@@ -269,7 +273,7 @@ export function NotificationHistoryAdmin() {
   }, [page, query])
   useEffect(() => { void load(); const timer = setInterval(load, 15000); return () => clearInterval(timer) }, [load])
   const date = (value: string | null) => value ? new Date(value).toLocaleString('ko-KR') : '—'
-  return <div className="w-full p-6 space-y-5"><NotificationNavigation page="history" />
+  return <div className="w-full p-6 space-y-5"><Navigation />
     <p className="text-sm text-muted-foreground">외부 채널의 접수와 최종 전달 결과를 구분해서 표시합니다. 메일은 SMTP 서버 접수까지 확인합니다. 발송 내역은 자동 삭제하지 않습니다.</p>
     <form className="flex flex-wrap gap-3 items-end" onSubmit={e => { e.preventDefault(); setPage(1); const next = new URLSearchParams(filters).toString(); if (next === query && page === 1) void load(); else setQuery(next) }}>
       <label className="text-sm grid gap-2">회원·연락처·이벤트<Input placeholder="회원 닉네임 또는 표시된 연락처" value={filters.search} onChange={e => setFilters(v => ({ ...v, search: e.target.value }))} /></label>

@@ -1,2 +1,5 @@
-import { AligoSettingsAdmin } from '@/features/notifications/components/AligoSettingsAdmin'
-export default AligoSettingsAdmin
+import { redirect } from 'next/navigation'
+
+export default function AligoSettingsPage() {
+  redirect('/admin/notifications/settings')
+}
