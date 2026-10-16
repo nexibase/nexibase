@@ -10,6 +10,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { aligoTemplateLabel, usableAligoTemplate, type AligoTemplate } from '@/lib/notifications/template-options'
 import { NotificationNavigation } from './NotificationNavigation'
 import { mobileDeliveryDescription } from './MobileDeliveryOptions'
+import { NotificationVariableMapping } from './NotificationVariableMapping'
+import { readVariableMapping } from '@/lib/notifications/template-variables'
 import type { NotificationRuleEditor as Rule } from './notification-admin-types'
 
 const channels = { email: '메일', alimtalk: '알림톡', sms: '문자' } as const
@@ -51,7 +53,7 @@ export function NotificationRulesAdmin() {
       if (!response.ok) throw new Error(result.error || '이벤트 설정을 불러오지 못했습니다.')
       result.rules = result.rules.map((rule: Rule) => ({ ...rule,
         buttonsText: rule.alimtalkButtons ? JSON.stringify(rule.alimtalkButtons, null, 2) : '',
-        mappingText: rule.variableMapping ? JSON.stringify(rule.variableMapping, null, 2) : '' }))
+        variableMapping: readVariableMapping(rule.variableMapping) }))
       setData(result); setDirty(false)
       if (result.canLoadTemplates) void loadTemplates()
       else {
@@ -77,8 +79,7 @@ export function NotificationRulesAdmin() {
     setBusy(true); setMessage('')
     try {
       const rules = data.rules.map(rule => ({ ...rule,
-        alimtalkButtons: rule.buttonsText.trim() ? JSON.parse(rule.buttonsText) : null,
-        variableMapping: rule.mappingText.trim() ? JSON.parse(rule.mappingText) : {} }))
+        alimtalkButtons: rule.buttonsText.trim() ? JSON.parse(rule.buttonsText) : null }))
       const response = await fetch('/api/admin/notifications/rules', {
         method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rules }),
       })
@@ -86,7 +87,7 @@ export function NotificationRulesAdmin() {
       if (!response.ok) throw new Error(result.error || '이벤트 설정 저장 실패')
       if (!await load()) throw new Error('이벤트 설정은 저장했지만 다시 불러오지 못했습니다. 새로고침 후 확인하세요.')
       setMessage('이벤트별 발송 설정을 저장했습니다.')
-    } catch (error) { setMessage(error instanceof SyntaxError ? '버튼 정보와 변수 매핑의 JSON 형식을 확인하세요.' : error instanceof Error ? error.message : '이벤트 설정 저장 실패') }
+    } catch (error) { setMessage(error instanceof SyntaxError ? '알림톡 버튼 정보의 JSON 형식을 확인하세요.' : error instanceof Error ? error.message : '이벤트 설정 저장 실패') }
     finally { setBusy(false) }
   }
   async function sendTest() {
@@ -136,7 +137,7 @@ export function NotificationRulesAdmin() {
                 <label className="block space-y-2 text-sm">문자 본문<Textarea value={r.smsTemplate} onChange={e => rule(r.eventType, { smsTemplate: e.target.value })} rows={4} /></label>
               </section>
             </div>
-            <label className="block space-y-2 text-sm">공통 변수 매핑 · JSON<Textarea value={r.mappingText} onChange={e => rule(r.eventType, { mappingText: e.target.value })} placeholder={'{"고객명": "name", "주문번호": "orderNo"}'} rows={3} /></label>
+            <NotificationVariableMapping eventType={r.eventType} label={r.label} alimtalkTemplate={r.alimtalkTemplate} smsTemplate={r.smsTemplate} buttonsText={r.buttonsText} mapping={r.variableMapping} disabled={busy} onChange={mapping => rule(r.eventType, { variableMapping: mapping })} />
           </div></details></div>)}
       </Section>
       <Section title="테스트 발송"><p className="text-sm text-muted-foreground">선택한 회원의 등록된 연락처를 사용합니다. 테스트는 해당 회원의 수신 설정과 채널 켜기 여부에 관계없이 요청하며, 사이트 내 테스트 알림도 기록합니다.</p>
