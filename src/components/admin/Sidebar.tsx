@@ -9,7 +9,6 @@ import { getVersionStatus, normalizeVersion } from "@/lib/releases/version"
 import {
   LayoutDashboard,
   Bell,
-  Send,
   Users,
   MessageSquare,
   MessageCircleQuestion,
@@ -104,7 +103,6 @@ const coreMenuItems = [
   { id: "users", labelKey: "users", icon: Users, path: "/admin/users" },
   { id: "boards", labelKey: "boards", icon: MessageSquare, path: "/admin/boards" },
   { id: "notification-settings", labelKey: "notificationSettings", icon: Bell, path: "/admin/notifications/settings" },
-  { id: "notification-history", labelKey: "notificationHistory", icon: Send, path: "/admin/notifications" },
   { id: "contents", labelKey: "contents", icon: FileText, path: "/admin/contents" },
   { id: "policies", labelKey: "policies", icon: ScrollText, path: "/admin/policies" },
   { id: "faqs", labelKey: "faqs", icon: MessageCircleQuestion, path: "/admin/faqs" },
@@ -316,6 +314,8 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
 
   // Determine active menu
   const getActiveMenu = () => {
+    if (pathname === '/admin/notifications' || pathname.startsWith('/admin/notifications/')) return 'notification-settings'
+
     // Check group menus first
     for (const group of pluginGroupMenus) {
       const exactChild = group.children.find(item => item.path === pathname)
