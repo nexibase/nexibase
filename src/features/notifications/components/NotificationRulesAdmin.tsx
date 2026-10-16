@@ -119,7 +119,7 @@ export function NotificationRulesAdmin() {
         {data.rules.filter(r => r.eventType !== 'notification_test').map(r => <div key={r.eventType} className="border rounded-lg p-4 space-y-3"><div className="flex flex-wrap gap-4 items-center justify-between"><div><h3 className="font-medium">{r.label}</h3><p className="text-xs text-muted-foreground">{r.eventType}</p></div><div className="flex flex-wrap gap-5">{Object.entries(channels).map(([channel,label]) => <label key={channel} className={`flex gap-2 items-center text-sm ${!data.channels[channel as keyof typeof channels] ? 'text-muted-foreground' : ''}`} title={!data.channels[channel as keyof typeof channels] ? `알림 설정에서 ${label} 보내기를 켜세요.` : undefined}><Switch aria-label={`${r.label} ${label} 보내기`} disabled={!data.channels[channel as keyof typeof channels]} checked={r[`${channel as keyof typeof channels}Enabled`]} onCheckedChange={v => rule(r.eventType, { [`${channel}Enabled`]: v })} />{label} 보내기</label>)}</div></div>
           <p className="text-sm text-muted-foreground" aria-label={`${r.label} 문자·알림톡 발송 방식`}>알림톡·문자: {mobileDeliveryDescription(data.channels.sms && r.smsEnabled, data.channels.alimtalk && r.alimtalkEnabled)}</p>
           <details><summary className="text-sm cursor-pointer text-primary">알림톡·문자 템플릿</summary><div className="mt-4 space-y-4">
-            <p className="text-xs text-muted-foreground">기본 변수: {'#{title}, #{message}, #{link}, #{name}, #{eventType}'}. 주문 이벤트: {'#{orderNo}, #{status}, #{totalAmount}, #{trackingNumber}, #{customerName}'}. 승인된 알림톡 본문의 줄바꿈을 유지하세요.</p>
+            <p className="text-xs text-muted-foreground">기본 변수: {'#{title}, #{message}, #{link}, #{name}, #{siteName}, #{eventType}'}. 주문 이벤트: {'#{orderNo}, #{status}, #{totalAmount}, #{trackingNumber}, #{customerName}'}. 승인된 알림톡 본문의 줄바꿈을 유지하세요.</p>
             <div className="grid items-start gap-4 lg:grid-cols-2">
               <section className="min-w-0 rounded-lg border p-4 space-y-4" aria-label={`${r.label} 알림톡 설정`}>
                 <h4 className="font-medium">알림톡 설정</h4>
@@ -137,9 +137,9 @@ export function NotificationRulesAdmin() {
               </section>
             </div>
             <div className="space-y-2" role="group" aria-label={`${r.label} 공통 변수 매핑`}>
-              <label className="block space-y-2 text-sm">공통 변수 매핑 · JSON<Textarea value={r.mappingText} onChange={e => rule(r.eventType, { mappingText: e.target.value })} placeholder={'{"고객명": "name", "내용": "message"}'} rows={3} disabled={busy} /></label>
-              <p className="text-xs text-muted-foreground">문자·알림톡 본문과 버튼의 변수명을 발송 데이터에 연결합니다. 기본 변수를 그대로 쓰면 {'{}'}로 두세요.</p>
-              <p className="text-xs text-muted-foreground">예: <code>{'{"고객명":"name","내용":"message"}'}</code> → {'#{고객명}'}은 회원 이름/닉네임, {'#{내용}'}은 알림 내용으로 바뀝니다.</p>
+              <label className="block space-y-2 text-sm">공통 변수 매핑 · JSON<Textarea value={r.mappingText} onChange={e => rule(r.eventType, { mappingText: e.target.value })} placeholder={'{"고객명": "name", "회사명": "siteName"}'} rows={3} disabled={busy} /></label>
+              <p className="text-xs text-muted-foreground">문자·알림톡 본문과 버튼의 변수명을 발송 데이터에 연결합니다. siteName은 관리자 설정의 사이트 이름입니다. 기본 변수를 그대로 쓰면 {'{}'}로 두세요.</p>
+              <p className="text-xs text-muted-foreground">예: <code>{'{"고객명":"name","회사명":"siteName"}'}</code> → {'#{고객명}'}은 회원 이름/닉네임, {'#{회사명}'}은 사이트 이름으로 바뀝니다.</p>
             </div>
           </div></details></div>)}
       </Section>

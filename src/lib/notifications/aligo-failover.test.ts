@@ -43,18 +43,20 @@ function matches(row: Row, where: Row): boolean {
 }
 function fixture({ sms = true, alimtalk = true, testChannel }: { sms?: boolean; alimtalk?: boolean; testChannel?: 'alimtalk' | 'sms' } = {}) {
   const state = {
+    siteName: '테스트 사이트' as string | null,
     settings: { ...DEFAULT_SETTINGS, emailEnabled: false, smsEnabled: sms, alimtalkEnabled: alimtalk, liveEnabled: true,
       testRecipients: ['01000000000'], aligoUserId: 'test-account', sender: '0212345678' },
     secrets: { aligoKey: 'test-private', senderKey: 'test-profile' },
     user: { id: 1, email: 'member@example.invalid', phone: '01000000000', nickname: '회원', name: '회원', status: 'active', role: 'user', deletedAt: null },
     rule: { eventType: 'direct_message', label: '쪽지', owner: 'core', preferenceType: 'direct_message', emailEnabled: false, smsEnabled: true, alimtalkEnabled: true,
-      smsTemplate: '#{title} #{message}', alimtalkTemplate: '#{message}', alimtalkCode: 'TPL_TEST', alimtalkButtons: null, variableMapping: {} },
+      smsTemplate: '#{title} #{message}', alimtalkTemplate: '#{message}', alimtalkCode: 'TPL_TEST', alimtalkButtons: null as Record<string, unknown> | null, variableMapping: {} },
     pref: { mobilePreferences: { direct_message: { sms: true, alimtalk: true } } },
     jobs: [] as Row[], events: [] as Row[], notes: [] as Row[], requests: [] as { channel: string; params: Record<string, string> }[], queries: [] as string[],
     outcome: 'accepted' as ProviderResult['status'], query: (_channel: string): ProviderResult | null => null,
   }
   const getConfig = async () => ({ settings: structuredClone(state.settings), secrets: state.secrets, updatedAt: undefined })
   const prisma: Row = {
+    setting: { findUnique: async ({ where }: Row) => { assert.equal(where.key, 'site_name'); return state.siteName === null ? null : { value: state.siteName } } },
     user: { findUnique: async () => structuredClone(state.user) },
     notificationPreference: { findUnique: async () => structuredClone(state.pref) },
     notificationRule: { upsert: async () => structuredClone(state.rule), findUnique: async () => structuredClone(state.rule) },
@@ -98,8 +100,8 @@ function fixture({ sms = true, alimtalk = true, testChannel }: { sms?: boolean; 
       return Response.json(channel === 'alimtalk' ? { code: 0, info: { mid: 200, scnt: 1, fcnt: 0 } } : { result_code: 1, msg_id: 300, success_cnt: 1, error_cnt: 0 })
     })
   }
-  return { state, enqueue: () => service.emitNotification({ userId: 1, type: testChannel ? 'notification_test' : 'direct_message', eventKey: 'one', title: '제목', message: '본문',
-    ...(testChannel ? { test: { channel: testChannel, live: false }, testRule: state.rule } : {}) }),
+  return { state, enqueue: (overrides: { eventKey?: string; variables?: Record<string, string> } = {}) => service.emitNotification({ userId: 1, type: testChannel ? 'notification_test' : 'direct_message', eventKey: 'one', title: '제목', message: '본문',
+    ...(testChannel ? { test: { channel: testChannel, live: false }, testRule: state.rule } : {}), ...overrides }),
     run: () => worker.runNotificationWorkerOnce({ getConfig, send, query: async (channel: string) => { state.queries.push(channel); return state.query(channel) } }),
     job: (channel: string) => state.jobs.find(j => j.channel === channel)!,
     expirePoll: () => { for (const job of state.jobs) { job.lastCheckedAt = new Date(0); job.nextAttemptAt = new Date(0) } },
@@ -185,4 +187,39 @@ test('unresolved provider fallback expires to attention-required without resendi
   const f = fixture(); await f.enqueue(); f.state.query = () => ({ status: 'failed' }); await f.run()
   f.job('alimtalk').acceptedAt = new Date(Date.now() - 25 * 60 * 60000)
   await f.run(); assert.equal(f.job('sms').status, 'unknown'); assert.equal(f.state.requests.length, 1)
+})
+
+test('siteName resolves from administrator settings in Alimtalk, SMS, buttons and provider fallback, including JSON escaping', async () => {
+  const f = fixture()
+  f.state.siteName = '  넥시 "테스트" 사이트  '
+  f.state.rule.variableMapping = { 회사명: 'siteName' }
+  f.state.rule.smsTemplate = '#{회사명} 문자 · #{siteName}'
+  f.state.rule.alimtalkTemplate = '#{회사명} 알림톡 · #{siteName}'
+  f.state.rule.alimtalkButtons = { button: [{ name: '#{회사명} 바로가기', linkType: 'WL', linkMo: 'https://example.invalid' }] }
+  await f.enqueue({ variables: { siteName: 'caller override must not replace administrator setting' } })
+  const sms = decrypt<DeliveryPayload>(f.job('sms').payloadEncrypted)
+  const alimtalk = decrypt<DeliveryPayload>(f.job('alimtalk').payloadEncrypted)
+  assert.equal(sms.text, '넥시 "테스트" 사이트 문자 · 넥시 "테스트" 사이트')
+  assert.equal(alimtalk.text, '넥시 "테스트" 사이트 알림톡 · 넥시 "테스트" 사이트')
+  assert.deepEqual(alimtalk.buttons, { button: [{ name: '넥시 "테스트" 사이트 바로가기', linkType: 'WL', linkMo: 'https://example.invalid' }] })
+  assert.equal(alimtalk.aligoFailoverSms?.text, sms.text)
+  await f.run()
+  assert.equal(f.state.requests[0].params.message_1, alimtalk.text)
+  assert.equal(f.state.requests[0].params.fmessage_1, sms.text)
+})
+test('new notifications read updated site names while queued content keeps its original snapshot', async () => {
+  const f = fixture({ sms: false })
+  f.state.rule.alimtalkTemplate = '#{siteName}'
+  f.state.siteName = '기존 사이트'; await f.enqueue()
+  const old = f.job('alimtalk')
+  f.state.siteName = '변경된 사이트'; await f.enqueue({ eventKey: 'after-site-settings-change' })
+  const latest = f.state.jobs.find(job => job.channel === 'alimtalk' && job.eventId !== old.eventId)!
+  assert.equal(decrypt<DeliveryPayload>(old.payloadEncrypted).text, '기존 사이트')
+  assert.equal(decrypt<DeliveryPayload>(latest.payloadEncrypted).text, '변경된 사이트')
+})
+test('missing or blank site names use the same NexiBase default as site settings', async () => {
+  for (const siteName of [null, '   ']) {
+    const f = fixture({ sms: false }); f.state.siteName = siteName; f.state.rule.alimtalkTemplate = '#{siteName}'
+    await f.enqueue(); assert.equal(decrypt<DeliveryPayload>(f.job('alimtalk').payloadEncrypted).text, 'NexiBase')
+  }
 })

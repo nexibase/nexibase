@@ -62,8 +62,9 @@ export async function emitNotification(input: EmitNotificationInput, transaction
     const rule = input.test && input.testRule ? { ...registeredRule, ...input.testRule } : registeredRule
     const pref = await db.notificationPreference.findUnique({ where: { userId: input.userId } })
     const url = input.link ? new URL(input.link, process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').href : ''
+    const site = await db.setting.findUnique({ where: { key: 'site_name' }, select: { value: true } })
     const variables = { title: input.title, message: input.message, link: url, name: user.name || user.nickname,
-      eventType: input.type, ...input.variables }
+      eventType: input.type, ...input.variables, siteName: site?.value.trim() || 'NexiBase' }
     const mapping = rule.variableMapping as Record<string, string> | null
     if (mapping) for (const [name, source] of Object.entries(mapping)) {
       if (Object.prototype.hasOwnProperty.call(variables, source)) variables[name as keyof typeof variables] = variables[source as keyof typeof variables]
