@@ -11,6 +11,7 @@ import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import type { NotificationSettings, Secrets } from '@/lib/notifications/config'
+import { NotificationSecretField } from './NotificationSecretField'
 
 const channels = { email: '메일', alimtalk: '알림톡', sms: '문자' } as const
 const smtpProviders = {
@@ -31,7 +32,7 @@ type SmtpPortSelection = `${typeof smtpPorts[number]}` | 'custom'
 const smtpPortSelectionFor = (port: number): SmtpPortSelection => smtpPorts.some(value => value === port) ? String(port) as SmtpPortSelection : 'custom'
 const statuses: Record<string, string> = { pending: '발송 대기', waiting: '알림톡 실패 시 발송', processing: '요청 중', accepted: '접수 완료 · 결과 대기', delivered: '전달 완료', failed: '실패', unknown: '결과 확인 필요', skipped: '발송 안 함', tested: '테스트 처리' }
 type Rule = { eventType: string; label: string; owner: string; emailEnabled: boolean; smsEnabled: boolean; alimtalkEnabled: boolean; smsTemplate: string; alimtalkCode: string; alimtalkTemplate: string; alimtalkButtons: unknown; variableMapping: unknown; buttonsText: string; mappingText: string }
-type Configuration = { settings: NotificationSettings; configuredSecrets: Record<keyof Secrets, boolean>; environment: string; encryptionReady: boolean; missing: Record<keyof typeof channels, string[]>; rules: Rule[] }
+type Configuration = { updatedAt?: string; settings: NotificationSettings; configuredSecrets: Record<keyof Secrets, boolean>; environment: string; encryptionReady: boolean; missing: Record<keyof typeof channels, string[]>; rules: Rule[] }
 const fieldClass = 'rounded-md border bg-background px-3 py-2 text-sm'
 
 function Navigation({ settings }: { settings?: boolean }) {
@@ -203,7 +204,8 @@ export function NotificationSettingsAdmin() {
     return <div className="space-y-2"><Label htmlFor={`notification-${key}`}>{label}</Label><Input id={`notification-${key}`} value={data!.settings[key]} onChange={e => setting(key, e.target.value)} autoComplete="off" /></div>
   }
   function secretField(key: keyof Secrets, label: string) {
-    return <div className="space-y-2"><Label htmlFor={`notification-${key}`}>{label}</Label><Input id={`notification-${key}`} type="password" value={secrets[key] || ''} autoComplete="new-password" placeholder={data!.configuredSecrets[key] ? '설정됨 · 변경할 때만 입력' : '미설정'} onChange={e => { setSecrets(s => ({ ...s, [key]: e.target.value })); setDirty(true) }} /></div>
+    return <NotificationSecretField key={`${key}:${data!.updatedAt || ''}`} name={key} label={label} value={secrets[key] || ''} configured={data!.configuredSecrets[key]} disabled={busy}
+      onChange={value => { setSecrets(previous => ({ ...previous, [key]: value })); setDirty(true) }} />
   }
   return <div className="w-full p-6 space-y-5"><Navigation settings />
     <p className="text-sm text-muted-foreground">사이트 내 알림은 항상 기록합니다. 알림톡과 문자를 함께 켜면 알림톡 최종 실패 시에만 문자를 보냅니다. 외부 발송은 회원의 수신 설정을 따릅니다.</p>
