@@ -72,6 +72,7 @@ export async function emitNotification(input: EmitNotificationInput, transaction
       (config.settings[`${channel}Enabled`] && rule[`${channel}Enabled`] &&
         (channel === 'email' ? emailPreference(pref, rule.preferenceType) : mobilePreference(pref, rule.preferenceType, channel))))
     const alimtalkFirst = !input.test && allowed('sms') && allowed('alimtalk')
+    let fallbackSms: DeliveryPayload | undefined
     for (const channel of CHANNELS) {
       const recipient = channel === 'email' ? user.email : normalizePhone(user.phone || '')
       let reason = !allowed(channel) ? '채널 또는 이벤트가 꺼져 있거나 회원이 수신을 선택하지 않았습니다.' : ''
@@ -96,12 +97,19 @@ export async function emitNotification(input: EmitNotificationInput, transaction
             ...(channel === 'alimtalk' ? { templateCode: rule.alimtalkCode,
               ...(rule.alimtalkButtons ? { buttons: JSON.parse(renderTemplate(JSON.stringify(rule.alimtalkButtons), Object.fromEntries(Object.entries(variables).map(([key, value]) => [key, JSON.stringify(value).slice(1, -1)])))) } : {}) } : {}),
           }
-          if (channel === 'sms') payload.text = payload.text.replace(/[\u{1F000}-\u{1FAFF}]/gu, '')
+          if (channel === 'sms') {
+            payload.text = payload.text.replace(/[\u{1F000}-\u{1FAFF}]/gu, '')
+            if (alimtalkFirst) { payload.aligoManaged = true; fallbackSms = payload }
+          }
+          if (channel === 'alimtalk' && fallbackSms) {
+            if (!fallbackSms.text.trim()) throw new Error('대체 문자 본문이 필요합니다.')
+            payload.aligoFailoverSms = { subject: fallbackSms.subject, text: fallbackSms.text }
+          }
         } catch (error) { reason = error instanceof Error ? error.message : '템플릿 오류' }
       }
       await db.notificationDelivery.create({ data: { eventId: id, channel, recipientMasked: maskRecipient(recipient, channel),
         status: reason ? 'skipped' : channel === 'sms' && alimtalkFirst ? 'waiting' : 'pending',
-        reason: reason || (channel === 'sms' && alimtalkFirst ? '알림톡 최종 실패 시 문자 발송 대기' : null),
+        reason: reason || (channel === 'sms' && alimtalkFirst ? '알리고 자동 대체 문자 대기 · 자체 발송하지 않음' : null),
         payloadEncrypted: payload ? encrypt(payload) : null } })
     }
     return notification

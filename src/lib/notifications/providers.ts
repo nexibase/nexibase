@@ -5,10 +5,12 @@ import { normalizePhone, type Channel } from './policy'
 export interface DeliveryPayload {
   to: string; subject: string; text: string; html?: string
   templateCode?: string; buttons?: unknown; test?: boolean; smtpTest?: boolean
+  aligoFailoverSms?: { subject: string; text: string }
+  aligoManaged?: boolean; aligoFallbackId?: string
 }
 export interface ProviderResult {
   status: 'accepted' | 'delivered' | 'failed' | 'unknown' | 'tested' | 'retry'
-  providerId?: string; code?: string; reason?: string
+  providerId?: string; code?: string; reason?: string; fallbackProviderId?: string
 }
 type ApiResult = Record<string, unknown> & { list?: Record<string, unknown>[]; info?: Record<string, unknown> }
 export async function aligoRequest(channel: 'sms' | 'alimtalk', endpoint: string,
@@ -75,7 +77,9 @@ export async function sendViaProvider(channel: Channel, payload: DeliveryPayload
         senderkey: secrets.senderKey || '', tpl_code: payload.templateCode || '', sender: settings.sender,
         receiver_1: normalizePhone(payload.to), subject_1: payload.subject, message_1: payload.text,
         ...(payload.buttons ? { button_1: JSON.stringify(payload.buttons) } : {}),
-        failover: 'N', testMode: live ? 'N' : 'Y',
+        failover: payload.aligoFailoverSms ? 'Y' : 'N',
+        ...(payload.aligoFailoverSms ? { fsubject_1: payload.aligoFailoverSms.subject, fmessage_1: payload.aligoFailoverSms.text } : {}),
+        testMode: live ? 'N' : 'Y',
       }, fetcher)
     const code = Number(channel === 'sms' ? result.result_code : result.code)
     const accepted = channel === 'sms' ? code > 0 : code === 0
@@ -94,11 +98,14 @@ export function parseFinalResult(channel: 'sms' | 'alimtalk', rows: Record<strin
   const row = rows.find(r => normalizePhone(String(channel === 'sms' ? r.receiver : r.phone)) === normalizePhone(recipient))
   if (!row) return null
   const message = String(channel === 'sms' ? row.sms_state || '' : row.rslt_message || '')
-  if (channel === 'alimtalk' && (String(row.msgid).startsWith('Q') || !row.rsltdate || !row.rslt)) return null
-  if (channel === 'alimtalk' && Number(row.smid) > 0) return { status: 'unknown', reason: '알리고 대체문자 처리 내역이 있어 앱의 문자 대체를 중지했습니다. 알리고 내역을 확인하세요.', code: String(row.rslt) }
-  if (/^(발송완료|전송완료|수신완료|성공|정상|정상처리|정상 처리|전송성공|발송성공)$/.test(message.trim()) || /^정상적으로 전송되었/.test(message)) return { status: 'delivered', reason: message, code: String(row.rslt || '') }
-  if (/실패|오류|거부|거절|불가|없음|일치하지|불일치|차단|만료|미가입|미사용|미설치|미등록|부족|초과|잘못|제한|취소/.test(message)) return { status: 'failed', reason: message, code: String(row.rslt || '') }
-  if (channel === 'alimtalk') return { status: 'unknown', code: String(row.rslt), reason: `확인되지 않은 최종 결과: ${message || String(row.rslt)}. 자동 문자 대체를 중지했습니다.` }
+  const fallbackProviderId = channel === 'alimtalk' && /^[1-9]\d{0,19}$/.test(String(row.smid)) ? String(row.smid) : undefined
+  const fallback = fallbackProviderId ? { fallbackProviderId } : {}
+  if (channel === 'alimtalk' && (String(row.msgid).startsWith('Q') || !row.rsltdate || !row.rslt)) {
+    return fallbackProviderId ? { status: 'unknown', ...fallback, reason: '알리고 대체 문자 발송 확인. 알림톡 최종 결과는 확인이 필요합니다.' } : null
+  }
+  if (/^(발송완료|전송완료|수신완료|성공|정상|정상처리|정상 처리|전송성공|발송성공)$/.test(message.trim()) || /^정상적으로 전송되었/.test(message)) return { status: 'delivered', reason: message, code: String(row.rslt || ''), ...fallback }
+  if (/실패|오류|거부|거절|불가|없음|일치하지|불일치|차단|만료|미가입|미사용|미설치|미등록|부족|초과|잘못|제한|취소/.test(message)) return { status: 'failed', reason: message, code: String(row.rslt || ''), ...fallback }
+  if (channel === 'alimtalk') return { status: 'unknown', code: String(row.rslt), reason: `확인되지 않은 최종 결과: ${message || String(row.rslt)}. 자동 재발송하지 않습니다.`, ...fallback }
   // Unknown provider codes remain pending; never treat status=3 as delivery success.
   return null
 }

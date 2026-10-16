@@ -111,8 +111,8 @@ export function NotificationRulesAdmin() {
     {!data ? <p>설정을 불러오는 중입니다.</p> : <>
       <Section title="이벤트별 발송 설정"><p className="text-sm text-muted-foreground">사이트 내 알림은 필수입니다. 알림 설정에서 켠 채널만 아래에서 변경할 수 있습니다. 채널을 꺼도 이벤트별 설정값은 유지됩니다.</p>
         <div className="rounded-md bg-muted p-3 space-y-2 text-sm">
-          <p>문자만 보내려면 문자만 켜고, 알림톡만 보내려면 알림톡만 켜세요. 둘 다 켜면 알림톡을 먼저 보내고 최종 실패한 경우에만 문자로 대체합니다. 알림톡이 성공하면 문자를 보내지 않습니다.</p>
-          <p className="text-xs text-muted-foreground">알림 설정과 이 페이지에서 모두 켠 채널만 자동 발송에 사용합니다. 회원의 수신 동의·연락처와 발송 모드도 적용됩니다. 알림톡에는 승인된 템플릿, 대체 문자에는 문자 본문이 필요하며, 설정·템플릿 문제로 알림톡 발송이 생략되면 문자로 전환하지 않습니다.</p>
+          <p>문자만 보내려면 문자만 켜고, 알림톡만 보내려면 알림톡만 켜세요. 둘 다 켜면 알림톡을 먼저 보내고 최종 실패한 경우에만 알리고가 문자로 자동 대체 발송합니다. 알림톡이 성공하면 문자를 보내지 않습니다.</p>
+          <p className="text-xs text-muted-foreground">알림 설정과 이 페이지에서 모두 켠 채널만 자동 발송에 사용합니다. 회원의 수신 동의·연락처와 발송 모드도 적용됩니다. 알림톡에는 승인된 템플릿, 대체 문자에는 문자 본문이 필요하며, 알리고 접수 전에 설정·템플릿 문제로 알림톡 발송이 생략되면 대체 문자도 보내지 않습니다.</p>
         </div>
         <div className="flex flex-wrap items-center justify-between gap-3"><p className="text-xs text-muted-foreground">저장된 알리고 계정의 승인된 템플릿을 이름으로 선택합니다.</p><Button type="button" variant="outline" disabled={busy || templatesLoading} onClick={() => void loadTemplates()}><RefreshCw className={`h-4 w-4 mr-2 ${templatesLoading ? 'animate-spin' : ''}`} />{templatesLoading ? '템플릿 불러오는 중…' : '템플릿 목록 새로고침'}</Button></div>
         {templatesError && <p role="status" className="text-sm text-destructive">{templatesError}</p>}

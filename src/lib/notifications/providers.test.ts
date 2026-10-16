@@ -31,7 +31,7 @@ test('SMS uses SMS credentials and the documented non-billing test flag', async 
   assert.equal((await sendViaProvider('sms', payload, settings, secrets, false, fetcher)).status, 'tested')
   assert.ok(called)
 })
-test('Alimtalk uses its own credentials, testMode and disables provider-side fallback', async () => {
+test('Alimtalk-only uses its own credentials, testMode and failover=N', async () => {
   const fetcher: typeof fetch = async (input, init) => {
     assert.equal(String(input), 'https://kakaoapi.aligo.in/akv10/alimtalk/send/')
     const body = init!.body as URLSearchParams
@@ -61,5 +61,18 @@ test('final results are matched to the recipient and not inferred from Kakao num
   assert.equal(parseFinalResult('sms', [{ receiver: '01099999999', sms_state: '발송완료' }], payload.to), null)
   assert.equal(parseFinalResult('alimtalk', [{ phone: payload.to, msgid: '123', rslt: 'provider-code', rsltdate: '2026-10-15', rslt_message: '정상' }], payload.to)?.status, 'delivered')
   assert.equal(parseFinalResult('alimtalk', [{ phone: payload.to, msgid: '123', rslt: 'U', rsltdate: '2026-10-15', rslt_message: '미가입 사용자' }], payload.to)?.status, 'failed')
-  assert.equal(parseFinalResult('alimtalk', [{ phone: payload.to, msgid: '123', rslt: 'U', rsltdate: '2026-10-15', rslt_message: '템플릿 불일치', smid: 1234 }], payload.to)?.status, 'unknown')
+  assert.deepEqual(parseFinalResult('alimtalk', [{ phone: payload.to, msgid: '123', rslt: 'U', rsltdate: '2026-10-15', rslt_message: '템플릿 불일치', smid: 1234 }], payload.to), { status: 'failed', code: 'U', reason: '템플릿 불일치', fallbackProviderId: '1234' })
+})
+
+test('provider-owned failover sends the SMS content in the Alimtalk request and keeps test mode non-billing', async () => {
+  for (const live of [false, true]) {
+    const result = await sendViaProvider('alimtalk', { ...payload, aligoFailoverSms: { subject: '문자 제목', text: '대체 문자 본문' } }, settings, secrets, live, async (input, init) => {
+      assert.equal(String(input), 'https://kakaoapi.aligo.in/akv10/alimtalk/send/')
+      const body = init!.body as URLSearchParams
+      assert.equal(body.get('failover'), 'Y'); assert.equal(body.get('fsubject_1'), '문자 제목'); assert.equal(body.get('fmessage_1'), '대체 문자 본문')
+      assert.equal(body.get('testMode'), live ? 'N' : 'Y')
+      return Response.json({ code: 0, info: { mid: 202, scnt: 1, fcnt: 0 } })
+    })
+    assert.equal(result.status, live ? 'accepted' : 'tested')
+  }
 })

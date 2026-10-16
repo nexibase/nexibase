@@ -31,7 +31,7 @@ const smtpPortDescriptions = {
 } as const
 type SmtpPortSelection = `${typeof smtpPorts[number]}` | 'custom'
 const smtpPortSelectionFor = (port: number): SmtpPortSelection => smtpPorts.some(value => value === port) ? String(port) as SmtpPortSelection : 'custom'
-const statuses: Record<string, string> = { pending: '발송 대기', waiting: '알림톡 실패 시 발송', processing: '요청 중', accepted: '접수 완료 · 결과 대기', delivered: '전달 완료', failed: '실패', unknown: '결과 확인 필요', skipped: '발송 안 함', tested: '테스트 처리' }
+const statuses: Record<string, string> = { pending: '발송 대기', waiting: '대체 문자 대기', processing: '요청 중', accepted: '접수 완료 · 결과 대기', delivered: '전달 완료', failed: '실패', unknown: '결과 확인 필요', skipped: '발송 안 함', tested: '테스트 처리' }
 type Configuration = { updatedAt?: string; settings: NotificationSettings; configuredSecrets: Record<keyof Secrets, boolean>; environment: string; encryptionReady: boolean; missing: Record<keyof typeof channels, string[]> }
 const fieldClass = 'rounded-md border bg-background px-3 py-2 text-sm'
 
