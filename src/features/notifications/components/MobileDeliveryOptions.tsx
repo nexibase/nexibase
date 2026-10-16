@@ -1,9 +1,9 @@
 import { Button } from '@/components/ui/button'
 
 const options = [
-  { label: '문자만 보내기', sms: true, alimtalk: false, switches: '문자 켜기 · 알림톡 끄기', description: '알림톡을 사용하지 않고 문자로 보냅니다.' },
-  { label: '알림톡만 보내기', sms: false, alimtalk: true, switches: '문자 끄기 · 알림톡 켜기', description: '알림톡으로 보냅니다. 알림톡이 실패해도 문자를 보내지 않습니다.' },
-  { label: '알림톡 후 문자 보내기', sms: true, alimtalk: true, switches: '문자 켜기 · 알림톡 켜기', description: '알림톡을 먼저 보내고, 최종 실패한 경우에만 문자로 대체합니다. 알림톡이 성공하면 문자를 보내지 않습니다.' },
+  { label: '문자만 보내기', sms: true, alimtalk: false, switches: '알림톡 끄기, 문자 켜기', description: '알림톡을 사용하지 않고 문자로 보냅니다.' },
+  { label: '알림톡만 보내기', sms: false, alimtalk: true, switches: '알림톡 켜기, 문자 끄기', description: '알림톡으로 보냅니다. 알림톡이 실패해도 문자를 보내지 않습니다.' },
+  { label: '알림톡 후 문자 보내기', sms: true, alimtalk: true, switches: '알림톡 켜기, 문자 켜기', description: '알림톡을 먼저 보내고, 최종 실패한 경우에만 문자로 대체합니다. 알림톡이 성공하면 문자를 보내지 않습니다.' },
 ] as const
 
 export function mobileDeliveryDescription(sms: boolean, alimtalk: boolean) {

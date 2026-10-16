@@ -206,7 +206,12 @@ export function NotificationSettingsAdmin() {
         {textField('smtpUser', 'SMTP 계정')}{secretField('smtpPass', 'SMTP 비밀번호')}{textField('smtpFrom', '발신 이메일')}
         <div className="flex gap-3 items-center"><Switch id="notification-tls" checked={data.settings.smtpSecure} onCheckedChange={v => setting('smtpSecure', v)} /><Label htmlFor="notification-tls">연결 시 TLS 사용 · 보통 465 포트</Label></div>
       </div><p className="text-xs text-muted-foreground">인증 메일은 일반 알림의 메일 켜기·끄기와 별개로 동작하며, 발송 모드와 dev 허용 목록은 동일하게 적용합니다.</p><SmtpTest data={data} dirty={dirty} busy={busy} onSave={save} /></Section>
-        <Section title="문자·알림톡 · 알리고"><div className="grid sm:grid-cols-2 gap-4">{textField('aligoUserId', '알리고 아이디')}{secretField('aligoKey', '기존 API Key')}{textField('sender', '등록된 발신번호')}{secretField('senderKey', 'Senderkey')}</div><p className="text-xs text-muted-foreground">알리고의 발신번호 등록, API 서버 IP 허용, 카카오채널 연동 및 템플릿 승인이 필요합니다. 비밀값은 빈칸으로 저장하면 기존 값을 유지합니다.</p><AligoConnectionCheck dirty={dirty} busy={busy} onSave={save} /></Section></div>
+        <Section title="문자·알림톡 · 알리고">
+          <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm">
+            <a href="https://smartsms.aligo.in/" target="_blank" rel="noopener noreferrer" className="text-primary underline underline-offset-4">알리고 바로가기<span className="sr-only"> (새 창)</span></a>
+            <a href="https://smartsms.aligo.in/shop/kakaoapispec.html" target="_blank" rel="noopener noreferrer" className="text-primary underline underline-offset-4">알림톡 API 매뉴얼<span className="sr-only"> (새 창)</span></a>
+          </div>
+          <div className="grid sm:grid-cols-2 gap-4">{textField('aligoUserId', '알리고 아이디')}{secretField('aligoKey', '기존 API Key')}{textField('sender', '등록된 발신번호')}{secretField('senderKey', 'Senderkey')}</div><p className="text-xs text-muted-foreground">알리고의 발신번호 등록, API 서버 IP 허용, 카카오채널 연동 및 템플릿 승인이 필요합니다. 비밀값은 빈칸으로 저장하면 기존 값을 유지합니다.</p><AligoConnectionCheck dirty={dirty} busy={busy} onSave={save} /></Section></div>
       <Section title="이벤트별 발송 설정"><p className="text-sm text-muted-foreground">이벤트별 채널 사용 여부와 템플릿 설정, 테스트 발송은 별도 페이지에서 관리합니다.</p><Button asChild variant="outline"><Link href="/admin/notifications/settings/events">이벤트별 발송 설정 열기</Link></Button></Section>
     </>}
   </div>
