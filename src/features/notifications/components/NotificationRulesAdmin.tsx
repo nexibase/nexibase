@@ -9,6 +9,7 @@ import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { aligoTemplateLabel, usableAligoTemplate, type AligoTemplate } from '@/lib/notifications/template-options'
 import { NotificationNavigation } from './NotificationNavigation'
+import { mobileDeliveryDescription } from './MobileDeliveryOptions'
 import type { NotificationRuleEditor as Rule } from './notification-admin-types'
 
 const channels = { email: '메일', alimtalk: '알림톡', sms: '문자' } as const
@@ -109,9 +110,14 @@ export function NotificationRulesAdmin() {
     {!data && message && <div role="status" className="text-sm text-destructive">{message}</div>}
     {!data ? <p>설정을 불러오는 중입니다.</p> : <>
       <Section title="이벤트별 발송 설정"><p className="text-sm text-muted-foreground">사이트 내 알림은 필수입니다. 알림 설정에서 켠 채널만 아래에서 변경할 수 있습니다. 채널을 꺼도 이벤트별 설정값은 유지됩니다.</p>
+        <div className="rounded-md bg-muted p-3 space-y-2 text-sm">
+          <p>문자만 보내려면 문자만 켜고, 알림톡만 보내려면 알림톡만 켜세요. 둘 다 켜면 알림톡을 먼저 보내고 최종 실패한 경우에만 문자로 대체합니다. 알림톡이 성공하면 문자를 보내지 않습니다.</p>
+          <p className="text-xs text-muted-foreground">알림 설정과 이 페이지에서 모두 켠 채널만 자동 발송에 사용합니다. 회원의 수신 동의·연락처와 발송 모드도 적용됩니다. 알림톡에는 승인된 템플릿, 대체 문자에는 문자 본문이 필요하며, 설정·템플릿 문제로 알림톡 발송이 생략되면 문자로 전환하지 않습니다.</p>
+        </div>
         <div className="flex flex-wrap items-center justify-between gap-3"><p className="text-xs text-muted-foreground">저장된 알리고 계정의 승인된 템플릿을 이름으로 선택합니다.</p><Button type="button" variant="outline" disabled={busy || templatesLoading} onClick={() => void loadTemplates()}><RefreshCw className={`h-4 w-4 mr-2 ${templatesLoading ? 'animate-spin' : ''}`} />{templatesLoading ? '템플릿 불러오는 중…' : '템플릿 목록 새로고침'}</Button></div>
         {templatesError && <p role="status" className="text-sm text-destructive">{templatesError}</p>}
         {data.rules.filter(r => r.eventType !== 'notification_test').map(r => <div key={r.eventType} className="border rounded-lg p-4 space-y-3"><div className="flex flex-wrap gap-4 items-center justify-between"><div><h3 className="font-medium">{r.label}</h3><p className="text-xs text-muted-foreground">{r.eventType}</p></div><div className="flex flex-wrap gap-5">{Object.entries(channels).map(([channel,label]) => <label key={channel} className={`flex gap-2 items-center text-sm ${!data.channels[channel as keyof typeof channels] ? 'text-muted-foreground' : ''}`} title={!data.channels[channel as keyof typeof channels] ? `알림 설정에서 ${label} 보내기를 켜세요.` : undefined}><Switch aria-label={`${r.label} ${label} 보내기`} disabled={!data.channels[channel as keyof typeof channels]} checked={r[`${channel as keyof typeof channels}Enabled`]} onCheckedChange={v => rule(r.eventType, { [`${channel}Enabled`]: v })} />{label} 보내기</label>)}</div></div>
+          <p className="text-sm text-muted-foreground" aria-label={`${r.label} 문자·알림톡 발송 방식`}>문자·알림톡: {mobileDeliveryDescription(data.channels.sms && r.smsEnabled, data.channels.alimtalk && r.alimtalkEnabled)}</p>
           <details><summary className="text-sm cursor-pointer text-primary">문자·알림톡 템플릿</summary><div className="mt-4 space-y-4">
             <p className="text-xs text-muted-foreground">기본 변수: {'#{title}, #{message}, #{link}, #{name}, #{eventType}'}. 주문 이벤트: {'#{orderNo}, #{status}, #{totalAmount}, #{trackingNumber}, #{customerName}'}. 승인된 알림톡 본문의 줄바꿈을 유지하세요.</p>
             <div className="grid lg:grid-cols-2 gap-4"><label className="space-y-2 text-sm">문자 본문<Textarea value={r.smsTemplate} onChange={e => rule(r.eventType, { smsTemplate: e.target.value })} rows={4} /></label>
@@ -130,7 +136,7 @@ export function NotificationRulesAdmin() {
           <label className="text-sm grid gap-2">템플릿 이벤트<select className={fieldClass} value={test.eventType} onChange={e => setTest(v => ({ ...v, eventType: e.target.value }))}>{data.rules.filter(r => r.eventType !== 'notification_test').map(r => <option key={r.eventType} value={r.eventType}>{r.label}</option>)}</select></label>
           <label className="text-sm grid gap-2">발송 방식<select className={fieldClass} value={test.mode} onChange={e => setTest(v => ({ ...v, mode: e.target.value }))}><option value="test">테스트 모드 · 실제 발송 없음</option><option value="live">실제 발송 · 과금 발생</option></select></label>
           <Button onClick={sendTest} disabled={busy || dirty}>테스트 요청</Button>
-        </div><p className="text-xs text-muted-foreground">테스트 모드 접수는 실제 수신 성공을 의미하지 않습니다. 이벤트 설정을 변경했다면 상단에서 먼저 저장하세요. 발송 결과는 발송 내역에서 확인할 수 있습니다.</p>
+        </div><p className="text-xs text-muted-foreground">테스트 발송은 선택한 채널 1개만 확인합니다. 알림톡 실패 후 문자 전환은 자동 발송에 적용됩니다. 테스트 모드 접수는 실제 수신 성공을 의미하지 않습니다. 이벤트 설정을 변경했다면 상단에서 먼저 저장하세요. 발송 결과는 발송 내역에서 확인할 수 있습니다.</p>
       </Section>
     </>}
   </div>

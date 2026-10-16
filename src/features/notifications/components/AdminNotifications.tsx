@@ -12,6 +12,7 @@ import type { NotificationSettings, Secrets } from '@/lib/notifications/config'
 import { NotificationSecretField } from './NotificationSecretField'
 import { AligoConnectionCheck } from './AligoConnectionCheck'
 import { NotificationNavigation } from './NotificationNavigation'
+import { MobileDeliveryOptions } from './MobileDeliveryOptions'
 
 const channels = { email: '메일', alimtalk: '알림톡', sms: '문자' } as const
 const smtpProviders = {
@@ -139,6 +140,11 @@ export function NotificationSettingsAdmin() {
   const setting = <K extends keyof NotificationSettings>(key: K, value: NotificationSettings[K]) => {
     setData(previous => previous ? { ...previous, settings: { ...previous.settings, [key]: value } } : previous); setDirty(true)
   }
+  function selectMobileDelivery(smsEnabled: boolean, alimtalkEnabled: boolean) {
+    if (busy) return
+    setData(previous => previous ? { ...previous, settings: { ...previous.settings, smsEnabled, alimtalkEnabled } } : previous)
+    setDirty(true)
+  }
   function selectSmtpProvider(provider: SmtpProvider) {
     setSmtpProvider(provider)
     if (provider === 'custom') return
@@ -180,7 +186,9 @@ export function NotificationSettingsAdmin() {
     {!data && message && <div role="status" className="border rounded-md p-3 text-sm whitespace-pre-wrap break-words">{message}</div>}
     {!data ? <p>설정을 불러오는 중입니다.</p> : <>
       {!data.encryptionReady && <p className="text-destructive">서버 알림 암호화 키 설정이 필요합니다. 외부 발송 정보를 저장할 수 없습니다.</p>}
-      <Section title="발송 채널"><div className="grid gap-4 md:grid-cols-3">{Object.entries(channels).map(([channel, label]) => <div key={channel} className="border rounded-lg p-4 space-y-3">
+      <Section title="발송 채널">
+        <MobileDeliveryOptions sms={data.settings.smsEnabled} alimtalk={data.settings.alimtalkEnabled} disabled={busy} onSelect={selectMobileDelivery} />
+        <div className="grid gap-4 md:grid-cols-3">{Object.entries(channels).map(([channel, label]) => <div key={channel} className="border rounded-lg p-4 space-y-3">
         <div className="flex items-center justify-between gap-2"><Label htmlFor={`channel-${channel}`}>{label} 보내기</Label><Switch id={`channel-${channel}`} checked={data.settings[`${channel as keyof typeof channels}Enabled`]} onCheckedChange={v => setting(`${channel as keyof typeof channels}Enabled`, v)} /></div>
         <p className="text-xs text-muted-foreground">{data.missing[channel as keyof typeof channels].length ? `설정 필요: ${data.missing[channel as keyof typeof channels].join(', ')}` : '연결 정보 설정됨 · 실제 연결은 테스트로 확인하세요.'}</p>
       </div>)}</div></Section>
@@ -199,7 +207,8 @@ export function NotificationSettingsAdmin() {
         <div className="flex gap-3 items-center"><Switch id="notification-tls" checked={data.settings.smtpSecure} onCheckedChange={v => setting('smtpSecure', v)} /><Label htmlFor="notification-tls">연결 시 TLS 사용 · 보통 465 포트</Label></div>
       </div><p className="text-xs text-muted-foreground">인증 메일은 일반 알림의 메일 켜기·끄기와 별개로 동작하며, 발송 모드와 dev 허용 목록은 동일하게 적용합니다.</p><SmtpTest data={data} dirty={dirty} busy={busy} onSave={save} /></Section>
         <Section title="문자·알림톡 · 알리고"><div className="grid sm:grid-cols-2 gap-4">{textField('aligoUserId', '알리고 아이디')}{secretField('aligoKey', '기존 API Key')}{textField('sender', '등록된 발신번호')}{secretField('senderKey', 'Senderkey')}</div><p className="text-xs text-muted-foreground">알리고의 발신번호 등록, API 서버 IP 허용, 카카오채널 연동 및 템플릿 승인이 필요합니다. 비밀값은 빈칸으로 저장하면 기존 값을 유지합니다.</p><AligoConnectionCheck dirty={dirty} busy={busy} onSave={save} /></Section></div>
-      <Section title="이벤트별 발송 설정"><p className="text-sm text-muted-foreground">이벤트별 채널 사용 여부와 템플릿 설정, 테스트 발송은 별도 페이지에서 관리합니다.</p><Button asChild variant="outline"><Link href="/admin/notifications/settings/events">이벤트별 발송 설정 열기</Link></Button></Section>    </>}
+      <Section title="이벤트별 발송 설정"><p className="text-sm text-muted-foreground">이벤트별 채널 사용 여부와 템플릿 설정, 테스트 발송은 별도 페이지에서 관리합니다.</p><Button asChild variant="outline"><Link href="/admin/notifications/settings/events">이벤트별 발송 설정 열기</Link></Button></Section>
+    </>}
   </div>
 }
 
