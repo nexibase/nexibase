@@ -120,15 +120,23 @@ export function NotificationRulesAdmin() {
           <p className="text-sm text-muted-foreground" aria-label={`${r.label} 문자·알림톡 발송 방식`}>알림톡·문자: {mobileDeliveryDescription(data.channels.sms && r.smsEnabled, data.channels.alimtalk && r.alimtalkEnabled)}</p>
           <details><summary className="text-sm cursor-pointer text-primary">알림톡·문자 템플릿</summary><div className="mt-4 space-y-4">
             <p className="text-xs text-muted-foreground">기본 변수: {'#{title}, #{message}, #{link}, #{name}, #{eventType}'}. 주문 이벤트: {'#{orderNo}, #{status}, #{totalAmount}, #{trackingNumber}, #{customerName}'}. 승인된 알림톡 본문의 줄바꿈을 유지하세요.</p>
-            <div className="space-y-2"><Label htmlFor={`tpl-${r.eventType}`}>알림톡 템플릿명</Label><select id={`tpl-${r.eventType}`} className={`${fieldClass} w-full h-10`} value={r.alimtalkCode} disabled={busy || templatesLoading || !templates.length} onChange={event => selectTemplate(r.eventType, event.target.value)}>
+            <div className="grid items-start gap-4 lg:grid-cols-2">
+              <section className="min-w-0 rounded-lg border p-4 space-y-4" aria-label={`${r.label} 알림톡 설정`}>
+                <h4 className="font-medium">알림톡 설정</h4>
+                <div className="space-y-2"><Label htmlFor={`tpl-${r.eventType}`}>알림톡 템플릿명</Label><select id={`tpl-${r.eventType}`} className={`${fieldClass} w-full h-10`} value={r.alimtalkCode} disabled={busy || templatesLoading || !templates.length} onChange={event => selectTemplate(r.eventType, event.target.value)}>
                 <option value="">{templatesLoading ? '템플릿을 불러오는 중입니다.' : '템플릿을 선택하세요'}</option>
                 {r.alimtalkCode && !templates.some(template => template.code === r.alimtalkCode) && <option value={r.alimtalkCode} disabled>현재 저장된 템플릿 ({r.alimtalkCode}) · 목록에서 확인 필요</option>}
                 {templates.map(template => <option key={template.code} value={template.code} disabled={!usableAligoTemplate(template)}>{aligoTemplateLabel(template)}{templates.filter(item => item.name === template.name).length > 1 ? ` · ${template.code}` : ''}</option>)}
               </select><p className="text-xs text-muted-foreground">선택하면 승인된 본문과 버튼 정보를 자동으로 채웁니다. 승인된 템플릿은 대기 상태여도 선택할 수 있습니다. 미승인·반려된 템플릿은 선택할 수 없습니다.</p></div>
-            <div className="grid lg:grid-cols-2 gap-4"><label className="block space-y-2 text-sm">알림톡 본문<Textarea value={r.alimtalkTemplate} onChange={e => rule(r.eventType, { alimtalkTemplate: e.target.value })} rows={4} /></label>
-              <label className="space-y-2 text-sm">문자 본문<Textarea value={r.smsTemplate} onChange={e => rule(r.eventType, { smsTemplate: e.target.value })} rows={4} /></label>
+                <label className="block space-y-2 text-sm">알림톡 본문<Textarea value={r.alimtalkTemplate} onChange={e => rule(r.eventType, { alimtalkTemplate: e.target.value })} rows={4} /></label>
+                <label className="block space-y-2 text-sm">알림톡 버튼 정보 · JSON<Textarea value={r.buttonsText} onChange={e => rule(r.eventType, { buttonsText: e.target.value })} placeholder={'{"button": []}'} rows={3} /></label>
+              </section>
+              <section className="min-w-0 rounded-lg border p-4 space-y-4" aria-label={`${r.label} 문자 설정`}>
+                <h4 className="font-medium">문자 설정</h4>
+                <label className="block space-y-2 text-sm">문자 본문<Textarea value={r.smsTemplate} onChange={e => rule(r.eventType, { smsTemplate: e.target.value })} rows={4} /></label>
+              </section>
             </div>
-            <div className="grid lg:grid-cols-2 gap-4"><label className="space-y-2 text-sm">알림톡 버튼 정보 · JSON<Textarea value={r.buttonsText} onChange={e => rule(r.eventType, { buttonsText: e.target.value })} placeholder={'{"button": []}'} rows={3} /></label><label className="space-y-2 text-sm">변수 매핑 · JSON<Textarea value={r.mappingText} onChange={e => rule(r.eventType, { mappingText: e.target.value })} placeholder={'{"고객명": "name", "주문번호": "orderNo"}'} rows={3} /></label></div>
+            <label className="block space-y-2 text-sm">공통 변수 매핑 · JSON<Textarea value={r.mappingText} onChange={e => rule(r.eventType, { mappingText: e.target.value })} placeholder={'{"고객명": "name", "주문번호": "orderNo"}'} rows={3} /></label>
           </div></details></div>)}
       </Section>
       <Section title="테스트 발송"><p className="text-sm text-muted-foreground">선택한 회원의 등록된 연락처를 사용합니다. 테스트는 해당 회원의 수신 설정과 채널 켜기 여부에 관계없이 요청하며, 사이트 내 테스트 알림도 기록합니다.</p>
