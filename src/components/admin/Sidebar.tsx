@@ -101,10 +101,10 @@ function getIcon(iconName: string): LucideIcon {
 const coreMenuItems = [
   { id: "dashboard", labelKey: "dashboard", icon: LayoutDashboard, path: "/admin" },
   { id: "settings", labelKey: "settings", icon: Settings, path: "/admin/settings" },
-  { id: "notification-settings", labelKey: "notificationSettings", icon: Bell, path: "/admin/notifications/settings" },
-  { id: "notification-history", labelKey: "notificationHistory", icon: Send, path: "/admin/notifications" },
   { id: "users", labelKey: "users", icon: Users, path: "/admin/users" },
   { id: "boards", labelKey: "boards", icon: MessageSquare, path: "/admin/boards" },
+  { id: "notification-settings", labelKey: "notificationSettings", icon: Bell, path: "/admin/notifications/settings" },
+  { id: "notification-history", labelKey: "notificationHistory", icon: Send, path: "/admin/notifications" },
   { id: "contents", labelKey: "contents", icon: FileText, path: "/admin/contents" },
   { id: "policies", labelKey: "policies", icon: ScrollText, path: "/admin/policies" },
   { id: "faqs", labelKey: "faqs", icon: MessageCircleQuestion, path: "/admin/faqs" },
