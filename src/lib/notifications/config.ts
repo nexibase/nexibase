@@ -27,8 +27,8 @@ export async function getNotificationConfig(db: Prisma.TransactionClient = prism
 export function configReadiness(settings: NotificationSettings, secrets: Secrets) {
   return {
     email: [!settings.smtpHost && 'SMTP 호스트', !settings.smtpFrom && '발신 이메일', settings.smtpUser && !secrets.smtpPass && 'SMTP 비밀번호'].filter(Boolean),
-    sms: [!settings.aligoUserId && '알리고 아이디', !secrets.aligoKey && '알리고 API 키', !settings.sender && '등록된 발신번호'].filter(Boolean),
-    alimtalk: [!settings.aligoUserId && '알리고 아이디', !secrets.aligoKey && '알리고 API 키', !settings.sender && '등록된 발신번호', !secrets.senderKey && '카카오 발신프로필 키'].filter(Boolean),
+    sms: [!settings.aligoUserId && '알리고 아이디', !secrets.aligoKey && '기존 API Key', !settings.sender && '등록된 발신번호'].filter(Boolean),
+    alimtalk: [!settings.aligoUserId && '알리고 아이디', !secrets.aligoKey && '기존 API Key', !settings.sender && '등록된 발신번호', !secrets.senderKey && 'Senderkey'].filter(Boolean),
   }
 }
 export async function publicNotificationConfig() {

@@ -35,7 +35,7 @@ export async function checkAligoConnection(settings: NotificationSettings, secre
         secrets.senderKey ? { senderkey: secrets.senderKey } : {}, fetcher)
       if (result.code === undefined || result.code === null || result.code === '' || Number(result.code) !== 0) return { id: 'alimtalk', status: 'error', message: failure('카카오 API 인증 실패', result, secrets) }
       if (!Array.isArray(result.list)) return { id: 'alimtalk', status: 'error', message: '카카오 API 인증은 성공했지만 발신프로필 목록의 응답 형식을 확인할 수 없습니다.' }
-      if (!secrets.senderKey) return { id: 'alimtalk', status: 'warning', message: '카카오 API 인증 성공 · 카카오 발신프로필 키를 입력하고 저장하세요.' }
+      if (!secrets.senderKey) return { id: 'alimtalk', status: 'warning', message: '카카오 API 인증 성공 · Senderkey를 입력하고 저장하세요.' }
       const row = result.list.find(row => row.senderKey === secrets.senderKey)
       if (!row) return { id: 'alimtalk', status: 'error', message: '저장된 발신프로필 키가 이 알리고 계정에 등록되어 있지 않습니다.' }
       if (row.status !== 'A') return { id: 'alimtalk', status: 'error', message: '발신프로필이 정상 상태가 아닙니다. 알리고에서 차단·삭제 여부를 확인하세요.' }
