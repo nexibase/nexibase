@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { RefreshCw, Save } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
@@ -21,6 +22,7 @@ export function NotificationRulesAdmin() {
   const [message, setMessage] = useState('')
   const [busy, setBusy] = useState(false)
   const [dirty, setDirty] = useState(false)
+  const [test, setTest] = useState({ channel: 'email', userId: '', mode: 'test', eventType: 'post_comment' })
   const [templates, setTemplates] = useState<AligoTemplate[]>([])
   const [templatesLoading, setTemplatesLoading] = useState(false)
   const [templatesError, setTemplatesError] = useState('')
@@ -86,9 +88,19 @@ export function NotificationRulesAdmin() {
     } catch (error) { setMessage(error instanceof SyntaxError ? '버튼 정보와 변수 매핑의 JSON 형식을 확인하세요.' : error instanceof Error ? error.message : '이벤트 설정 저장 실패') }
     finally { setBusy(false) }
   }
+  async function sendTest() {
+    if (!data || busy || dirty) return
+    setBusy(true); setMessage('')
+    try {
+      const response = await fetch('/api/admin/notifications/test', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...test, userId: test.userId ? Number(test.userId) : undefined }) })
+      const result = await response.json()
+      if (!response.ok) throw new Error(result.error)
+      setMessage(`테스트를 등록했습니다. 발송 내역에서 결과를 확인하세요. (${result.eventId})`)
+    } catch (error) { setMessage(error instanceof Error ? error.message : '테스트 요청 실패') } finally { setBusy(false) }
+  }
   return <div className="w-full p-6 space-y-5">
     <NotificationNavigation page="events" />
-    <p className="text-sm text-muted-foreground">이벤트별 메일·문자·알림톡 사용 여부와 메시지 템플릿을 관리합니다. 채널 전체 사용 여부와 연결 정보는 알림 설정에서 관리합니다.</p>
+    <p className="text-sm text-muted-foreground">이벤트별 메일·문자·알림톡 사용 여부와 메시지 템플릿을 설정하고 테스트 발송을 요청합니다. 채널 전체 사용 여부와 연결 정보는 알림 설정에서 관리합니다.</p>
     {data && <div className="sticky top-0 z-20 border rounded-lg bg-background/95 p-3 shadow-sm space-y-2" aria-label="이벤트 설정 저장 영역">
       <div className="flex flex-wrap items-center justify-between gap-3"><span className="text-sm text-muted-foreground">{dirty ? '저장하지 않은 변경사항이 있습니다.' : '저장된 설정입니다.'}</span>
         <Button onClick={save} disabled={busy || !dirty} aria-label="이벤트별 발송 설정 저장"><Save className="h-4 w-4 mr-2" />{busy ? '저장 중…' : '설정 저장'}</Button>
@@ -111,6 +123,14 @@ export function NotificationRulesAdmin() {
             <label className="block space-y-2 text-sm">알림톡 본문<Textarea value={r.alimtalkTemplate} onChange={e => rule(r.eventType, { alimtalkTemplate: e.target.value })} rows={4} /></label>
             <div className="grid lg:grid-cols-2 gap-4"><label className="space-y-2 text-sm">알림톡 버튼 정보 · JSON<Textarea value={r.buttonsText} onChange={e => rule(r.eventType, { buttonsText: e.target.value })} placeholder={'{"button": []}'} rows={3} /></label><label className="space-y-2 text-sm">변수 매핑 · JSON<Textarea value={r.mappingText} onChange={e => rule(r.eventType, { mappingText: e.target.value })} placeholder={'{"고객명": "name", "주문번호": "orderNo"}'} rows={3} /></label></div>
           </div></details></div>)}
+      </Section>
+      <Section title="테스트 발송"><p className="text-sm text-muted-foreground">선택한 회원의 등록된 연락처를 사용합니다. 테스트는 해당 회원의 수신 설정과 채널 켜기 여부에 관계없이 요청하며, 사이트 내 테스트 알림도 기록합니다.</p>
+        <div className="flex flex-wrap gap-3 items-end"><label className="text-sm space-y-2">테스트 회원 ID<Input type="number" min={1} placeholder="비워두면 내 계정" value={test.userId} onChange={e => setTest(v => ({ ...v, userId: e.target.value }))} /></label>
+          <label className="text-sm grid gap-2">채널<select className={fieldClass} value={test.channel} onChange={e => setTest(v => ({ ...v, channel: e.target.value }))}>{Object.entries(channels).map(([key,label]) => <option key={key} value={key}>{label}</option>)}</select></label>
+          <label className="text-sm grid gap-2">템플릿 이벤트<select className={fieldClass} value={test.eventType} onChange={e => setTest(v => ({ ...v, eventType: e.target.value }))}>{data.rules.filter(r => r.eventType !== 'notification_test').map(r => <option key={r.eventType} value={r.eventType}>{r.label}</option>)}</select></label>
+          <label className="text-sm grid gap-2">발송 방식<select className={fieldClass} value={test.mode} onChange={e => setTest(v => ({ ...v, mode: e.target.value }))}><option value="test">테스트 모드 · 실제 발송 없음</option><option value="live">실제 발송 · 과금 발생</option></select></label>
+          <Button onClick={sendTest} disabled={busy || dirty}>테스트 요청</Button>
+        </div><p className="text-xs text-muted-foreground">테스트 모드 접수는 실제 수신 성공을 의미하지 않습니다. 이벤트 설정을 변경했다면 상단에서 먼저 저장하세요. 발송 결과는 발송 내역에서 확인할 수 있습니다.</p>
       </Section>
     </>}
   </div>

@@ -7,13 +7,11 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
-import { Textarea } from '@/components/ui/textarea'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import type { NotificationSettings, Secrets } from '@/lib/notifications/config'
 import { NotificationSecretField } from './NotificationSecretField'
 import { AligoConnectionCheck } from './AligoConnectionCheck'
 import { NotificationNavigation } from './NotificationNavigation'
-import type { NotificationRuleEditor as Rule } from './notification-admin-types'
 
 const channels = { email: '메일', alimtalk: '알림톡', sms: '문자' } as const
 const smtpProviders = {
@@ -33,7 +31,7 @@ const smtpPortDescriptions = {
 type SmtpPortSelection = `${typeof smtpPorts[number]}` | 'custom'
 const smtpPortSelectionFor = (port: number): SmtpPortSelection => smtpPorts.some(value => value === port) ? String(port) as SmtpPortSelection : 'custom'
 const statuses: Record<string, string> = { pending: '발송 대기', waiting: '알림톡 실패 시 발송', processing: '요청 중', accepted: '접수 완료 · 결과 대기', delivered: '전달 완료', failed: '실패', unknown: '결과 확인 필요', skipped: '발송 안 함', tested: '테스트 처리' }
-type Configuration = { updatedAt?: string; settings: NotificationSettings; configuredSecrets: Record<keyof Secrets, boolean>; environment: string; encryptionReady: boolean; missing: Record<keyof typeof channels, string[]>; rules: Rule[] }
+type Configuration = { updatedAt?: string; settings: NotificationSettings; configuredSecrets: Record<keyof Secrets, boolean>; environment: string; encryptionReady: boolean; missing: Record<keyof typeof channels, string[]> }
 const fieldClass = 'rounded-md border bg-background px-3 py-2 text-sm'
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -126,7 +124,6 @@ export function NotificationSettingsAdmin() {
   const [allowlist, setAllowlist] = useState('')
   const [smtpProvider, setSmtpProvider] = useState<SmtpProvider>('custom')
   const [smtpPortSelection, setSmtpPortSelection] = useState<SmtpPortSelection>('custom')
-  const [test, setTest] = useState({ channel: 'email', userId: '', mode: 'test', eventType: 'post_comment' })
   const load = useCallback(async () => {
     try {
       const response = await fetch('/api/admin/notifications/settings', { cache: 'no-store' })
@@ -170,15 +167,6 @@ export function NotificationSettingsAdmin() {
     } catch (error) { setMessage(error instanceof SyntaxError ? '버튼 정보와 변수 매핑의 JSON 형식을 확인하세요.' : error instanceof Error ? error.message : '설정 저장 실패'); return false }
     finally { setBusy(false) }
   }
-  async function sendTest() {
-    setBusy(true); setMessage('')
-    try {
-      const response = await fetch('/api/admin/notifications/test', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...test, userId: test.userId ? Number(test.userId) : undefined }) })
-      const result = await response.json()
-      if (!response.ok) throw new Error(result.error)
-      setMessage(`테스트를 등록했습니다. 발송 내역에서 결과를 확인하세요. (${result.eventId})`)
-    } catch (error) { setMessage(error instanceof Error ? error.message : '테스트 요청 실패') } finally { setBusy(false) }
-  }
   function textField(key: 'smtpHost' | 'smtpUser' | 'smtpFrom' | 'aligoUserId' | 'sender', label: string) {
     return <div className="space-y-2"><Label htmlFor={`notification-${key}`}>{label}</Label><Input id={`notification-${key}`} value={data!.settings[key]} onChange={e => setting(key, e.target.value)} autoComplete="off" /></div>
   }
@@ -211,15 +199,7 @@ export function NotificationSettingsAdmin() {
         <div className="flex gap-3 items-center"><Switch id="notification-tls" checked={data.settings.smtpSecure} onCheckedChange={v => setting('smtpSecure', v)} /><Label htmlFor="notification-tls">연결 시 TLS 사용 · 보통 465 포트</Label></div>
       </div><p className="text-xs text-muted-foreground">인증 메일은 일반 알림의 메일 켜기·끄기와 별개로 동작하며, 발송 모드와 dev 허용 목록은 동일하게 적용합니다.</p><SmtpTest data={data} dirty={dirty} busy={busy} onSave={save} /></Section>
         <Section title="문자·알림톡 · 알리고"><div className="grid sm:grid-cols-2 gap-4">{textField('aligoUserId', '알리고 아이디')}{secretField('aligoKey', '기존 API Key')}{textField('sender', '등록된 발신번호')}{secretField('senderKey', 'Senderkey')}</div><p className="text-xs text-muted-foreground">알리고의 발신번호 등록, API 서버 IP 허용, 카카오채널 연동 및 템플릿 승인이 필요합니다. 비밀값은 빈칸으로 저장하면 기존 값을 유지합니다.</p><AligoConnectionCheck dirty={dirty} busy={busy} onSave={save} /></Section></div>
-      <Section title="이벤트별 발송 설정"><p className="text-sm text-muted-foreground">이벤트별 채널 사용 여부와 템플릿은 별도 페이지에서 관리합니다.</p><Button asChild variant="outline"><Link href="/admin/notifications/settings/events">이벤트별 발송 설정 열기</Link></Button></Section>      <Section title="테스트 발송"><p className="text-sm text-muted-foreground">선택한 회원의 등록된 연락처를 사용합니다. 테스트는 해당 회원의 수신 설정과 채널 켜기 여부에 관계없이 요청하며, 사이트 내 테스트 알림도 기록합니다.</p>
-        <div className="flex flex-wrap gap-3 items-end"><label className="text-sm space-y-2">테스트 회원 ID<Input type="number" min={1} placeholder="비워두면 내 계정" value={test.userId} onChange={e => setTest(v => ({ ...v, userId: e.target.value }))} /></label>
-          <label className="text-sm grid gap-2">채널<select className={fieldClass} value={test.channel} onChange={e => setTest(v => ({ ...v, channel: e.target.value }))}>{Object.entries(channels).map(([key,label]) => <option key={key} value={key}>{label}</option>)}</select></label>
-          <label className="text-sm grid gap-2">템플릿 이벤트<select className={fieldClass} value={test.eventType} onChange={e => setTest(v => ({ ...v, eventType: e.target.value }))}>{data.rules.filter(r => r.eventType !== 'notification_test').map(r => <option key={r.eventType} value={r.eventType}>{r.label}</option>)}</select></label>
-          <label className="text-sm grid gap-2">발송 방식<select className={fieldClass} value={test.mode} onChange={e => setTest(v => ({ ...v, mode: e.target.value }))}><option value="test">테스트 모드 · 실제 발송 없음</option><option value="live">실제 발송 · 과금 발생</option></select></label>
-          <Button onClick={sendTest} disabled={busy || dirty}>테스트 요청</Button>
-        </div><p className="text-xs text-muted-foreground">테스트 모드 접수는 실제 수신 성공을 의미하지 않습니다. 템플릿·인증 정보 변경은 먼저 저장하세요.</p>
-      </Section>
-    </>}
+      <Section title="이벤트별 발송 설정"><p className="text-sm text-muted-foreground">이벤트별 채널 사용 여부와 템플릿 설정, 테스트 발송은 별도 페이지에서 관리합니다.</p><Button asChild variant="outline"><Link href="/admin/notifications/settings/events">이벤트별 발송 설정 열기</Link></Button></Section>    </>}
   </div>
 }
 
