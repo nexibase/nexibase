@@ -10,6 +10,7 @@ import re
 import shutil
 import subprocess
 import time
+import uuid
 
 HERE = Path(__file__).resolve().parent
 SKIP_DIRS = {'.git', 'node_modules', '.next', 'tmp', 'logs', '.demo-snapshot', '__pycache__'}
@@ -54,25 +55,115 @@ def digest_tree(root, source=True):
 
 
 def run(args, cwd=None, log=None, capture=False, check=True, env=None):
+    offset = None
+    if log is not None:
+        log.flush()
+        offset = log.tell()
     result = subprocess.run([str(a) for a in args], cwd=cwd, env=env,
                             stdout=subprocess.PIPE if capture else log,
                             stderr=subprocess.PIPE if capture else log, check=False)
     if check and result.returncode:
-        # Do not expose database URLs, env values or private query responses in errors.
-        raise RuntimeError(f'Command failed ({result.returncode}): {args[0]}; inspect private deployment logs')
+        detail = ''
+        if offset is not None:
+            try:
+                with open(log.name, errors='replace') as source:
+                    source.seek(offset)
+                    lines = [line.strip() for line in source.read(16000).splitlines() if line.strip()]
+                detail = next((line for line in lines if any(word in line.lower() for word in
+                              ('error', 'failed', 'missing', 'mismatch', 'expected', 'contains', 'timeout', 'unable'))), '')
+            except OSError:
+                pass
+        suffix = ': ' + safe_message(detail) if detail else '; inspect private deployment logs'
+        raise RuntimeError(f'Command failed ({result.returncode}): {args[0]}' + suffix)
     return result
 
 
 def read_json(path):
-    return json.loads(path.read_text())
+    return json.loads(path.read_text(encoding='utf-8'))
 
 
 def save(path, data):
     path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_suffix('.pending')
-    temporary.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n')
-    temporary.chmod(0o600)
-    temporary.replace(path)
+    temporary = path.with_name('.report-' + uuid.uuid4().hex + '.pending')
+    try:
+        with temporary.open('x', encoding='utf-8') as output:
+            output.write(json.dumps(data, ensure_ascii=False, indent=2) + '\n')
+        temporary.chmod(0o600)
+        for attempt in range(6):
+            try:
+                temporary.replace(path)
+                break
+            except PermissionError:
+                # Windows can briefly deny replacement while another writer closes its handle.
+                if os.name != 'nt' or attempt == 5:
+                    raise
+                time.sleep(0.01 * (attempt + 1))
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+def utc_now():
+    return datetime.datetime.now(datetime.timezone.utc).isoformat()
+
+
+def safe_message(value):
+    text = str(value)
+    text = re.sub(r'([a-z][a-z0-9+.-]*://)[^\s/@]+:[^\s/@]+@', r'\1[redacted]@', text, flags=re.I)
+    text = re.sub(r'((?:[A-Z_]*(?:PASSWORD|SECRET|TOKEN)|DATABASE_URL)\s*[=:]\s*)("[^"]*"|\x27[^\x27]*\x27|[^\s,;]+)',
+                  r'\1[redacted]', text, flags=re.I)
+    return text[:3000]
+
+
+def failure_info(error, stage, log):
+    return {'type': type(error).__name__, 'stage': stage, 'message': safe_message(error), 'log': str(log)}
+
+
+class ActivationReport:
+    """A private report for each activation attempt, including attempts that stop before switching."""
+    def __init__(self, job, service):
+        identifier = datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%S.%fZ-') + uuid.uuid4().hex[:8]
+        self.job = job
+        self.directory = HERE / 'reports/deployments' / identifier
+        self.data = {
+            'id': identifier, 'site': 'home', 'service': service, 'status': 'running', 'stage': 'preflight',
+            'started_at': utc_now(), 'finished_at': None, 'previous_release': None,
+            'attempted_release': str(job), 'current_release': None, 'service_active': None,
+            'failure': None, 'recovery': {'attempted': False, 'status': 'not_attempted', 'failure': None},
+            'report': str(self.directory), 'activation_log': str(job / 'tmp/activate.log'),
+            'preview_checks_report': str(job / 'tmp/preview-checks/result.json'),
+            'checks_report': str(job / 'tmp/post-deploy-checks/result.json'),
+            'recovery_checks_report': str(job / 'tmp/recovery-checks/result.json'),
+        }
+
+    def context(self):
+        return {key: self.data[key] for key in ('id', 'status', 'stage', 'previous_release',
+                'attempted_release', 'current_release', 'service_active', 'failure')}
+
+    def publish(self, required=True):
+        self.data['updated_at'] = utc_now()
+        try:
+            save(self.directory / 'result.json', self.data)
+            save(self.job / 'tmp/deployment-result.json', self.data)
+            save(HERE / 'reports/latest-deployment.json', self.data)
+            for name, scope in (('post-deploy-checks', 'all'), ('recovery-checks', 'home')):
+                directory = self.job / 'tmp' / name
+                path = directory / 'result.json'
+                if not path.exists():
+                    continue
+                audit = read_json(path)
+                if audit.get('deployment_id') != self.data['id']:
+                    continue  # Never attach a new activation to a stale or unrelated check.
+                audit.update(deployment=self.context(), recovery=self.data['recovery'])
+                save(path, audit)
+                latest = HERE / 'reports' / ('latest-' + scope + '.json')
+                if latest.exists() and read_json(latest).get('report') == str(directory):
+                    save(latest, dict(audit, report=str(directory)))
+        except Exception as error:
+            if required:
+                raise
+            # Reporting failure must not prevent restoration of the previous service.
+            self.data.setdefault('reporting_errors', []).append(safe_message(error))
+            print('RECOVERY REPORT WRITE FAILED: ' + safe_message(error), flush=True)
 
 
 def merge_sources(base, current, incoming, output):
@@ -158,8 +249,22 @@ class Deployment:
         self.env = dict(os.environ, PATH=str(Path(self.config['node']).parent) + ':' + os.environ['PATH'])
 
     def active(self):
-        return Path(run(['systemctl', 'show', self.config['service'], '-p', 'WorkingDirectory', '--value'],
-                        capture=True).stdout.decode().strip()).resolve()
+        value = run(['systemctl', 'show', self.config['service'], '-p', 'WorkingDirectory', '--value'],
+                    capture=True).stdout.decode().strip()
+        if not value:
+            raise RuntimeError('Service WorkingDirectory is unavailable')
+        return Path(value).resolve()
+
+    def observe(self, report):
+        report.data['current_release'] = None
+        report.data['service_active'] = None
+        try:
+            report.data['current_release'] = str(self.active())
+            report.data['service_active'] = run(['systemctl', 'is-active', '--quiet', self.config['service']],
+                                                 check=False, capture=True).returncode == 0
+            report.data.pop('observation_error', None)
+        except Exception as error:
+            report.data['observation_error'] = safe_message(error)
 
     def check_active(self):
         active = self.active()
@@ -178,8 +283,11 @@ class Deployment:
         run(args, log=self.log, env=self.env)
 
     def audit(self, release, url, output, site):
-        run(['python3', HERE / 'audit.py', '--site', site, '--home-release', release,
-             '--home-url', url, '--output', output], log=self.log, env=self.env)
+        args = ['python3', HERE / 'audit.py', '--site', site, '--home-release', release,
+                '--home-url', url, '--output', output]
+        if getattr(self, '_activation_report', None):
+            args.extend(['--deployment-report', self._activation_report.job / 'tmp/deployment-result.json'])
+        run(args, log=self.log, env=self.env)
 
     def checkout(self, mirror, commit, dest):
         run(['git', 'clone', '--shared', '--no-checkout', mirror, dest], log=self.log)
@@ -288,50 +396,131 @@ class Deployment:
         if job.parent != self.root.resolve():
             raise RuntimeError('Candidate must be a direct child of configured releases directory')
         self.log = (job / 'tmp/activate.log').open('a')
-        active = self.check_active()
-        manifest = read_json(job / 'tmp/ready.json')
-        if (not manifest['ready'] or manifest['active'] != str(active) or
-                manifest['previous_commit'] != self.state['official_commit'] or
-                manifest['active_hash'] != digest_tree(active) or
-                manifest['source_hash'] != digest_tree(job) or
-                manifest['build_hash'] != digest_tree(job / '.next', False)):
-            raise RuntimeError('Candidate or live source changed after verification; prepare again')
-        if manifest['official_commit'] == self.state['official_commit']:
-            raise RuntimeError('Same-version preparation is a rehearsal; no service switch allowed')
-        if (job / 'public/uploads').resolve() != Path(self.config['uploads']).resolve():
-            raise RuntimeError('Candidate shared uploads missing')
-        source_guard(job)
-        environment_guard(active, job)
-        self.preview(job, job / 'tmp/before.json')
-        self.guard(active, job / 'tmp/pre-switch.json', self.config['public_url'], job / 'tmp/before.json')
-        override = Path(self.config['override'])
-        old_override = override.read_bytes() if override.exists() else None
-        if old_override is not None:
-            (job / 'tmp/previous-override.conf').write_bytes(old_override)
-        conf = job / 'tmp/service.conf'
-        conf.write_text('[Service]\nWorkingDirectory=' + str(job) + '\nExecStart=\nExecStart=' +
-                        self.config['node'] + ' ' + str(job / 'node_modules/next/dist/bin/next') +
-                        ' start --hostname localhost --port ' + str(self.config['port']) + '\n')
+        report = self._activation_report = ActivationReport(job, self.config['service'])
+        switched = False
+        state_commit_started = False
+        active = None
         try:
+            self.observe(report)
+            report.data['previous_release'] = report.data['current_release']
+            report.publish()  # Fail before touching services if reports cannot be persisted.
+            active = self.check_active()
+            report.data['previous_release'] = str(active)
+            manifest = read_json(job / 'tmp/ready.json')
+            if (not manifest['ready'] or manifest['active'] != str(active) or
+                    manifest['previous_commit'] != self.state['official_commit'] or
+                    manifest['active_hash'] != digest_tree(active) or
+                    manifest['source_hash'] != digest_tree(job) or
+                    manifest['build_hash'] != digest_tree(job / '.next', False)):
+                raise RuntimeError('Candidate or live source changed after verification; prepare again')
+            if manifest['official_commit'] == self.state['official_commit']:
+                raise RuntimeError('Same-version preparation is a rehearsal; no service switch allowed')
+            if (job / 'public/uploads').resolve() != Path(self.config['uploads']).resolve():
+                raise RuntimeError('Candidate shared uploads missing')
+            source_guard(job)
+            environment_guard(active, job)
+            report.data['stage'] = 'preview_checks'
+            report.publish()
+            self.preview(job, job / 'tmp/before.json')
+            self.guard(active, job / 'tmp/pre-switch.json', self.config['public_url'], job / 'tmp/before.json')
+            override = Path(self.config['override'])
+            old_override = override.read_bytes() if override.exists() else None
+            if old_override is not None:
+                (job / 'tmp/previous-override.conf').write_bytes(old_override)
+            conf = job / 'tmp/service.conf'
+            conf.write_text('[Service]\nWorkingDirectory=' + str(job) + '\nExecStart=\nExecStart=' +
+                            self.config['node'] + ' ' + str(job / 'node_modules/next/dist/bin/next') +
+                            ' start --hostname localhost --port ' + str(self.config['port']) + '\n')
+            report.data['stage'] = 'service_switch'
+            report.publish()
+            switched = True  # Even a partial override installation requires restoration.
             run(['sudo', '-n', 'install', '-m', '644', conf, override], log=self.log)
             run(['sudo', '-n', 'systemctl', 'daemon-reload'], log=self.log)
             run(['sudo', '-n', 'systemctl', 'restart', self.config['service']], log=self.log)
             self.wait_http('http://localhost:' + str(self.config['port']))
             if self.active() != job:
                 raise RuntimeError('Another systemd override took precedence')
+            report.data['stage'] = 'post_deploy_checks'
+            self.observe(report)
+            report.publish()
             self.guard(job, job / 'tmp/live.json', self.config['public_url'], job / 'tmp/before.json')
             # Browser/UI + both sites' runtime checks must pass before publishing deployment state.
             self.audit(job, self.config['public_url'], job / 'tmp/post-deploy-checks', 'all')
+            report.data.update(status='succeeded', stage='complete', finished_at=utc_now(),
+                               recovery={'attempted': False, 'status': 'not_needed', 'failure': None})
+            self.observe(report)
+            if report.data['current_release'] != str(job) or not report.data['service_active']:
+                raise RuntimeError('Verified deployment is no longer the active service')
+            report.publish()
+            report.data['stage'] = 'commit_state'
+            state_commit_started = True
             save(self.state_path, {'active': str(job), 'official_commit': manifest['official_commit'],
                                    'ref': manifest['ref'], 'previous_active': str(active)})
-        except BaseException:
-            if old_override is None:
-                run(['sudo', '-n', 'rm', '--', override], log=self.log)
+            report.data['stage'] = 'complete'
+        except BaseException as original:
+            report.data['status'] = 'failed'
+            report.data['failure'] = failure_info(original, report.data['stage'], job / 'tmp/activate.log')
+            audit_path = job / 'tmp' / ('preview-checks' if report.data['stage'] == 'preview_checks' else 'post-deploy-checks') / 'result.json'
+            if audit_path.exists():
+                try:
+                    audit_result = read_json(audit_path)
+                    if audit_result.get('deployment_id') == report.data['id']:
+                        report.data['failure']['cause'] = audit_result.get('failure') or audit_result.get('error')
+                except Exception:
+                    pass
+            if switched:
+                recovery = report.data['recovery'] = {'attempted': True, 'status': 'running',
+                    'started_at': utc_now(), 'failure': None, 'stage': 'restore_override'}
+                report.publish(required=False)
+                try:
+                    if old_override is None:
+                        run(['sudo', '-n', 'rm', '--', override], log=self.log)
+                    else:
+                        run(['sudo', '-n', 'install', '-m', '644', job / 'tmp/previous-override.conf', override], log=self.log)
+                    recovery['stage'] = 'restart_previous'
+                    report.publish(required=False)
+                    run(['sudo', '-n', 'systemctl', 'daemon-reload'], log=self.log)
+                    run(['sudo', '-n', 'systemctl', 'restart', self.config['service']], log=self.log)
+                    recovery['stage'] = 'verify_previous_path'
+                    self.observe(report)
+                    if report.data['current_release'] != str(active) or not report.data['service_active']:
+                        raise RuntimeError('Recovery did not restore the previous active service path')
+                    recovery['stage'] = 'verify_previous_http'
+                    self.wait_http('http://localhost:' + str(self.config['port']))
+                    recovery['stage'] = 'verify_previous_runtime'
+                    self.guard(active, job / 'tmp/recovery-runtime.json', self.config['public_url'])
+                    recovery['stage'] = 'verify_previous_browser'
+                    report.publish(required=False)
+                    # A demo failure must not prevent judging the restored home site's health.
+                    self.audit(active, self.config['public_url'], job / 'tmp/recovery-checks', 'home')
+                    self.observe(report)
+                    if report.data['current_release'] != str(active) or not report.data['service_active']:
+                        raise RuntimeError('Previous service changed during recovery verification')
+                    if state_commit_started:
+                        recovery['stage'] = 'restore_deployment_state'
+                        if not self.state_path.exists() or read_json(self.state_path) != self.state:
+                            save(self.state_path, self.state)
+                    recovery.update(status='succeeded', stage='complete')
+                except BaseException as recovery_error:
+                    recovery.update(status='failed', failure=failure_info(recovery_error, recovery['stage'], job / 'tmp/activate.log'))
+                    recovery_path = job / 'tmp/recovery-checks/result.json'
+                    if recovery_path.exists():
+                        try:
+                            check = read_json(recovery_path)
+                            if check.get('deployment_id') == report.data['id']:
+                                recovery['failure']['cause'] = check.get('failure') or check.get('error')
+                        except Exception:
+                            pass
+                finally:
+                    recovery['finished_at'] = utc_now()
             else:
-                run(['sudo', '-n', 'install', '-m', '644', job / 'tmp/previous-override.conf', override], log=self.log)
-            run(['sudo', '-n', 'systemctl', 'daemon-reload'], log=self.log)
-            run(['sudo', '-n', 'systemctl', 'restart', self.config['service']], log=self.log)
-            self.wait_http('http://localhost:' + str(self.config['port']))
+                report.data['recovery'] = {'attempted': False, 'status': 'not_attempted',
+                                           'reason': 'service_was_not_changed', 'failure': None}
+            self.observe(report)
+            report.data['finished_at'] = utc_now()
+            report.publish(required=False)
+            print('RECOVERY STATUS: ' + report.data['recovery']['status'], flush=True)
+            print('DEPLOYMENT REPORT: ' + str(report.directory / 'result.json'), flush=True)
             raise
         print('DEPLOYED AND VERIFIED: ' + manifest['ref'], flush=True)
 

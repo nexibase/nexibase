@@ -68,3 +68,35 @@ sudo systemctl restart nexibase-demo-deployment-check.service
 CI는 실제 Chromium으로 정상 운영/데모, 모바일 바로가기 누락, 깨진 관리자 로고, 데모 모바일 메뉴·홈 위젯 유출을 검증한다. Python 회귀 테스트는 전환 후 자동 검사 실패가 성공 상태를 기록하지 않고 기존 서비스 설정을 복원하는지도 확인한다.
 
 2026-10-23 자동 검사 추가 검증: 서버의 Python 회귀 테스트 13개와 실제 브라우저 회귀 테스트 7개를 통과했다. 운영·데모 전체 검사, 배포 미리보기의 브라우저 검사, 데모 시작 훅과 동일한 `ExecStartPost`를 사용한 임시 유닛의 자동 검사 실행을 확인했다. 운영·데모의 PID는 유지했다.
+
+## 배포·복구 결과 보고서
+
+운영 `activate`를 시도하면 전환 전 검증부터 복구 완료까지 다음 파일을 자동 갱신한다. 최초 전환 시도부터 생성하며 과거 배포 결과를 추정해 만들지 않는다.
+
+- 최근 배포 시도: `/home/kagla/nexibase-home-deploy/reports/latest-deployment.json`
+- 시도별 보관본: 같은 `reports/deployments/<시도 ID>/result.json`
+- 해당 배포 폴더의 바로가기 사본: `tmp/deployment-result.json`
+- 검사·복구 검사 보고서가 생성된 경우 `tmp/post-deploy-checks/result.json`과 `tmp/recovery-checks/result.json`에도 같은 배포 ID·경로·복구 결과를 연결한다. 이전 시도의 검사 결과는 새 시도에 연결하지 않는다.
+
+`status`는 배포 성공/실패이며 `recovery.status`와 구분한다. 복구가 성공해도 실패한 새 배포의 `status`는 `failed`로 남는다.
+
+| 필드 | 내용 |
+| --- | --- |
+| `previous_release` | 전환 전 실제 서비스 실행 경로 |
+| `attempted_release` | 적용하려던 새 배포 경로 |
+| `current_release`, `service_active` | 보고서 갱신 시 실제로 관찰한 최종 실행 경로·활성 여부. 조회 실패는 오류와 미확인 값으로 기록 |
+| `failure` | 원래 실패 단계·유형·원인·로그 경로. 검사 보고서의 세부 원인도 보존 |
+| `recovery` | 시도 여부·시작/완료 시각·복구 단계·결과·복구 자체의 실패 원인 |
+| `checks_report`, `recovery_checks_report` | 원래 검사와 복구 후 검사의 보고서 경로 |
+
+복구 상태는 `not_attempted`(서비스 변경 전 중단), `running`(복구 진행 중), `succeeded`(복구 검증 통과), `failed`(복구 또는 검증 실패), `not_needed`(배포 성공으로 복구 불필요)다. 단독·데모 검사의 `not_applicable`은 읽기 전용 검사라 복구를 수행하지 않았다는 뜻이다.
+
+복구는 이전 systemd 설정 복원, 재시작, 이전 경로·서비스 활성 확인, HTTP·운영 API·브라우저 검증을 통과해야 성공이다. 복구 검사는 운영 사이트만 대상으로 하므로 원래 실패가 데모 검사였다면 그 실패와 운영 복구 성공을 구분할 수 있다. 원래 실패와 복구 실패를 서로 덮어쓰지 않는다. 상태·오류·경로는 비공개 원자적 JSON 파일로 남기고 접속 URL의 인증정보와 비밀 변수는 가린다.
+
+```sh
+cat /home/kagla/nexibase-home-deploy/reports/latest-deployment.json
+```
+
+단독 재검사로 `latest-all.json`이 갱신되어도 `latest-deployment.json`과 시도별 배포·복구 이력은 유지한다.
+
+2026-10-23 복구 보고 검증: Linux 회귀 테스트 25개를 통과했다. 격리된 임시 systemd 서비스에서 실제 전환 후 검사 실패·복구 성공, 이전 서비스 재시작 실패·복구 실패를 발생시켜 원래 실패/복구 실패의 분리와 실제 경로·활성 상태 기록을 확인했다. 현재 운영·데모의 읽기 전용 검사도 통과했으며 두 운영 프로세스는 재시작하지 않았다.
