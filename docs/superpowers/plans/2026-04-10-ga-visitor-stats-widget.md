@@ -42,7 +42,7 @@ NexiBase는 자동 테스트 프레임워크가 없고 수동 검증 중심이�
 
 ## 작업 전 확인: 서비스 디렉토리
 
-모든 명령은 `/home/kagla/_nexibase.com`에서 실행한다. 다른 디렉토리(예: `/home/kagla/nexibase` upstream)와 혼동하지 말 것. 각 명령 앞에 `cd /home/kagla/_nexibase.com &&`를 붙인다.
+모든 명령은 `/path/to/production-source`에서 실행한다. 다른 디렉토리(예: `/path/to/nexibase` upstream)와 혼동하지 말 것. 각 명령 앞에 `cd /path/to/production-source &&`를 붙인다.
 
 ---
 
@@ -55,7 +55,7 @@ NexiBase는 자동 테스트 프레임워크가 없고 수동 검증 중심이�
 - [ ] **Step 1: 패키지 설치**
 
 ```bash
-cd /home/kagla/_nexibase.com && npm install @google-analytics/data
+cd /path/to/production-source && npm install @google-analytics/data
 ```
 
 Expected: 설치 성공, `package.json` dependencies에 `"@google-analytics/data"` 라인 추가.
@@ -63,7 +63,7 @@ Expected: 설치 성공, `package.json` dependencies에 `"@google-analytics/data
 - [ ] **Step 2: 설치 확인**
 
 ```bash
-cd /home/kagla/_nexibase.com && grep '"@google-analytics/data"' package.json
+cd /path/to/production-source && grep '"@google-analytics/data"' package.json
 ```
 
 Expected: `"@google-analytics/data": "^4.x.x"` 형태의 라인 출력.
@@ -71,7 +71,7 @@ Expected: `"@google-analytics/data": "^4.x.x"` 형태의 라인 출력.
 - [ ] **Step 3: import 가능 확인**
 
 ```bash
-cd /home/kagla/_nexibase.com && node -e "const { BetaAnalyticsDataClient } = require('@google-analytics/data'); console.log(typeof BetaAnalyticsDataClient)"
+cd /path/to/production-source && node -e "const { BetaAnalyticsDataClient } = require('@google-analytics/data'); console.log(typeof BetaAnalyticsDataClient)"
 ```
 
 Expected: `function`
@@ -79,7 +79,7 @@ Expected: `function`
 - [ ] **Step 4: 커밋**
 
 ```bash
-cd /home/kagla/_nexibase.com && git add package.json package-lock.json && git commit -m "feat(ga-widget): @google-analytics/data 의존성 추가"
+cd /path/to/production-source && git add package.json package-lock.json && git commit -m "feat(ga-widget): @google-analytics/data 의존성 추가"
 ```
 
 ---
@@ -148,7 +148,7 @@ export function invalidateGaClientCache(): void {
 - [ ] **Step 2: TypeScript check**
 
 ```bash
-cd /home/kagla/_nexibase.com && npx tsc --noEmit 2>&1 | grep "gaClient.ts" || echo "gaClient.ts OK"
+cd /path/to/production-source && npx tsc --noEmit 2>&1 | grep "gaClient.ts" || echo "gaClient.ts OK"
 ```
 
 Expected: `gaClient.ts OK`
@@ -156,7 +156,7 @@ Expected: `gaClient.ts OK`
 - [ ] **Step 3: 커밋**
 
 ```bash
-cd /home/kagla/_nexibase.com && git add src/lib/gaClient.ts && git commit -m "feat(ga-widget): gaClient 헬퍼 추가
+cd /path/to/production-source && git add src/lib/gaClient.ts && git commit -m "feat(ga-widget): gaClient 헬퍼 추가
 
 settings 테이블의 ga4_property_id + ga4_service_account_json을 읽어
 BetaAnalyticsDataClient 인스턴스를 생성. 설정 미완 / JSON 파싱 실패 시
@@ -173,7 +173,7 @@ null 반환. credentials hash로 모듈 캐시 관리."
 - [ ] **Step 1: 디렉토리 생성**
 
 ```bash
-cd /home/kagla/_nexibase.com && mkdir -p src/app/api/admin/analytics/test
+cd /path/to/production-source && mkdir -p src/app/api/admin/analytics/test
 ```
 
 - [ ] **Step 2: `src/app/api/admin/analytics/test/route.ts` 전체 내용 작성**
@@ -233,7 +233,7 @@ export async function POST() {
 - [ ] **Step 3: 빌드 통과 확인**
 
 ```bash
-cd /home/kagla/_nexibase.com && npx next build 2>&1 | tail -10
+cd /path/to/production-source && npx next build 2>&1 | tail -10
 ```
 
 Expected: 빌드 성공. route 목록에 `ƒ /api/admin/analytics/test` 포함.
@@ -241,7 +241,7 @@ Expected: 빌드 성공. route 목록에 `ƒ /api/admin/analytics/test` 포함.
 - [ ] **Step 4: 커밋**
 
 ```bash
-cd /home/kagla/_nexibase.com && git add src/app/api/admin/analytics/test/route.ts && git commit -m "feat(ga-widget): 관리자 GA 연결 테스트 API 추가
+cd /path/to/production-source && git add src/app/api/admin/analytics/test/route.ts && git commit -m "feat(ga-widget): 관리자 GA 연결 테스트 API 추가
 
 저장된 설정으로 runReport(오늘 1일치) 1회 실행하여 연결 검증.
 모든 실패는 200 OK + { ok: false, error } 로 응답하여 프론트가
@@ -258,7 +258,7 @@ cd /home/kagla/_nexibase.com && git add src/app/api/admin/analytics/test/route.t
 - [ ] **Step 1: 디렉토리 생성**
 
 ```bash
-cd /home/kagla/_nexibase.com && mkdir -p src/app/api/analytics/ga-stats
+cd /path/to/production-source && mkdir -p src/app/api/analytics/ga-stats
 ```
 
 - [ ] **Step 2: `src/app/api/analytics/ga-stats/route.ts` 전체 내용 작성**
@@ -390,7 +390,7 @@ export async function GET() {
 - [ ] **Step 3: 빌드 통과 확인**
 
 ```bash
-cd /home/kagla/_nexibase.com && npx next build 2>&1 | tail -10
+cd /path/to/production-source && npx next build 2>&1 | tail -10
 ```
 
 Expected: 빌드 성공. route 목록에 `ƒ /api/analytics/ga-stats` 포함.
@@ -398,7 +398,7 @@ Expected: 빌드 성공. route 목록에 `ƒ /api/analytics/ga-stats` 포함.
 - [ ] **Step 4: 커밋**
 
 ```bash
-cd /home/kagla/_nexibase.com && git add src/app/api/analytics/ga-stats/route.ts && git commit -m "feat(ga-widget): /api/analytics/ga-stats API 추가
+cd /path/to/production-source && git add src/app/api/analytics/ga-stats/route.ts && git commit -m "feat(ga-widget): /api/analytics/ga-stats API 추가
 
 GA4 Realtime(현재 접속자) + Core Reporting(오늘/어제/7일)을 병렬 조회.
 인메모리 캐시 TTL 120초 + inflight promise guard로 캐시 스탬피드 방지.
@@ -428,7 +428,7 @@ export default {
 - [ ] **Step 2: 파일 생성 확인**
 
 ```bash
-cd /home/kagla/_nexibase.com && cat src/widgets/VisitorStats.meta.ts
+cd /path/to/production-source && cat src/widgets/VisitorStats.meta.ts
 ```
 
 Expected: 작성한 내용 그대로 출력.
@@ -555,7 +555,7 @@ export default function VisitorStats() {
 - [ ] **Step 2: scan-plugins 실행하여 레지스트리 재생성**
 
 ```bash
-cd /home/kagla/_nexibase.com && node scripts/scan-plugins.js
+cd /path/to/production-source && node scripts/scan-plugins.js
 ```
 
 Expected 출력: `Generated widget registry with N widget(s)` — N이 기존 + 1.
@@ -563,13 +563,13 @@ Expected 출력: `Generated widget registry with N widget(s)` — N이 기존 + 
 - [ ] **Step 3: 등록 확인**
 
 ```bash
-cd /home/kagla/_nexibase.com && grep "visitor-stats\|VisitorStats" src/lib/widgets/_generated-registry.ts
+cd /path/to/production-source && grep "visitor-stats\|VisitorStats" src/lib/widgets/_generated-registry.ts
 ```
 
 Expected: `VisitorStats` 관련 라인이 dynamic import 형태로 출력됨.
 
 ```bash
-cd /home/kagla/_nexibase.com && grep -A 7 "visitor-stats" src/lib/widgets/_generated-metadata.ts
+cd /path/to/production-source && grep -A 7 "visitor-stats" src/lib/widgets/_generated-metadata.ts
 ```
 
 Expected: `label: '방문자 통계'` 를 포함한 블록 출력.
@@ -577,7 +577,7 @@ Expected: `label: '방문자 통계'` 를 포함한 블록 출력.
 - [ ] **Step 4: 빌드 통과 확인**
 
 ```bash
-cd /home/kagla/_nexibase.com && npx next build 2>&1 | tail -10
+cd /path/to/production-source && npx next build 2>&1 | tail -10
 ```
 
 Expected: 빌드 성공.
@@ -585,7 +585,7 @@ Expected: 빌드 성공.
 - [ ] **Step 5: 커밋**
 
 ```bash
-cd /home/kagla/_nexibase.com && git add src/widgets/VisitorStats.tsx src/widgets/VisitorStats.meta.ts && git commit -m "feat(ga-widget): VisitorStats 위젯 추가
+cd /path/to/production-source && git add src/widgets/VisitorStats.tsx src/widgets/VisitorStats.meta.ts && git commit -m "feat(ga-widget): VisitorStats 위젯 추가
 
 현재 접속자 / 오늘 / 어제 / 지난 7일 방문자 수를 표시.
 초기 렌더 시 스켈레톤 UI, 120초 폴링으로 갱신.
@@ -604,7 +604,7 @@ configured: false 응답 시 return null 로 자신을 숨긴다."
 - [ ] **Step 1: 현재 관련 부분 확인**
 
 ```bash
-cd /home/kagla/_nexibase.com && sed -n '50,85p' src/app/admin/settings/page.tsx
+cd /path/to/production-source && sed -n '50,85p' src/app/admin/settings/page.tsx
 ```
 
 약 54라인 `google_analytics_id: string` 과 80라인 `google_analytics_id: ''` 위치를 메모.
@@ -647,7 +647,7 @@ cd /home/kagla/_nexibase.com && sed -n '50,85p' src/app/admin/settings/page.tsx
 - [ ] **Step 4: TypeScript 검증**
 
 ```bash
-cd /home/kagla/_nexibase.com && npx tsc --noEmit 2>&1 | grep "admin/settings/page.tsx" || echo "page.tsx OK"
+cd /path/to/production-source && npx tsc --noEmit 2>&1 | grep "admin/settings/page.tsx" || echo "page.tsx OK"
 ```
 
 Expected: `page.tsx OK`
@@ -655,7 +655,7 @@ Expected: `page.tsx OK`
 - [ ] **Step 5: 커밋**
 
 ```bash
-cd /home/kagla/_nexibase.com && git add src/app/admin/settings/page.tsx && git commit -m "feat(ga-widget): 관리자 설정에 GA4 필드 타입/기본값 추가
+cd /path/to/production-source && git add src/app/admin/settings/page.tsx && git commit -m "feat(ga-widget): 관리자 설정에 GA4 필드 타입/기본값 추가
 
 SettingsData에 ga4_property_id, ga4_service_account_json 추가.
 DEFAULT_SETTINGS에 빈 문자열 기본값 추가."
@@ -673,7 +673,7 @@ DEFAULT_SETTINGS에 빈 문자열 기본값 추가."
 - [ ] **Step 1: 기존 google_analytics_id 블록 위치 확인**
 
 ```bash
-cd /home/kagla/_nexibase.com && grep -n "google_analytics_id\|Google Analytics ID\|사이트 기본 설정" src/app/admin/settings/page.tsx
+cd /path/to/production-source && grep -n "google_analytics_id\|Google Analytics ID\|사이트 기본 설정" src/app/admin/settings/page.tsx
 ```
 
 기존 `<div className="grid gap-2">` ~ `</div>` 블록 (Label = "Google Analytics ID", Input id = "google_analytics_id") 의 줄 번호를 메모.
@@ -899,7 +899,7 @@ import { Globe, Users, Image as ImageIcon, Palette, Upload, Trash2, Link as Link
 - [ ] **Step 6: 빌드 통과 확인**
 
 ```bash
-cd /home/kagla/_nexibase.com && npx next build 2>&1 | tail -10
+cd /path/to/production-source && npx next build 2>&1 | tail -10
 ```
 
 Expected: 빌드 성공.
@@ -907,7 +907,7 @@ Expected: 빌드 성공.
 - [ ] **Step 7: 커밋**
 
 ```bash
-cd /home/kagla/_nexibase.com && git add src/app/admin/settings/page.tsx && git commit -m "feat(ga-widget): 관리자 설정에 Google Analytics 카드 추가
+cd /path/to/production-source && git add src/app/admin/settings/page.tsx && git commit -m "feat(ga-widget): 관리자 설정에 Google Analytics 카드 추가
 
 기존 Measurement ID 필드를 '사이트 기본 설정' 카드에서 독립된
 'Google Analytics' 카드로 이동. GA4 Property ID, Service Account JSON
@@ -924,7 +924,7 @@ cd /home/kagla/_nexibase.com && git add src/app/admin/settings/page.tsx && git c
 - [ ] **Step 1: 빌드**
 
 ```bash
-cd /home/kagla/_nexibase.com && npx next build 2>&1 | tail -15
+cd /path/to/production-source && npx next build 2>&1 | tail -15
 ```
 
 Expected: 빌드 성공. 새 라우트 두 개가 목록에 나타남:

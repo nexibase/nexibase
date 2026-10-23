@@ -60,7 +60,7 @@ src/plugins/vibe-coding-recipes/
 - [ ] **Step 1: Install @anthropic-ai/sdk**
 
 ```bash
-cd /home/kagla/_nexibase.com && npm install @anthropic-ai/sdk
+cd /path/to/production-source && npm install @anthropic-ai/sdk
 ```
 
 - [ ] **Step 2: Add environment variables to .env**
@@ -2384,7 +2384,7 @@ git commit -m "feat(vibe-recipes): add admin UI with recipes list, generation lo
 - [ ] **Step 1: Run dev to trigger plugin scan**
 
 ```bash
-cd /home/kagla/_nexibase.com && npm run dev
+cd /path/to/production-source && npm run dev
 ```
 
 Watch for errors. The scan script should detect the new plugin and generate route wrappers at:
@@ -2424,7 +2424,7 @@ Open public page → recipe card should appear in list. Click → detail with co
 - [ ] **Step 6: Test cron script manually**
 
 ```bash
-cd /home/kagla/_nexibase.com && VIBE_RECIPES_ENABLED=true npx tsx src/plugins/vibe-coding-recipes/cron/generate.ts
+cd /path/to/production-source && VIBE_RECIPES_ENABLED=true npx tsx src/plugins/vibe-coding-recipes/cron/generate.ts
 ```
 
 Should output recipe creation log. Check DB for new recipe.
@@ -2456,7 +2456,7 @@ crontab -e
 
 Add:
 ```
-0 9,14,20 * * * cd /home/kagla/_nexibase.com && /usr/bin/env npx tsx src/plugins/vibe-coding-recipes/cron/generate.ts >> /var/log/vibe-recipes-cron.log 2>&1
+0 9,14,20 * * * cd /path/to/production-source && /usr/bin/env npx tsx src/plugins/vibe-coding-recipes/cron/generate.ts >> /var/log/vibe-recipes-cron.log 2>&1
 ```
 
 - [ ] **Step 2: Verify crontab**
@@ -2470,7 +2470,7 @@ Expected: the cron entry above.
 - [ ] **Step 3: Create log file with correct permissions**
 
 ```bash
-sudo touch /var/log/vibe-recipes-cron.log && sudo chown kagla:kagla /var/log/vibe-recipes-cron.log
+sudo touch /var/log/vibe-recipes-cron.log && sudo chown "$(id -u):$(id -g)" /var/log/vibe-recipes-cron.log
 ```
 
 ---

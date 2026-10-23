@@ -57,7 +57,7 @@ Dev server is started in Task 0 and kept running throughout.
 - [ ] **Step 0.1: Create feature branch from main**
 
 ```bash
-cd /home/kagla/nexibase
+cd /path/to/nexibase
 git checkout main
 git pull --ff-only
 git checkout -b feat/site-metadata-settings

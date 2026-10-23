@@ -102,7 +102,7 @@ const tc = useTranslations('common')
 ### Step E: 빌드 검증
 
 ```bash
-cd /home/kagla/nexibase && node scripts/scan-plugins.js && npx next build 2>&1 | tail -15
+cd /path/to/nexibase && node scripts/scan-plugins.js && npx next build 2>&1 | tail -15
 ```
 
 Expected: clean build. 타입 오류 없음. 새 키가 messages/{en,ko}.json에 머지됨.
@@ -177,7 +177,7 @@ Expected: 32 lines 정도 출력 (더보기·알림·마이페이지·관리자 
 
 - [ ] **Step 4: 빌드 검증**
 
-Run: `cd /home/kagla/nexibase && node scripts/scan-plugins.js && npx next build 2>&1 | tail -10`
+Run: `cd /path/to/nexibase && node scripts/scan-plugins.js && npx next build 2>&1 | tail -10`
 Expected: clean build.
 
 Verify: `grep -n '[가-힣]' src/layouts/default/Header.tsx | grep -vE '^\s*//|console\.|ko-KR'`
@@ -447,7 +447,7 @@ Expected: 0 files (또는 의도적으로 제외된 파일만)
 
 - [ ] **Step 1: 빌드 검증**
 
-Run: `cd /home/kagla/nexibase && npx next build 2>&1 | tail -20`
+Run: `cd /path/to/nexibase && npx next build 2>&1 | tail -20`
 Expected: clean build, 0 errors.
 
 - [ ] **Step 2: 수동 smoke test — 영문 시나리오**
@@ -487,7 +487,7 @@ Expected: clean build, 0 errors.
 - [ ] **Step 1: package.json v0.14.0**
 
 ```bash
-cd /home/kagla/nexibase && node -e "const p=require('./package.json'); p.version='0.14.0'; require('fs').writeFileSync('./package.json', JSON.stringify(p,null,2)+'\n')"
+cd /path/to/nexibase && node -e "const p=require('./package.json'); p.version='0.14.0'; require('fs').writeFileSync('./package.json', JSON.stringify(p,null,2)+'\n')"
 ```
 
 - [ ] **Step 2: 커밋 + 푸시**

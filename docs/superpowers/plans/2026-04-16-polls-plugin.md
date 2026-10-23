@@ -8,7 +8,7 @@
 
 **Tech Stack:** Next.js 16, Prisma (MariaDB), Tailwind CSS, shadcn/ui, lucide-react, @anthropic-ai/sdk, next-intl
 
-**Reference:** sir.kr/polls (UI), `/home/kagla/aaa/new` (Laravel polls source), `src/plugins/vibe-coding-recipes` (AI pattern)
+**Reference:** sir.kr/polls (UI), `/path/to/working-copy` (Laravel polls source), `src/plugins/vibe-coding-recipes` (AI pattern)
 
 ---
 

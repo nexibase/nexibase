@@ -67,7 +67,7 @@ Plugin scan runs at dev/build time (npm run dev triggers scripts/scan-plugins.js
 
 - [ ] **Step 2: Type-check**
 
-Run: `cd /home/kagla/_nexibase.com && npx tsc --noEmit -p tsconfig.json 2>&1 | grep -E "prompt-builder|recipe-validator|generate\.ts" || echo "clean"`
+Run: `cd /path/to/production-source && npx tsc --noEmit -p tsconfig.json 2>&1 | grep -E "prompt-builder|recipe-validator|generate\.ts" || echo "clean"`
 Expected: `clean` (or no output referencing the three cron files).
 
 - [ ] **Step 3: Commit**
@@ -146,7 +146,7 @@ ${slot.type !== 'plugin' ? WIDGET_REFERENCE_EXAMPLE : ''}
 
 - [ ] **Step 3: Type-check**
 
-Run: `cd /home/kagla/_nexibase.com && npx tsc --noEmit -p tsconfig.json 2>&1 | grep -E "prompt-builder|recipe-validator|generate\.ts" || echo "clean"`
+Run: `cd /path/to/production-source && npx tsc --noEmit -p tsconfig.json 2>&1 | grep -E "prompt-builder|recipe-validator|generate\.ts" || echo "clean"`
 Expected: `clean`.
 
 - [ ] **Step 4: Commit**
@@ -225,7 +225,7 @@ Replace with:
 
 - [ ] **Step 3: Type-check**
 
-Run: `cd /home/kagla/_nexibase.com && npx tsc --noEmit -p tsconfig.json 2>&1 | grep -E "prompt-builder|recipe-validator|generate\.ts" || echo "clean"`
+Run: `cd /path/to/production-source && npx tsc --noEmit -p tsconfig.json 2>&1 | grep -E "prompt-builder|recipe-validator|generate\.ts" || echo "clean"`
 Expected: `clean`.
 
 - [ ] **Step 4: Commit**
@@ -294,7 +294,7 @@ export function validateRecipeCompleteness(recipe: ValidatedRecipe): void {
 
 - [ ] **Step 2: Type-check**
 
-Run: `cd /home/kagla/_nexibase.com && npx tsc --noEmit -p tsconfig.json 2>&1 | grep -E "prompt-builder|recipe-validator|generate\.ts" || echo "clean"`
+Run: `cd /path/to/production-source && npx tsc --noEmit -p tsconfig.json 2>&1 | grep -E "prompt-builder|recipe-validator|generate\.ts" || echo "clean"`
 Expected: `clean`.
 
 - [ ] **Step 3: Smoke-test the function from a one-liner**
@@ -302,7 +302,7 @@ Expected: `clean`.
 Run:
 
 ```bash
-cd /home/kagla/_nexibase.com && npx tsx -e "
+cd /path/to/production-source && npx tsx -e "
 import { validateRecipeCompleteness } from './src/plugins/vibe-coding-recipes/cron/recipe-validator';
 try {
   validateRecipeCompleteness({
@@ -365,7 +365,7 @@ Replace with:
 
 - [ ] **Step 3: Type-check**
 
-Run: `cd /home/kagla/_nexibase.com && npx tsc --noEmit -p tsconfig.json 2>&1 | grep -E "prompt-builder|recipe-validator|generate\.ts" || echo "clean"`
+Run: `cd /path/to/production-source && npx tsc --noEmit -p tsconfig.json 2>&1 | grep -E "prompt-builder|recipe-validator|generate\.ts" || echo "clean"`
 Expected: `clean`.
 
 - [ ] **Step 4: Commit**
@@ -383,7 +383,7 @@ git commit -m "feat(vibe-recipes): run completeness validator in generation pipe
 
 - [ ] **Step 1: Start the dev server (if not running)**
 
-Run: `cd /home/kagla/_nexibase.com && npm run dev` (in a separate terminal or background).
+Run: `cd /path/to/production-source && npm run dev` (in a separate terminal or background).
 
 - [ ] **Step 2: Open the admin recipes page**
 

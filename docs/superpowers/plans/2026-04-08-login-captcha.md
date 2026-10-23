@@ -38,7 +38,7 @@
 - [ ] **Step 1: @marsidev/react-turnstile 패키지 설치**
 
 ```bash
-cd /home/kagla/nexibase && npm install @marsidev/react-turnstile
+cd /path/to/nexibase && npm install @marsidev/react-turnstile
 ```
 
 - [ ] **Step 2: .env에 Turnstile 환경 변수 추가**
@@ -95,7 +95,7 @@ model LoginAttempt {
 - [ ] **Step 2: scan-plugins 실행하여 schema.prisma 재생성**
 
 ```bash
-cd /home/kagla/nexibase && node scripts/scan-plugins.js
+cd /path/to/nexibase && node scripts/scan-plugins.js
 ```
 
 Expected: `prisma/schema.prisma`에 LoginAttempt 모델이 포함됨
@@ -103,7 +103,7 @@ Expected: `prisma/schema.prisma`에 LoginAttempt 모델이 포함됨
 - [ ] **Step 3: Prisma 마이그레이션 실행**
 
 ```bash
-cd /home/kagla/nexibase && npx prisma migrate dev --name add-login-attempts
+cd /path/to/nexibase && npx prisma migrate dev --name add-login-attempts
 ```
 
 Expected: `login_attempts` 테이블 생성 완료
@@ -111,7 +111,7 @@ Expected: `login_attempts` 테이블 생성 완료
 - [ ] **Step 4: Prisma Client 생성 확인**
 
 ```bash
-cd /home/kagla/nexibase && npx prisma generate
+cd /path/to/nexibase && npx prisma generate
 ```
 
 - [ ] **Step 5: Commit**
@@ -1075,7 +1075,7 @@ git commit -m "feat: 관리자 로그인 기록 페이지 및 사이드바 메�
 - [ ] **Step 2: 빌드 확인**
 
 ```bash
-cd /home/kagla/nexibase && npm run build
+cd /path/to/nexibase && npm run build
 ```
 
 Expected: 빌드 성공, 에러 없음
