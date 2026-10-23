@@ -54,11 +54,6 @@ export async function runInstall(params: InstallParams): Promise<void> {
         { key: 'site_name', value: params.siteName },
         { key: 'site_locale', value: params.locale },
         { key: 'signup_enabled', value: 'true' },
-        // 신규 설치는 동의 배너를 켠 상태로 시작한다 (법적 기본선).
-        // 기존 설치는 마이그레이션이 'false'로 넣는다.
-        { key: 'consent_enabled', value: 'true' },
-        { key: 'consent_banner_version', value: '1' },
-        { key: 'consent_policy_slug', value: 'cookie' },
       ],
     })
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { isRetiredSetting } from '@/lib/settings-keys'
 import { getAdminUser } from '@/lib/auth'
 
 // Fetch settings
@@ -15,7 +16,7 @@ export async function GET() {
     // Convert to a key-value object
     const settingsMap: Record<string, string> = {}
     settings.forEach(s => {
-      settingsMap[s.key] = s.value
+      if (!isRetiredSetting(s.key)) settingsMap[s.key] = s.value
     })
 
     return NextResponse.json({ settings: settingsMap })
@@ -44,6 +45,10 @@ export async function POST(request: NextRequest) {
         { error: '잘못된 요청입니다.' },
         { status: 400 }
       )
+    }
+
+    if (Object.keys(settings).some(isRetiredSetting)) {
+      return NextResponse.json({ error: 'removed_setting' }, { status: 400 })
     }
 
     if ('site_name' in settings) {
