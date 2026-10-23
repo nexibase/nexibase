@@ -1,6 +1,5 @@
 import 'server-only'
 import { prisma } from '@/lib/prisma'
-import { getPublicShowcase } from '@/lib/showcase'
 
 // Use the same public fields and filters as the existing widget APIs. This
 // data is request scoped; authenticated or private data is never cached here.
@@ -15,9 +14,6 @@ export async function prepareHomeData<T extends { widgetKey: string; settings: s
     try { settings = JSON.parse(widget.settings || '{}') } catch { return widget }
     try {
       const limit = Math.min(50, Math.max(1, Number(settings.limit) || 6))
-      if (widget.widgetKey === 'showcase-sites') {
-        settings.initialShowcase = await getPublicShowcase(limit)
-      }
       if (widget.widgetKey === 'latest-posts') {
         const posts = await prisma.post.findMany({
           where: { status: 'published' }, orderBy: { createdAt: 'desc' }, take: limit,

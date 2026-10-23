@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAuthUser } from '@/lib/auth'
 import { sanitizeHtml } from '@/lib/sanitize'
-import { getShowcasePreview } from '@/lib/showcase-preview'
 
 // Fetch post list
 export async function GET(
@@ -80,7 +79,6 @@ export async function GET(
     const postSelect = {
       id: true,
       title: true,
-      ...(slug === 'showcase' && includeAttachments && { content: true }),
       status: true,
       isNotice: true,
       isSecret: true,
@@ -134,18 +132,12 @@ export async function GET(
     ])
 
     // Attach thumbnail info in gallery mode (applies to both arrays)
-    const attachThumbnail = <T extends { content?: string; isSecret: boolean; author: { id: number }; attachments?: { filePath: string; thumbnailPath?: string | null }[] }>(list: T[]) =>
+    const attachThumbnail = <T extends { attachments?: { filePath: string; thumbnailPath?: string | null }[] }>(list: T[]) =>
       list.map(p => {
         const attachment = p.attachments?.[0]
-        const canPreview = (!board.readMemberOnly || !!user) && (!p.isSecret || p.author.id === user?.id || user?.role === 'admin')
-        const preview = slug === 'showcase' ? (canPreview
-          ? getShowcasePreview(p.content || '', board.useFile ? attachment?.thumbnailPath || attachment?.filePath : null)
-          : { thumbnail: null, excerpt: '', siteUrl: null }) : {}
         return {
           ...p,
           thumbnail: attachment?.thumbnailPath || attachment?.filePath || null,
-          ...preview,
-          content: undefined,
           attachments: undefined,
         }
       })

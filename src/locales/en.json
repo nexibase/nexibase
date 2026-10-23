@@ -953,26 +953,6 @@
     }
   },
   "boards": {
-    "showcase": {
-      "label": "Showcase",
-      "heading": "Made with NexiBase",
-      "intro": "Explore community sites, the stories behind them, and experiences with NexiBase.",
-      "all": "View all",
-      "submit": "Share your site",
-      "invite": "What have you built with NexiBase? Introduce your site to the community.",
-      "empty": "No sites yet. Be the first to share yours.",
-      "madeWith": "Made with NexiBase",
-      "readStory": "Discover this site and the story behind it.",
-      "screenshot": "Screenshot of {title}",
-      "member": "Member",
-      "views": "{count} views",
-      "comments": "{count} comments",
-      "visit": "Visit site",
-      "loading": "Loading showcase…",
-      "unavailable": "The showcase could not be loaded. Use View all to browse the sites.",
-      "writeGuideTitle": "Tell us about your site",
-      "writeGuide": "Use your site name as the title. Add the site URL and a short introduction to the post. Insert a screenshot in the editor or attach an image to display it on the card. You can also share your themes, plugins, build process, and experience with NexiBase."
-    },
     "title": "Boards",
     "loadMore": "Load more",
     "loading": "Loading...",

@@ -32,7 +32,7 @@ before(() => {
     }
   }
   routeFiles.push('src/app/api/faq/route.ts', 'src/app/api/admin/faq/route.ts', 'src/app/api/faq-accordion/route.ts', 'src/app/api/admin/faq-accordion/route.ts')
-  routeFiles.push('src/app/api/showcase/route.ts', 'src/layouts/default/Header.tsx', 'src/features/boards/components/BoardPostPage.tsx', 'src/features/boards/components/ShowcaseCard.tsx')
+  routeFiles.push('src/features/boards/components/BoardPostPage.tsx')
 })
 after(() => {
   assert.ok(fixture.startsWith(path.join(tempRoot, 'nexibase-core-test-')))
@@ -65,7 +65,7 @@ test('core publishing is absent from plugin metadata while optional plugins rema
 
 test('saved widget keys, translations, and withdrawal retention remain available', () => {
   const registry = fs.readFileSync(path.join(fixture, 'src/lib/widgets/_generated-registry.ts'), 'utf8')
-  for (const key of ['latest-posts', 'board-cards', 'popular-boards', 'faq-widget', 'showcase-sites']) assert.ok(registry.includes(`'${key}': {`))
+  for (const key of ['latest-posts', 'board-cards', 'popular-boards', 'faq-widget']) assert.ok(registry.includes(`'${key}': {`))
   assert.ok(!registry.includes('@/plugins/boards/'))
   for (const locale of ['ko', 'en']) {
     const messages = JSON.parse(fs.readFileSync(path.join(fixture, `src/messages/${locale}.json`), 'utf8'))
@@ -84,7 +84,7 @@ test('saved widget keys, translations, and withdrawal retention remain available
 test('plugins cannot overwrite reserved core route slugs', () => {
   const plugin = path.join(fixture, 'src/plugins/core-collision-test')
   fs.mkdirSync(plugin)
-  for (const slug of [...features, ...Object.keys(require('../src/lib/core-route-aliases.json')), 'showcase']) {
+  for (const slug of [...features, ...Object.keys(require('../src/lib/core-route-aliases.json'))]) {
     fs.writeFileSync(path.join(plugin, 'plugin.ts'), `export default { name: 'Collision', slug: '${slug}' }`)
     const result = scan()
     assert.equal(result.status, 1)
