@@ -1,0 +1,12 @@
+[Unit]
+Description=NexiBase demo post-deployment showcase exclusion check
+After=nexibase-demo.service network.target
+
+[Service]
+Type=oneshot
+User=kagla
+Group=kagla
+WorkingDirectory=/home/kagla/nexibase-home-deploy
+ExecStart=/usr/bin/python3 /home/kagla/nexibase-home-deploy/audit.py --site demo
+TimeoutStartSec=240
+UMask=0077

@@ -2,3 +2,6 @@ state.json
 *.lock
 official.git/
 __pycache__/
+node_modules/
+.browsers/
+reports/

@@ -7,5 +7,8 @@
   "port": 9119,
   "preview_port": 9123,
   "public_url": "https://nexibase.com",
-  "override": "/etc/systemd/system/nexibase-home.service.d/zzzzzzzzzz-preserved-deployment.conf"
+  "override": "/etc/systemd/system/nexibase-home.service.d/zzzzzzzzzz-preserved-deployment.conf",
+  "demo_service": "nexibase-demo.service",
+  "demo_url": "https://demo.nexibase.com",
+  "demo_reset_lock": "/tmp/nexibase-demo-reset.lock"
 }
