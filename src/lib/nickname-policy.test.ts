@@ -24,6 +24,17 @@ test('OAuth gets a neutral nickname instead of a reserved provider display name'
   assert.equal(safeSocialNickname('구공탄', '회원42'), '구공탄')
 })
 
+test('official admins may use reserved words but must still provide a nickname', () => {
+  for (const name of ['관리자', '운영진', 'Admin', 'SuperAdmin']) {
+    assert.equal(nicknamePolicyError(name, true), null, name)
+    assert.ok(nicknamePolicyError(name, false), name)
+    assert.ok(nicknamePolicyError(name), name)
+  }
+  for (const value of [null, undefined, {}, 42, '', '   ']) {
+    assert.ok(nicknamePolicyError(value, true))
+  }
+})
+
 test('only active, non-deleted admin role earns the official badge', () => {
   const base = { role: 'admin', status: 'active', deletedAt: null }
   assert.equal(isOfficialAdmin(base), true)

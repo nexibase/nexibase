@@ -19,6 +19,7 @@ interface UserInfo {
   name: string | null
   phone: string | null
   image: string | null
+  isOfficialAdmin: boolean
 }
 
 export default function EditProfilePage() {
@@ -53,7 +54,7 @@ export default function EditProfilePage() {
 
   const handleSave = async () => {
     if (nickname !== user?.nickname) {
-      const error = nicknamePolicyError(nickname)
+      const error = nicknamePolicyError(nickname, user?.isOfficialAdmin === true)
       if (error) { setMessage(error); return }
     }
     setSaving(true)
@@ -190,7 +191,9 @@ export default function EditProfilePage() {
             <div>
               <Label>{t('nickname')}</Label>
               <Input value={nickname} onChange={e => setNickname(e.target.value)} />
-              <p className="mt-1 text-xs text-muted-foreground">{NICKNAME_POLICY_MESSAGE}</p>
+              {!user.isOfficialAdmin && (
+                <p className="mt-1 text-xs text-muted-foreground">{NICKNAME_POLICY_MESSAGE}</p>
+              )}
             </div>
             <div>
               <Label>{t('name')}</Label>

@@ -1,4 +1,5 @@
 import { nicknamePolicyError } from '@/lib/nickname-policy'
+import { isOfficialAdmin } from '@/lib/admin-identity'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
@@ -42,6 +43,7 @@ export async function GET() {
         role: true,
         level: true,
         status: true,
+        deletedAt: true,
         lastLoginAt: true,
         createdAt: true,
         password: true,
@@ -56,9 +58,9 @@ export async function GET() {
       )
     }
 
-    const { password, ...userWithoutPassword } = user
+    const { password, deletedAt, ...userWithoutPassword } = user
     return NextResponse.json({
-      user: userWithoutPassword,
+      user: { ...userWithoutPassword, isOfficialAdmin: isOfficialAdmin({ ...userWithoutPassword, deletedAt }) },
       hasPassword: !!password
     })
 
@@ -101,7 +103,7 @@ export async function PUT(request: NextRequest) {
 
     // Update nickname
     if (nickname !== undefined && nickname !== user.nickname) {
-      const nicknameError = nicknamePolicyError(nickname)
+      const nicknameError = nicknamePolicyError(nickname, isOfficialAdmin(user))
       if (nicknameError) return NextResponse.json({ error: nicknameError }, { status: 400 })
       if (nickname.trim().length < 2) {
         return NextResponse.json(
@@ -188,14 +190,16 @@ export async function PUT(request: NextRequest) {
         role: true,
         level: true,
         status: true,
+        deletedAt: true,
         lastLoginAt: true,
         createdAt: true
       }
     })
 
+    const { deletedAt, ...userWithoutDeletedAt } = updatedUser
     return NextResponse.json({
       message: '프로필이 수정되었습니다.',
-      user: updatedUser
+      user: { ...userWithoutDeletedAt, isOfficialAdmin: isOfficialAdmin({ ...userWithoutDeletedAt, deletedAt }) }
     })
 
   } catch (error) {
