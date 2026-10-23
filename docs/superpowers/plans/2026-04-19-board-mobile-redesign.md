@@ -48,7 +48,7 @@ This is a UI-only refactor. Steps that modify JSX/Tailwind end with a visual che
 - [ ] **Step 0.1: Create feature branch**
 
 ```bash
-cd /home/kagla/nexibase
+cd /path/to/nexibase
 git checkout main
 git pull --ff-only
 git checkout -b feat/board-mobile-redesign
@@ -218,7 +218,7 @@ After this block, the existing body rendering (`<div ref={contentRef} …>`) sta
 - [ ] **Step 2.3: Verify `UserNickname` supports `avatarOnly` prop**
 
 ```bash
-grep -n "avatarOnly" /home/kagla/nexibase/src/components/UserNickname.tsx
+grep -n "avatarOnly" /path/to/nexibase/src/components/UserNickname.tsx
 ```
 
 If it returns matches, skip to Step 2.5. If not, do Step 2.4 to render the avatar directly instead.
@@ -1050,7 +1050,7 @@ Replace with:
 Check `src/messages/<locale>.json` for `boards.loading` and `boards.loadMore`:
 
 ```bash
-grep -rn "loadMore\|loading" /home/kagla/nexibase/src/messages/ | grep -i boards
+grep -rn "loadMore\|loading" /path/to/nexibase/src/messages/ | grep -i boards
 ```
 
 If `loadMore` is missing, add it to every locale file under the `boards` namespace:

@@ -61,7 +61,7 @@ For API steps, verify via `curl` to the dev server.
 - [ ] **Step 0.1: Create feature branch**
 
 ```bash
-cd /home/kagla/nexibase
+cd /path/to/nexibase
 git checkout main
 git pull --ff-only
 git checkout -b feat/board-list-tabular-redesign

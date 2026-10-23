@@ -34,17 +34,17 @@ Unchanged (explicit non-goals, do not touch):
 
 - [ ] **Step 1: Verify working tree is clean on main**
 
-Run: `git -C /home/kagla/nexibase status --short`
+Run: `git -C /path/to/nexibase status --short`
 Expected: No modified tracked files (submodule pointer changes OK; don't include in this feature). If tracked files are dirty, stop and ask.
 
 - [ ] **Step 2: Verify main is up-to-date**
 
-Run: `git -C /home/kagla/nexibase fetch origin && git -C /home/kagla/nexibase log HEAD..origin/main --oneline`
-Expected: Empty output (no unpulled commits). If non-empty, `git -C /home/kagla/nexibase pull --ff-only origin main` first.
+Run: `git -C /path/to/nexibase fetch origin && git -C /path/to/nexibase log HEAD..origin/main --oneline`
+Expected: Empty output (no unpulled commits). If non-empty, `git -C /path/to/nexibase pull --ff-only origin main` first.
 
 - [ ] **Step 3: Create branch**
 
-Run: `git -C /home/kagla/nexibase checkout -b feat/admin-site-locale`
+Run: `git -C /path/to/nexibase checkout -b feat/admin-site-locale`
 Expected: `Switched to a new branch 'feat/admin-site-locale'`
 
 ---
@@ -93,15 +93,15 @@ with:
 
 - [ ] **Step 3: Verify JSON is still valid**
 
-Run: `node -e "JSON.parse(require('fs').readFileSync('/home/kagla/nexibase/src/locales/ko.json','utf8')); JSON.parse(require('fs').readFileSync('/home/kagla/nexibase/src/locales/en.json','utf8')); console.log('ok')"`
+Run: `node -e "JSON.parse(require('fs').readFileSync('/path/to/nexibase/src/locales/ko.json','utf8')); JSON.parse(require('fs').readFileSync('/path/to/nexibase/src/locales/en.json','utf8')); console.log('ok')"`
 Expected: `ok`. If it throws, fix the comma/brace before proceeding.
 
 - [ ] **Step 4: Commit**
 
 Run:
 ```bash
-git -C /home/kagla/nexibase add src/locales/ko.json src/locales/en.json
-git -C /home/kagla/nexibase commit -m "i18n(admin): add siteLocale label and description"
+git -C /path/to/nexibase add src/locales/ko.json src/locales/en.json
+git -C /path/to/nexibase commit -m "i18n(admin): add siteLocale label and description"
 ```
 
 ---
@@ -212,18 +212,18 @@ with:
 
 - [ ] **Step 5: Verify types and build succeed**
 
-Run: `cd /home/kagla/nexibase && npm run lint`
+Run: `cd /path/to/nexibase && npm run lint`
 Expected: No new errors mentioning `site_locale` or `localeOnLoadRef`.
 
-Run: `cd /home/kagla/nexibase && npm run build`
+Run: `cd /path/to/nexibase && npm run build`
 Expected: Build succeeds. (Build is slow — 60-120s is normal.)
 
 - [ ] **Step 6: Commit**
 
 Run:
 ```bash
-git -C /home/kagla/nexibase add src/app/\[locale\]/admin/settings/page.tsx
-git -C /home/kagla/nexibase commit -m "feat(admin-settings): thread site_locale through settings state"
+git -C /path/to/nexibase add src/app/\[locale\]/admin/settings/page.tsx
+git -C /path/to/nexibase commit -m "feat(admin-settings): thread site_locale through settings state"
 ```
 
 ---
@@ -269,15 +269,15 @@ Notes on the guard:
 
 - [ ] **Step 2: Lint + build**
 
-Run: `cd /home/kagla/nexibase && npm run lint && npm run build`
+Run: `cd /path/to/nexibase && npm run lint && npm run build`
 Expected: Both succeed with no new warnings.
 
 - [ ] **Step 3: Commit**
 
 Run:
 ```bash
-git -C /home/kagla/nexibase add src/app/\[locale\]/admin/settings/page.tsx
-git -C /home/kagla/nexibase commit -m "feat(admin-settings): reload page when site_locale changes on save"
+git -C /path/to/nexibase add src/app/\[locale\]/admin/settings/page.tsx
+git -C /path/to/nexibase commit -m "feat(admin-settings): reload page when site_locale changes on save"
 ```
 
 ---
@@ -382,15 +382,15 @@ Insert a new `<div className="grid gap-2">` block between them. The final result
 
 - [ ] **Step 4: Lint + build**
 
-Run: `cd /home/kagla/nexibase && npm run lint && npm run build`
+Run: `cd /path/to/nexibase && npm run lint && npm run build`
 Expected: Both succeed. If `SUPPORTED_LOCALES` type is readonly, TypeScript should accept `.map` without complaint — the generator emits `as const`.
 
 - [ ] **Step 5: Commit**
 
 Run:
 ```bash
-git -C /home/kagla/nexibase add src/app/\[locale\]/admin/settings/page.tsx
-git -C /home/kagla/nexibase commit -m "feat(admin-settings): add site_locale dropdown to site basics"
+git -C /path/to/nexibase add src/app/\[locale\]/admin/settings/page.tsx
+git -C /path/to/nexibase commit -m "feat(admin-settings): add site_locale dropdown to site basics"
 ```
 
 ---
@@ -403,7 +403,7 @@ No automated test infrastructure exists in this repo. Verify in a running dev se
 
 - [ ] **Step 1: Start the dev server**
 
-Run: `cd /home/kagla/nexibase && npm run dev`
+Run: `cd /path/to/nexibase && npm run dev`
 Expected: Server listens on `http://localhost:3000` (or whatever port the repo uses — check terminal output). Leave the dev server running for the remaining steps. If port 3000 is taken by demo.nexibase.com, stop the demo container or run dev on a different port.
 
 - [ ] **Step 2: Log in as admin and open `/admin/settings`**
@@ -461,16 +461,16 @@ If any scenario fails, DO NOT proceed to Task 7. Fix, amend the relevant commit 
 
 - [ ] **Step 1: Review the full diff once more**
 
-Run: `git -C /home/kagla/nexibase diff origin/main...HEAD`
+Run: `git -C /path/to/nexibase diff origin/main...HEAD`
 Expected: Changes span exactly three files: `src/app/[locale]/admin/settings/page.tsx`, `src/locales/ko.json`, `src/locales/en.json`. No stray edits.
 
 - [ ] **Step 2: Push branch**
 
-Run: `git -C /home/kagla/nexibase push -u origin feat/admin-site-locale`
+Run: `git -C /path/to/nexibase push -u origin feat/admin-site-locale`
 
 - [ ] **Step 3: Create PR against `nexibase/nexibase:main`**
 
-Run (from `/home/kagla/nexibase`):
+Run (from `/path/to/nexibase`):
 
 ```bash
 gh pr create --title "feat(admin-settings): editable site language" --body "$(cat <<'EOF'

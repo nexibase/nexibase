@@ -173,7 +173,7 @@ model OrderItem {
 
 - [ ] **Step 1.2: Regenerate merged schema**
 
-Run: `node /home/kagla/nexibase/scripts/scan-plugins.js`
+Run: `node /path/to/nexibase/scripts/scan-plugins.js`
 
 - [ ] **Step 1.3: Create migration**
 
@@ -250,7 +250,7 @@ Run: `npx prisma generate`
 
 Run:
 ```bash
-source /home/kagla/nexibase/.env 2>/dev/null
+source /path/to/nexibase/.env 2>/dev/null
 mariadb -u"$MYSQL_USER" -p"$MYSQL_PASS" -h"$MYSQL_HOST" -P"$MYSQL_PORT" "$MYSQL_DB" \
   -e "DESCRIBE return_requests; DESCRIBE return_items; SELECT \`key\`, value FROM shop_settings WHERE \`key\` IN ('return_window_days','sms_notifications_enabled','sms_provider_config');"
 ```
@@ -260,14 +260,14 @@ Expected: both tables with correct columns + 3 seeded rows.
 
 Shop submodule:
 ```bash
-git -C /home/kagla/nexibase/src/plugins/shop add schema.prisma
-git -C /home/kagla/nexibase/src/plugins/shop commit -m "feat(db): add ReturnRequest and ReturnItem models for fulfillment phase 2"
+git -C /path/to/nexibase/src/plugins/shop add schema.prisma
+git -C /path/to/nexibase/src/plugins/shop commit -m "feat(db): add ReturnRequest and ReturnItem models for fulfillment phase 2"
 ```
 
 Nexibase:
 ```bash
-git -C /home/kagla/nexibase add prisma/migrations/20260423000000_shop_return_exchange/ src/plugins/shop
-git -C /home/kagla/nexibase commit -m "feat(db): shop return/exchange phase 2 migration"
+git -C /path/to/nexibase add prisma/migrations/20260423000000_shop_return_exchange/ src/plugins/shop
+git -C /path/to/nexibase commit -m "feat(db): shop return/exchange phase 2 migration"
 ```
 
 ---
@@ -465,8 +465,8 @@ export async function restoreStockForReturn(
 - [ ] **Step 2.6: Commit**
 
 ```bash
-git -C /home/kagla/nexibase/src/plugins/shop add fulfillment/
-git -C /home/kagla/nexibase/src/plugins/shop commit -m "feat(fulfillment): return state machine, refund calc, stock restoration helper"
+git -C /path/to/nexibase/src/plugins/shop add fulfillment/
+git -C /path/to/nexibase/src/plugins/shop commit -m "feat(fulfillment): return state machine, refund calc, stock restoration helper"
 ```
 
 ---
@@ -617,8 +617,8 @@ If session cookie handling is awkward in curl, test via browser dev tools fetch.
 - [ ] **Step 3.3: Commit**
 
 ```bash
-git -C /home/kagla/nexibase/src/plugins/shop add api/returns/
-git -C /home/kagla/nexibase/src/plugins/shop commit -m "feat(api): customer return request create + list endpoints"
+git -C /path/to/nexibase/src/plugins/shop add api/returns/
+git -C /path/to/nexibase/src/plugins/shop commit -m "feat(api): customer return request create + list endpoints"
 ```
 
 ---
@@ -708,8 +708,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 - [ ] **Step 4.3: Commit**
 
 ```bash
-git -C /home/kagla/nexibase/src/plugins/shop add api/returns/[id]/
-git -C /home/kagla/nexibase/src/plugins/shop commit -m "feat(api): customer return request detail, tracking, cancel"
+git -C /path/to/nexibase/src/plugins/shop add api/returns/[id]/
+git -C /path/to/nexibase/src/plugins/shop commit -m "feat(api): customer return request detail, tracking, cancel"
 ```
 
 ---
@@ -859,8 +859,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 - [ ] **Step 5.4: Commit**
 
 ```bash
-git -C /home/kagla/nexibase/src/plugins/shop add admin/api/returns/
-git -C /home/kagla/nexibase/src/plugins/shop commit -m "feat(admin-api): returns list/detail + approve/reject endpoints"
+git -C /path/to/nexibase/src/plugins/shop add admin/api/returns/
+git -C /path/to/nexibase/src/plugins/shop commit -m "feat(admin-api): returns list/detail + approve/reject endpoints"
 ```
 
 ---
@@ -912,8 +912,8 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
 - [ ] **Step 6.2: Commit**
 
 ```bash
-git -C /home/kagla/nexibase/src/plugins/shop add admin/api/returns/[id]/collect/
-git -C /home/kagla/nexibase/src/plugins/shop commit -m "feat(admin-api): returns collect endpoint (restores stock in transaction)"
+git -C /path/to/nexibase/src/plugins/shop add admin/api/returns/[id]/collect/
+git -C /path/to/nexibase/src/plugins/shop commit -m "feat(admin-api): returns collect endpoint (restores stock in transaction)"
 ```
 
 ---
@@ -1004,8 +1004,8 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
 - [ ] **Step 7.2: Commit**
 
 ```bash
-git -C /home/kagla/nexibase/src/plugins/shop add admin/api/returns/[id]/refund/
-git -C /home/kagla/nexibase/src/plugins/shop commit -m "feat(admin-api): returns refund endpoint (PG refund API call + stock-aware)"
+git -C /path/to/nexibase/src/plugins/shop add admin/api/returns/[id]/refund/
+git -C /path/to/nexibase/src/plugins/shop commit -m "feat(admin-api): returns refund endpoint (PG refund API call + stock-aware)"
 ```
 
 ---
@@ -1122,8 +1122,8 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
 - [ ] **Step 8.2: Commit**
 
 ```bash
-git -C /home/kagla/nexibase/src/plugins/shop add admin/api/returns/[id]/exchange-order/
-git -C /home/kagla/nexibase/src/plugins/shop commit -m "feat(admin-api): returns exchange-order endpoint (creates replacement at price=0)"
+git -C /path/to/nexibase/src/plugins/shop add admin/api/returns/[id]/exchange-order/
+git -C /path/to/nexibase/src/plugins/shop commit -m "feat(admin-api): returns exchange-order endpoint (creates replacement at price=0)"
 ```
 
 ---
@@ -1294,8 +1294,8 @@ export default function ReturnRequestForm() {
 - [ ] **Step 9.2: Commit**
 
 ```bash
-git -C /home/kagla/nexibase/src/plugins/shop add routes/mypage/orders/[orderNo]/return/
-git -C /home/kagla/nexibase/src/plugins/shop commit -m "feat(mypage): customer return/exchange request form"
+git -C /path/to/nexibase/src/plugins/shop add routes/mypage/orders/[orderNo]/return/
+git -C /path/to/nexibase/src/plugins/shop commit -m "feat(mypage): customer return/exchange request form"
 ```
 
 ---
@@ -1441,8 +1441,8 @@ export default function ReturnDetailPage() {
 - [ ] **Step 10.3: Commit**
 
 ```bash
-git -C /home/kagla/nexibase/src/plugins/shop add routes/mypage/returns/
-git -C /home/kagla/nexibase/src/plugins/shop commit -m "feat(mypage): customer returns list and detail pages"
+git -C /path/to/nexibase/src/plugins/shop add routes/mypage/returns/
+git -C /path/to/nexibase/src/plugins/shop commit -m "feat(mypage): customer returns list and detail pages"
 ```
 
 ---
@@ -1475,8 +1475,8 @@ Place the button at the card-level, not per-item (since the form handles item-le
 - [ ] **Step 11.2: Commit**
 
 ```bash
-git -C /home/kagla/nexibase/src/plugins/shop add routes/mypage/orders/[orderNo]/page.tsx
-git -C /home/kagla/nexibase/src/plugins/shop commit -m "feat(mypage): add return/exchange button on order detail"
+git -C /path/to/nexibase/src/plugins/shop add routes/mypage/orders/[orderNo]/page.tsx
+git -C /path/to/nexibase/src/plugins/shop commit -m "feat(mypage): add return/exchange button on order detail"
 ```
 
 ---
@@ -1635,8 +1635,8 @@ Run `node scripts/scan-plugins.js`.
 - [ ] **Step 12.4: Commit**
 
 ```bash
-git -C /home/kagla/nexibase/src/plugins/shop add admin/returns/ admin/menus.ts locales/
-git -C /home/kagla/nexibase/src/plugins/shop commit -m "feat(admin): returns list + detail pages with full action buttons"
+git -C /path/to/nexibase/src/plugins/shop add admin/returns/ admin/menus.ts locales/
+git -C /path/to/nexibase/src/plugins/shop commit -m "feat(admin): returns list + detail pages with full action buttons"
 ```
 
 ---
@@ -1701,8 +1701,8 @@ And import at top.
 - [ ] **Step 13.3: Commit**
 
 ```bash
-git -C /home/kagla/nexibase/src/plugins/shop add admin/orders/
-git -C /home/kagla/nexibase/src/plugins/shop commit -m "feat(admin): related returns section on order detail"
+git -C /path/to/nexibase/src/plugins/shop add admin/orders/
+git -C /path/to/nexibase/src/plugins/shop commit -m "feat(admin): related returns section on order detail"
 ```
 
 ---
@@ -1896,8 +1896,8 @@ All notifications are fire-and-forget (outside critical transaction, inside try/
 - [ ] **Step 14.7: Commit**
 
 ```bash
-git -C /home/kagla/nexibase/src/plugins/shop add notifications/ api/ admin/api/
-git -C /home/kagla/nexibase/src/plugins/shop commit -m "feat(notifications): in-app + email dispatcher with per-event templates"
+git -C /path/to/nexibase/src/plugins/shop add notifications/ api/ admin/api/
+git -C /path/to/nexibase/src/plugins/shop commit -m "feat(notifications): in-app + email dispatcher with per-event templates"
 ```
 
 ---
@@ -1914,7 +1914,7 @@ git -C /home/kagla/nexibase/src/plugins/shop commit -m "feat(notifications): in-
 - [ ] **Step 15.1: Check User.smsOptIn presence**
 
 ```bash
-grep -n "smsOptIn\|sms_opt_in" /home/kagla/nexibase/prisma/schema.base.prisma
+grep -n "smsOptIn\|sms_opt_in" /path/to/nexibase/prisma/schema.base.prisma
 ```
 
 If missing, add a migration to the nexibase core that adds `smsOptIn Boolean @default(false)` to the User model. (Schema additions to core require nexibase migration, not plugin-scoped.)
@@ -1993,8 +1993,8 @@ If CoolSMS account isn't available, the SMS channel silently skips (no error). V
 - [ ] **Step 15.5: Commit**
 
 ```bash
-git -C /home/kagla/nexibase/src/plugins/shop add notifications/channels/sms.ts admin/settings/
-git -C /home/kagla/nexibase/src/plugins/shop commit -m "feat(notifications): SMS channel via CoolSMS + admin settings"
+git -C /path/to/nexibase/src/plugins/shop add notifications/channels/sms.ts admin/settings/
+git -C /path/to/nexibase/src/plugins/shop commit -m "feat(notifications): SMS channel via CoolSMS + admin settings"
 ```
 
 ---
@@ -2050,13 +2050,13 @@ Append to spec §8 Phase 1 deployment section, new subsection:
 - [ ] **Step 16.5: Commit + push + PRs**
 
 ```bash
-git -C /home/kagla/nexibase/src/plugins/shop add plugin.ts
-git -C /home/kagla/nexibase/src/plugins/shop commit -m "chore: v1.2.0 — fulfillment phase 2"
-git -C /home/kagla/nexibase/src/plugins/shop push -u origin feat/shop-fulfillment-phase2
+git -C /path/to/nexibase/src/plugins/shop add plugin.ts
+git -C /path/to/nexibase/src/plugins/shop commit -m "chore: v1.2.0 — fulfillment phase 2"
+git -C /path/to/nexibase/src/plugins/shop push -u origin feat/shop-fulfillment-phase2
 
-git -C /home/kagla/nexibase add docs/superpowers/specs/ src/plugins/shop
-git -C /home/kagla/nexibase commit -m "chore: bump shop submodule to v1.2.0 + append Phase 2 deploy notes"
-git -C /home/kagla/nexibase push -u origin feat/shop-fulfillment-phase2
+git -C /path/to/nexibase add docs/superpowers/specs/ src/plugins/shop
+git -C /path/to/nexibase commit -m "chore: bump shop submodule to v1.2.0 + append Phase 2 deploy notes"
+git -C /path/to/nexibase push -u origin feat/shop-fulfillment-phase2
 ```
 
 Create PRs on both repos (plugin-shop + nexibase) referencing the spec and plan.

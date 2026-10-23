@@ -1,20 +1,22 @@
 # nexibase.com 전용 배포
 
+이 문서의 `/path/to/...`는 실제 서버 경로를 가린 예시다. 명령 실행 전 비공개 로컬 작업 지침과 설치된 서버 설정에서 실제 경로를 확인해 대입한다. 문서의 예시 경로로 실제 스크립트·설정을 바꾸지 않는다.
+
 공식 NexiBase 업데이트를 현재 운영 사이트 소스에 3-way 병합하는 **nexibase.com 운영자 전용 도구**다. 공식 저장소의 `deploy/home`에 보관하며 일반 설치·빌드·시드·데모 배포에서는 실행하지 않는다.
 
 쇼케이스 갤러리·홈 위젯·모바일 바로가기는 운영 서버에 이미 있는 별도 수정사항이다. 이 폴더는 해당 소스나 설치 기본값을 추가하지 않고, 업데이트 중 기존 기능이 보존되는지만 검사한다. 쇼케이스는 공식 기본 기능에 포함하지 않는다. `config.json`, 초기 기준 커밋, 검증 대상 게시글·로고는 nexibase.com 전용이므로 다른 설치 사이트에서 그대로 실행하지 않는다.
 
-서버 진입점: `/home/kagla/deploy-nexibase-home`
+서버 진입점: `/path/to/operator-home/deploy-nexibase-home`
 
 ```sh
 # 다음 공식 릴리즈가 v0.34.2인 경우: 준비, 검증 후 서비스 전환까지 실행
-/home/kagla/deploy-nexibase-home deploy --ref v0.34.2
+/path/to/operator-home/deploy-nexibase-home deploy --ref v0.34.2
 
 # 서비스 전환 없이 병합·테스트·빌드·실행 검증만 수행
-/home/kagla/deploy-nexibase-home prepare --ref v0.34.2
+/path/to/operator-home/deploy-nexibase-home prepare --ref v0.34.2
 
 # 준비 완료 출력에 나온 경로를 지정하여 전환
-/home/kagla/deploy-nexibase-home activate --release /backup/nexibase-home-releases/실제-준비-폴더
+/path/to/operator-home/deploy-nexibase-home activate --release /path/to/releases/실제-준비-폴더
 ```
 
 실제로 존재하는 공식 릴리즈 태그를 명시해야 한다. 같은 버전을 `prepare`하면 서비스 전환 없는 리허설을 실행하며 같은 버전의 `activate`는 차단한다.
@@ -22,7 +24,7 @@
 ## 보존과 중단 조건
 
 - systemd에서 현재 실행 경로를 확인한다. 마지막으로 반영한 공식 커밋은 비공개 `state.json`에 기록한다. 다른 도구가 실행 경로를 바꾸면 기준을 자동 추정하지 않고 중단한다.
-- `/backup/nexibase-home-releases`에 현재 소스를 복사한다. `.env`와 운영 전용 추가 파일을 보존하고 공식 기준 커밋에서 새 태그까지의 변경만 병합한다. 플러그인 서브모듈도 실제 파일로 비교한다. 충돌, 수정한 파일의 삭제, 운영 전용 파일과 공식 새 파일의 충돌은 중단한다.
+- `/path/to/releases`에 현재 소스를 복사한다. `.env`와 운영 전용 추가 파일을 보존하고 공식 기준 커밋에서 새 태그까지의 변경만 병합한다. 플러그인 서브모듈도 실제 파일로 비교한다. 충돌, 수정한 파일의 삭제, 운영 전용 파일과 공식 새 파일의 충돌은 중단한다.
 - DB와 업로드 백업을 비공개 `tmp`에 만든다. 설치/초기화/시드/DB push를 실행하지 않는다. DB 마이그레이션은 상태만 확인한다. 미적용 마이그레이션이 있는 업데이트는 별도의 스키마 검토·적용 후 다시 준비해야 한다.
 - 쇼케이스 UI/API/홈 위젯/다국어/모바일 메뉴, 게시글 작성자 아바타 대체 표시, GA 직접 초기화, 쿠키 동의 제거를 검사한다. 의존성 설치, 전체 테스트, 타입 검사, 프로덕션 빌드 후 다시 검사한다.
 - `public/uploads`는 기존 공유 업로드에 연결한다. 환경설정·게시판·메뉴·홈 위젯·게시글·회원 프로필 DB 값과 기존 업로드 파일의 해시를 비교한다. YEOK 소개와 최저가 문구, 관리자 로고도 확인한다. 원본 데이터는 검증 로그에 출력하지 않는다.
@@ -40,12 +42,12 @@
 
 ```sh
 python3 test_deploy.py
-/home/kagla/deploy-nexibase-home prepare --ref v0.34.1
+/path/to/operator-home/deploy-nexibase-home prepare --ref v0.34.1
 ```
 
 회귀 테스트는 실제 3-way 병합, 운영 파일 보존, 충돌/삭제/파일명 충돌 차단, 비공개 환경 파일 유입 차단, 필수 기능 누락 차단, 검증 이후 소스 변경 감지를 다룬다. 임시 테스트 파일은 이 프로젝트 내부 `tmp/deploy-tests`에만 생성한다. 준비 로그·백업·검증 해시는 각 릴리즈의 `tmp`에 보관한다. 백업에는 운영 데이터가 있으므로 공개 저장소에 올리지 않는다.
 
-2026-10-23 서버 검증: 배포 도구 회귀 테스트 12개, 사이트 테스트 64개, 타입 검사, 프로덕션 빌드, 미리보기와 운영 HTTP/DB/업로드 보존 검사를 통과했다. 공유 업로드 55개를 확인했다. `.env` 보존 검사와 같은 버전 서비스 전환 차단도 확인했다. 리허설 경로는 `/backup/nexibase-home-releases/20261023T072535Z-v0.34.1`이며 운영 서비스의 실행 경로·PID가 검증 전후 동일했다. 미리보기는 종료했다.
+2026-10-23 서버 검증: 배포 도구 회귀 테스트 12개, 사이트 테스트 64개, 타입 검사, 프로덕션 빌드, 미리보기와 운영 HTTP/DB/업로드 보존 검사를 통과했다. 공유 업로드 55개를 확인했다. `.env` 보존 검사와 같은 버전 서비스 전환 차단도 확인했다. 리허설 경로는 `/path/to/releases/20261023T072535Z-v0.34.1`이며 운영 서비스의 실행 경로·PID가 검증 전후 동일했다. 미리보기는 종료했다.
 
 ## 배포 후 자동 검사
 
@@ -53,13 +55,13 @@ python3 test_deploy.py
 - 데모: 서비스가 시작·재시작되면 `ExecStartPost` 훅이 별도의 `nexibase-demo-deployment-check.service`를 실행한다. 데모 검사 실패는 검사 유닛을 실패 상태로 남기며 웹사이트 자체를 종료하거나 재시작하지 않는다. 배포 완료 판정 시 검사 유닛의 완료·성공과 최신 보고서의 시각·결과를 확인한다.
 - 데모 검사 범위: 운영 전용 소스·위젯 등록·DB 게시판/메뉴/위젯이 없음, `/api/showcase`와 `/api/boards/showcase`가 404, 데스크톱·모바일 펼침 메뉴·홈에 운영 전용 쇼케이스가 없음. 일반 클라이언트 게시판 페이지의 HTTP 200 셸은 게시판 존재로 간주하지 않는다.
 - 데모 검사는 기존 초기화 작업과 같은 파일 잠금을 사용해 초기화 도중 검사하는 일을 막는다. 검사에서는 로그인·글 작성·설정 변경·시드·데이터 초기화를 실행하지 않는다.
-- 보고서·스크린샷·비공개 로그는 `/home/kagla/nexibase-home-deploy/reports`에 보관한다. `latest-all.json`, `latest-home.json`, `latest-demo.json`은 각 범위의 마지막 결과이며 각 실행의 별도 보고서도 남긴다. 정상은 종료 코드 0, 실패는 1이다. 브라우저나 필수 의존성이 없으면 검사를 건너뛰지 않고 실패한다.
+- 보고서·스크린샷·비공개 로그는 `/path/to/deployment-control/reports`에 보관한다. `latest-all.json`, `latest-home.json`, `latest-demo.json`은 각 범위의 마지막 결과이며 각 실행의 별도 보고서도 남긴다. 정상은 종료 코드 0, 실패는 1이다. 브라우저나 필수 의존성이 없으면 검사를 건너뛰지 않고 실패한다.
 
 재배포 없이도 동일한 검사를 실행할 수 있다.
 
 ```sh
-/home/kagla/check-nexibase-deployment --site all
-/home/kagla/check-nexibase-deployment --site demo
+/path/to/operator-home/check-nexibase-deployment --site all
+/path/to/operator-home/check-nexibase-deployment --site demo
 systemctl status nexibase-demo-deployment-check.service
 # 데모 검사 유닛만 재실행 (데모 웹 서비스는 재시작하지 않음)
 sudo systemctl restart nexibase-demo-deployment-check.service
@@ -73,7 +75,7 @@ CI는 실제 Chromium으로 정상 운영/데모, 모바일 바로가기 누락,
 
 운영 `activate`를 시도하면 전환 전 검증부터 복구 완료까지 다음 파일을 자동 갱신한다. 최초 전환 시도부터 생성하며 과거 배포 결과를 추정해 만들지 않는다.
 
-- 최근 배포 시도: `/home/kagla/nexibase-home-deploy/reports/latest-deployment.json`
+- 최근 배포 시도: `/path/to/deployment-control/reports/latest-deployment.json`
 - 시도별 보관본: 같은 `reports/deployments/<시도 ID>/result.json`
 - 해당 배포 폴더의 바로가기 사본: `tmp/deployment-result.json`
 - 검사·복구 검사 보고서가 생성된 경우 `tmp/post-deploy-checks/result.json`과 `tmp/recovery-checks/result.json`에도 같은 배포 ID·경로·복구 결과를 연결한다. 이전 시도의 검사 결과는 새 시도에 연결하지 않는다.
@@ -94,7 +96,7 @@ CI는 실제 Chromium으로 정상 운영/데모, 모바일 바로가기 누락,
 복구는 이전 systemd 설정 복원, 재시작, 이전 경로·서비스 활성 확인, HTTP·운영 API·브라우저 검증을 통과해야 성공이다. 복구 검사는 운영 사이트만 대상으로 하므로 원래 실패가 데모 검사였다면 그 실패와 운영 복구 성공을 구분할 수 있다. 원래 실패와 복구 실패를 서로 덮어쓰지 않는다. 상태·오류·경로는 비공개 원자적 JSON 파일로 남기고 접속 URL의 인증정보와 비밀 변수는 가린다.
 
 ```sh
-cat /home/kagla/nexibase-home-deploy/reports/latest-deployment.json
+cat /path/to/deployment-control/reports/latest-deployment.json
 ```
 
 단독 재검사로 `latest-all.json`이 갱신되어도 `latest-deployment.json`과 시도별 배포·복구 이력은 유지한다.

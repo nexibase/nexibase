@@ -207,7 +207,7 @@ export const seedEn: SeedData = {
 
 - [ ] **Step 3: 빌드 검증**
 
-Run: `cd /home/kagla/nexibase && npx next build 2>&1 | tail -10`
+Run: `cd /path/to/nexibase && npx next build 2>&1 | tail -10`
 Expected: 성공, 타입 오류 없음.
 
 - [ ] **Step 4: 커밋**
@@ -310,7 +310,7 @@ Read `.gitignore`, find the section with other `_generated*` entries, append:
 
 Run:
 ```bash
-cd /home/kagla/nexibase && node scripts/scan-plugins.js 2>&1 | tail -10
+cd /path/to/nexibase && node scripts/scan-plugins.js 2>&1 | tail -10
 ```
 Expected: `[scan-plugins] Registered 1 install locale(s): en`
 
@@ -341,7 +341,7 @@ export type Locale = (typeof routing.locales)[number]
 
 - [ ] **Step 6: 빌드 검증**
 
-Run: `cd /home/kagla/nexibase && npx next build 2>&1 | tail -15`
+Run: `cd /path/to/nexibase && npx next build 2>&1 | tail -15`
 Expected: 성공, 타입 오류 없음. `SUPPORTED_LOCALES`가 `['en']`일 때도 next-intl이 정상 동작.
 
 - [ ] **Step 7: 커밋**
@@ -496,7 +496,7 @@ export async function runInstall(params: InstallParams): Promise<void> {
 
 - [ ] **Step 3: 빌드 검증**
 
-Run: `cd /home/kagla/nexibase && npx next build 2>&1 | tail -15`
+Run: `cd /path/to/nexibase && npx next build 2>&1 | tail -15`
 Expected: 타입 오류 없음. `localeRegistry` import가 `_generated-registry.ts`에서 정상 해석됨.
 
 만약 Prisma 타입 오류(예: `widgetKey` 중복 제약 등)가 나오면 기존 스키마의 unique constraint에 맞춰 조정. 특히 `HomeWidget.widgetKey`는 `@unique`이므로 동일 키로 재실행 시 충돌 가능 (install은 1회성이므로 실무적으로 문제 없음).
@@ -614,7 +614,7 @@ export async function POST(request: NextRequest) {
 
 - [ ] **Step 2: 빌드 검증**
 
-Run: `cd /home/kagla/nexibase && npx next build 2>&1 | grep -E "(api/install|error)" | head -10`
+Run: `cd /path/to/nexibase && npx next build 2>&1 | grep -E "(api/install|error)" | head -10`
 Expected: `/api/install` route가 빌드 목록에 나타남. 에러 없음.
 
 - [ ] **Step 3: 커밋**
@@ -701,7 +701,7 @@ function isAllowedWhenNotInstalled(pathname: string): boolean {
 
 - [ ] **Step 4: 빌드 검증**
 
-Run: `cd /home/kagla/nexibase && npx next build 2>&1 | tail -10`
+Run: `cd /path/to/nexibase && npx next build 2>&1 | tail -10`
 Expected: 성공.
 
 **주의:** 미들웨어에서 Prisma 사용 시 Edge runtime 제약 이슈 가능성. 현재 Nexibase `proxy.ts`가 이미 fetch를 쓰므로 Node runtime 사용 중일 수 있음. 빌드 에러가 `edge runtime` 관련이면 `export const runtime = 'nodejs'` 명시 필요.
@@ -788,7 +788,7 @@ export default function InstallStep1() {
 
 - [ ] **Step 3: 빌드 검증**
 
-Run: `cd /home/kagla/nexibase && npx next build 2>&1 | grep -E "(install|error)" | head -10`
+Run: `cd /path/to/nexibase && npx next build 2>&1 | grep -E "(install|error)" | head -10`
 Expected: `/install` route 빌드됨. 에러 없음.
 
 - [ ] **Step 4: 커밋**
@@ -862,7 +862,7 @@ export default getRequestConfig(async ({ requestLocale }) => {
 
 - [ ] **Step 3: 빌드 검증**
 
-Run: `cd /home/kagla/nexibase && npx next build 2>&1 | tail -10`
+Run: `cd /path/to/nexibase && npx next build 2>&1 | tail -10`
 Expected: 성공.
 
 - [ ] **Step 4: 커밋**
@@ -1105,7 +1105,7 @@ export default function InstallStep2() {
 
 - [ ] **Step 2: 빌드 검증**
 
-Run: `cd /home/kagla/nexibase && npx next build 2>&1 | grep -E "(install|error)" | head -10`
+Run: `cd /path/to/nexibase && npx next build 2>&1 | grep -E "(install|error)" | head -10`
 Expected: `/install/setup` 빌드됨. 에러 없음.
 
 - [ ] **Step 3: 커밋**
@@ -1262,7 +1262,7 @@ Dispatch a general-purpose subagent (sonnet model) with the following prompt:
 ```
 You are creating a Korean machine translation of src/lib/install/seed-en.ts.
 
-**Working directory:** /home/kagla/nexibase
+**Working directory:** /path/to/nexibase
 **Branch:** feat/install-wizard (or current feature branch)
 
 Task:
@@ -1294,7 +1294,7 @@ Korean translation guidelines:
 - Preserve all JSON/TS syntax exactly
 
 After creating the file, verify:
-- TypeScript compiles cleanly: `cd /home/kagla/nexibase && npx tsc --noEmit src/lib/install/seed-ko.ts` (or use `npx next build`)
+- TypeScript compiles cleanly: `cd /path/to/nexibase && npx tsc --noEmit src/lib/install/seed-ko.ts` (or use `npx next build`)
 - File structure matches seed-en.ts exactly (same fields, same arrays, same order)
 
 Then commit:
@@ -1313,7 +1313,7 @@ Report back with:
 
 After subagent completes, run:
 ```bash
-cd /home/kagla/nexibase && node scripts/scan-plugins.js 2>&1 | tail -5
+cd /path/to/nexibase && node scripts/scan-plugins.js 2>&1 | tail -5
 ```
 Expected: `[scan-plugins] Registered 2 install locale(s): en, ko` (or similar if ko.json not yet — 다음 태스크에서 생성)
 
@@ -1325,7 +1325,7 @@ Expected: `[scan-plugins] Registered 2 install locale(s): en, ko` (or similar if
 
 Run:
 ```bash
-cd /home/kagla/nexibase && node -e "
+cd /path/to/nexibase && node -e "
 const m = require('./src/lib/install/seed-ko.ts.compiled-check');
 // TS 파일이므로 직접 require 불가. 대신:
 " 2>&1 || true
@@ -1357,7 +1357,7 @@ Dispatch a general-purpose subagent (sonnet model) with the following prompt:
 ```
 You are creating a Korean machine translation of src/locales/en.json.
 
-**Working directory:** /home/kagla/nexibase
+**Working directory:** /path/to/nexibase
 **Branch:** feat/install-wizard (or current feature branch)
 
 Task:
@@ -1389,7 +1389,7 @@ console.log('en:', count(en), 'ko:', count(ko));
 "`
   Expected: en and ko counts match within ~5 keys (exact match preferred)
 
-3. Run scan-plugins: `cd /home/kagla/nexibase && node scripts/scan-plugins.js 2>&1 | tail -5`
+3. Run scan-plugins: `cd /path/to/nexibase && node scripts/scan-plugins.js 2>&1 | tail -5`
    Expected: `[scan-plugins] Registered 2 install locale(s): en, ko`
 
 4. Build check: `npx next build 2>&1 | tail -5`
@@ -1420,13 +1420,13 @@ Report back with:
 
 Run:
 ```bash
-cd /home/kagla/nexibase && node scripts/scan-plugins.js 2>&1 | tail -5
+cd /path/to/nexibase && node scripts/scan-plugins.js 2>&1 | tail -5
 ```
 Expected: `[scan-plugins] Registered 2 install locale(s): en, ko`
 
 - [ ] **Step 3: 빌드 검증**
 
-Run: `cd /home/kagla/nexibase && npx next build 2>&1 | tail -15`
+Run: `cd /path/to/nexibase && npx next build 2>&1 | tail -15`
 Expected: 성공. 이제 ko가 `routing.locales`에 자동 포함됨.
 
 - [ ] **Step 4: 커밋 확인**
@@ -1447,7 +1447,7 @@ Expected: `feat(install): 한국어 메시지 파일 (기계 번역, 732 키)` �
 
 Run:
 ```bash
-cd /home/kagla/nexibase && npm run reset-install -- --confirm
+cd /path/to/nexibase && npm run reset-install -- --confirm
 ```
 Expected: 경고 출력 후 5초 카운트다운 후 모든 데이터 삭제. 완료 메시지 출력.
 
@@ -1455,7 +1455,7 @@ Expected: 경고 출력 후 5초 카운트다운 후 모든 데이터 삭제. �
 
 Run (새 터미널에서):
 ```bash
-cd /home/kagla/nexibase && npm run dev
+cd /path/to/nexibase && npm run dev
 ```
 Expected: scan-plugins 실행 후 Next.js dev 서버 시작 (http://localhost:3001).
 
@@ -1577,18 +1577,18 @@ If README doesn't exist or doesn't have an install section, create/append this.
 
 Run:
 ```bash
-cd /home/kagla/nexibase && node -e "const p=require('./package.json'); p.version='0.13.0'; require('fs').writeFileSync('./package.json', JSON.stringify(p,null,2)+'\n')"
+cd /path/to/nexibase && node -e "const p=require('./package.json'); p.version='0.13.0'; require('fs').writeFileSync('./package.json', JSON.stringify(p,null,2)+'\n')"
 ```
 
 - [ ] **Step 3: 최종 빌드 검증**
 
-Run: `cd /home/kagla/nexibase && npx next build 2>&1 | tail -15`
+Run: `cd /path/to/nexibase && npx next build 2>&1 | tail -15`
 Expected: clean build, 0 errors.
 
 - [ ] **Step 4: 커밋 + 푸시**
 
 ```bash
-cd /home/kagla/nexibase
+cd /path/to/nexibase
 git add package.json README.md
 git commit -m "chore: v0.13.0 — install wizard"
 git push -u origin feat/install-wizard
