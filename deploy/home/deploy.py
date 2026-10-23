@@ -177,6 +177,10 @@ class Deployment:
             args.extend([url, compare or '-'])
         run(args, log=self.log, env=self.env)
 
+    def audit(self, release, url, output, site):
+        run(['python3', HERE / 'audit.py', '--site', site, '--home-release', release,
+             '--home-url', url, '--output', output], log=self.log, env=self.env)
+
     def checkout(self, mirror, commit, dest):
         run(['git', 'clone', '--shared', '--no-checkout', mirror, dest], log=self.log)
         run(['git', 'remote', 'set-url', 'origin', self.config['repository']], cwd=dest, log=self.log)
@@ -263,6 +267,7 @@ class Deployment:
                  '--hostname', 'localhost', '--port', port], log=self.log)
             self.wait_http('http://localhost:' + port)
             self.guard(job, job / 'tmp/preview.json', 'http://localhost:' + port, compare)
+            self.audit(job, 'http://localhost:' + port, job / 'tmp/preview-checks', 'home')
         finally:
             run(['sudo', '-n', 'systemctl', 'stop', unit], log=self.log, check=False)
 
@@ -315,6 +320,8 @@ class Deployment:
             if self.active() != job:
                 raise RuntimeError('Another systemd override took precedence')
             self.guard(job, job / 'tmp/live.json', self.config['public_url'], job / 'tmp/before.json')
+            # Browser/UI + both sites' runtime checks must pass before publishing deployment state.
+            self.audit(job, self.config['public_url'], job / 'tmp/post-deploy-checks', 'all')
             save(self.state_path, {'active': str(job), 'official_commit': manifest['official_commit'],
                                    'ref': manifest['ref'], 'previous_active': str(active)})
         except BaseException:

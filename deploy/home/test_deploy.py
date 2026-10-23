@@ -129,6 +129,51 @@ class PreservationTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, 'environment configuration changed'):
             deploy.environment_guard(self.current, self.output)
 
+    def test_post_deployment_browser_failure_rolls_back_before_state_commit(self):
+        candidate = self.root / 'candidate'
+        (candidate / 'tmp').mkdir(parents=True)
+        (candidate / '.next').mkdir()
+        self.put(candidate, '.next/BUILD_ID', 'built')
+        uploads = self.root / 'shared-uploads'
+        uploads.mkdir()
+        (candidate / 'public').mkdir()
+        try:
+            (candidate / 'public/uploads').symlink_to(uploads, target_is_directory=True)
+        except OSError:
+            self.skipTest('Host does not permit symlink creation')
+        override = self.root / 'service.conf'
+        override.write_text('previous service config')
+        deploy.save(candidate / 'tmp/ready.json', {
+            'ready': True, 'active': str(self.current), 'previous_commit': 'baseline',
+            'official_commit': 'next-release', 'ref': 'v0.34.2',
+            'active_hash': deploy.digest_tree(self.current),
+            'source_hash': deploy.digest_tree(candidate),
+            'build_hash': deploy.digest_tree(candidate / '.next', False),
+        })
+        operation = deploy.Deployment.__new__(deploy.Deployment)
+        operation.root = self.root
+        operation.state = {'official_commit': 'baseline'}
+        operation.state_path = self.root / 'state.json'
+        operation.env = {}
+        operation.config = {'uploads': str(uploads), 'override': str(override), 'node': '/node',
+                            'port': 9119, 'public_url': 'https://nexibase.com', 'service': 'test-home.service'}
+        operation.check_active = lambda: self.current
+        operation.active = lambda: candidate
+        try:
+            with mock.patch.object(deploy, 'run') as commands, mock.patch.object(deploy, 'source_guard'), \
+                 mock.patch.object(operation, 'preview'), mock.patch.object(operation, 'guard'), \
+                 mock.patch.object(operation, 'wait_http'), \
+                 mock.patch.object(operation, 'audit', side_effect=RuntimeError('browser check failed')) as audit:
+                with self.assertRaisesRegex(RuntimeError, 'browser check failed'):
+                    operation.activate(candidate)
+                self.assertFalse(operation.state_path.exists(), 'Failed verification must not commit deployment state')
+                audit.assert_called_once_with(candidate, 'https://nexibase.com', candidate / 'tmp/post-deploy-checks', 'all')
+                calls = [[str(a) for a in call.args[0]] for call in commands.call_args_list]
+                self.assertEqual(sum(c == ['sudo', '-n', 'systemctl', 'restart', 'test-home.service'] for c in calls), 2)
+                self.assertTrue(any('previous-override.conf' in ' '.join(c) and 'install' in c for c in calls))
+        finally:
+            operation.log.close()
+
 
 if __name__ == '__main__':
     unittest.main()

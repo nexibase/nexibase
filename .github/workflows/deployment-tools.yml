@@ -27,8 +27,24 @@ jobs:
           node-version: 22
       - name: 운영 수정 보존 및 배포 차단 회귀 테스트
         run: python3 deploy/home/test_deploy.py
+      - name: 운영 도구 전용 의존성 설치
+        working-directory: deploy/home
+        run: npm ci --ignore-scripts
+      - name: 검사 전용 Chromium 설치
+        working-directory: deploy/home
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/deploy/home/.browsers
+        run: npx playwright install --with-deps chromium --only-shell
+      - name: 실제 브라우저 정상·실패 회귀 검사
+        working-directory: deploy/home
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/deploy/home/.browsers
+        run: npm test
       - name: 배포 스크립트 문법 검사
         run: |
           node --check deploy/home/verify.cjs
+          node --check deploy/home/verify-demo.cjs
+          node --check deploy/home/browser-check.cjs
           bash -n deploy/home/install.sh
           sh -n deploy/home/deploy-nexibase-home
+          sh -n deploy/home/check-nexibase-deployment

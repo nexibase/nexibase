@@ -1,0 +1,7 @@
+{
+  "name": "nexibase-operator-checks",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": { "test": "node --test browser-check.test.cjs" },
+  "dependencies": { "playwright": "1.64.1" }
+}
