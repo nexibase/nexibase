@@ -1,0 +1,11 @@
+{
+  "repository": "https://github.com/nexibase/nexibase.git",
+  "service": "nexibase-home.service",
+  "releases": "/backup/nexibase-home-releases",
+  "uploads": "/home/kagla/_nexibase.com/public/uploads",
+  "node": "/home/kagla/.local/share/fnm/node-versions/v24.19.0/installation/bin/node",
+  "port": 9119,
+  "preview_port": 9123,
+  "public_url": "https://nexibase.com",
+  "override": "/etc/systemd/system/nexibase-home.service.d/zzzzzzzzzz-preserved-deployment.conf"
+}

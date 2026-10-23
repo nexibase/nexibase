@@ -1,0 +1,34 @@
+name: 운영 전용 배포 도구 검사
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'deploy/home/**'
+      - '.github/workflows/deployment-tools.yml'
+  pull_request:
+    paths:
+      - 'deploy/home/**'
+      - '.github/workflows/deployment-tools.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  deployment-tools:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: 운영 수정 보존 및 배포 차단 회귀 테스트
+        run: python3 deploy/home/test_deploy.py
+      - name: 배포 스크립트 문법 검사
+        run: |
+          node --check deploy/home/verify.cjs
+          bash -n deploy/home/install.sh
+          sh -n deploy/home/deploy-nexibase-home
