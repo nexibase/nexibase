@@ -14,9 +14,10 @@ export function hasReservedNickname(nickname: unknown): boolean {
   return ['관리', '운영', 'admin'].some(word => inspected.includes(word))
 }
 
-export function nicknamePolicyError(nickname: unknown): string | null {
+/** Only pass allowReserved after checking the authenticated user's current identity. */
+export function nicknamePolicyError(nickname: unknown, allowReserved = false): string | null {
   if (typeof nickname !== 'string' || !nickname.trim()) return '닉네임을 입력해주세요.'
-  return hasReservedNickname(nickname) ? NICKNAME_POLICY_MESSAGE : null
+  return !allowReserved && hasReservedNickname(nickname) ? NICKNAME_POLICY_MESSAGE : null
 }
 
 /** OAuth provider display names are untrusted, but must not break sign-in. */
