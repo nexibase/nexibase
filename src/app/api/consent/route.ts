@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { randomUUID } from 'node:crypto'
 import { getServerSession } from 'next-auth'
-import { authOptions } from '@/app/api/auth/[...nextauth]/route'
+import { authOptions } from '@/lib/auth-options'
 import { prisma } from '@/lib/prisma'
 import { serializeConsent } from '@/lib/consent/cookie'
 import { isCrossSiteWrite } from '@/lib/consent/origin'
