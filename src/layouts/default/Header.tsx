@@ -12,7 +12,6 @@ import Image from "next/image"
 import { useRouter, usePathname } from "next/navigation"
 import { headerWidgets } from "@/lib/widgets/_generated-header-widgets"
 import { useSite } from "@/lib/SiteContext"
-import { getMobileShowcaseMenu } from "@/lib/showcase-navigation"
 import { useTranslations, useLocale } from 'next-intl'
 import { formatDistanceToNow } from 'date-fns'
 import { ko, enUS } from 'date-fns/locale'
@@ -45,7 +44,6 @@ export default function Header() {
   const router = useRouter()
   const pathname = usePathname()
   const { theme, setTheme } = useTheme()
-  const mobileShowcaseMenu = getMobileShowcaseMenu(headerMenus, user)
 
   useEffect(() => {
     setMounted(true)
@@ -203,22 +201,6 @@ export default function Header() {
               )}
               <span className="text-xl font-bold text-foreground hidden md:block">{isLoading ? '' : settings.site_name}</span>
             </Link>
-
-            {mobileShowcaseMenu && (
-              <Link
-                href={mobileShowcaseMenu.url}
-                target={mobileShowcaseMenu.target}
-                aria-current={pathname?.startsWith(mobileShowcaseMenu.url) ? 'page' : undefined}
-                onClick={() => setMobileMenuOpen(false)}
-                className={`md:hidden inline-flex min-h-11 shrink-0 items-center rounded-md px-3 text-sm font-medium transition-colors ${
-                  pathname?.startsWith(mobileShowcaseMenu.url)
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-primary hover:bg-primary/10'
-                }`}
-              >
-                {mobileShowcaseMenu.label}
-              </Link>
-            )}
 
             {/* Search (desktop) */}
             <div className="hidden md:flex flex-1 max-w-md mx-8">

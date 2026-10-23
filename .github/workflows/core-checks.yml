@@ -40,7 +40,7 @@ jobs:
         run: npm ci
       - name: 빈 DB에 전체 마이그레이션 적용
         run: npm run db:migrate
-      - name: 공개 미리보기·메뉴 권한·코어 보존 회귀 테스트
+      - name: 자동 테스트 및 코어 보존 회귀 검사
         run: npm test
       - name: 타입 검사
         run: npm run typecheck
