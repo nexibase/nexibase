@@ -25,7 +25,7 @@ function scanPlugins() {
     .map(e => e.name)
 
   const plugins = []
-  const slugs = new Map([...coreFeatures, ...Object.keys(coreRouteAliases)].map(slug => [slug, null]))
+  const slugs = new Map([...coreFeatures, ...Object.keys(coreRouteAliases), 'showcase'].map(slug => [slug, null]))
 
   for (const folder of folders) {
     const pluginFile = path.join(PLUGINS_DIR, folder, 'plugin.ts')

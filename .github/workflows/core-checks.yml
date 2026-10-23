@@ -1,0 +1,48 @@
+name: 코어 기능 회귀 검사
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  core-checks:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: nexibase-ci-only
+          MYSQL_DATABASE: nexibase_ci
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -pnexibase-ci-only"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    env:
+      DATABASE_URL: mysql://root:nexibase-ci-only@127.0.0.1:3306/nexibase_ci
+      NEXTAUTH_SECRET: nexibase-ci-build-only
+      NEXTAUTH_URL: http://localhost:3000
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: 의존성 설치
+        run: npm ci
+      - name: 빈 DB에 전체 마이그레이션 적용
+        run: npm run db:migrate
+      - name: 공개 미리보기·메뉴 권한·코어 보존 회귀 테스트
+        run: npm test
+      - name: 타입 검사
+        run: npm run typecheck
+      - name: 재도입 검사 및 프로덕션 빌드
+        run: npm run build

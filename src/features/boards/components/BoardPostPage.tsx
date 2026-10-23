@@ -37,6 +37,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CommentReactions } from "@/features/boards/components/CommentReactions"
 import { MiniEditor } from "@/components/editors/MiniEditor"
 import { UserNickname } from "@/components/UserNickname"
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 
 // Reaction type definitions (positive only)
 const REACTIONS = [
@@ -674,14 +675,12 @@ export default function BoardPostPage() {
 
           {/* Author header */}
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-[14px] font-semibold shrink-0 overflow-hidden">
-              {post.author.image ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={post.author.image} alt="" className="w-full h-full object-cover" />
-              ) : (
-                (post.author.nickname || post.author.name || '?').charAt(0).toUpperCase()
-              )}
-            </div>
+            <Avatar className="h-10 w-10">
+              <AvatarImage src={post.author.image || undefined} alt="" className="object-cover" />
+              <AvatarFallback className="text-[14px] font-semibold">
+                {(post.author.nickname || post.author.name || '?').charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
             <div className="min-w-0 flex-1">
               <UserNickname
                 userId={post.author.id}

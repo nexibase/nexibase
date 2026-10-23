@@ -69,6 +69,7 @@ export default function BoardWritePage() {
   const router = useRouter()
   const slug = params.slug as string
   const t = useTranslations('boards')
+  const ts = useTranslations('boards.showcase')
 
   const [user, setUser] = useState<User | null>(null)
   const [sessionChecked, setSessionChecked] = useState(false)
@@ -318,11 +319,15 @@ export default function BoardWritePage() {
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div>
-            <h1 className="text-xl font-bold">{t('post.writeTitle')}</h1>
+            <h1 className="text-xl font-bold">{slug === 'showcase' ? ts('submit') : t('post.writeTitle')}</h1>
             <p className="text-sm text-muted-foreground">{board.name}</p>
           </div>
         </div>
 
+        {slug === 'showcase' && <div className="mb-5 rounded-lg border bg-muted/40 p-4 text-sm leading-relaxed">
+          <p className="font-medium">{ts('writeGuideTitle')}</p>
+          <p className="mt-1 text-muted-foreground">{ts('writeGuide')}</p>
+        </div>}
         <Card>
           <CardContent className="p-6">
             <form onSubmit={handleSubmit} className="space-y-6">
