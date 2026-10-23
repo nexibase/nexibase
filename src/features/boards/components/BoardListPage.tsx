@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { UserLayout } from "@/components/layout/UserLayout"
 import { PostListRow } from "./PostListRow"
+import ShowcaseCard from "./ShowcaseCard"
 import {
   Loader2,
   Eye,
@@ -47,6 +48,8 @@ interface Post {
   isSecret: boolean
   createdAt: string
   thumbnail?: string | null
+  excerpt?: string
+  siteUrl?: string | null
   _count?: { attachments: number }
   author: {
     id: string
@@ -70,6 +73,8 @@ export default function BoardListPage() {
   const slug = params.slug as string
   const t = useTranslations('boards')
   const locale = useLocale()
+  const ts = useTranslations('boards.showcase')
+  const isShowcase = slug === 'showcase'
 
   const [board, setBoard] = useState<Board | null>(null)
   const [posts, setPosts] = useState<Post[]>([])
@@ -223,10 +228,10 @@ export default function BoardListPage() {
 
   return (
     <UserLayout>
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-3 sm:py-6">
+      <div className={`${isShowcase ? 'max-w-5xl' : 'max-w-3xl'} mx-auto px-4 sm:px-6 py-3 sm:py-6`}>
         {/* Board header */}
         <div className="mb-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-2xl font-bold">{board.name}</h1>
@@ -239,11 +244,12 @@ export default function BoardListPage() {
               {board.description && (
                 <p className="text-muted-foreground mt-1">{board.description}</p>
               )}
+              {isShowcase && <p className="mt-2 text-sm text-muted-foreground">{ts('intro')}</p>}
             </div>
-            {canWrite && (
-              <Button onClick={() => router.push(`/boards/${slug}/create`)}>
+            {(canWrite || isShowcase) && (
+              <Button onClick={() => router.push(!canWrite && isShowcase ? '/login?callbackUrl=/boards/showcase/create' : `/boards/${slug}/create`)}>
                 <PenSquare className="h-4 w-4 mr-2" />
-                {t('write')}
+                {isShowcase ? ts('submit') : t('write')}
               </Button>
             )}
           </div>
@@ -304,6 +310,21 @@ export default function BoardListPage() {
                       onSecretBlocked={() => alert(t('secretPostAlert'))}
                     />
                   ))
+                )}
+              </div>
+            ) : isShowcase ? (
+              <div>
+                {notices.map(notice => <PostListRow key={`n-${notice.id}`} post={notice} board={board}
+                  displayNumber={null} viewer={user} isAdmin={isAdmin} formatDate={formatDate}
+                  onSecretBlocked={() => alert(t('secretPostAlert'))} />)}
+                {posts.length === 0 ? (
+                  <div className="rounded-xl border border-dashed px-4 py-16 text-center text-muted-foreground">{ts('empty')}</div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-5 py-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {posts.map(post => <ShowcaseCard key={post.id}
+                      post={{ ...post, thumbnail: post.thumbnail || null, excerpt: post.excerpt || '', siteUrl: post.siteUrl || null, commentCount: board.useComment ? post.commentCount : 0 }}
+                      onOpen={e => { if (post.isSecret && post.author.id !== user?.id && !isAdmin) { e.preventDefault(); alert(t('secretPostAlert')) } }} />)}
+                  </div>
                 )}
               </div>
             ) : posts.length === 0 ? (

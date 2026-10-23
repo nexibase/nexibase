@@ -116,5 +116,8 @@ bun.lockb
 # logs
 /logs
 
+# Local build, deployment, and test artifacts
+/tmp/
+
 # 이니시스 샘플 코드 (참고용)
 /general_pc/
