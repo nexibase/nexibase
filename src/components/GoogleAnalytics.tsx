@@ -1,12 +1,7 @@
 import { prisma } from '@/lib/prisma'
+import Script from 'next/script'
 
-/**
- * 설정된 GA measurement id를 반환한다. 렌더링은 하지 않는다.
- *
- * 실제 스크립트 주입은 동의 이후에만 일어나며 GatedAnalytics가 담당한다.
- * 이 파일이 직접 <Script>를 렌더하면 동의 전에 gtag가 붙어 ePrivacy 5(3)
- * 위반이 된다 — 렌더링 책임을 여기 되돌리지 말 것.
- */
+/** Read and validate the configured Google Analytics measurement ID. */
 export async function getMeasurementId(): Promise<string | null> {
   try {
     const row = await prisma.setting.findUnique({
@@ -18,4 +13,19 @@ export async function getMeasurementId(): Promise<string | null> {
   } catch {
     return null
   }
+}
+
+export function GoogleAnalytics({ measurementId }: { measurementId: string | null }) {
+  if (!measurementId) return null
+  return (
+    <>
+      <Script src={`https://www.googletagmanager.com/gtag/js?id=${measurementId}`} strategy="afterInteractive" />
+      <Script id="ga-init" strategy="afterInteractive">
+        {`window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', '${measurementId}');`}
+      </Script>
+    </>
+  )
 }

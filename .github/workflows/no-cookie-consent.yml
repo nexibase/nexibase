@@ -1,0 +1,21 @@
+name: 쿠키 동의 기능 재도입 검사
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  no-cookie-consent:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: 삭제한 기능과 설정이 없는지 확인
+        run: npm run check:retired-features
+      - name: 재도입 감지 회귀 테스트
+        run: node --test scripts/check-no-cookie-consent.test.cjs

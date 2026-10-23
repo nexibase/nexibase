@@ -271,28 +271,6 @@ model Message {
   @@map("messages")
 }
 
-/// 동의 이력. append-only — 철회도 새 행으로 남긴다.
-/// IP와 User-Agent는 저장하지 않는다 (데이터 최소화).
-model ConsentLog {
-  id            Int      @id @default(autoincrement())
-  /// 익명 UUID. 로그인 여부와 무관하게 방문자를 묶는 축.
-  consentId     String   @db.VarChar(36)
-  /// 동의 시점에 로그인 상태였을 때만 채운다. 관계는 걸지 않는다.
-  userId        Int?
-  analytics     Boolean  @default(false)
-  marketing     Boolean  @default(false)
-  /// 동의 시점의 활성 개인정보처리방침 버전
-  policyVersion String?  @db.VarChar(20)
-  bannerVersion String   @db.VarChar(20)
-  /// accept_all | reject_all | save_custom | withdraw
-  action        String   @db.VarChar(20)
-  createdAt     DateTime @default(now())
-
-  @@index([consentId])
-  @@index([createdAt])
-  @@map("consent_logs")
-}
-
 // Core publishing models (existing table mappings are preserved).
 
 model Board {
