@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAdminUser } from '@/lib/auth'
+import { parseDailyLimits } from '@/features/boards/lib/daily-limits'
 
 // Fetch board detail
 export async function GET(
@@ -113,11 +114,16 @@ export async function PUT(
       }
     }
 
+    let dailyLimits
+    try { dailyLimits = parseDailyLimits(body, existingBoard) }
+    catch (error) { return NextResponse.json({ error: (error as Error).message }, { status: 400 }) }
+
     // Update board
     // Posting and commenting are member-only (guest posting requires name/password fields and is not supported)
     const updatedBoard = await prisma.board.update({
       where: { id: boardId },
       data: {
+        ...dailyLimits,
         slug: slug || existingBoard.slug,
         name: name || existingBoard.name,
         description: description !== undefined ? description : existingBoard.description,

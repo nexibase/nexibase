@@ -30,6 +30,7 @@ model User {
   providerId    String?         @db.VarChar(255)
   faqFeedback   FaqFeedback[]
   faqViews      FaqView[]
+  boardDailyUsage BoardDailyUsage[]
   posts         Post[]
   comments      Comment[]
   reactions     Reaction[]
@@ -287,6 +288,9 @@ model Board {
   useReaction       Boolean  @default(true)
   useFile           Boolean  @default(true)
   useSecret         Boolean  @default(false)
+  dailyPostLimit    Int      @default(0)
+  dailyCommentLimit Int      @default(0)
+  dailyUsage        BoardDailyUsage[]
   postsPerPage      Int      @default(20)
   sortOrder         String   @default("latest") @db.VarChar(20)
   isActive          Boolean  @default(true)
@@ -301,6 +305,23 @@ model Board {
   @@index([category])
   @@index([isActive])
   @@map("boards")
+}
+
+// Rolling per-member counts; deletions do not refund today's allowance.
+model BoardDailyUsage {
+  id           Int      @id @default(autoincrement())
+  boardId      Int
+  userId       Int
+  day          String   @db.VarChar(10)
+  postCount    Int      @default(0)
+  commentCount Int      @default(0)
+  updatedAt    DateTime @updatedAt
+  board        Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([boardId, userId])
+  @@index([userId])
+  @@map("board_daily_usage")
 }
 
 model Post {

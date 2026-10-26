@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAuthUser } from '@/lib/auth'
+import { BoardDailyLimitError, reserveBoardDailyWrite } from '@/features/boards/lib/daily-limits'
 import {
   createPostCommentNotification,
   createCommentReplyNotification,
@@ -91,28 +92,33 @@ export async function POST(
     }
 
     // Create comment
-    const comment = await prisma.comment.create({
-      data: {
-        content: content.trim(),
-        authorId: user.id,
-        postId,
-        parentId: parentId ? parseInt(parentId) : null
-      },
-      include: {
-        author: {
-          select: {
-            id: true,
-            nickname: true,
-            image: true
+    const comment = await prisma.$transaction(async tx => {
+      await reserveBoardDailyWrite(tx, user, board.id, 'comment')
+      const created = await tx.comment.create({
+        data: {
+          content: content.trim(),
+          authorId: user.id,
+          postId,
+          parentId: parentId ? parseInt(parentId) : null
+        },
+        include: {
+          author: {
+            select: {
+              id: true,
+              nickname: true,
+              image: true
+            }
           }
         }
-      }
-    })
+      })
 
-    // Increment the post's comment count
-    await prisma.post.update({
-      where: { id: postId },
-      data: { commentCount: { increment: 1 } }
+      // Increment the post's comment count
+      await tx.post.update({
+        where: { id: postId },
+        data: { commentCount: { increment: 1 } }
+      })
+
+      return created
     })
 
     // --- Notification fan-out ---------------------------------------------
@@ -174,6 +180,10 @@ export async function POST(
     }, { status: 201 })
 
   } catch (error) {
+    if (error instanceof BoardDailyLimitError) return NextResponse.json(
+      { error: error.message, code: 'BOARD_DAILY_LIMIT', resetAt: error.resetAt.toISOString() },
+      { status: 429, headers: { 'Retry-After': String(Math.max(1, Math.ceil((error.resetAt.getTime() - Date.now()) / 1000))) } },
+    )
     console.error('failed to create comment:', error)
     return NextResponse.json(
       { error: '서버 오류가 발생했습니다.' },
