@@ -2,9 +2,9 @@
 
 # NexiBase
 
-### Open-source full-stack CMS built on Next.js 16
+### Next.js 16 기반 오픈소스 풀스택 CMS
 
-**Plugin-based · Theme system · Community-first**
+**플러그인 기반 · 테마 시스템 · 커뮤니티 중심**
 
 [![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=next.js)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react)](https://react.dev/)
@@ -12,7 +12,7 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-38B2AC?style=flat-square&logo=tailwind-css)](https://tailwindcss.com/)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 
-[Live Demo](https://nexibase.com) · [Quick Start](#quick-start) · [Plugin System](#plugin-system) · [한국어](#korean)
+[라이브 데모](https://nexibase.com) · [빠른 시작](#빠른-시작) · [플러그인 시스템](#플러그인-시스템) · [English](#english)
 
 </div>
 
@@ -20,268 +20,11 @@
 
 <div align="center">
 
-| Light Mode | Dark Mode |
+| 라이트 모드 | 다크 모드 |
 |:---:|:---:|
 | ![NexiBase Light](docs/screenshots/homepage-light.png) | ![NexiBase Dark](docs/screenshots/homepage-dark.png) |
 
 </div>
-
-## What is NexiBase?
-
-NexiBase is an open-source, self-hosted CMS platform for building community sites, e-commerce, corporate websites, and more — all from a single codebase.
-
-Drop a plugin folder → auto-detected. Override CSS variables → new theme. Drag widgets → custom homepage. That's the idea.
-
-> **NexiBase** = **Next.js** + **I** + **Base**
->
-> *I*: Intelligence, Idea, Interface, Individual, Innovation
-
----
-
-## Features
-
-### 🧩 Plugin System
-- **Folder-based** — Drop a folder in `src/plugins/`, auto-detected
-- Each plugin gets its own Prisma schema, API routes, admin pages, widgets, and menus
-- Enable/disable from admin dashboard
-- Plugins as git submodules — version and update independently
-
-### 🎨 Theme System
-- CSS variable-based theme switching
-- Server-side loaded (no flash of unstyled content)
-- Custom themes via `custom.css` — no build step needed
-- Dark/light mode with system preference detection
-
-### 📦 Widget System
-- 12-column grid homepage layout
-- Drag & drop widget placement (top / center / bottom zones)
-- Sidebar widgets (left / right, all pages)
-- Plugin widgets auto-registered
-
-### 📋 Board System (Core)
-- Unlimited boards with custom permissions
-- Rich text editor (Tiptap) with image drag & drop
-- Comments, threaded replies, reactions
-- Gallery view, secret posts, pinned notices
-- Full-text search (MySQL FULLTEXT)
-- File attachments with auto image processing (Sharp → WebP)
-
-### 🔔 Notifications
-- In-app + email delivery, per-user preferences
-- Triggered by comments / replies / @mentions from core boards
-- Admin can send a free-form notification to any user
-- Direct-message arrivals surface as notifications
-- Bell icon tints when unread; refresh on route change (no background polling)
-
-### 💬 Direct Messages (쪽지)
-- 1:1 threaded DM between any logged-in members
-- Start from a user nickname popover or profile page
-- Admin can initiate from `/admin/users` or a shop order detail
-- 5-second polling inside an open thread (paused when the tab is hidden)
-- Conversations use UUIDs in URLs so sequential ids aren't enumerable
-- Cursor-based pagination — only the last 30 messages load initially
-- Hide conversations per-viewer; auto-resurface when the other side sends
-
-### 👥 Members
-- Email/password + social login (Google, Naver, Kakao)
-- Email verification
-- Role-based access (user / moderator / admin)
-- Browser session management
-
-### ⚙️ Admin Dashboard
-- Member management
-- Board management
-- Plugin management (enable/disable, slug customization)
-- Menu management (header/footer, tree structure)
-- Homepage widget layout
-- Content pages (about, FAQ, etc.)
-- Site settings (theme, layout, analytics)
-
----
-
-## Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| Framework | Next.js 16, React 19 |
-| Styling | Tailwind CSS 4, shadcn/ui |
-| Database | MySQL 8+ via Prisma ORM |
-| Auth | NextAuth.js (JWT + session) |
-| Editor | Tiptap (rich text) |
-| Image | Sharp (resize, WebP) |
-
----
-
-## Quick Start
-
-Prepare **Node.js 20.9+** and a **MySQL 8.0+ database** with a user that can create tables.
-
-### 1. Download and install dependencies
-
-```bash
-git clone --recurse-submodules https://github.com/nexibase/nexibase.git
-cd nexibase
-npm install
-cp .env.example .env
-```
-
-### 2. Configure MySQL
-
-Create an empty database, then set `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_USER`, `MYSQL_PASS`, and `MYSQL_DB` in `.env`. Keep `DATABASE_URL` in sync with those values, and set `NEXTAUTH_SECRET` to a random secret.
-
-```sql
-CREATE DATABASE nexibase CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-```
-
-```bash
-npm run db:setup
-```
-
-### 3. Start and complete setup
-
-```bash
-npm run dev
-```
-
-Open http://localhost:3000/install and choose a language, create your administrator account, and enter your site name. The install wizard creates the default boards and menus.
-
-For production, set `NEXTAUTH_URL` and `NEXT_PUBLIC_APP_URL` to your site URL, then build and start:
-
-```bash
-npm run build
-npm start
-```
-
-### Adding a New Language
-
-NexiBase supports drop-in language packs. Just add two files:
-
-```bash
-# 1. src/locales/{locale}.json — copy en.json and translate
-cp src/locales/en.json src/locales/ja.json
-# Translate all values (keep the key structure)
-
-# 2. src/lib/install/seed-{locale}.ts — copy seed-en.ts and translate
-cp src/lib/install/seed-en.ts src/lib/install/seed-ja.ts
-# Translate displayName and all strings
-
-# 3. Restart (scan-plugins picks up the new locale automatically)
-npm run dev
-```
-
-The new language button shows up on `/install` automatically. Zero code changes.
-
-### Reset Install (dev only)
-
-To wipe the DB and rerun the install wizard for testing:
-
-```bash
-npm run reset-install -- --confirm
-```
-
-⚠️ This deletes all users, boards, menus, widgets, contents, policies, settings, and shop orders. Rejected when `NODE_ENV=production`. Restart the dev server after reset to clear caches.
-
----
-
-## Plugin System
-
-Plugins are self-contained folders in `src/plugins/`:
-
-```
-src/plugins/my-feature/
-├── plugin.ts           # Plugin metadata
-├── schema.prisma       # Database models
-├── schema.user.prisma  # User model relations (auto-injected)
-├── routes/             # Page components
-├── api/                # API endpoints
-├── admin/              # Admin pages & API
-├── widgets/            # Homepage widgets
-├── menus/              # Auto-registered menus
-└── header-widget.tsx   # Header icon/widget
-```
-
-**Add a plugin:**
-
-```bash
-# As git submodule
-git submodule add https://github.com/nexibase/plugin-shop.git src/plugins/shop
-
-# Sync database
-npx prisma db push
-
-# Restart → auto-detected → enable in admin
-npm run dev
-```
-
-### Available Plugins
-
-Boards, content pages, FAQ, and versioned policies are always available as core features. They keep their existing URLs and are managed directly from the admin sidebar.
-
-| Plugin | Description | Status |
-|--------|------------|--------|
-| `shop` | E-commerce (products, cart, orders) | Submodule |
-
----
-
-## Project Structure
-
-```
-src/
-├── app/              # Core routes + auto-generated wrappers
-├── features/         # Core boards, content pages, FAQ, policies
-├── plugins/          # Plugin system
-│   └── shop/         # E-commerce (submodule)
-├── layouts/          # Layout system (Header, HomePage, Footer)
-├── themes/           # Theme system (CSS variables)
-├── widgets/          # Standalone widgets
-├── components/       # Shared UI components
-└── lib/              # Utilities
-```
-
----
-
-## Social Login Setup
-
-<details>
-<summary>Google</summary>
-
-1. [Google Cloud Console](https://console.cloud.google.com/) → Create project
-2. APIs & Services → Credentials → OAuth 2.0 Client ID
-3. Redirect URI: `http://localhost:3000/api/auth/callback/google`
-4. Set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in `.env`
-</details>
-
-<details>
-<summary>Naver</summary>
-
-1. [Naver Developers](https://developers.naver.com/) → Register app
-2. Service URL: `http://localhost:3000`
-3. Callback URL: `http://localhost:3000/api/auth/callback/naver`
-4. Set `NAVER_CLIENT_ID` and `NAVER_CLIENT_SECRET` in `.env`
-</details>
-
-<details>
-<summary>Kakao</summary>
-
-1. [Kakao Developers](https://developers.kakao.com/) → Add app
-2. Enable Kakao Login → Redirect URI: `http://localhost:3000/api/auth/callback/kakao`
-3. Set email as required in consent items
-4. Set `KAKAO_CLIENT_ID` (REST API key) and `KAKAO_CLIENT_SECRET` in `.env`
-</details>
-
----
-
-## Contributing
-
-Contributions welcome! Open an issue, submit a PR, or just say hi.
-
----
-
-## License
-
-[MIT](LICENSE)
-
----
 
 <a id="korean"></a>
 
@@ -538,6 +281,269 @@ src/
 ---
 
 ## 라이선스
+
+[MIT](LICENSE)
+
+---
+
+<a id="english"></a>
+
+# English
+
+[Live Demo](https://nexibase.com) · [Quick Start](#quick-start) · [Plugin System](#plugin-system) · [한국어](#korean)
+
+## What is NexiBase?
+
+NexiBase is an open-source, self-hosted CMS platform for building community sites, e-commerce, corporate websites, and more — all from a single codebase.
+
+Drop a plugin folder → auto-detected. Override CSS variables → new theme. Drag widgets → custom homepage. That's the idea.
+
+> **NexiBase** = **Next.js** + **I** + **Base**
+>
+> *I*: Intelligence, Idea, Interface, Individual, Innovation
+
+---
+
+## Features
+
+### 🧩 Plugin System
+- **Folder-based** — Drop a folder in `src/plugins/`, auto-detected
+- Each plugin gets its own Prisma schema, API routes, admin pages, widgets, and menus
+- Enable/disable from admin dashboard
+- Plugins as git submodules — version and update independently
+
+### 🎨 Theme System
+- CSS variable-based theme switching
+- Server-side loaded (no flash of unstyled content)
+- Custom themes via `custom.css` — no build step needed
+- Dark/light mode with system preference detection
+
+### 📦 Widget System
+- 12-column grid homepage layout
+- Drag & drop widget placement (top / center / bottom zones)
+- Sidebar widgets (left / right, all pages)
+- Plugin widgets auto-registered
+
+### 📋 Board System (Core)
+- Unlimited boards with custom permissions
+- Rich text editor (Tiptap) with image drag & drop
+- Comments, threaded replies, reactions
+- Gallery view, secret posts, pinned notices
+- Full-text search (MySQL FULLTEXT)
+- File attachments with auto image processing (Sharp → WebP)
+
+### 🔔 Notifications
+- In-app + email delivery, per-user preferences
+- Triggered by comments / replies / @mentions from core boards
+- Admin can send a free-form notification to any user
+- Direct-message arrivals surface as notifications
+- Bell icon tints when unread; refresh on route change (no background polling)
+
+### 💬 Direct Messages (쪽지)
+- 1:1 threaded DM between any logged-in members
+- Start from a user nickname popover or profile page
+- Admin can initiate from `/admin/users` or a shop order detail
+- 5-second polling inside an open thread (paused when the tab is hidden)
+- Conversations use UUIDs in URLs so sequential ids aren't enumerable
+- Cursor-based pagination — only the last 30 messages load initially
+- Hide conversations per-viewer; auto-resurface when the other side sends
+
+### 👥 Members
+- Email/password + social login (Google, Naver, Kakao)
+- Email verification
+- Role-based access (user / moderator / admin)
+- Browser session management
+
+### ⚙️ Admin Dashboard
+- Member management
+- Board management
+- Plugin management (enable/disable, slug customization)
+- Menu management (header/footer, tree structure)
+- Homepage widget layout
+- Content pages (about, FAQ, etc.)
+- Site settings (theme, layout, analytics)
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Framework | Next.js 16, React 19 |
+| Styling | Tailwind CSS 4, shadcn/ui |
+| Database | MySQL 8+ via Prisma ORM |
+| Auth | NextAuth.js (JWT + session) |
+| Editor | Tiptap (rich text) |
+| Image | Sharp (resize, WebP) |
+
+---
+
+## Quick Start
+
+Prepare **Node.js 20.9+** and a **MySQL 8.0+ database** with a user that can create tables.
+
+### 1. Download and install dependencies
+
+```bash
+git clone --recurse-submodules https://github.com/nexibase/nexibase.git
+cd nexibase
+npm install
+cp .env.example .env
+```
+
+### 2. Configure MySQL
+
+Create an empty database, then set `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_USER`, `MYSQL_PASS`, and `MYSQL_DB` in `.env`. Keep `DATABASE_URL` in sync with those values, and set `NEXTAUTH_SECRET` to a random secret.
+
+```sql
+CREATE DATABASE nexibase CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+```bash
+npm run db:setup
+```
+
+### 3. Start and complete setup
+
+```bash
+npm run dev
+```
+
+Open http://localhost:3000/install and choose a language, create your administrator account, and enter your site name. The install wizard creates the default boards and menus.
+
+For production, set `NEXTAUTH_URL` and `NEXT_PUBLIC_APP_URL` to your site URL, then build and start:
+
+```bash
+npm run build
+npm start
+```
+
+### Adding a New Language
+
+NexiBase supports drop-in language packs. Just add two files:
+
+```bash
+# 1. src/locales/{locale}.json — copy en.json and translate
+cp src/locales/en.json src/locales/ja.json
+# Translate all values (keep the key structure)
+
+# 2. src/lib/install/seed-{locale}.ts — copy seed-en.ts and translate
+cp src/lib/install/seed-en.ts src/lib/install/seed-ja.ts
+# Translate displayName and all strings
+
+# 3. Restart (scan-plugins picks up the new locale automatically)
+npm run dev
+```
+
+The new language button shows up on `/install` automatically. Zero code changes.
+
+### Reset Install (dev only)
+
+To wipe the DB and rerun the install wizard for testing:
+
+```bash
+npm run reset-install -- --confirm
+```
+
+⚠️ This deletes all users, boards, menus, widgets, contents, policies, settings, and shop orders. Rejected when `NODE_ENV=production`. Restart the dev server after reset to clear caches.
+
+---
+
+## Plugin System
+
+Plugins are self-contained folders in `src/plugins/`:
+
+```
+src/plugins/my-feature/
+├── plugin.ts           # Plugin metadata
+├── schema.prisma       # Database models
+├── schema.user.prisma  # User model relations (auto-injected)
+├── routes/             # Page components
+├── api/                # API endpoints
+├── admin/              # Admin pages & API
+├── widgets/            # Homepage widgets
+├── menus/              # Auto-registered menus
+└── header-widget.tsx   # Header icon/widget
+```
+
+**Add a plugin:**
+
+```bash
+# As git submodule
+git submodule add https://github.com/nexibase/plugin-shop.git src/plugins/shop
+
+# Sync database
+npx prisma db push
+
+# Restart → auto-detected → enable in admin
+npm run dev
+```
+
+### Available Plugins
+
+Boards, content pages, FAQ, and versioned policies are always available as core features. They keep their existing URLs and are managed directly from the admin sidebar.
+
+| Plugin | Description | Status |
+|--------|------------|--------|
+| `shop` | E-commerce (products, cart, orders) | Submodule |
+
+---
+
+## Project Structure
+
+```
+src/
+├── app/              # Core routes + auto-generated wrappers
+├── features/         # Core boards, content pages, FAQ, policies
+├── plugins/          # Plugin system
+│   └── shop/         # E-commerce (submodule)
+├── layouts/          # Layout system (Header, HomePage, Footer)
+├── themes/           # Theme system (CSS variables)
+├── widgets/          # Standalone widgets
+├── components/       # Shared UI components
+└── lib/              # Utilities
+```
+
+---
+
+## Social Login Setup
+
+<details>
+<summary>Google</summary>
+
+1. [Google Cloud Console](https://console.cloud.google.com/) → Create project
+2. APIs & Services → Credentials → OAuth 2.0 Client ID
+3. Redirect URI: `http://localhost:3000/api/auth/callback/google`
+4. Set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in `.env`
+</details>
+
+<details>
+<summary>Naver</summary>
+
+1. [Naver Developers](https://developers.naver.com/) → Register app
+2. Service URL: `http://localhost:3000`
+3. Callback URL: `http://localhost:3000/api/auth/callback/naver`
+4. Set `NAVER_CLIENT_ID` and `NAVER_CLIENT_SECRET` in `.env`
+</details>
+
+<details>
+<summary>Kakao</summary>
+
+1. [Kakao Developers](https://developers.kakao.com/) → Add app
+2. Enable Kakao Login → Redirect URI: `http://localhost:3000/api/auth/callback/kakao`
+3. Set email as required in consent items
+4. Set `KAKAO_CLIENT_ID` (REST API key) and `KAKAO_CLIENT_SECRET` in `.env`
+</details>
+
+---
+
+## Contributing
+
+Contributions welcome! Open an issue, submit a PR, or just say hi.
+
+---
+
+## License
 
 [MIT](LICENSE)
 
