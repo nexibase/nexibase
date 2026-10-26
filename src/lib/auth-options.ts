@@ -6,6 +6,7 @@ import CredentialsProvider from "next-auth/providers/credentials"
 import { prisma } from "@/lib/prisma"
 import { CustomPrismaAdapter } from "@/lib/auth-adapter"
 import bcrypt from "bcryptjs"
+import { getAuthPolicy } from "@/lib/auth-policy-server"
 
 export const authOptions: NextAuthOptions = {
   adapter: CustomPrismaAdapter(),
@@ -19,6 +20,10 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
+        const policy = await getAuthPolicy()
+        if (!policy.emailLoginEnabled) {
+          throw new Error("이메일 로그인이 비활성화되어 있습니다. 소셜 로그인을 이용해주세요.")
+        }
         if (!credentials?.email || !credentials?.password) {
           throw new Error("이메일과 비밀번호를 입력해주세요.")
         }
@@ -116,6 +121,11 @@ export const authOptions: NextAuthOptions = {
           const existingUser = await prisma.user.findUnique({
             where: { email }
           })
+
+          // Closing registration must not prevent existing social members from logging in.
+          if (!existingAccount && !existingUser && !(await getAuthPolicy()).signupEnabled) {
+            return "/login?error=SignupDisabled"
+          }
 
           if (existingUser) {
             if (existingUser.deletedAt) {

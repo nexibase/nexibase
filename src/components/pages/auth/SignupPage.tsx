@@ -11,6 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Mail, Lock, User, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
+import { useSite } from "@/lib/SiteContext";
+import { resolveAuthPolicy } from "@/lib/auth-policy";
 
 // Social login icon components
 const GoogleIcon = () => (
@@ -52,6 +54,8 @@ export default function SignupPage() {
   const [isFirstUser, setIsFirstUser] = useState(false);
   const [socialLoading, setSocialLoading] = useState<string | null>(null);
   const router = useRouter();
+  const { settings, isLoading: settingsLoading } = useSite();
+  const policy = resolveAuthPolicy(settings);
 
   const handleSocialLogin = async (provider: string) => {
     setSocialLoading(provider);
@@ -71,6 +75,7 @@ export default function SignupPage() {
 
   // Check whether this is the first user
   useEffect(() => {
+    if (settingsLoading || !policy.signupEnabled || policy.socialSignupOnly) return;
     const checkFirstUser = async () => {
       try {
         const response = await fetch('/api/members/check-first');
@@ -89,7 +94,7 @@ export default function SignupPage() {
       }
     };
     checkFirstUser();
-  }, []);
+  }, [settingsLoading, policy.signupEnabled, policy.socialSignupOnly]);
 
   // Email format validator
   const isValidEmail = (email: string): boolean => {
@@ -333,6 +338,8 @@ export default function SignupPage() {
            nicknameStatus.available === true;
   };
 
+  if (settingsLoading) return <p role="status" className="p-8 text-center">{t("authSettingsLoading")}</p>;
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
@@ -345,12 +352,13 @@ export default function SignupPage() {
                   {t("firstUserBecomesAdmin")}
                 </span>
               ) : (
-                t("signupDescription")
+                t(!policy.signupEnabled ? "signupDisabled" : policy.socialSignupOnly ? "socialSignupOnlyDescription" : "signupDescription")
               )}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <form onSubmit={handleSubmit} className="space-y-4">
+            {policy.signupEnabled && <>
+            {!policy.socialSignupOnly && <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <label htmlFor="email" className="text-sm font-medium text-foreground">
                   {t("email")}
@@ -466,7 +474,7 @@ export default function SignupPage() {
                   </div>
                 </div>
               )}
-            </form>
+            </form>}
 
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
@@ -534,6 +542,7 @@ export default function SignupPage() {
                 )}
               </Button>
             </div>
+            </>}
 
             <Separator />
 

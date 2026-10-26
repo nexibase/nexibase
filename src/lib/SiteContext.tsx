@@ -14,6 +14,8 @@ interface SiteSettings {
   site_name: string
   site_logo: string
   signup_enabled: string
+  social_signup_only: string
+  email_login_enabled: string
 }
 
 interface Board {
@@ -62,6 +64,8 @@ const defaultSettings: SiteSettings = {
   site_name: 'NexiBase',
   site_logo: '',
   signup_enabled: 'true',
+  social_signup_only: 'false',
+  email_login_enabled: 'true',
 }
 
 const SiteContext = createContext<SiteContextValue>({
@@ -123,6 +127,8 @@ export function SiteProvider({ children }: { children: ReactNode }) {
             site_name: data.settings.site_name || 'NexiBase',
             site_logo: data.settings.site_logo || '',
             signup_enabled: data.settings.signup_enabled ?? 'true',
+            social_signup_only: data.settings.social_signup_only ?? 'false',
+            email_login_enabled: data.settings.email_login_enabled ?? 'true',
           })
         }
 

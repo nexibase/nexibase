@@ -2,10 +2,18 @@ import { nicknamePolicyError } from '@/lib/nickname-policy'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
+import { getAuthPolicy } from '@/lib/auth-policy-server'
+import { canRegister } from '@/lib/auth-policy'
 
 // Signup
 export async function POST(request: NextRequest) {
   try {
+    const policy = await getAuthPolicy()
+    if (!canRegister(policy, 'email')) {
+      return NextResponse.json({
+        error: policy.signupEnabled ? '소셜 계정으로만 회원가입할 수 있습니다.' : '현재 회원가입을 받지 않습니다.',
+      }, { status: 403 })
+    }
     const body = await request.json()
     const { email, password } = body
     const nickname = typeof body.nickname === 'string' ? body.nickname.trim() : body.nickname
