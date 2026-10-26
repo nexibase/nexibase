@@ -38,29 +38,6 @@ Drop a plugin folder → auto-detected. Override CSS variables → new theme. Dr
 
 ---
 
-## 🚀 1-Minute Install (Docker)
-
-All you need is Docker. One command starts NexiBase with a bundled MySQL.
-
-```bash
-git clone --recurse-submodules https://github.com/nexibase/nexibase.git
-cd nexibase
-docker compose up -d
-```
-
-Open **http://localhost:3000** — **the first signup becomes admin automatically.**
-
-```bash
-docker compose logs -f app   # tail logs
-docker compose down          # stop
-docker compose down -v       # stop + wipe data
-```
-
-> For production, change `NEXTAUTH_SECRET` and the MySQL password in [`docker-compose.yml`](docker-compose.yml).
-> For SMTP / OAuth / CAPTCHA, create a `.env` file and uncomment the `env_file` section in compose.
-
----
-
 ## Features
 
 ### 🧩 Plugin System
@@ -137,57 +114,43 @@ docker compose down -v       # stop + wipe data
 
 ## Quick Start
 
-### Requirements
-- Node.js 18+
-- MySQL 8.0+
+Prepare **Node.js 20.9+** and a **MySQL 8.0+ database** with a user that can create tables.
 
-### 1. Clone
+### 1. Download and install dependencies
 
 ```bash
 git clone --recurse-submodules https://github.com/nexibase/nexibase.git
 cd nexibase
-```
-
-### 2. Install
-
-```bash
 npm install
-```
-
-### 3. Configure
-
-```bash
 cp .env.example .env
-# Edit .env with your MySQL credentials
 ```
 
-### 4. Database
+### 2. Configure MySQL
+
+Create an empty database, then set `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_USER`, `MYSQL_PASS`, and `MYSQL_DB` in `.env`. Keep `DATABASE_URL` in sync with those values, and set `NEXTAUTH_SECRET` to a random secret.
 
 ```sql
 CREATE DATABASE nexibase CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
 ```bash
-npx prisma db push
+npm run db:setup
 ```
 
-### 5. Run
+### 3. Start and complete setup
 
 ```bash
 npm run dev
 ```
 
-Visit http://localhost:3000 — the install wizard opens automatically.
+Open http://localhost:3000/install and choose a language, create your administrator account, and enter your site name. The install wizard creates the default boards and menus.
 
-### 6. Install Wizard
+For production, set `NEXTAUTH_URL` and `NEXT_PUBLIC_APP_URL` to your site URL, then build and start:
 
-On first run, your browser is redirected to `/install`:
-
-1. **Language** — English or 한국어
-2. **Admin account + site info**
-   - Admin email · password · nickname
-   - Site name · description (optional)
-3. Click **Install** → seed data (default boards, menus, policies) is generated → redirected to `/login`
+```bash
+npm run build
+npm start
+```
 
 ### Adding a New Language
 
@@ -332,29 +295,6 @@ NexiBase는 커뮤니티, 쇼핑몰, 기업 사이트 등 무엇이든 만들 �
 
 ---
 
-## 🚀 1분 설치 (Docker)
-
-Docker만 있으면 명령어 한 줄로 바로 실행할 수 있습니다. MySQL도 자동으로 함께 뜹니다.
-
-```bash
-git clone --recurse-submodules https://github.com/nexibase/nexibase.git
-cd nexibase
-docker compose up -d
-```
-
-브라우저에서 **http://localhost:3000** 접속 → **첫 번째 가입자가 자동으로 관리자가 됩니다.**
-
-```bash
-docker compose logs -f app   # 로그 보기
-docker compose down          # 중지
-docker compose down -v       # 중지 + 데이터 삭제
-```
-
-> 프로덕션 배포 시에는 [`docker-compose.yml`](docker-compose.yml)의 `NEXTAUTH_SECRET`과 MySQL 비밀번호를 반드시 변경하세요.
-> SMTP/OAuth/CAPTCHA 설정은 `.env` 파일을 만들고 compose의 `env_file` 주석을 해제하면 됩니다.
-
----
-
 ## 주요 기능
 
 ### 🧩 플러그인 시스템
@@ -428,57 +368,43 @@ docker compose down -v       # 중지 + 데이터 삭제
 
 ## 빠른 시작
 
-### 요구사항
-- Node.js 18+
-- MySQL 8.0+
+**Node.js 20.9+**와 **MySQL 8.0+ 데이터베이스**, 테이블을 생성할 수 있는 DB 계정을 준비합니다.
 
-### 1. 클론
+### 1. 소스와 의존성 설치
 
 ```bash
 git clone --recurse-submodules https://github.com/nexibase/nexibase.git
 cd nexibase
-```
-
-### 2. 설치
-
-```bash
 npm install
-```
-
-### 3. 환경 설정
-
-```bash
 cp .env.example .env
-# .env 파일에 MySQL 접속 정보 입력
 ```
 
-### 4. 데이터베이스
+### 2. MySQL 연결 설정
+
+빈 데이터베이스를 만들고 `.env`의 `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_USER`, `MYSQL_PASS`, `MYSQL_DB`를 입력합니다. `DATABASE_URL`도 같은 접속 정보로 맞추고, `NEXTAUTH_SECRET`은 임의의 비밀값으로 변경합니다.
 
 ```sql
 CREATE DATABASE nexibase CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
 ```bash
-npx prisma db push
+npm run db:setup
 ```
 
-### 5. 실행
+### 3. 실행 후 설치 완료
 
 ```bash
 npm run dev
 ```
 
-http://localhost:3000 접속 → 설치 마법사가 자동으로 열립니다.
+http://localhost:3000/install 에서 언어를 선택하고 관리자 계정과 사이트 이름을 입력합니다. 설치 마법사가 기본 게시판과 메뉴를 생성합니다.
 
-### 6. 설치 마법사
+실제 운영 시에는 `NEXTAUTH_URL`과 `NEXT_PUBLIC_APP_URL`을 사이트 주소로 설정하고 빌드 후 실행합니다.
 
-첫 실행 시 브라우저가 자동으로 `/install`로 이동합니다.
-
-1. **언어 선택** — English 또는 한국어
-2. **관리자 계정 + 사이트 정보**
-   - 관리자 이메일 · 비밀번호 · 닉네임
-   - 사이트 이름 · 사이트 설명 (선택)
-3. **설치** 버튼 클릭 → 자동으로 seed 데이터(기본 게시판·메뉴·정책 등) 생성 → `/login`으로 이동
+```bash
+npm run build
+npm start
+```
 
 ### 새 언어 추가하기
 
@@ -570,7 +496,7 @@ src/
 
 ## 운영 사이트 배포 도구
 
-[nexibase.com 전용 배포 도구](deploy/home/README.md)는 공식 업데이트를 운영 사이트의 기존 수정사항과 병합·검증한 후 적용합니다. 일반 설치·빌드·시드·데모 배포에서는 실행하지 않으며 Docker 이미지에도 포함하지 않습니다. 쇼케이스 갤러리·홈 위젯·모바일 바로가기는 nexibase.com 전용으로 유지하며 공식 기본 기능에는 추가하지 않습니다.
+[nexibase.com 전용 배포 도구](deploy/home/README.md)는 공식 업데이트를 운영 사이트의 기존 수정사항과 병합·검증한 후 적용합니다. 일반 설치·빌드·시드·데모 배포에서는 실행하지 않습니다. 쇼케이스 갤러리·홈 위젯·모바일 바로가기는 nexibase.com 전용으로 유지하며 공식 기본 기능에는 추가하지 않습니다.
 
 ---
 
