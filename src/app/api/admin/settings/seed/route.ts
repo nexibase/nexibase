@@ -11,6 +11,8 @@ const DEFAULT_SETTINGS = [
 
   // Member settings
   { key: 'signup_enabled', value: 'true' },
+        { key: 'social_signup_only', value: 'false' },
+        { key: 'email_login_enabled', value: 'true' },
   { key: 'email_verification_required', value: 'false' },
 
   // Footer settings

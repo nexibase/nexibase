@@ -54,6 +54,8 @@ export async function runInstall(params: InstallParams): Promise<void> {
         { key: 'site_name', value: params.siteName },
         { key: 'site_locale', value: params.locale },
         { key: 'signup_enabled', value: 'true' },
+        { key: 'social_signup_only', value: 'false' },
+        { key: 'email_login_enabled', value: 'true' },
       ],
     })
 

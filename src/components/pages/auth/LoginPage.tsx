@@ -14,6 +14,7 @@ import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { markBrowserSession, markJustLoggedIn } from "@/components/providers/SessionProvider";
 import { useSite } from "@/lib/SiteContext";
+import { resolveAuthPolicy } from "@/lib/auth-policy";
 
 // PasswordCredential type declaration
 declare global {
@@ -57,7 +58,8 @@ function LoginForm() {
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const turnstileRef = useRef<TurnstileInstance>(null);
   const executeRecaptcha = useRecaptchaToken();
-  const { refreshUser } = useSite();
+  const { refreshUser, settings, isLoading: settingsLoading } = useSite();
+  const policy = resolveAuthPolicy(settings);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { status } = useSession();
@@ -75,6 +77,8 @@ function LoginForm() {
       setErrorMessage(t("loginFailed"));
     } else if (error === "WithdrawnAccount") {
       setErrorMessage(t("withdrawnAccount"));
+    } else if (error === "SignupDisabled") {
+      setErrorMessage(t("signupDisabled"));
     } else if (error) {
       setErrorMessage(t("loginError"));
     }
@@ -164,6 +168,8 @@ function LoginForm() {
     }
   };
 
+  if (settingsLoading) return <p role="status" className="p-8 text-center">{t("authSettingsLoading")}</p>;
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
@@ -180,7 +186,7 @@ function LoginForm() {
                 {errorMessage}
               </div>
             )}
-            <form onSubmit={handleSubmit} className="space-y-4">
+            {policy.emailLoginEnabled && <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <label htmlFor="email" className="text-sm font-medium text-foreground">
                   {t("email")}
@@ -258,7 +264,7 @@ function LoginForm() {
               >
                 {isLoading ? t("loggingIn") : t("loginButton")}
               </Button>
-            </form>
+            </form>}
 
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
@@ -329,14 +335,14 @@ function LoginForm() {
 
             <Separator />
 
-            <div className="text-center">
+            {policy.signupEnabled && <div className="text-center">
               <span className="text-sm text-muted-foreground">
                 {t("noAccount")}{" "}
                 <Link href="/signup" className="text-primary hover:underline font-medium">
                   {t("signupButton")}
                 </Link>
               </span>
-            </div>
+            </div>}
           </CardContent>
         </Card>
       </div>

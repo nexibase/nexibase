@@ -57,6 +57,8 @@ interface SettingsData {
 
   // Member settings
   signup_enabled: string
+  social_signup_only: string
+  email_login_enabled: string
   email_verification_required: string
 
   // Footer settings
@@ -102,6 +104,8 @@ const DEFAULT_SETTINGS: SettingsData = {
   site_keywords: '',
   site_logo: '',
   signup_enabled: 'true',
+  social_signup_only: 'false',
+  email_login_enabled: 'true',
   email_verification_required: 'false',
   footer_copyright: '',
   footer_links: '[]',
@@ -759,6 +763,30 @@ export default function SettingsPage() {
                     checked={settings.signup_enabled === 'true'}
                     onCheckedChange={(checked) => handleSwitchChange('signup_enabled', checked)}
                   />
+                </div>
+
+                <Separator />
+
+                <div className="flex items-center justify-between gap-4">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="social-signup-only">{t('socialSignupOnly')}</Label>
+                    <p className="text-sm text-muted-foreground">{t('socialSignupOnlyDesc')}</p>
+                  </div>
+                  <Switch id="social-signup-only"
+                    checked={settings.social_signup_only === 'true'}
+                    onCheckedChange={(checked) => handleSwitchChange('social_signup_only', checked)} />
+                </div>
+
+                <Separator />
+
+                <div className="flex items-center justify-between gap-4">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="email-login-enabled">{t('emailLoginEnabled')}</Label>
+                    <p className="text-sm text-muted-foreground">{t('emailLoginEnabledDesc')}</p>
+                  </div>
+                  <Switch id="email-login-enabled"
+                    checked={settings.email_login_enabled === 'true'}
+                    onCheckedChange={(checked) => handleSwitchChange('email_login_enabled', checked)} />
                 </div>
 
                 <Separator />

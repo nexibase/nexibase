@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
+import { getAuthPolicy } from "@/lib/auth-policy-server"
 import { encode } from "next-auth/jwt"
 import { authOptions } from "@/lib/auth-options"
 
 export async function POST(req: NextRequest) {
   try {
+    const policy = await getAuthPolicy()
+    if (!policy.emailLoginEnabled) {
+      return NextResponse.json({ success: false, message: "이메일 로그인이 비활성화되어 있습니다. 소셜 로그인을 이용해주세요." }, { status: 403 })
+    }
     const { email, password, captchaToken } = await req.json()
 
     const ip =

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { isRetiredSetting } from '@/lib/settings-keys'
+import { AUTH_POLICY_KEYS } from '@/lib/auth-policy'
 import { getAdminUser } from '@/lib/auth'
 
 // Fetch settings
@@ -49,6 +50,10 @@ export async function POST(request: NextRequest) {
 
     if (Object.keys(settings).some(isRetiredSetting)) {
       return NextResponse.json({ error: 'removed_setting' }, { status: 400 })
+    }
+
+    if (AUTH_POLICY_KEYS.some(key => key in settings && !['true', 'false'].includes(settings[key]))) {
+      return NextResponse.json({ error: 'auth_policy_invalid' }, { status: 400 })
     }
 
     if ('site_name' in settings) {
