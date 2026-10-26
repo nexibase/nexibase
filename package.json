@@ -1,6 +1,6 @@
 {
   "name": "nexibase",
-  "version": "0.35.1",
+  "version": "0.35.2",
   "private": true,
   "scripts": {
     "dev": "node scripts/scan-plugins.js && node scripts/scan-layouts.js && node scripts/scan-themes.js && prisma generate && next dev --turbopack",
@@ -58,7 +58,7 @@
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.528.0",
     "mysql2": "^3.14.2",
-    "next": "^16.2.3",
+    "next": "16.4.3",
     "next-auth": "^4.24.13",
     "next-intl": "^4.9.1",
     "next-themes": "^0.4.6",
@@ -83,7 +83,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "^16.0.10",
+    "eslint-config-next": "16.4.3",
     "nodemon": "^3.1.10",
     "prisma": "^6.12.0",
     "tailwindcss": "^4",
