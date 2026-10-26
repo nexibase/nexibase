@@ -166,7 +166,7 @@ class ActivationReport:
             print('RECOVERY REPORT WRITE FAILED: ' + safe_message(error), flush=True)
 
 
-def merge_sources(base, current, incoming, output):
+def merge_sources(base, current, incoming, output, resolutions=None):
     """Apply only upstream deltas; keep every unrelated site file and local edit."""
     before, local, after = files(base), files(current), files(incoming)
     changed = []
@@ -182,7 +182,8 @@ def merge_sources(base, current, incoming, output):
         if ours == new:
             continue
         target = output / name
-        if ours == old:
+        if ours == old or (old is not None and ours is not None and
+                           old.replace(b'\r\n', b'\n') == ours.replace(b'\r\n', b'\n')):
             if new is None:
                 target.unlink(missing_ok=True)
             else:
@@ -192,7 +193,19 @@ def merge_sources(base, current, incoming, output):
             result = run(['git', 'merge-file', '-p', '--diff3', local[name], before[name], after[name]],
                          capture=True, check=False)
             if result.returncode:
-                conflicts.append(name)
+                resolution = (resolutions or {}).get(name)
+                if resolution is None:
+                    conflicts.append(name)
+                    continue
+                for key, content in (('base', old), ('current', ours), ('incoming', new)):
+                    if resolution.get(key + '_sha256') != hashlib.sha256(content).hexdigest():
+                        raise RuntimeError('Reviewed merge inputs changed: ' + name)
+                content = resolution.get('content')
+                if not isinstance(content, str) or any(line.startswith(('<<<<<<< ', '||||||| ', '=======', '>>>>>>> '))
+                                                       for line in content.splitlines()):
+                    raise RuntimeError('Invalid reviewed merge content: ' + name)
+                target.write_bytes(content.encode('utf-8'))
+                changed.append(name)
                 continue
             target.write_bytes(result.stdout)
         else:
@@ -295,7 +308,7 @@ class Deployment:
         run(['git', 'checkout', '--detach', commit], cwd=dest, log=self.log)
         run(['git', 'submodule', 'update', '--init', '--recursive'], cwd=dest, log=self.log)
 
-    def prepare(self, ref):
+    def prepare(self, ref, resolutions=None):
         if not re.fullmatch(r'v\d+\.\d+\.\d+(?:-[A-Za-z0-9.-]+)?', ref):
             raise RuntimeError('Use an explicit official release tag, e.g. v0.34.2')
         active = self.check_active()
@@ -337,7 +350,9 @@ class Deployment:
                 raise RuntimeError('Database backup failed')
         (job / 'tmp/database-before.sql.gz').chmod(0o600)
         run(['tar', '-czf', job / 'tmp/uploads-before.tar.gz', '-C', self.config['uploads'], '.'], log=self.log)
-        changed = merge_sources(base, active, incoming, job)
+        changed = merge_sources(base, active, incoming, job, resolutions)
+        if resolutions:
+            save(job / 'tmp/reviewed-merge-resolutions.json', resolutions)
         source_guard(job)
         (job / 'public/uploads').mkdir(parents=True, exist_ok=True)
         print('Merged official changes; running tests and build (private logs in release/tmp).', flush=True)
@@ -531,16 +546,20 @@ def main():
     parser.add_argument('command', choices=['prepare', 'activate', 'deploy'])
     parser.add_argument('--ref')
     parser.add_argument('--release')
+    parser.add_argument('--resolutions', type=Path, help='Private JSON with reviewed text conflicts and SHA-256 of all three inputs')
     args = parser.parse_args()
     if args.command in ('prepare', 'deploy') and not args.ref:
         parser.error('--ref is required')
     if args.command == 'activate' and not args.release:
         parser.error('--release is required')
+    if args.command == 'activate' and args.resolutions:
+        parser.error('--resolutions is only allowed during preparation')
     os.umask(0o077)
     with (HERE / 'deployment.lock').open('w') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         deployment = Deployment()
-        job = deployment.prepare(args.ref) if args.command != 'activate' else Path(args.release)
+        resolutions = read_json(args.resolutions) if args.resolutions else None
+        job = deployment.prepare(args.ref, resolutions) if args.command != 'activate' else Path(args.release)
         if args.command != 'prepare':
             deployment.activate(job)
 
