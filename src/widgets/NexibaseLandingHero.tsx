@@ -8,8 +8,6 @@ import {
   Github,
   ExternalLink,
   BookOpen,
-  Copy,
-  Check,
   Puzzle,
   Palette,
   Globe,
@@ -22,10 +20,7 @@ import Link from "next/link"
 const GITHUB_URL = "https://github.com/nexibase/nexibase"
 const TAGS_URL = "https://github.com/nexibase/nexibase/tags"
 const DEMO_URL = "https://demo.nexibase.com"
-const DOCS_URL = "https://github.com/nexibase/nexibase#readme"
-
-const INSTALL_CMD = `git clone --recurse-submodules https://github.com/nexibase/nexibase.git
-cd nexibase && docker compose up -d`
+const DOCS_URL = "https://github.com/nexibase/nexibase#quick-start"
 
 const SITE_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || ""
 
@@ -60,19 +55,8 @@ export default function NexibaseLandingHero() {
     return tRel("yearsAgo", { years: Math.floor(days / 365) })
   }, [tRel])
 
-  const [copied, setCopied] = useState(false)
   const [stars, setStars] = useState<number | null>(null)
   const [release, setRelease] = useState<GitHubRelease | null>(null)
-
-  const handleCopy = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(INSTALL_CMD)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    } catch {
-      // clipboard API not available; ignore
-    }
-  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -134,28 +118,9 @@ export default function NexibaseLandingHero() {
           </p>
         </div>
 
-        <div className="relative rounded-md border bg-background/80 max-w-2xl">
-          <pre className="font-mono text-xs md:text-sm leading-relaxed overflow-x-auto px-3 py-2.5 pr-11">
-            <code>
-              <span className="text-muted-foreground select-none">$ </span>
-              <span>git clone --recurse-submodules https://github.com/nexibase/nexibase.git</span>
-              {"\n"}
-              <span className="text-muted-foreground select-none">$ </span>
-              <span>cd nexibase && docker compose up -d</span>
-            </code>
-          </pre>
-          <button
-            type="button"
-            onClick={handleCopy}
-            aria-label={t("copyAria")}
-            className="absolute top-2 right-2 inline-flex h-7 w-7 items-center justify-center rounded border bg-background hover:bg-muted transition-colors"
-          >
-            {copied ? (
-              <Check className="h-3.5 w-3.5 text-green-600" />
-            ) : (
-              <Copy className="h-3.5 w-3.5 text-muted-foreground" />
-            )}
-          </button>
+        <div className="rounded-md border bg-background/80 max-w-2xl px-3 py-2.5 space-y-1 break-keep">
+          <p className="text-sm font-medium">{t("installRequirements")}</p>
+          <p className="text-xs md:text-sm text-muted-foreground">{t("installGuide")}</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
