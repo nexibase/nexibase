@@ -39,12 +39,50 @@ class PreservationTests(unittest.TestCase):
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(content)
 
-    def merge(self):
+    def merge(self, resolutions=None):
         for name, source in deploy.files(self.current).items():
             target = self.output / name
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(source, target)
-        return deploy.merge_sources(self.base, self.current, self.incoming, self.output)
+        return deploy.merge_sources(self.base, self.current, self.incoming, self.output, resolutions)
+
+    def test_line_endings_alone_do_not_conflict_with_official_update(self):
+        (self.base / 'package.json').write_bytes(b'{\n  "version": "1.0.0"\n}\n')
+        (self.current / 'package.json').write_bytes(b'{\r\n  "version": "1.0.0"\r\n}\r\n')
+        (self.incoming / 'package.json').write_bytes(b'{\n  "version": "1.0.1"\n}\n')
+        self.merge()
+        self.assertEqual((self.output / 'package.json').read_bytes(), (self.incoming / 'package.json').read_bytes())
+        self.assertIn(b'\r\n', (self.current / 'package.json').read_bytes())
+
+    def reviewed_conflict(self, content='site and official\n'):
+        for folder, value in ((self.base, 'base\n'), (self.current, 'site\n'), (self.incoming, 'official\n')):
+            self.put(folder, 'guide.md', value)
+        resolution = {key + '_sha256': deploy.hashlib.sha256((folder / 'guide.md').read_bytes()).hexdigest()
+                      for key, folder in (('base', self.base), ('current', self.current), ('incoming', self.incoming))}
+        return {'guide.md': dict(resolution, content=content)}
+
+    def test_reviewed_resolution_only_changes_candidate(self):
+        self.merge(self.reviewed_conflict())
+        self.assertEqual((self.output / 'guide.md').read_text(), 'site and official\n')
+        self.assertEqual((self.current / 'guide.md').read_text(), 'site\n')
+
+    def test_stale_resolution_is_blocked(self):
+        resolutions = self.reviewed_conflict()
+        self.put(self.current, 'guide.md', 'new site edit\n')
+        with self.assertRaisesRegex(RuntimeError, 'inputs changed'):
+            self.merge(resolutions)
+
+    def test_resolution_cannot_retain_conflict_markers(self):
+        resolutions = self.reviewed_conflict('<<<<<<< site\nunresolved\n')
+        with self.assertRaisesRegex(RuntimeError, 'Invalid reviewed'):
+            self.merge(resolutions)
+
+    def test_reviewing_one_conflict_does_not_ignore_another(self):
+        resolutions = self.reviewed_conflict()
+        for folder, value in ((self.base, 'base'), (self.current, 'site'), (self.incoming, 'official')):
+            self.put(folder, 'other.md', value)
+        with self.assertRaisesRegex(RuntimeError, 'merge conflict.*other.md'):
+            self.merge(resolutions)
 
     def test_nonoverlapping_changes_and_site_only_files_survive(self):
         text = ''.join(f'line {i}\n' for i in range(30))
